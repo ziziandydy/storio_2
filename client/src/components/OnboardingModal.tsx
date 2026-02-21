@@ -4,6 +4,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogIn, UserPlus, X, ShieldCheck, Sparkles, Star } from 'lucide-react';
 import Image from 'next/image';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -13,6 +14,8 @@ interface OnboardingModalProps {
 }
 
 export default function OnboardingModal({ isOpen, onClose, onLogin, onContinueAsGuest }: OnboardingModalProps) {
+  const { t } = useTranslation();
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -43,7 +46,7 @@ export default function OnboardingModal({ isOpen, onClose, onLogin, onContinueAs
                 <div className="absolute inset-0 bg-gradient-to-t from-folio-black via-transparent to-transparent" />
                 <div className="absolute bottom-8 left-8 right-8">
                     <div className="text-accent-gold mb-2"><Sparkles size={24} /></div>
-                    <h3 className="text-xl font-serif font-bold text-white leading-tight">Begin your curation journey.</h3>
+                    <h3 className="text-xl font-serif font-bold text-white leading-tight">{t.onboarding.tagline}</h3>
                 </div>
             </div>
 
@@ -54,10 +57,10 @@ export default function OnboardingModal({ isOpen, onClose, onLogin, onContinueAs
                         <div className="w-10 h-10 bg-accent-gold rounded-xl flex items-center justify-center">
                             <Image src="/logo/logo.png" width={24} height={24} alt="Storio" />
                         </div>
-                        <h2 className="text-2xl font-bold font-serif text-white tracking-wide">Welcome to Storio</h2>
+                        <h2 className="text-2xl font-bold font-serif text-white tracking-wide">{t.onboarding.welcome}</h2>
                     </div>
                     <p className="text-text-secondary text-sm leading-relaxed">
-                        A private space for your cinematic and literary memories. Sync across devices and preserve your folio forever.
+                        {t.onboarding.description}
                     </p>
                 </div>
 
@@ -67,7 +70,7 @@ export default function OnboardingModal({ isOpen, onClose, onLogin, onContinueAs
                         className="w-full py-4 bg-white text-black rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-gray-200 transition-all shadow-xl active:scale-[0.98]"
                     >
                         <Image src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width={18} height={18} alt="Google" />
-                        Continue with Google
+                        {t.onboarding.google}
                     </button>
                     
                     <button 
@@ -75,28 +78,25 @@ export default function OnboardingModal({ isOpen, onClose, onLogin, onContinueAs
                         className="w-full py-4 bg-black border border-white/20 text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-white/5 transition-all active:scale-[0.98]"
                     >
                         <Image src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" width={18} height={18} alt="Apple" className="invert" />
-                        Continue with Apple
+                        {t.onboarding.apple}
                     </button>
 
                     <div className="relative py-4 flex items-center justify-center">
                         <div className="absolute inset-x-0 h-px bg-white/5" />
-                        <span className="relative z-10 bg-folio-black px-4 text-[10px] uppercase font-bold tracking-widest text-text-desc">or</span>
+                        <span className="relative z-10 bg-folio-black px-4 text-[10px] uppercase font-bold tracking-widest text-text-desc">{t.onboarding.or}</span>
                     </div>
 
                     <button 
                         onClick={onContinueAsGuest}
                         className="w-full py-4 rounded-2xl text-text-desc hover:text-white font-bold uppercase tracking-widest text-[10px] transition-colors border border-dashed border-white/10 hover:border-white/30"
                     >
-                        Continue as Guest
+                        {t.onboarding.guest}
                     </button>
                 </div>
 
                 <div className="flex items-center gap-3 bg-white/5 p-4 rounded-xl border border-white/5">
                     <ShieldCheck className="text-accent-gold shrink-0" size={18} />
-                    <p className="text-[10px] text-text-desc leading-tight">
-                        Guests are limited to <span className="text-white font-bold">10 Stories</span>. 
-                        Login to unlock unlimited archives and cloud sync.
-                    </p>
+                    <p className="text-[10px] text-text-desc leading-tight" dangerouslySetInnerHTML={{ __html: t.onboarding.guestNote.replace('<bold>', '<span class="text-white font-bold">').replace('</bold>', '</span>') }} />
                 </div>
             </div>
 

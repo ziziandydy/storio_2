@@ -61,45 +61,45 @@ class SearchService:
     # --- Public Detail Method ---
 
     @staticmethod
-    async def get_item_details(client: httpx.AsyncClient, media_type: str, external_id: str) -> Optional[ItemDetailResponse]:
+    async def get_item_details(client: httpx.AsyncClient, media_type: str, external_id: str, language: str = "zh-TW") -> Optional[ItemDetailResponse]:
         """
         Fetch full details for an item, including synopsis and reviews.
         """
         if media_type == "movie":
-            return await SearchService._fetch_tmdb_details(client, external_id, is_tv=False)
+            return await SearchService._fetch_tmdb_details(client, external_id, is_tv=False, language=language)
         elif media_type == "tv":
-            return await SearchService._fetch_tmdb_details(client, external_id, is_tv=True)
+            return await SearchService._fetch_tmdb_details(client, external_id, is_tv=True, language=language)
         elif media_type == "book":
-            return await SearchService._fetch_gbooks_details(client, external_id)
+            return await SearchService._fetch_gbooks_details(client, external_id, language=language)
         return None
 
     # --- Public Trending Methods (Cached via TrendingService) ---
 
     @staticmethod
-    async def get_trending_movies(client: httpx.AsyncClient) -> List[StoryBase]:
+    async def get_trending_movies(client: httpx.AsyncClient, language: str = "zh-TW") -> List[StoryBase]:
         async def fetcher():
-            return await SearchService._fetch_tmdb_trending(client, "movie")
-        return await TrendingService.get_trending("movie", fetcher)
+            return await SearchService._fetch_tmdb_trending(client, "movie", language)
+        return await TrendingService.get_trending("movie", fetcher, language)
 
     @staticmethod
-    async def get_trending_series(client: httpx.AsyncClient) -> List[StoryBase]:
+    async def get_trending_series(client: httpx.AsyncClient, language: str = "zh-TW") -> List[StoryBase]:
         async def fetcher():
-            return await SearchService._fetch_tmdb_trending(client, "tv")
-        return await TrendingService.get_trending("series", fetcher)
+            return await SearchService._fetch_tmdb_trending(client, "tv", language)
+        return await TrendingService.get_trending("series", fetcher, language)
 
     @staticmethod
-    async def get_trending_books(client: httpx.AsyncClient) -> List[StoryBase]:
+    async def get_trending_books(client: httpx.AsyncClient, language: str = "zh-TW") -> List[StoryBase]:
         async def fetcher():
-            return await SearchService._fetch_ai_books(client)
-        return await TrendingService.get_trending("book", fetcher)
+            return await SearchService._fetch_ai_books(client, language)
+        return await TrendingService.get_trending("book", fetcher, language)
 
     # --- Internal Fetchers (Source of Truth) ---
 
     @staticmethod
-    async def _fetch_tmdb_details(client: httpx.AsyncClient, external_id: str, is_tv: bool = False) -> Optional[ItemDetailResponse]:
+    async def _fetch_tmdb_details(client: httpx.AsyncClient, external_id: str, is_tv: bool = False, language: str = "zh-TW") -> Optional[ItemDetailResponse]:
         headers = {}
         # Append credits, reviews, videos, and images
-        params = {"language": "zh-TW", "append_to_response": "credits,reviews,videos,images"}
+        params = {"language": language, "append_to_response": "credits,reviews,videos,images"}
         
         if settings.TMDB_ACCESS_TOKEN:
             headers["Authorization"] = f"Bearer {settings.TMDB_ACCESS_TOKEN}"
@@ -223,7 +223,7 @@ class SearchService:
             return None
 
     @staticmethod
-    async def _fetch_gbooks_details(client: httpx.AsyncClient, external_id: str) -> Optional[ItemDetailResponse]:
+    async def _fetch_gbooks_details(client: httpx.AsyncClient, external_id: str, language: str = "zh-TW") -> Optional[ItemDetailResponse]:
         params = {}
         if settings.GOOGLE_BOOKS_API_KEY:
             params["key"] = settings.GOOGLE_BOOKS_API_KEY
@@ -276,9 +276,9 @@ class SearchService:
             return None
 
     @staticmethod
-    async def _fetch_tmdb_trending(client: httpx.AsyncClient, media_type: str) -> List[StoryBase]:
+    async def _fetch_tmdb_trending(client: httpx.AsyncClient, media_type: str, language: str = "zh-TW") -> List[StoryBase]:
         headers = {}
-        params = {"language": "zh-TW", "region": "TW"}
+        params = {"language": language, "region": "TW"}
         if settings.TMDB_ACCESS_TOKEN:
             headers["Authorization"] = f"Bearer {settings.TMDB_ACCESS_TOKEN}"
         elif settings.TMDB_API_KEY:
@@ -313,10 +313,11 @@ class SearchService:
             return []
 
     @staticmethod
-    async def _fetch_ai_books(client: httpx.AsyncClient) -> List[StoryBase]:
-        ai_books = await AIRecommendationService._try_gemini()
+    async def _fetch_ai_books(client: httpx.AsyncClient, language: str = "zh-TW") -> List[StoryBase]:
+        # Pass language to AI service to get localized recommendations
+        ai_books = await AIRecommendationService._try_gemini(language)
         if not ai_books:
-            ai_books = await AIRecommendationService._try_openai()
+            ai_books = await AIRecommendationService._try_openai(language)
         
         if ai_books:
             # Limit concurrency to 5 requests at a time
@@ -324,7 +325,8 @@ class SearchService:
 
             async def fetch_with_sem(book):
                 async with sem:
-                    return await SearchService._search_single_book_cover(client, book["title"], book["author"])
+                    # When searching Google Books, we use the title returned by AI (which should be localized)
+                    return await SearchService._search_single_book_cover(client, book["title"], book["author"], language)
 
             tasks = [fetch_with_sem(book) for book in ai_books]
             results = await asyncio.gather(*tasks)
@@ -334,7 +336,7 @@ class SearchService:
 
         # 2. Fallback to Google Books standard search
 
-        params = {"q": "v:*", "orderBy": "newest", "maxResults": 30, "printType": "books", "langRestrict": "zh-TW"}
+        params = {"q": "v:*", "orderBy": "newest", "maxResults": 30, "printType": "books", "langRestrict": language[:2]}
         if settings.GOOGLE_BOOKS_API_KEY: params["key"] = settings.GOOGLE_BOOKS_API_KEY
         try:
             response = await client.get(SearchService.BASE_URL_GBOOKS, params=params)
@@ -359,10 +361,10 @@ class SearchService:
             return []
 
     @staticmethod
-    async def _search_single_book_cover(client: httpx.AsyncClient, title: str, author: str) -> Optional[StoryBase]:
+    async def _search_single_book_cover(client: httpx.AsyncClient, title: str, author: str, language: str = "zh-TW") -> Optional[StoryBase]:
         query = f"intitle:{title}"
         if author: query += f"+inauthor:{author}"
-        params = {"q": query, "maxResults": 1, "printType": "books", "langRestrict": "zh-TW"}
+        params = {"q": query, "maxResults": 1, "printType": "books", "langRestrict": language[:2]}
         if settings.GOOGLE_BOOKS_API_KEY: params["key"] = settings.GOOGLE_BOOKS_API_KEY
         try:
             response = await client.get(SearchService.BASE_URL_GBOOKS, params=params)
@@ -386,9 +388,9 @@ class SearchService:
             return None
 
     @staticmethod
-    async def search_tmdb(client: httpx.AsyncClient, query: str) -> List[StoryBase]:
+    async def search_tmdb(client: httpx.AsyncClient, query: str, language: str = "zh-TW") -> List[StoryBase]:
         headers = {}
-        params = {"query": query, "language": "zh-TW", "region": "TW"}
+        params = {"query": query, "language": language, "region": "TW"}
         if settings.TMDB_ACCESS_TOKEN: headers["Authorization"] = f"Bearer {settings.TMDB_ACCESS_TOKEN}"
         elif settings.TMDB_API_KEY: params["api_key"] = settings.TMDB_API_KEY
         else: return []
@@ -414,8 +416,8 @@ class SearchService:
             return []
 
     @staticmethod
-    async def search_google_books(client: httpx.AsyncClient, query: str) -> List[StoryBase]:
-        params = {"q": query, "maxResults": 15, "printType": "books", "langRestrict": "zh-TW"}
+    async def search_google_books(client: httpx.AsyncClient, query: str, language: str = "zh-TW") -> List[StoryBase]:
+        params = {"q": query, "maxResults": 15, "printType": "books", "langRestrict": language[:2]}
         if settings.GOOGLE_BOOKS_API_KEY: params["key"] = settings.GOOGLE_BOOKS_API_KEY
         try:
             response = await client.get(SearchService.BASE_URL_GBOOKS, params=params)
@@ -440,10 +442,10 @@ class SearchService:
             return []
 
     @staticmethod
-    async def search_multi(query: str) -> List[StoryBase]:
+    async def search_multi(query: str, language: str = "zh-TW") -> List[StoryBase]:
         if not query: return []
         async with httpx.AsyncClient() as client:
-            tmdb_task = SearchService.search_tmdb(client, query)
-            gbooks_task = SearchService.search_google_books(client, query)
+            tmdb_task = SearchService.search_tmdb(client, query, language)
+            gbooks_task = SearchService.search_google_books(client, query, language)
             results_tmdb, results_gbooks = await asyncio.gather(tmdb_task, gbooks_task)
             return results_tmdb + results_gbooks

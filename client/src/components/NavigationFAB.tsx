@@ -4,13 +4,15 @@ import React, { useState } from 'react';
 import { Plus, Search, Layers, X } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function NavigationFAB() {
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useTranslation();
 
   const menuItems = [
-    { icon: Search, label: 'Search', href: '/search', color: 'bg-blue-600' },
-    { icon: Layers, label: 'Collection', href: '/collection', color: 'bg-emerald-600' },
+    { icon: Search, label: t.nav.search, href: '/search', color: 'bg-blue-600' },
+    { icon: Layers, label: t.nav.collection, href: '/collection', color: 'bg-emerald-600' },
   ];
 
   return (

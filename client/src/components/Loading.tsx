@@ -12,6 +12,7 @@ export default function Loading() {
           fill
           className="object-contain"
           unoptimized
+          priority
         />
       </div>
     </div>

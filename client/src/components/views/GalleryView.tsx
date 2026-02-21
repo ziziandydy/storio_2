@@ -6,6 +6,7 @@ import { Story } from '@/types';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Star, User, Calendar, Feather } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface GalleryViewProps {
   stories: Story[];
@@ -13,6 +14,7 @@ interface GalleryViewProps {
 
 export default function GalleryView({ stories }: GalleryViewProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     loop: true,
     align: 'center',
@@ -122,7 +124,7 @@ export default function GalleryView({ stories }: GalleryViewProps) {
                       </div>
                     ) : (
                       <div className="flex items-center gap-1.5 bg-accent-gold/20 backdrop-blur-md border border-accent-gold/40 px-3 py-1.5 rounded-full text-accent-gold animate-pulse shadow-[0_0_15px_rgba(233,108,38,0.4)]">
-                        <span className="font-black text-[10px] tracking-widest uppercase">Rate It</span>
+                        <span className="font-black text-[10px] tracking-widest uppercase">{t.common.rateIt}</span>
                       </div>
                     )}
                     <span className="text-white/60 text-sm capitalize border border-white/20 px-2 py-0.5 rounded-full">{story.media_type}</span>

@@ -9,18 +9,23 @@ class TrendingService:
     _mem_cache: Dict[str, dict] = {}
 
     @classmethod
-    async def get_trending(cls, type_key: str, fetch_func) -> List[StoryBase]:
+    async def get_trending(cls, type_key: str, fetch_func, language: str = "zh-TW") -> List[StoryBase]:
         """
         Generic method to get trending items with L1 (Mem) and L2 (DB) caching.
         type_key: 'movie', 'series', 'book'
         fetch_func: Async function to fetch data from source if cache miss.
+        language: 'zh-TW' or 'en-US'
         """
         today = datetime.date.today()
-        cache_key = f"{type_key}_{today}"
+        # Combine type and language for unique cache key (e.g. "movie_zh-TW")
+        # We store this combined key in the 'type' column of the DB to avoid schema migration
+        lang_type_key = f"{type_key}_{language}"
+        
+        cache_key = f"{lang_type_key}_{today}"
 
         # 1. L1 Memory Cache
         if cache_key in cls._mem_cache:
-            print(f"DEBUG: Returning L1 Memory Cache for {type_key}")
+            print(f"DEBUG: Returning L1 Memory Cache for {lang_type_key}")
             return cls._mem_cache[cache_key]
 
         # 2. L2 Database Cache (Supabase) - Run in ThreadPool to avoid blocking
@@ -29,18 +34,18 @@ class TrendingService:
         def _fetch_from_db():
             try:
                 supabase = get_supabase_client()
-                response = supabase.table("trending_cache").select("data").eq("date", str(today)).eq("type", type_key).execute()
+                response = supabase.table("trending_cache").select("data").eq("date", str(today)).eq("type", lang_type_key).execute()
                 if response.data and len(response.data) > 0:
                     return response.data[0]["data"]
                 return None
             except Exception as e:
-                print(f"DB Read Error for {type_key}: {e}")
+                print(f"DB Read Error for {lang_type_key}: {e}")
                 return None
 
         db_data = await loop.run_in_executor(None, _fetch_from_db)
         
         if db_data:
-            print(f"DEBUG: Returning L2 DB Cache for {type_key}")
+            print(f"DEBUG: Returning L2 DB Cache for {lang_type_key}")
             # Convert dicts back to Pydantic models
             results = [StoryBase(**item) for item in db_data]
             # Update L1
@@ -48,7 +53,7 @@ class TrendingService:
             return results
 
         # 3. Cache Miss - Fetch from Source
-        print(f"DEBUG: Cache Miss for {type_key}. Fetching from Source API...")
+        print(f"DEBUG: Cache Miss for {lang_type_key}. Fetching from Source API...")
         results = await fetch_func()
         
         if results:
@@ -64,16 +69,15 @@ class TrendingService:
                     
                     insert_data = {
                         "date": str(today),
-                        "type": type_key,
+                        "type": lang_type_key,
                         "data": json_data
                     }
                     supabase.table("trending_cache").insert(insert_data).execute()
-                    print(f"DEBUG: Persisted {type_key} to DB")
+                    print(f"DEBUG: Persisted {lang_type_key} to DB")
                 except Exception as e:
-                    print(f"DB Write Error for {type_key}: {e}")
+                    print(f"DB Write Error for {lang_type_key}: {e}")
 
-            # Fire and forget DB write (or await it if we want to ensure consistency)
-            # Awaiting it is safer to prevent race conditions on subsequent reads
+            # Fire and forget DB write
             await loop.run_in_executor(None, _write_to_db)
         
         return results or []

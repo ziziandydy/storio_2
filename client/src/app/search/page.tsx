@@ -9,6 +9,8 @@ import StoryCard from '@/components/StoryCard';
 import AddToFolioModal from '@/components/AddToFolioModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ToastProvider';
+import { useTranslation } from '@/hooks/useTranslation';
+import { useSettingsStore } from '@/store/settingsStore';
 
 // 定義與後端一致的型別
 interface StoryResult {
@@ -36,6 +38,8 @@ function SearchContent() {
   const [filter, setFilter] = useState<'movie' | 'book'>(initialFilter);
   const { token, loading: authLoading } = useAuth();
   const { showToast } = useToast();
+  const { t } = useTranslation();
+  const { language } = useSettingsStore();
   
   // Add To Folio Modal State
   const [selectedStory, setSelectedStory] = useState<StoryResult | null>(null);
@@ -71,7 +75,11 @@ function SearchContent() {
 
       setLoading(true);
       try {
-        const res = await fetch(`http://127.0.0.1:8010/api/v1/search/?q=${encodeURIComponent(debouncedQuery)}`);
+        const res = await fetch(`http://127.0.0.1:8010/api/v1/search/?q=${encodeURIComponent(debouncedQuery)}`, {
+          headers: {
+            'Accept-Language': language
+          }
+        });
         if (!res.ok) {
             console.error("Search API returned non-OK status");
             setResults([]);
@@ -157,7 +165,7 @@ function SearchContent() {
           <ArrowLeft size={20} />
         </Link>
         <Link href="/collection" className="pointer-events-auto text-[10px] font-bold tracking-[0.2em] uppercase text-text-desc hover:text-accent-gold transition-colors bg-white/5 px-4 py-2 rounded-full backdrop-blur-md border border-white/5 hover:bg-white/10">
-          My Storio
+          {t.home.myFolio}
         </Link>
       </header>
 
@@ -201,7 +209,7 @@ function SearchContent() {
         {debouncedQuery && !loading && filteredResults.length === 0 && (
           <div className="text-center text-text-desc mt-20 flex flex-col items-center">
             <div className="w-12 h-px bg-folio-outline mb-6"></div>
-            <p className="tracking-widest uppercase text-xs">No {filter === 'movie' ? 'Movie/Series' : 'Book'} entries found in the archives.</p>
+            <p className="tracking-widest uppercase text-xs">{t.search.noResults}</p>
           </div>
         )}
       </main>
@@ -222,7 +230,7 @@ function SearchContent() {
                 filter === 'movie' ? 'text-folio-black' : 'text-text-desc hover:text-white'
               }`}
             >
-              Movie/Series
+              {t.search.tabs.movies} / {t.search.tabs.tv}
             </button>
             <button
               onClick={() => setFilter('book')}
@@ -230,7 +238,7 @@ function SearchContent() {
                 filter === 'book' ? 'text-folio-black' : 'text-text-desc hover:text-white'
               }`}
             >
-              Book
+              {t.search.tabs.books}
             </button>
           </div>
 
@@ -240,7 +248,7 @@ function SearchContent() {
             <Search className={`absolute left-6 top-1/2 -translate-y-1/2 transition-colors z-10 ${loading ? 'text-accent-gold animate-pulse' : 'text-text-desc group-focus-within:text-accent-gold'}`} size={20} />
             <input 
               type="text" 
-              placeholder={filter === 'movie' ? "Find a movie or series..." : "Find a book..."}
+              placeholder={t.search.placeholder}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="w-full bg-folio-card/80 backdrop-blur-md hover:bg-folio-card focus:bg-black border border-white/10 focus:border-accent-gold/50 rounded-full py-4 pl-16 pr-14 text-base text-white placeholder:text-text-desc/50 focus:outline-none focus:ring-4 focus:ring-accent-gold/10 transition-all shadow-xl relative z-0"

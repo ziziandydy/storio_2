@@ -2,21 +2,25 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { User, Menu, Search, Layers, Plus } from 'lucide-react';
+import { User, Menu, Search, Layers, Plus, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import HomeStats from '@/components/HomeStats';
+import AddToFolioModal from '@/components/AddToFolioModal';
+import { useTranslation } from '@/hooks/useTranslation';
 import SectionSlider from '@/components/SectionSlider';
 import NavigationFAB from '@/components/NavigationFAB';
 import SplashScreen from '@/components/SplashScreen';
 import OnboardingModal from '@/components/OnboardingModal';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 
 export default function Home() {
+  const { user, loading: authLoading } = useAuth();
+  const { t } = useTranslation();
   const [scrollY, setScrollY] = useState(0);
   const [showSplash, setShowSplash] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
     // Check if splash has been shown in this session
@@ -49,6 +53,20 @@ export default function Home() {
     sessionStorage.setItem('hasSeenOnboarding', 'true');
   };
 
+  const handleLogin = async (provider: 'google' | 'apple' | 'email') => {
+    try {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: provider as any,
+            options: {
+                redirectTo: `${window.location.origin}/auth/callback`
+            }
+        });
+        if (error) throw error;
+    } catch (error) {
+        console.error('Login failed:', error);
+    }
+  };
+
   return (
     <div className="bg-folio-black min-h-screen text-white font-sans relative overflow-x-hidden selection:bg-accent-gold/30">
       {/* Intro Animation */}
@@ -58,11 +76,7 @@ export default function Home() {
       <OnboardingModal 
         isOpen={showOnboarding} 
         onClose={handleOnboardingClose}
-        onLogin={(provider) => {
-            console.log("Login with", provider);
-            // Implement social login logic here
-            handleOnboardingClose();
-        }}
+        onLogin={handleLogin}
         onContinueAsGuest={handleOnboardingClose}
       />
 
@@ -102,54 +116,45 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 pt-28 pb-40 space-y-12">
+      <main className="relative z-10 pt-28 pb-40 space-y-16">
         
-        {/* Curated Stats (Immersive Hero) */}
-        <section className="flex flex-col items-center gap-4 mb-10 px-6 text-center">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1, ease: "easeOut" }}
-              className="space-y-3"
-            >
-              <h1 className="text-4xl md:text-5xl font-serif font-bold text-white tracking-tight drop-shadow-2xl">
+        {/* Hero Section */}
+        <div className="flex flex-col items-center justify-center text-center px-4 mb-8">
+            <h1 className="text-5xl md:text-8xl font-black font-serif text-white tracking-tighter mb-6 drop-shadow-2xl">
                 Storio
-              </h1>
-              <div className="flex flex-col items-center gap-3">
-                <div className="w-8 h-px bg-accent-gold/30" />
-                <p className="text-[10px] uppercase tracking-[0.4em] text-accent-gold font-bold opacity-80">
-                  Collect stories in your folio
-                </p>
-                <div className="w-8 h-px bg-accent-gold/30" />
-              </div>
-            </motion.div>
-            
-            <HomeStats />
+            </h1>
+            <p className="text-xl md:text-2xl text-text-desc font-light tracking-wide max-w-2xl mb-10 drop-shadow-lg">
+                {t.home.heroSubtitle}
+            </p>
+        </div>
 
-            <Link 
-              href="/collection"
-              className="mt-6 flex items-center gap-2 px-8 py-3 bg-accent-gold text-folio-black rounded-full font-black text-[10px] uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(233,108,38,0.3)] hover:shadow-[0_0_30px_rgba(233,108,38,0.5)] hover:scale-105 active:scale-95 transition-all"
-            >
-              View My Storio
-            </Link>
-        </section>
+        {/* Stats Section */}
+        <div className="flex flex-col items-center gap-12">
+            <HomeStats />
+            
+            <div className="flex gap-4">
+                <Link href="/collection" className="group px-8 py-4 bg-accent-gold text-folio-black rounded-full font-black uppercase tracking-widest text-xs hover:bg-white transition-all shadow-[0_0_30px_rgba(233,108,38,0.4)] flex items-center gap-2">
+                {t.home.viewStorio} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                </Link>
+            </div>
+        </div>
         
         {/* Trending Sections */}
         <div className="space-y-16">
           <SectionSlider 
-            title="Trending Movies" 
+            title={t.home.trendingMovies}
             endpoint="/api/v1/search/trending/movies" 
             viewAllLink="/search?filter=movie"
           />
 
           <SectionSlider 
-            title="Trending Series" 
+            title={t.home.trendingSeries}
             endpoint="/api/v1/search/trending/series" 
             viewAllLink="/search?filter=movie"
           />
           
           <SectionSlider 
-            title="Trending Reads" 
+            title={t.home.trendingReads}
             endpoint="/api/v1/search/trending/books" 
             viewAllLink="/search?filter=book"
           />

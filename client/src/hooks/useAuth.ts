@@ -44,5 +44,32 @@ export function useAuth() {
     }
   };
 
-  return { user, token, loading };
+  const signOut = async () => {
+    try {
+      setLoading(true);
+      await supabase.auth.signOut();
+      // After sign out, create a new anonymous session immediately
+      // This ensures the app is always "logged in" as at least a guest
+      await signInAnonymously();
+    } catch (error) {
+      console.error('Error signing out:', error);
+      setLoading(false);
+    }
+  };
+
+  const updateProfile = async (updates: { display_name?: string, avatar_url?: string }) => {
+    try {
+      const { data, error } = await supabase.auth.updateUser({
+        data: updates
+      });
+      if (error) throw error;
+      if (data.user) setUser(data.user);
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      return { data: null, error };
+    }
+  };
+
+  return { user, token, loading, signOut, updateProfile };
 }

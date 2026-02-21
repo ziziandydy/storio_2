@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import StoryCard from './StoryCard';
 import AddToFolioModal from './AddToFolioModal';
 import { useAuth } from '@/hooks/useAuth';
+import { useSettingsStore } from '@/store/settingsStore';
 import confetti from 'canvas-confetti';
 import { useToast } from '@/components/ToastProvider';
 
@@ -32,6 +33,7 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
   const scrollRef = useRef<HTMLDivElement>(null);
   const { token } = useAuth();
   const { showToast } = useToast();
+  const { language } = useSettingsStore();
   const router = useRouter();
 
   // Add To Folio Modal State
@@ -46,7 +48,11 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch(`http://127.0.0.1:8010${endpoint}`);
+        const res = await fetch(`http://127.0.0.1:8010${endpoint}`, {
+          headers: {
+            'Accept-Language': language
+          }
+        });
         if (!res.ok) throw new Error('Network response was not ok');
         const data = await res.json();
         setItems(data);
@@ -58,7 +64,7 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
     };
 
     fetchData();
-  }, [endpoint, title]);
+  }, [endpoint, title, language]);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {

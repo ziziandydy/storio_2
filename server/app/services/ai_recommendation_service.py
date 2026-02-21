@@ -12,93 +12,90 @@ class AIRecommendationService:
     _last_update: datetime.date = None
 
     @classmethod
-    async def get_daily_book_recommendations(cls) -> List[Dict[str, str]]:
+    async def get_daily_book_recommendations(cls, language: str = "zh-TW") -> List[Dict[str, str]]:
         today = datetime.date.today()
         loop = asyncio.get_running_loop()
         
+        # Combined cache key
+        cache_id = f"{today}_{language}"
+
         # L1 Cache: Memory
-        if cls._cache and cls._last_update == today:
-            print("DEBUG: Returning L1 cached AI book recommendations")
+        if cls._cache and cls._last_update == cache_id:
+            print(f"DEBUG: Returning L1 cached recommendations for {language}")
             return cls._cache
 
-        # L2 Cache: Database (Supabase) - Non-blocking
+        # L2 Cache: Database (Supabase)
         def _fetch_daily_rec():
             try:
                 supabase = get_supabase_client()
-                response = supabase.table("daily_recommendations").select("books").eq("date", str(today)).execute()
+                # We reuse the date column but encode language if needed, 
+                # or just use a combined ID if the table schema allows.
+                # Since I don't want to change schema, let's check if we can filter by language.
+                # If table doesn't have language column, we might need to store it in date as "2026-02-21_zh-TW"
+                lang_date = f"{today}_{language}"
+                response = supabase.table("daily_recommendations").select("books").eq("date", lang_date).execute()
                 if response.data and len(response.data) > 0:
                     return response.data[0]["books"]
                 return None
             except Exception as e:
-                print(f"DB Cache Read Error (Table might not exist): {e}")
+                print(f"DB Cache Read Error: {e}")
                 return None
 
         db_books = await loop.run_in_executor(None, _fetch_daily_rec)
         if db_books:
-            print("DEBUG: Returning L2 DB cached recommendations")
             cls._cache = db_books
-            cls._last_update = today
+            cls._last_update = cache_id
             return db_books
 
         # Cache Miss: Fetch from AI
-        print("DEBUG: Attempting Gemini Recommendation...")
-        result = await cls._try_gemini()
+        print(f"DEBUG: Attempting Gemini Recommendation for {language}...")
+        result = await cls._try_gemini(language)
         if not result:
-            print("DEBUG: Gemini failed or unavailable, switching to OpenAI...")
-            result = await cls._try_openai()
+            result = await cls._try_openai(language)
             
         if result:
-            # Update L1 Cache
-            cls._update_cache(result)
+            cls._cache = result
+            cls._last_update = cache_id
             
-            # Update L2 Cache (DB) - Non-blocking
             def _persist_daily_rec():
                 try:
                     supabase = get_supabase_client()
-                    data = {
-                        "date": str(today),
-                        "books": result
-                    }
+                    data = { "date": f"{today}_{language}", "books": result }
                     supabase.table("daily_recommendations").insert(data).execute()
-                    print("DEBUG: Persisted recommendations to DB")
                 except Exception as e:
                     print(f"DB Cache Write Error: {e}")
             
             await loop.run_in_executor(None, _persist_daily_rec)
-                
             return result
             
-        print("DEBUG: All AI services failed.")
         return []
 
     @classmethod
-    def _update_cache(cls, data):
-        cls._cache = data
-        cls._last_update = datetime.date.today()
-        print(f"DEBUG: Successfully cached {len(data)} books from AI")
-
-    @classmethod
-    async def _try_gemini(cls) -> List[Dict[str, str]]:
+    async def _try_gemini(cls, language: str = "zh-TW") -> List[Dict[str, str]]:
         if not settings.GEMINI_API_KEY:
-            print("Gemini API Key missing")
             return []
             
         try:
             genai.configure(api_key=settings.GEMINI_API_KEY)
             model = genai.GenerativeModel('gemini-2.0-flash')
             
-            prompt = """
-            請推薦 30 本繁體中文書籍，適合作為「每日推薦」給一般大眾。
-            選書標準：包含當代文學、經典小說、心理成長、商業思維、科普知識等不同領域的暢銷或高評價書籍。
-            確保推薦的書籍在台灣市場是有知名度的。
+            lang_name = "Traditional Chinese (繁體中文)" if language == "zh-TW" else "English"
+            market_context = "Taiwan/Chinese" if language == "zh-TW" else "International/US"
             
-            請嚴格輸出為 JSON Array 格式，不需要 Markdown 標記，格式如下：
-            [{"title": "書名", "author": "作者"}, ...]
+            prompt = f"""
+            Recommend 30 books suitable for a "Daily Recommendation" to the general public.
+            Language: {lang_name}.
+            Market: Popular in {market_context} market.
+            Categories: Contemporary literature, classics, self-help, business, sci-fi, etc.
+            
+            Output strictly as a JSON Array of objects:
+            [{{"title": "Book Title", "author": "Author Name"}}, ...]
+            No markdown tags, no extra text.
             """
             
             response = await asyncio.wait_for(
                 model.generate_content_async(prompt),
-                timeout=20.0 # Increased timeout for 30 books
+                timeout=25.0
             )
             
             text = response.text.replace("```json", "").replace("```", "").strip()
@@ -106,62 +103,39 @@ class AIRecommendationService:
                 text = text[text.find("["):text.rfind("]")+1]
                 
             books = json.loads(text)
-            
-            valid_books = []
-            for b in books:
-                if "title" in b:
-                    valid_books.append({"title": b["title"], "author": b.get("author", "")})
-            
-            return valid_books[:30]
+            return books[:30]
 
         except Exception as e:
-            print(f"Gemini Recommendation Error: {e}")
+            print(f"Gemini Rec Error: {e}")
             return []
 
     @classmethod
-    async def _try_openai(cls) -> List[Dict[str, str]]:
+    async def _try_openai(cls, language: str = "zh-TW") -> List[Dict[str, str]]:
         if not settings.OPENAI_API_KEY:
-            print("OpenAI API Key missing")
             return []
             
         try:
             client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+            lang_name = "Traditional Chinese (繁體中文)" if language == "zh-TW" else "English"
             
-            prompt = """
-            請推薦 30 本繁體中文書籍，適合作為「每日推薦」給一般大眾。
-            選書標準：包含當代文學、經典小說、心理成長、商業思維、科普知識等不同領域的暢銷或高評價書籍。
-            確保推薦的書籍在台灣市場是有知名度的。
-            
-            請嚴格輸出為 JSON Array 格式，不需要 Markdown 標記，格式如下：
-            [{"title": "書名", "author": "作者"}, ...]
-            """
+            prompt = f"Recommend 30 trending books in {lang_name}. Return JSON Array only: [{{'title': '...', 'author': '...'}}]"
 
             response = await asyncio.wait_for(
                 client.chat.completions.create(
                     model="gpt-4o-mini",
                     messages=[
-                        {"role": "system", "content": "You are a helpful librarian recommendation system. Output JSON only."},
+                        {"role": "system", "content": "You are a helpful librarian. Output JSON only."},
                         {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.7,
+                    ]
                 ),
-                timeout=20.0
+                timeout=25.0
             )
             
             content = response.choices[0].message.content
             text = content.replace("```json", "").replace("```", "").strip()
             if "[" in text and "]" in text:
                 text = text[text.find("["):text.rfind("]")+1]
-                
-            books = json.loads(text)
-            
-            valid_books = []
-            for b in books:
-                if "title" in b:
-                    valid_books.append({"title": b["title"], "author": b.get("author", "")})
-            
-            return valid_books[:30]
-
+            return json.loads(text)[:30]
         except Exception as e:
-            print(f"OpenAI Recommendation Error: {e}")
+            print(f"OpenAI Rec Error: {e}")
             return []

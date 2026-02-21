@@ -1,42 +1,43 @@
 from typing import List
 import httpx
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, Depends
 from app.schemas.item import SearchResponse, StoryBase, ItemDetailResponse
 from app.services.search_service import SearchService
+from app.api.deps import get_language
 
 router = APIRouter()
 
 @router.get("/trending/movies", response_model=List[StoryBase])
-async def trending_movies():
+async def trending_movies(language: str = Depends(get_language)):
     """
     Get trending movies (Top 20 from this week).
     """
     async with httpx.AsyncClient() as client:
-        return await SearchService.get_trending_movies(client)
+        return await SearchService.get_trending_movies(client, language)
 
 @router.get("/trending/series", response_model=List[StoryBase])
-async def trending_series():
+async def trending_series(language: str = Depends(get_language)):
     """
     Get trending TV series (Top 20 from this week).
     """
     async with httpx.AsyncClient() as client:
-        return await SearchService.get_trending_series(client)
+        return await SearchService.get_trending_series(client, language)
 
 @router.get("/trending/books", response_model=List[StoryBase])
-async def trending_books():
+async def trending_books(language: str = Depends(get_language)):
     """
     Get trending/recommended books (Top 20).
     """
     async with httpx.AsyncClient() as client:
-        return await SearchService.get_trending_books(client)
+        return await SearchService.get_trending_books(client, language)
 
 @router.get("/details/{media_type}/{external_id}", response_model=ItemDetailResponse)
-async def get_details(media_type: str, external_id: str):
+async def get_details(media_type: str, external_id: str, language: str = Depends(get_language)):
     """
     Get detailed information for a specific movie or book.
     """
     async with httpx.AsyncClient() as client:
-        details = await SearchService.get_item_details(client, media_type, external_id)
+        details = await SearchService.get_item_details(client, media_type, external_id, language)
         if not details:
             raise HTTPException(status_code=404, detail="Item details not found")
         return details
@@ -44,10 +45,11 @@ async def get_details(media_type: str, external_id: str):
 @router.get("/", response_model=SearchResponse)
 async def search(
     q: str = Query(..., min_length=1, description="Search query for movies or books"),
-    page: int = 1
+    page: int = 1,
+    language: str = Depends(get_language)
 ):
     """
     Search for movies and books.
     """
-    results = await SearchService.search_multi(query=q)
+    results = await SearchService.search_multi(query=q, language=language)
     return SearchResponse(results=results, page=page, total_results=len(results))

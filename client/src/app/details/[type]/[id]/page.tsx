@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import AddToFolioModal from '@/components/AddToFolioModal';
 import { useAuth } from '@/hooks/useAuth';
+import { useSettingsStore } from '@/store/settingsStore';
 import StoryDetailsView, { ItemDetail } from '@/components/StoryDetailsView';
 
 export default function DetailsPage() {
@@ -14,6 +15,7 @@ export default function DetailsPage() {
   const type = typeof params.type === 'string' ? params.type : (Array.isArray(params.type) ? params.type[0] : '');
   const id = typeof params.id === 'string' ? params.id : (Array.isArray(params.id) ? params.id[0] : '');
   const { token } = useAuth();
+  const { language } = useSettingsStore();
 
   const [item, setItem] = useState<ItemDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,7 +28,11 @@ export default function DetailsPage() {
       
       setLoading(true);
       try {
-        const res = await fetch(`http://127.0.0.1:8010/api/v1/details/${type}/${id}`);
+        const res = await fetch(`http://127.0.0.1:8010/api/v1/details/${type}/${id}`, {
+          headers: {
+            'Accept-Language': language
+          }
+        });
         if (!res.ok) throw new Error('Failed to fetch details');
         const data = await res.json();
         setItem(data);
@@ -102,6 +108,7 @@ export default function DetailsPage() {
         item={item} 
         onAddClick={() => setIsAddModalOpen(true)}
         showAddButton={true}
+        onBack={() => router.back()}
       />
 
       {/* Add Modal */}

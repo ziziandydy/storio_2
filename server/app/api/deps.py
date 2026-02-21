@@ -1,10 +1,24 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from supabase import Client
 from app.core.supabase import get_supabase_client
 from app.core.config import settings
 
 security = HTTPBearer()
+
+def get_language(accept_language: str = Header("zh-TW")) -> str:
+    """
+    Parses the Accept-Language header to determine the preferred language.
+    Defaults to 'zh-TW' if not provided or invalid.
+    Supported: 'zh-TW', 'en-US'.
+    """
+    if not accept_language:
+        return "zh-TW"
+    
+    # Simple check for now (can be improved with parsing q-values)
+    if "en" in accept_language.lower():
+        return "en-US"
+    return "zh-TW"
 
 def get_current_user_id(
     credentials: HTTPAuthorizationCredentials = Depends(security),

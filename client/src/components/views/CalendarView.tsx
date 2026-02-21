@@ -14,11 +14,13 @@ import {
   parseISO,
   isSameDay
 } from 'date-fns';
+import { zhTW, enUS } from 'date-fns/locale';
 import { X, User } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Story } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface CalendarViewProps {
   stories: Story[];
@@ -26,6 +28,8 @@ interface CalendarViewProps {
 
 export default function CalendarView({ stories }: CalendarViewProps) {
   const router = useRouter();
+  const { t, locale } = useTranslation();
+  const dateLocale = locale === 'zh-TW' ? zhTW : enUS;
   
   // Initial state: current month and previous month
   const [months, setMonths] = useState<Date[]>([subMonths(new Date(), 1), new Date()]);
@@ -149,7 +153,7 @@ export default function CalendarView({ stories }: CalendarViewProps) {
       
       {/* Top Sentinel */}
       <div ref={topSentinelRef} className="h-10 w-full flex items-center justify-center text-text-desc opacity-50 text-xs py-4">
-        Loading past...
+        {t.collection.calendar.loadingPast}
       </div>
 
       <div className="flex flex-col gap-12">
@@ -159,6 +163,7 @@ export default function CalendarView({ stories }: CalendarViewProps) {
                 month={month} 
                 storiesByDate={storiesByDate}
                 onDayClick={handleDayClick}
+                locale={dateLocale}
             />
         ))}
       </div>
@@ -186,10 +191,10 @@ export default function CalendarView({ stories }: CalendarViewProps) {
               <div className="p-4 border-b border-white/5 flex items-center justify-between bg-folio-black/50">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
                   <span className="text-accent-gold">
-                    {format(selectedDate, 'MMMM d, yyyy')}
+                    {format(selectedDate, 'MMMM d, yyyy', { locale: dateLocale })}
                   </span>
                   <span className="text-text-desc text-xs font-normal bg-white/5 px-2 py-0.5 rounded-full">
-                    {selectedStories.length} stories
+                    {selectedStories.length} {t.collection.calendar.stories}
                   </span>
                 </h3>
                 <button 
@@ -243,21 +248,23 @@ export default function CalendarView({ stories }: CalendarViewProps) {
 }
 
 // Sub-component for individual month grid
-function MonthGrid({ month, storiesByDate, onDayClick }: { month: Date, storiesByDate: Record<string, Story[]>, onDayClick: (d: Date, s: Story[]) => void }) {
+function MonthGrid({ month, storiesByDate, onDayClick, locale }: { month: Date, storiesByDate: Record<string, Story[]>, onDayClick: (d: Date, s: Story[]) => void, locale: any }) {
     const days = useMemo(() => {
         const start = startOfWeek(startOfMonth(month));
         const end = endOfWeek(endOfMonth(month));
         return eachDayOfInterval({ start, end });
     }, [month]);
 
-    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const weekDays = locale.code === 'zh-TW' 
+      ? ['日', '一', '二', '三', '四', '五', '六']
+      : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     return (
         <div>
              {/* Header */}
             <div className="flex items-center justify-between mb-4 px-2 sticky top-16 z-20 bg-folio-black/95 backdrop-blur py-2 border-b border-white/5">
                 <h2 className="text-xl font-serif font-bold text-accent-gold capitalize">
-                {format(month, 'MMMM yyyy')}
+                {format(month, 'MMMM yyyy', { locale })}
                 </h2>
             </div>
 

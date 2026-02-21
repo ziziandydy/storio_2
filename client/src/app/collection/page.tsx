@@ -14,11 +14,14 @@ import ListView from '@/components/views/ListView';
 import CalendarView from '@/components/views/CalendarView';
 import GalleryView from '@/components/views/GalleryView';
 
+import { useTranslation } from '@/hooks/useTranslation';
+
 export default function CollectionPage() {
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
   const { token, loading: authLoading } = useAuth();
   const { currentView } = useViewStore();
+  const { t } = useTranslation();
   const router = useRouter();
 
   useEffect(() => {
@@ -82,7 +85,7 @@ export default function CollectionPage() {
               unoptimized
             />
           </div>
-          <p className="text-accent-gold font-bold tracking-[0.3em] uppercase text-xs animate-pulse">Consulting the Folio...</p>
+          <p className="text-accent-gold font-bold tracking-[0.3em] uppercase text-xs animate-pulse">{t.common.loading}</p>
         </div>
       </div>
     );
@@ -99,7 +102,7 @@ export default function CollectionPage() {
             <div className="flex items-center gap-3">
               <img src="/image/logo/logo.svg" alt="Storio Logo" className="w-6 h-6" />
 <h1 className="text-2xl md:text-3xl font-bold font-serif tracking-tight text-white flex items-center gap-3">
-            My Storio
+            {t.collection.title}
           </h1>
             </div>
           </div>
@@ -119,15 +122,15 @@ export default function CollectionPage() {
             <div className="w-20 h-20 rounded-full border border-white/10 flex items-center justify-center mb-6 bg-folio-card shadow-2xl relative">
               <Library size={32} strokeWidth={1} className="text-accent-gold opacity-40" />
             </div>
-            <h2 className="text-2xl font-bold mb-3 text-text-primary">Your Storio is Empty</h2>
-            <p className="max-w-xs mb-10 text-text-desc text-sm">Begin your journey by curating memories of films and literature.</p>
+            <h2 className="text-2xl font-bold mb-3 text-text-primary">{t.collection.emptyTitle}</h2>
+            <p className="max-w-xs mb-10 text-text-desc text-sm">{t.collection.emptyDesc}</p>
             
             <div className="flex flex-col sm:flex-row gap-4 w-full max-w-xs justify-center">
                 <Link href="/search" className="flex-1 px-8 py-3.5 bg-accent-gold text-folio-black font-black rounded-xl hover:bg-white transition-all shadow-xl shadow-accent-gold/10 uppercase text-[10px] tracking-widest">
-                Explore
+                {t.common.explore}
                 </Link>
                 <Link href="/" className="flex-1 px-8 py-3.5 bg-white/5 text-white font-bold rounded-xl border border-white/10 hover:bg-white/10 transition-all uppercase text-[10px] tracking-widest">
-                Home
+                {t.nav.home}
                 </Link>
             </div>
           </div>

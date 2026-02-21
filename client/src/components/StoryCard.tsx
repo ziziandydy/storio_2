@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { PlayCircle, BookOpen, Plus, Info, Star, Calendar, Feather, Tv, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface StoryCardProps {
   title: string;
@@ -27,6 +28,7 @@ const StoryCard: React.FC<StoryCardProps> = ({
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const router = useRouter();
+  const { t } = useTranslation();
   
   const handleCardClick = () => {
     if (onViewDetails) {
@@ -48,11 +50,11 @@ const StoryCard: React.FC<StoryCardProps> = ({
 
   let typeLabel = '未知';
   if (type === 'movie') {
-    typeLabel = '電影';
+    typeLabel = t.common.movies;
   } else if (type === 'tv') {
-    typeLabel = '影集';
+    typeLabel = t.common.tv;
   } else if (type === 'book') {
-    typeLabel = '書籍';
+    typeLabel = t.common.books;
   }
   
   const typeColor = 'text-accent-gold';
@@ -82,7 +84,7 @@ const StoryCard: React.FC<StoryCardProps> = ({
         {/* Rewatch Badge */}
         {viewingNumber && viewingNumber > 1 && (
             <div className="bg-accent-gold text-folio-black text-[9px] font-black px-2 py-1 rounded shadow-[0_0_10px_rgba(233,108,38,0.3)]">
-            {viewingNumber === 2 ? '2ND' : viewingNumber === 3 ? '3RD' : `${viewingNumber}TH`} VIEW
+            {viewingNumber === 2 ? '2ND' : viewingNumber === 3 ? '3RD' : `${viewingNumber}TH`} {t.collection.card.view}
             </div>
         )}
       </div>
@@ -94,7 +96,7 @@ const StoryCard: React.FC<StoryCardProps> = ({
                 <div className="p-2 bg-black/60 backdrop-blur-md rounded-full border border-accent-gold/40 text-accent-gold animate-pulse shadow-lg">
                     <Feather size={18} strokeWidth={2.5} />
                 </div>
-                <span className="absolute top-full right-0 mt-2 text-[8px] font-black text-accent-gold uppercase tracking-widest opacity-0 group-hover/hint:opacity-100 transition-opacity bg-black/80 px-2 py-1 rounded backdrop-blur-sm whitespace-nowrap pointer-events-none border border-accent-gold/20">Inscribe</span>
+                <span className="absolute top-full right-0 mt-2 text-[8px] font-black text-accent-gold uppercase tracking-widest opacity-0 group-hover/hint:opacity-100 transition-opacity bg-black/80 px-2 py-1 rounded backdrop-blur-sm whitespace-nowrap pointer-events-none border border-accent-gold/20">{t.common.inscribe}</span>
             </div>
         </div>
       )}
@@ -131,7 +133,7 @@ const StoryCard: React.FC<StoryCardProps> = ({
                ) : (
                  <div className="flex items-center gap-2 animate-pulse">
                    <div className="flex items-center gap-1 bg-accent-gold/20 backdrop-blur-md border border-accent-gold/50 px-2 py-1 rounded-full text-accent-gold shadow-[0_0_10px_rgba(233,108,38,0.3)]">
-                     <span className="text-[9px] font-black tracking-widest uppercase">Rate It</span>
+                     <span className="text-[9px] font-black tracking-widest uppercase">{t.common.rateIt}</span>
                    </div>
                  </div>
                )}
@@ -144,7 +146,7 @@ const StoryCard: React.FC<StoryCardProps> = ({
             </span>
             <span className={`text-[9px] uppercase tracking-[0.2em] font-bold ${typeColor} drop-shadow-md flex items-center`}>
               {typeLabel}
-              {year && <span className="text-white/40 ml-1.5 font-medium tracking-normal">(Released {year})</span>}
+              {year && <span className="text-white/40 ml-1.5 font-medium tracking-normal">({t.collection.card.released} {year})</span>}
             </span>
           </div>
           <h3 className="text-sm font-bold text-white leading-tight line-clamp-2 drop-shadow-md font-sans">
@@ -162,7 +164,7 @@ const StoryCard: React.FC<StoryCardProps> = ({
                 className="w-full py-3 bg-accent-gold text-folio-black rounded-lg font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white hover:scale-105 transition-all shadow-xl"
                 >
                 <Plus size={16} strokeWidth={3} />
-                Add
+                {t.modals.addToFolio}
                 </button>
             )}
 

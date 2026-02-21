@@ -5,6 +5,7 @@ import useEmblaCarousel from 'embla-carousel-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface DailyCount {
   date: string;
@@ -26,6 +27,7 @@ export default function HomeStats() {
   const [stats, setStats] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const { token } = useAuth();
+  const { t } = useTranslation();
   
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -144,31 +146,31 @@ export default function HomeStats() {
   const allSlides = [
     {
       id: '7d',
-      content: <div key="7d" className="w-full flex justify-center py-2"><SingleStatItem value={stats.last_7_days} label="Last 7 Days" /></div>
+      content: <div key="7d" className="w-full flex justify-center py-2"><SingleStatItem value={stats.last_7_days} label={t.profile.widgets['7d']} /></div>
     },
     {
       id: '30d',
-      content: <div key="30d" className="w-full flex justify-center py-2"><SingleStatItem value={stats.last_30_days} label="Last 30 Days" /></div>
+      content: <div key="30d" className="w-full flex justify-center py-2"><SingleStatItem value={stats.last_30_days} label={t.profile.widgets['30d']} /></div>
     },
     {
       id: 'week',
-      content: <div key="week" className="w-full flex justify-center py-2"><SingleStatItem value={stats.this_week} label="This Week" /></div>
+      content: <div key="week" className="w-full flex justify-center py-2"><SingleStatItem value={stats.this_week} label={t.profile.widgets.week} /></div>
     },
     {
       id: 'month',
-      content: <div key="month" className="w-full flex justify-center py-2"><SingleStatItem value={stats.this_month} label="This Month" /></div>
+      content: <div key="month" className="w-full flex justify-center py-2"><SingleStatItem value={stats.this_month} label={t.profile.widgets.month} /></div>
     },
     {
       id: 'year',
-      content: <div key="year" className="w-full flex justify-center py-2"><SingleStatItem value={stats.this_year} label={`In ${new Date().getFullYear()}`} /></div>
+      content: <div key="year" className="w-full flex justify-center py-2"><SingleStatItem value={stats.this_year} label={t.profile.widgets.year} /></div>
     },
     {
       id: 'trend7',
-      content: <div key="trend7" className="w-full flex justify-center py-2"><BarChart data={stats.daily_counts_7d} label="7-Day Trend" /></div>
+      content: <div key="trend7" className="w-full flex justify-center py-2"><BarChart data={stats.daily_counts_7d} label={t.profile.widgets.trend7} /></div>
     },
     {
       id: 'trend30',
-      content: <div key="trend30" className="w-full flex justify-center py-2"><BarChart data={stats.daily_counts_30d} label="30-Day Trend" /></div>
+      content: <div key="trend30" className="w-full flex justify-center py-2"><BarChart data={stats.daily_counts_30d} label={t.profile.widgets.trend30} /></div>
     }
   ];
 

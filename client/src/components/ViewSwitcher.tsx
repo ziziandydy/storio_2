@@ -2,13 +2,15 @@
 
 import React, { useEffect, useState } from 'react';
 import { LayoutGrid, CalendarDays, GalleryHorizontal } from 'lucide-react';
-import { useViewStore, ViewMode } from '@/store/viewStore';
+import { useSettingsStore, useViewStore, ViewMode } from '@/store/viewStore';
 import { useToast } from '@/components/ToastProvider';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function ViewSwitcher() {
   const { currentView, cycleView } = useViewStore();
   // @ts-ignore - Context is verified to exist in page wrapper
   const { showToast } = useToast(); 
+  const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -20,14 +22,14 @@ export default function ViewSwitcher() {
     const nextIndex = (order.indexOf(currentView) + 1) % order.length;
     const nextView = order[nextIndex];
 
-    const viewNames: Record<ViewMode, string> = {
-      list: 'Grid View',
-      calendar: 'Calendar View',
-      gallery: 'Gallery View'
+    const messages: Record<ViewMode, string> = {
+      list: t.collection.toast.grid,
+      calendar: t.collection.toast.calendar,
+      gallery: t.collection.toast.gallery
     };
 
     cycleView();
-    showToast(`Switched to ${viewNames[nextView]}`, 'success');
+    showToast(messages[nextView], 'success');
   };
 
   // Prevent hydration mismatch by rendering nothing on server
