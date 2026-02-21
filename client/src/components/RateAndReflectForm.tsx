@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Loader2, Wand2, Save, X } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useSettingsStore } from '@/store/settingsStore';
+import { getApiUrl } from '@/lib/api';
 
 interface RateAndReflectFormProps {
   initialRating?: number;
@@ -42,7 +43,7 @@ export default function RateAndReflectForm({
   const fetchSuggestions = async () => {
     setLoadingSuggestions(true);
     try {
-      const res = await fetch('http://127.0.0.1:8010/api/v1/ai/suggestions', {
+      const res = await fetch(getApiUrl('/api/v1/ai/suggestions'), {
         method: 'POST',
         headers: { 
             'Content-Type': 'application/json',
@@ -63,7 +64,7 @@ export default function RateAndReflectForm({
     if (!notes.trim()) return;
     setLoadingRefine(true);
     try {
-      const res = await fetch('http://127.0.0.1:8010/api/v1/ai/refine', {
+      const res = await fetch(getApiUrl('/api/v1/ai/refine'), {
         method: 'POST',
         headers: { 
             'Content-Type': 'application/json',

@@ -6,8 +6,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, Star, Loader2, Film, Book as BookIcon, Calendar, Trash2, Edit3, MessageSquarePlus, Info, Quote, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/components/ToastProvider';
-import StoryDetailsView, { ItemDetail } from '@/components/StoryDetailsView';
+import { useToast } from '@/hooks/useToast';
+import { getApiUrl } from '@/lib/api';
+import StoryDetailsView from '@/components/StoryDetailsView';
 import RateAndReflectForm from '@/components/RateAndReflectForm';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -47,7 +48,7 @@ export default function CollectionDetailPage() {
       if (!token) return;
 
       try {
-        const res = await fetch(`http://127.0.0.1:8010/api/v1/collection/${id}`, {
+        const res = await fetch(getApiUrl(`/api/v1/collection/${id}`), {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -72,7 +73,7 @@ export default function CollectionDetailPage() {
     if (!token || !item) return;
     
     try {
-      const res = await fetch(`http://127.0.0.1:8010/api/v1/collection/${id}`, {
+      const res = await fetch(getApiUrl(`/api/v1/collection/${id}`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -102,7 +103,7 @@ export default function CollectionDetailPage() {
     
     setIsDeleting(true);
     try {
-      const res = await fetch(`http://127.0.0.1:8010/api/v1/collection/${id}`, {
+      const res = await fetch(getApiUrl(`/api/v1/collection/${id}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -121,24 +122,17 @@ export default function CollectionDetailPage() {
     }
   };
 
-  const handleViewDetails = async () => {
-    if (!item) return;
-    setIsDetailsOpen(true);
-    if (detailsItem && detailsItem.external_id === item.external_id) return;
-
-    setLoadingDetails(true);
-    try {
-        const res = await fetch(`http://127.0.0.1:8010/api/v1/details/${item.media_type}/${item.external_id}`);
+    const fetchExternalDetails = async () => {
+      try {
+        const res = await fetch(getApiUrl(`/api/v1/details/${item.media_type}/${item.external_id}`));
         if (res.ok) {
-            const data = await res.json();
-            setDetailsItem(data);
+          const data = await res.json();
+          setDetails(data);
         }
-    } catch (error) {
-        console.error("Failed to fetch details:", error);
-    } finally {
-        setLoadingDetails(false);
-    }
-  };
+      } catch (error) {
+        console.error("Error fetching external details:", error);
+      }
+    };
 
   const getOrdinal = (n: number) => {
     const s = ["th", "st", "nd", "rd"];

@@ -8,6 +8,7 @@ import StoryCard from './StoryCard';
 import AddToFolioModal from './AddToFolioModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useSettingsStore } from '@/store/settingsStore';
+import { getApiUrl } from '@/lib/api';
 import confetti from 'canvas-confetti';
 import { useToast } from '@/components/ToastProvider';
 
@@ -48,7 +49,7 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch(`http://127.0.0.1:8010${endpoint}`, {
+        const res = await fetch(getApiUrl(endpoint), {
           headers: {
             'Accept-Language': language
           }
@@ -81,7 +82,7 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
     }
 
     try {
-      const res = await fetch('http://127.0.0.1:8010/api/v1/collection/', {
+      const res = await fetch(getApiUrl('/api/v1/collection/'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

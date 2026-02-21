@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ToastProvider';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useSettingsStore } from '@/store/settingsStore';
+import { getApiUrl } from '@/lib/api';
 
 // 定義與後端一致的型別
 interface StoryResult {
@@ -75,7 +76,7 @@ function SearchContent() {
 
       setLoading(true);
       try {
-        const res = await fetch(`http://127.0.0.1:8010/api/v1/search/?q=${encodeURIComponent(debouncedQuery)}`, {
+        const res = await fetch(getApiUrl(`/api/v1/search/?q=${encodeURIComponent(debouncedQuery)}`), {
           headers: {
             'Accept-Language': language
           }
@@ -111,7 +112,7 @@ function SearchContent() {
     if (!selectedStory || !token) return;
 
     try {
-      const res = await fetch('http://127.0.0.1:8010/api/v1/collection/', {
+      const res = await fetch(getApiUrl('/api/v1/collection/'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

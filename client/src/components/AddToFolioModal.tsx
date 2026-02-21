@@ -10,6 +10,7 @@ import {
 import Image from 'next/image';
 import RateAndReflectForm from './RateAndReflectForm';
 import { useTranslation } from '@/hooks/useTranslation';
+import { getApiUrl } from '@/lib/api';
 
 interface AddToFolioModalProps {
   isOpen: boolean;

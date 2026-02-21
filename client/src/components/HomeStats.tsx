@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
+import { getApiUrl } from '@/lib/api';
 
 interface DailyCount {
   date: string;
@@ -74,7 +75,7 @@ export default function HomeStats() {
     if (!token) return;
     const fetchStats = async () => {
       try {
-        const res = await fetch('http://127.0.0.1:8010/api/v1/collection/stats', {
+        const res = await fetch(getApiUrl('/api/v1/collection/stats'), {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {

@@ -13,8 +13,7 @@ import { Story } from '@/types';
 import ListView from '@/components/views/ListView';
 import CalendarView from '@/components/views/CalendarView';
 import GalleryView from '@/components/views/GalleryView';
-
-import { useTranslation } from '@/hooks/useTranslation';
+import { getApiUrl } from '@/lib/api';
 
 export default function CollectionPage() {
   const [stories, setStories] = useState<Story[]>([]);
@@ -33,7 +32,7 @@ export default function CollectionPage() {
       }
 
       try {
-        const res = await fetch('http://127.0.0.1:8010/api/v1/collection/', {
+        const res = await fetch(getApiUrl('/api/v1/collection/'), {
           headers: {
             'Authorization': `Bearer ${token}`
           }

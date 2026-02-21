@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Plus, Layers } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
+import { getApiUrl } from '@/lib/api';
 
 export default function HeroStats() {
   const { token, loading: authLoading } = useAuth();
@@ -12,7 +13,7 @@ export default function HeroStats() {
 
   useEffect(() => {
     if (token) {
-      fetch('http://127.0.0.1:8010/api/v1/collection/', {
+      fetch(getApiUrl('/api/v1/collection/'), {
         headers: {
           'Authorization': `Bearer ${token}`
         }

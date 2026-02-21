@@ -7,6 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 import AddToFolioModal from '@/components/AddToFolioModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useSettingsStore } from '@/store/settingsStore';
+import { getApiUrl } from '@/lib/api';
 import StoryDetailsView, { ItemDetail } from '@/components/StoryDetailsView';
 
 export default function DetailsPage() {
@@ -28,7 +29,7 @@ export default function DetailsPage() {
       
       setLoading(true);
       try {
-        const res = await fetch(`http://127.0.0.1:8010/api/v1/details/${type}/${id}`, {
+        const res = await fetch(getApiUrl(`/api/v1/details/${type}/${id}`), {
           headers: {
             'Accept-Language': language
           }
@@ -51,7 +52,7 @@ export default function DetailsPage() {
     if (!item || !token) return;
 
     try {
-        const res = await fetch('http://127.0.0.1:8010/api/v1/collection/', {
+        const res = await fetch(getApiUrl('/api/v1/collection/'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
