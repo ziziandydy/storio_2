@@ -15,11 +15,18 @@ origins = [
     "http://localhost:3010",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3010",
+    os.getenv("FRONTEND_URL", ""), # Production Vercel URL
+    "https://storio-2.vercel.app",  # Placeholder, update with actual
 ]
+
+# Add more origins from env if provided as comma-separated string
+extra_origins = os.getenv("CORS_ORIGINS", "")
+if extra_origins:
+    origins.extend(extra_origins.split(","))
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=[o for o in origins if o],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
