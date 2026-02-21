@@ -1,12 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Default to placeholders to prevent build-time crashes if environment variables are missing
-// Important: These must be properly set in Vercel/Production environment variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.warn("Supabase environment variables are missing! Authentication will not work correctly.");
+// During build time, Vercel might not have access to these env vars.
+// We provide a fallback only to satisfy the SDK's initialization check.
+// The actual values must be provided in the Vercel dashboard.
+const safeUrl = supabaseUrl && supabaseUrl.startsWith('http') ? supabaseUrl : 'https://tmp.supabase.co';
+const safeKey = supabaseAnonKey || 'tmp-key';
+
+export const supabase = createClient(safeUrl, safeKey);
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  if (typeof window !== 'undefined') {
+    console.error("Supabase credentials missing! Check your environment variables.");
+  }
 }
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
