@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, Star, Loader2, Film, Book as BookIcon, Calendar, Trash2, Edit3, MessageSquarePlus, Info, Quote, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/components/ToastProvider';
 import { getApiUrl } from '@/lib/api';
 import StoryDetailsView from '@/components/StoryDetailsView';
 import RateAndReflectForm from '@/components/RateAndReflectForm';

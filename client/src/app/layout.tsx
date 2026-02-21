@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Roboto } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ToastProvider";
@@ -11,8 +11,24 @@ const roboto = Roboto({
 });
 
 export const metadata: Metadata = {
-  title: "Storio - Collect stories in your folio",
+  title: "Storio - Collect stories in your Folio",
   description: "A personal collection of movies, series, and books.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Storio",
+  },
+  icons: {
+    apple: "/apple-touch-icon.png",
+  }
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0d0d0d",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
