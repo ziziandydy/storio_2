@@ -1,0 +1,19 @@
+# Ignore frontend build artifacts and dependencies from the Python bundle
+client/node_modules
+client/.next
+client/out
+client/build
+
+# Ignore large media assets
+image/
+public/image/
+client/public/image/
+
+# Ignore local caches
+.pytest_cache
+server/.pytest_cache
+__pycache__
+server/__pycache__
+.agent
+.agents
+.gemini/tmp
