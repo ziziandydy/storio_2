@@ -8,9 +8,11 @@ import { ArrowLeft, Star, Loader2, Film, Book as BookIcon, Calendar, Trash2, Edi
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ToastProvider';
 import { getApiUrl } from '@/lib/api';
+import { ItemDetail } from '@/types';
 import StoryDetailsView from '@/components/StoryDetailsView';
 import RateAndReflectForm from '@/components/RateAndReflectForm';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface CollectionItem {
   id: string;
@@ -31,6 +33,7 @@ export default function CollectionDetailPage() {
   const router = useRouter();
   const { token, loading: authLoading } = useAuth();
   const { showToast } = useToast();
+  const { t, formatDate } = useTranslation();
   
   const [item, setItem] = useState<CollectionItem | null>(null);
   const [loading, setLoading] = useState(true);
@@ -89,17 +92,17 @@ export default function CollectionDetailPage() {
         const updated = await res.json();
         setItem(updated);
         setIsEditing(false);
-        showToast("Memory updated successfully.");
+        showToast(t.common.confirm);
       }
     } catch (error) {
       console.error("Failed to save memory:", error);
-      showToast("Failed to save changes.", "error");
+      showToast(t.common.error, "error");
     }
   };
 
   const handleArchive = async () => {
     if (!token || !item) return;
-    if (!confirm("Are you sure you want to remove this memory from your Folio? This action cannot be undone.")) return;
+    if (!confirm(t.details.remove + "?")) return;
     
     setIsDeleting(true);
     try {
@@ -111,28 +114,33 @@ export default function CollectionDetailPage() {
       });
       
       if (res.ok) {
-        showToast("Memory archived.");
+        showToast(t.common.delete);
         router.push('/collection');
       }
     } catch (error) {
       console.error("Failed to delete:", error);
-      showToast("Could not archive memory.", "error");
+      showToast(t.common.error, "error");
     } finally {
       setIsDeleting(false);
     }
   };
 
-    const fetchExternalDetails = async () => {
-      try {
-        const res = await fetch(getApiUrl(`/api/v1/details/${item.media_type}/${item.external_id}`));
-        if (res.ok) {
-          const data = await res.json();
-          setDetails(data);
-        }
-      } catch (error) {
-        console.error("Error fetching external details:", error);
+  const handleViewDetails = async () => {
+    if (!item) return;
+    setIsDetailsOpen(true);
+    setLoadingDetails(true);
+    try {
+      const res = await fetch(getApiUrl(`/api/v1/details/${item.media_type}/${item.external_id}`));
+      if (res.ok) {
+        const data = await res.json();
+        setDetailsItem(data);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching external details:", error);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
 
   const getOrdinal = (n: number) => {
     const s = ["th", "st", "nd", "rd"];
@@ -151,9 +159,10 @@ export default function CollectionDetailPage() {
                     fill
                     className="object-contain"
                     unoptimized
+                    priority
                 />
             </div>
-            <p className="text-accent-gold font-bold tracking-[0.3em] uppercase text-xs animate-pulse">Extracting Memory...</p>
+            <p className="text-accent-gold font-bold tracking-[0.3em] uppercase text-xs animate-pulse">{t.common.loading}</p>
         </div>
       </div>
     );
@@ -168,12 +177,12 @@ export default function CollectionDetailPage() {
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <Link href="/collection" className="flex items-center gap-2 text-text-desc hover:text-accent-gold transition-colors text-xs font-bold tracking-widest uppercase">
             <ArrowLeft size={18} />
-            Back to My Storio
+            {t.common.back} {t.nav.collection}
           </Link>
           
           <div className="flex items-center gap-3">
              <div className="text-[10px] font-black tracking-widest uppercase text-accent-gold/60 border border-accent-gold/20 px-3 py-1 rounded-full">
-                {getOrdinal(item.viewing_number).toUpperCase()} VIEW
+                {getOrdinal(item.viewing_number).toUpperCase()} {t.collection.card.view}
              </div>
           </div>
         </div>
@@ -203,7 +212,7 @@ export default function CollectionDetailPage() {
                 </div>
                 <div className="flex flex-col">
                     <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-text-desc">Category</span>
-                    <span className="text-sm font-bold text-white capitalize">{item.media_type}</span>
+                    <span className="text-sm font-bold text-white capitalize">{item.media_type === 'movie' ? t.common.movies : t.common.books}</span>
                 </div>
               </div>
 
@@ -214,7 +223,7 @@ export default function CollectionDetailPage() {
                 <div className="flex flex-col">
                     <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-text-desc">Archived On</span>
                     <span className="text-sm font-bold text-white">
-                        {new Date(item.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}
+                        {formatDate(item.created_at)}
                     </span>
                 </div>
               </div>
@@ -225,7 +234,7 @@ export default function CollectionDetailPage() {
                 className="w-full flex items-center justify-center gap-2 py-4 rounded-xl border border-white/10 hover:border-accent-gold/50 hover:bg-white/5 transition-all text-xs font-bold uppercase tracking-widest text-text-desc hover:text-white group"
             >
                 <Info size={16} className="text-accent-gold/50 group-hover:text-accent-gold transition-colors" />
-                View Details
+                {t.modals.viewDetails}
             </button>
           </div>
 
@@ -242,10 +251,6 @@ export default function CollectionDetailPage() {
             </header>
 
             {/* Past Memories Section */}
-            {/* Note: item.related_instances might be undefined if not yet populated by backend or if type mismatch. 
-                We cast item to any or update interface to support related_instances.
-                For now, let's assume item has related_instances from our backend update. 
-            */}
             {(item as any).related_instances && (item as any).related_instances.length > 1 && (
                 <div className="space-y-4">
                     <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-desc opacity-60">Memory Timeline</h3>
@@ -256,14 +261,14 @@ export default function CollectionDetailPage() {
                                 <Link 
                                     key={inst.id}
                                     href={`/collection/${inst.id}`}
-                                    className={`flex-none w-40 p-4 rounded-xl border transition-all group ${
+                                    className={`flex-none w-40 p-4 rounded-xl border transition-all group ${ 
                                         isCurrent 
                                             ? 'bg-accent-gold/10 border-accent-gold cursor-default' 
                                             : 'bg-[#121212] border-white/5 hover:border-white/20 hover:bg-white/5'
                                     }`}
                                 >
                                     <div className="flex justify-between items-start mb-2">
-                                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${ 
                                             isCurrent ? 'bg-accent-gold text-black' : 'bg-white/10 text-text-desc'
                                         }`}>
                                             {getOrdinal(inst.viewing_number)} View
@@ -275,7 +280,7 @@ export default function CollectionDetailPage() {
                                         )}
                                     </div>
                                     <div className="text-[10px] text-text-desc font-mono">
-                                        {new Date(inst.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        {formatDate(inst.created_at)}
                                     </div>
                                 </Link>
                             );
@@ -320,7 +325,6 @@ export default function CollectionDetailPage() {
                                         {item.rating || '—'}
                                     </span>
                                 </motion.div>
-                                {/* Ink texture overlay could go here */}
                             </div>
                         </div>
 
@@ -376,8 +380,8 @@ export default function CollectionDetailPage() {
         {!isEditing && (
             <div className="mt-32 pt-12 border-t border-white/5 flex flex-col items-center gap-6 pb-20 opacity-40 hover:opacity-100 transition-opacity">
                 <div className="text-center">
-                    <h4 className="text-white font-bold text-sm mb-1">Archive this Memory?</h4>
-                    <p className="text-text-desc text-[10px] uppercase tracking-widest opacity-60">This will permanently remove it from your personal Folio.</p>
+                    <h4 className="text-white font-bold text-sm mb-1">{language === 'zh-TW' ? "歸檔此記憶？" : "Archive this Memory?"}</h4>
+                    <p className="text-text-desc text-[10px] uppercase tracking-widest opacity-60">This will permanently remove it from your personal Storio.</p>
                 </div>
                 <button 
                     onClick={handleArchive}
@@ -385,7 +389,7 @@ export default function CollectionDetailPage() {
                     className="flex items-center gap-2 px-8 py-3 rounded-full border border-red-500/20 text-red-500/60 hover:text-red-500 hover:bg-red-500/10 hover:border-red-500/50 transition-all text-[10px] font-black uppercase tracking-[0.2em] disabled:opacity-30"
                 >
                     {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                    Remove from Folio
+                    {t.details.remove}
                 </button>
             </div>
         )}
@@ -422,9 +426,10 @@ export default function CollectionDetailPage() {
                                         fill
                                         className="object-contain"
                                         unoptimized
+                                        priority
                                     />
                                 </div>
-                                <p className="text-accent-gold font-bold tracking-[0.3em] uppercase text-xs animate-pulse">Retrieving Archives...</p>
+                                <p className="text-accent-gold font-bold tracking-[0.3em] uppercase text-xs animate-pulse">{t.common.loading}</p>
                             </div>
                         </div>
                     ) : detailsItem ? (
@@ -435,8 +440,8 @@ export default function CollectionDetailPage() {
                         />
                     ) : (
                         <div className="h-full flex items-center justify-center text-red-500 gap-4 bg-black">
-                            <p>Failed to load details.</p>
-                            <button onClick={() => setIsDetailsOpen(false)} className="text-white hover:text-accent-gold underline">Close</button>
+                            <p>{t.common.error}</p>
+                            <button onClick={() => setIsDetailsOpen(false)} className="text-white hover:text-accent-gold underline">{t.common.back}</button>
                         </div>
                     )}
                 </motion.div>
