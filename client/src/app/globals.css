@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 13, 13, 13; /* #0d0d0d */
+  --background-end-rgb: 13, 13, 13;
+}
+
+body {
+  color: theme('colors.text.primary');
+  background: theme('colors.folio.black');
+  font-family: theme('fontFamily.sans');
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: theme('fontFamily.heading');
+  font-weight: 700;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: theme('colors.folio.black');
+}
+
+::-webkit-scrollbar-thumb {
+  background: theme('colors.folio.outline');
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: theme('colors.accent.gold');
+}

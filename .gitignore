@@ -1,0 +1,47 @@
+# General
+.DS_Store
+.vscode/
+.idea/
+*.log
+*.out
+*.gz
+
+# Node / Next.js
+node_modules/
+.next/
+.npm_cache/
+client/node_modules/
+client/.next/
+client/.npm_cache/
+client/out/
+client/build/
+client/.env
+client/.env.local
+client/.env.development.local
+client/.env.test.local
+client/.env.production.local
+
+# Python / FastAPI
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+server/.env
+server/.pytest_cache/
+server/venv/
+server/__pycache__/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+test-results/
+
+# Agent
+.gemini/tmp/
