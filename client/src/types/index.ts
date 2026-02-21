@@ -19,6 +19,7 @@ export interface ItemDetail {
   title: string;
   media_type: 'movie' | 'book' | 'tv';
   year?: number;
+  external_id: string;
   director?: string;
   cast?: string[];
   overview: string;

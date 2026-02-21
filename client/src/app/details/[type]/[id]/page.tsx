@@ -8,7 +8,8 @@ import AddToFolioModal from '@/components/AddToFolioModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useSettingsStore } from '@/store/settingsStore';
 import { getApiUrl } from '@/lib/api';
-import StoryDetailsView, { ItemDetail } from '@/components/StoryDetailsView';
+import { ItemDetail } from '@/types';
+import StoryDetailsView from '@/components/StoryDetailsView';
 
 export default function DetailsPage() {
   const params = useParams();

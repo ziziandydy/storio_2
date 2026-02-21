@@ -15,8 +15,8 @@ import { getApiUrl } from '@/lib/api';
 interface AddToFolioModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (rating: number, notes: string) => Promise<void>;
-  onViewDetails: () => void;
+  onSave: (rating: number, notes: string) => Promise<any>;
+  onViewDetails: (id?: string) => void;
   title: string;
   external_id: string;
 }
@@ -24,19 +24,24 @@ interface AddToFolioModalProps {
 export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails, title, external_id }: AddToFolioModalProps) {
   const [mode, setShowMode] = useState<'add' | 'prompt' | 'view_existing' | 'success'>('add');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newlyCreatedId, setNewlyCreatedId] = useState<string | undefined>(undefined);
   const { t } = useTranslation();
 
   // Reset mode when modal opens
   useEffect(() => {
     if (isOpen) {
       setShowMode('add');
+      setNewlyCreatedId(undefined);
     }
   }, [isOpen]);
 
   const handleSave = async (rating: number, notes: string) => {
     setIsSubmitting(true);
     try {
-      await onSave(rating, notes);
+      const result = await onSave(rating, notes);
+      if (result && result.id) {
+        setNewlyCreatedId(result.id);
+      }
       setShowMode('success');
     } catch (err) {
       console.error(err);
@@ -82,11 +87,11 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
                     onClick={onClose}
                     className="py-4 bg-white/5 text-white rounded-2xl font-bold text-xs uppercase tracking-widest border border-white/10 hover:bg-white/10 transition-all"
                   >
-                    Close
+                    {t.common.cancel}
                   </button>
                   <button 
                     onClick={() => {
-                        onViewDetails();
+                        onViewDetails(newlyCreatedId);
                         onClose();
                     }}
                     className="py-4 bg-accent-gold text-folio-black rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white transition-all flex items-center justify-center gap-2"
@@ -118,14 +123,13 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
                   </div>
 
                   <RateAndReflectForm 
-                    onSubmit={handleSave} 
-                    isSubmitting={isSubmitting} 
+                    onSave={handleSave} 
+                    isSaving={isSubmitting} 
+                    title={title}
                   />
                 </div>
               </>
             )}
-
-            {/* Note: Other modes like 'prompt' or 'view_existing' can be added here if needed */}
           </motion.div>
         </div>
       )}

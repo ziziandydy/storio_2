@@ -13,6 +13,7 @@ import StoryDetailsView from '@/components/StoryDetailsView';
 import RateAndReflectForm from '@/components/RateAndReflectForm';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useSettingsStore } from '@/store/settingsStore';
 
 interface CollectionItem {
   id: string;
@@ -34,6 +35,7 @@ export default function CollectionDetailPage() {
   const { token, loading: authLoading } = useAuth();
   const { showToast } = useToast();
   const { t, formatDate } = useTranslation();
+  const { language } = useSettingsStore();
   
   const [item, setItem] = useState<CollectionItem | null>(null);
   const [loading, setLoading] = useState(true);

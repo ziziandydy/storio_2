@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { LayoutGrid, CalendarDays, GalleryHorizontal } from 'lucide-react';
-import { useSettingsStore, useViewStore, ViewMode } from '@/store/viewStore';
+import { useViewStore, ViewMode } from '@/store/viewStore';
+import { useSettingsStore } from '@/store/settingsStore';
 import { useToast } from '@/components/ToastProvider';
 import { useTranslation } from '@/hooks/useTranslation';
 

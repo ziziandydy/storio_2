@@ -14,6 +14,7 @@ import ListView from '@/components/views/ListView';
 import CalendarView from '@/components/views/CalendarView';
 import GalleryView from '@/components/views/GalleryView';
 import { getApiUrl } from '@/lib/api';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function CollectionPage() {
   const [stories, setStories] = useState<Story[]>([]);
