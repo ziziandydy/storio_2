@@ -24,8 +24,9 @@ test.describe('Search Page Integration', () => {
     await page.goto('/search');
 
     // 3. Type in Search Box
-    const input = page.getByPlaceholder(/Find a movie/i);
+    const input = page.getByPlaceholder(/Search movies/i);
     await input.fill('Dune');
+    await input.press('Enter');
 
     // 4. Wait for results (StoryCard)
     // We expect the mocked title to appear
@@ -39,8 +40,10 @@ test.describe('Search Page Integration', () => {
     });
 
     await page.goto('/search');
-    await page.getByPlaceholder(/Find a movie/i).fill('Nothing'); // Update placeholder
+    const input = page.getByPlaceholder(/Search movies/i);
+    await input.fill('Nothing'); // Update placeholder
+    await input.press('Enter');
 
-    await expect(page.getByText(/No .* entries found/i)).toBeVisible();
+    await expect(page.getByText(/No results found/i)).toBeVisible();
   });
 });

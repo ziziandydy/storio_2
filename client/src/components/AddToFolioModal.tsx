@@ -12,6 +12,8 @@ import RateAndReflectForm from './RateAndReflectForm';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getApiUrl } from '@/lib/api';
 
+import { useToast } from '@/components/ToastProvider';
+
 interface AddToFolioModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -28,6 +30,7 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
   const [newlyCreatedId, setNewlyCreatedId] = useState<string | undefined>(undefined);
   const [forceAdd, setForceAdd] = useState(false);
   const { t } = useTranslation();
+  const { showToast } = useToast();
 
   // Reset mode when modal opens
   useEffect(() => {
@@ -52,8 +55,9 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
         setNewlyCreatedId(result.id);
       }
       setShowMode('success');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      showToast(err.message || t.common.error, 'error');
     } finally {
       setIsSubmitting(false);
     }

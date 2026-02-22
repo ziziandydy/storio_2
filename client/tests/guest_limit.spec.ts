@@ -42,7 +42,9 @@ test('Guest limit is enforced when adding 11th item', async ({ page }) => {
   });
 
   await page.goto('/search');
-  await page.fill('input[placeholder*="Find a movie"]', 'LimitTest');
+  const input = page.getByPlaceholder(/Search movies/i);
+  await input.fill('LimitTest');
+  await input.press('Enter');
   
   // Wait for the card to appear
   // Use filter to ensure we get the StoryCard, not other elements with class 'group'
@@ -58,7 +60,7 @@ test('Guest limit is enforced when adding 11th item', async ({ page }) => {
   await addButton.click({ force: true });
 
   // Wait for modal to open (Check for header)
-  const modalHeader = page.getByRole('heading', { name: /Add to Folio/i });
+  const modalHeader = page.getByRole('heading', { name: /Add to Storio/i });
   await expect(modalHeader).toBeVisible({ timeout: 15000 });
 
   // Modal is open, click Save

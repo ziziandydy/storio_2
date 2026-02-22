@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { Search, Loader2, ArrowLeft, Bookmark, Film, BookOpen, Ticket } from 'lucide-react';
+import { Search, Loader2, ArrowLeft, Bookmark, Film, BookOpen, Ticket, X, ArrowUp } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -32,11 +32,14 @@ function SearchContent() {
   const initialQuery = searchParams.get('q') || '';
   const initialFilter = (searchParams.get('filter') as 'movie' | 'book' | 'tv') || 'movie';
 
+  // We use uncontrolled input for the search field to avoid CJK composition issues
+  // query state is still used for triggering the search via debouncedQuery
   const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<StoryResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
   const [filter, setFilter] = useState<'movie' | 'book' | 'tv'>(initialFilter);
+  const inputRef = React.useRef<HTMLInputElement>(null);
   const { token, loading: authLoading } = useAuth();
   const { showToast } = useToast();
   const { t } = useTranslation();
@@ -45,6 +48,14 @@ function SearchContent() {
   // Add To Folio Modal State
   const [selectedStory, setSelectedStory] = useState<StoryResult | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // Sync input value with URL param on mount/update if needed
+  useEffect(() => {
+    if (inputRef.current && inputRef.current.value !== initialQuery) {
+        inputRef.current.value = initialQuery;
+        setQuery(initialQuery); // Sync state for clear button visibility
+    }
+  }, [initialQuery]);
 
   // Filter results based on category
   const filteredResults = results.filter(item => {
@@ -58,25 +69,43 @@ function SearchContent() {
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('filter', filter);
-    // Preserve existing query if present in state, but don't overwrite if not submitting
     if (debouncedQuery) params.set('q', debouncedQuery);
     
     router.replace(`/search?${params.toString()}`, { scroll: false });
-  }, [filter, router]); // Remove query dependency
+  }, [filter, router]);
 
   // Handle Search Submit
-  const handleSubmit = (e?: React.FormEvent | React.KeyboardEvent) => {
+  const handleSubmit = (e?: React.FormEvent | React.KeyboardEvent | React.MouseEvent) => {
+    // Ignore keyboard events that aren't Enter
     if (e && 'key' in e && e.key !== 'Enter') return;
-    e?.preventDefault();
     
-    setDebouncedQuery(query);
+    // Ignore composition events (when user is selecting CJK characters via Enter)
+    if (e && 'nativeEvent' in e && (e.nativeEvent as any).isComposing) return;
+
+    e?.preventDefault();
+    inputRef.current?.blur(); // Dismiss keyboard
+    
+    const currentVal = inputRef.current?.value || '';
+    setQuery(currentVal);
+    setDebouncedQuery(currentVal);
     
     const params = new URLSearchParams(searchParams.toString());
-    if (query) params.set('q', query);
+    if (currentVal) params.set('q', currentVal);
     else params.delete('q');
     params.set('filter', filter);
     
     router.replace(`/search?${params.toString()}`, { scroll: false });
+  };
+
+  // Handle Clear
+  const handleClear = () => {
+    if (inputRef.current) {
+        inputRef.current.value = '';
+        inputRef.current.focus();
+    }
+    setQuery('');
+    setDebouncedQuery('');
+    // Optionally trigger search or just clear
   };
 
   // Fetch logic
@@ -260,34 +289,44 @@ function SearchContent() {
           {/* Search Input */}
           <div className="relative group w-full">
             <div className="absolute inset-0 bg-accent-gold/5 blur-xl rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
-            <button 
-              onClick={(e) => handleSubmit(e)}
-              className={`absolute left-6 top-1/2 -translate-y-1/2 transition-colors z-10 ${loading ? 'text-accent-gold animate-pulse' : 'text-text-desc hover:text-white group-focus-within:text-accent-gold'}`}
-            >
-              <Search size={20} />
-            </button>
             <input 
+              ref={inputRef}
               type="text" 
               placeholder={t.search.placeholder}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              defaultValue={initialQuery}
+              onChange={(e) => setQuery(e.target.value)} // Just for UI state (clear btn)
               onKeyDown={handleSubmit}
-              className="w-full bg-folio-card/80 backdrop-blur-md hover:bg-folio-card focus:bg-black border border-white/10 focus:border-accent-gold/50 rounded-full py-4 pl-16 pr-14 text-base text-white placeholder:text-text-desc/50 focus:outline-none focus:ring-4 focus:ring-accent-gold/10 transition-all shadow-xl relative z-0"
+              className="w-full bg-folio-card/80 backdrop-blur-md hover:bg-folio-card focus:bg-black border border-white/10 focus:border-accent-gold/50 rounded-full py-4 pl-7 pr-32 text-base text-white placeholder:text-text-desc/50 focus:outline-none focus:border-accent-gold transition-all shadow-xl relative z-0"
               autoFocus
             />
-            {loading && (
-              <div className="absolute right-5 top-1/2 -translate-y-1/2 z-10">
-                <Loader2 className="text-accent-gold animate-spin" size={20} />
-              </div>
-            )}
-            {query && !loading && (
+            
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10">
+                {query && !loading && (
+                    <button 
+                        onClick={handleClear}
+                        className="text-text-desc hover:text-white bg-white/5 rounded-full p-2 hover:bg-white/10 transition-all"
+                        title="Clear"
+                    >
+                        <X size={16} />
+                    </button>
+                )}
+
+                {loading && (
+                    <div className="p-2">
+                        <Loader2 className="text-accent-gold animate-spin" size={20} />
+                    </div>
+                )}
+
                 <button 
-                    onClick={() => setQuery('')}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 z-10 text-text-desc hover:text-white bg-white/5 rounded-full p-1 hover:bg-white/20 transition-all"
+                    onClick={(e) => handleSubmit(e)}
+                    className={`flex items-center justify-center w-12 h-12 rounded-full transition-all ${
+                        loading ? 'bg-white/5 text-text-desc' : 'bg-accent-gold text-folio-black hover:bg-white hover:scale-105 active:scale-95 shadow-lg'
+                    }`}
+                    title="Search"
                 >
-                    <ArrowLeft size={14} className="rotate-45" /> {/* Use X icon ideally, reusing Arrow for now or import X */}
+                    <ArrowUp size={22} strokeWidth={3} />
                 </button>
-            )}
+            </div>
           </div>
         </div>
       </div>

@@ -30,12 +30,16 @@ test('Guest can search and see results', async ({ page }) => {
 
   await expect(page).toHaveTitle(/Storio/);
 
-  // 2. Click Search (FAB)
+  // 2. Click Search (via FAB)
+  const fabButton = page.locator('div.fixed.bottom-8.right-6 button');
+  await fabButton.click();
   await page.click('a[href="/search"]');
   await expect(page).toHaveURL(/.*search/);
 
-  // 3. Type "Dune"
-  await page.fill('input[placeholder*="Find a movie"]', 'Dune');
+  // 3. Type "Dune" and Search
+  const input = page.getByPlaceholder(/Search movies/i);
+  await input.fill('Dune');
+  await input.press('Enter');
 
   // 4. Wait for results
   const cards = page.locator('div.group'); 
@@ -88,7 +92,9 @@ test('Guest can add item to collection (Mock Flow)', async ({ page }) => {
   });
   await page.goto('/search');
   
-  await page.fill('input[placeholder*="Find a movie"]', 'Matrix');
+  const input = page.getByPlaceholder(/Search movies/i);
+  await input.fill('Matrix');
+  await input.press('Enter');
   
   const cards = page.locator('div.group');
   await expect(cards.first()).toBeVisible({ timeout: 10000 });
