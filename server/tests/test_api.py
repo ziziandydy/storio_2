@@ -31,7 +31,7 @@ def test_search_endpoint(mock_search):
     assert data["results"][0]["title"] == "Integration Test Movie"
     
     # Verify the mock was called correctly
-    mock_search.assert_called_once_with(query="Test")
+    mock_search.assert_called_once_with(query="Test", language="zh-TW")
 
 def test_search_validation_empty():
     # FastAPI should handle validation (min_length=1)

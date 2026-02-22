@@ -4,19 +4,25 @@
 
 ---
 
-## 📅 階段一：Vercel 生產環境部署 (Production Web)
-**目標**：將目前的開發成果線上化，提供穩定的 URL 供使用者訪問。
+## 📅 階段一：生產環境部署 (Production Deployment)
+**目標**：將開發成果線上化，提供穩定的服務。
+**狀態**：✅ 已完成基礎部署
 
-### 1. 技術調整
-- **全端部署配置**：建立 `vercel.json` 整合 Next.js 前端與 FastAPI 後端。
-- **後端適配**：建立 `api/index.py` 作為 Serverless Function 進入點。
-- **環境變數管理**：在 Vercel 後台配置 TMDB, Google Books, Gemini, Supabase 的生產環境 Key。
-- **CORS 與安全**：限制 API 僅接受來自正式域名的請求。
+### 1. 生產環境架構
+- **Frontend**: [Vercel](https://storio-2.vercel.app) (Next.js)
+- **Backend**: [Railway](https://storio-backend-production.up.railway.app) (FastAPI) - *範例網址，請確認實際 URL*
+- **Database**: Supabase Production Project
 
-### 2. 驗收標準
-- [ ] 透過 `storio.vercel.app` (或自訂域名) 成功訪問。
-- [ ] 所有 API (包含 Gemini 推薦) 在 Vercel 環境下無逾時錯誤。
-- [ ] Supabase Auth 重新導向正常。
+### 2. 技術調整
+- [x] **跨網域部署**：前端與後端分離部署。
+- [x] **環境變數管理**：Railway 已配置 API Keys，Vercel 已配置 `NEXT_PUBLIC_API_URL`。
+- [x] **CORS 配置**：Railway 後端已允許來自 Vercel 網域的請求。
+
+### 3. 待修復與優化 (Current Focus)
+- [ ] 修正 Guest Login Logo 顯示異常。
+- [ ] 實作詳情頁描述文字截斷 (View More/Less)。
+- [ ] 優化重複收藏的提示邏輯 (詢問 Re-watch/Re-read)。
+- [ ] 移除收藏列表中舊資料的 "0" 分顯示。
 
 ---
 

@@ -9,7 +9,7 @@ import { getApiUrl } from '@/lib/api';
 export default function HeroStats() {
   const { token, loading: authLoading } = useAuth();
   const [count, setCount] = useState(0);
-  const [level, setLevel] = useState('Novice Builder');
+  const [level, setLevel] = useState('Apprentice');
 
   useEffect(() => {
     if (token) {
@@ -20,12 +20,12 @@ export default function HeroStats() {
       })
       .then(res => res.json())
       .then(data => {
-        const c = data.length;
+        const c = Array.isArray(data) ? data.length : 0;
         setCount(c);
-        if (c > 50) setLevel('Keeper');
-        else if (c > 20) setLevel('Archivist');
+        if (c > 50) setLevel('Grand Archivist');
+        else if (c > 20) setLevel('Keeper');
         else if (c > 10) setLevel('Curator');
-        else setLevel('Novice Collector');
+        else setLevel('Apprentice');
       })
       .catch(err => console.error("Failed to fetch stats", err));
     }

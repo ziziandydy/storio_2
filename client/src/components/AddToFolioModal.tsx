@@ -15,16 +15,18 @@ import { getApiUrl } from '@/lib/api';
 interface AddToFolioModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (rating: number, notes: string) => Promise<any>;
+  onSave: (rating: number, notes: string, date?: string) => Promise<any>;
   onViewDetails: (id?: string) => void;
   title: string;
   external_id: string;
+  overview?: string; // Add overview prop
 }
 
-export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails, title, external_id }: AddToFolioModalProps) {
+export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails, title, external_id, overview }: AddToFolioModalProps) {
   const [mode, setShowMode] = useState<'add' | 'prompt' | 'view_existing' | 'success'>('add');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newlyCreatedId, setNewlyCreatedId] = useState<string | undefined>(undefined);
+  const [forceAdd, setForceAdd] = useState(false);
   const { t } = useTranslation();
 
   // Reset mode when modal opens
@@ -32,13 +34,20 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
     if (isOpen) {
       setShowMode('add');
       setNewlyCreatedId(undefined);
+      setForceAdd(false);
     }
   }, [isOpen]);
 
-  const handleSave = async (rating: number, notes: string) => {
+  const handleSave = async (rating: number, notes: string, date?: string) => {
     setIsSubmitting(true);
     try {
-      const result = await onSave(rating, notes);
+      const result = await onSave(rating, notes, date);
+      
+      if (result && result.status === 'duplicate' && !forceAdd) {
+        setShowMode('prompt');
+        return;
+      }
+
       if (result && result.id) {
         setNewlyCreatedId(result.id);
       }
@@ -73,11 +82,11 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
             {/* Success State */}
             {mode === 'success' && (
               <div className="p-10 flex flex-col items-center text-center gap-8">
-                <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center text-green-500">
+                <div className="w-20 h-20 bg-accent-gold/20 rounded-full flex items-center justify-center text-accent-gold">
                   <CheckCircle2 size={40} />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white mb-2 font-serif">Successfully Curated</h2>
+                  <h2 className="text-2xl font-bold text-white mb-2 font-serif">Successfully add to storio</h2>
                   <p className="text-text-desc text-sm">
                     <span className="text-accent-gold font-bold">"{title}"</span> {t.modals.successMessage}
                   </p>
@@ -87,16 +96,57 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
                     onClick={onClose}
                     className="py-4 bg-white/5 text-white rounded-2xl font-bold text-xs uppercase tracking-widest border border-white/10 hover:bg-white/10 transition-all"
                   >
-                    {t.common.cancel}
+                    {t.modals.continueBrowsing}
                   </button>
                   <button 
                     onClick={() => {
-                        onViewDetails(newlyCreatedId);
-                        onClose();
+                        window.location.href = '/collection';
                     }}
                     className="py-4 bg-accent-gold text-folio-black rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white transition-all flex items-center justify-center gap-2"
                   >
-                    {t.modals.viewDetails} <ArrowRight size={14} />
+                    {t.modals.goToMyStorio} <ArrowRight size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Prompt State: Duplicate Warning */}
+            {mode === 'prompt' && (
+              <div className="p-10 flex flex-col items-center text-center gap-8">
+                <div className="w-20 h-20 bg-accent-gold/20 rounded-full flex items-center justify-center text-accent-gold">
+                  <History size={40} />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-4 font-serif">Already in your Folio</h2>
+                  <p className="text-text-desc text-sm leading-relaxed">
+                    You've already curated <span className="text-white font-bold">"{title}"</span>. 
+                    Are you logging a <span className="text-accent-gold font-bold">re-watch / re-read</span>?
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 gap-3 w-full">
+                  <button 
+                    onClick={() => {
+                        setForceAdd(true);
+                        setShowMode('add');
+                    }}
+                    className="w-full py-4 bg-accent-gold text-folio-black rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white transition-all flex items-center justify-center gap-2"
+                  >
+                    <Plus size={16} strokeWidth={3} /> Log as Re-watch
+                  </button>
+                  <button 
+                    onClick={() => {
+                        onViewDetails();
+                        onClose();
+                    }}
+                    className="w-full py-4 bg-white/5 text-white rounded-2xl font-bold text-xs uppercase tracking-widest border border-white/10 hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+                  >
+                    <ExternalLink size={16} /> View Existing Record
+                  </button>
+                  <button 
+                    onClick={onClose}
+                    className="w-full py-3 text-text-desc hover:text-white text-[10px] font-bold uppercase tracking-[0.2em] transition-colors"
+                  >
+                    {t.common.cancel}
                   </button>
                 </div>
               </div>
@@ -120,12 +170,18 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
                 <div className="p-8 overflow-y-auto max-h-[70vh]">
                   <div className="mb-8">
                     <h3 className="text-2xl font-black text-white leading-tight">{title}</h3>
+                    {forceAdd && (
+                        <div className="mt-2 text-[10px] font-black uppercase tracking-widest text-accent-gold flex items-center gap-2">
+                            <History size={12} /> New Viewing Log
+                        </div>
+                    )}
                   </div>
 
                   <RateAndReflectForm 
                     onSave={handleSave} 
                     isSaving={isSubmitting} 
                     title={title}
+                    overview={overview} // Pass overview
                   />
                 </div>
               </>

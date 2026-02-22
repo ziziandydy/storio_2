@@ -11,8 +11,8 @@ export default function NavigationFAB() {
   const { t } = useTranslation();
 
   const menuItems = [
-    { icon: Search, label: t.nav.search, href: '/search', color: 'bg-blue-600' },
-    { icon: Layers, label: t.nav.collection, href: '/collection', color: 'bg-emerald-600' },
+    { icon: Search, label: t.nav.search, href: '/search', color: 'bg-folio-card border border-white/10 text-white' },
+    { icon: Layers, label: t.nav.collection, href: '/collection', color: 'bg-folio-card border border-white/10 text-white' },
   ];
 
   return (
@@ -30,14 +30,14 @@ export default function NavigationFAB() {
               >
                 <Link 
                   href={item.href}
-                  className="flex items-center gap-3 group"
+                  className="flex items-center gap-4 group"
                   onClick={() => setIsOpen(false)}
                 >
-                  <span className="text-white text-sm font-bold bg-black/80 px-3 py-1 rounded-md backdrop-blur-md shadow-lg">
+                  <span className="text-white text-[10px] uppercase font-black tracking-widest bg-folio-black/60 px-4 py-2 rounded-xl backdrop-blur-xl border border-white/10 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity">
                     {item.label}
                   </span>
-                  <div className={`w-12 h-12 rounded-full ${item.color} flex items-center justify-center text-white shadow-lg shadow-black/50 hover:scale-110 transition-transform`}>
-                    <item.icon size={20} />
+                  <div className={`w-14 h-14 rounded-2xl ${item.color} flex items-center justify-center shadow-2xl hover:bg-accent-gold hover:text-folio-black transition-all duration-300`}>
+                    <item.icon size={22} />
                   </div>
                 </Link>
               </motion.div>
@@ -48,11 +48,11 @@ export default function NavigationFAB() {
 
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-16 h-16 rounded-full flex items-center justify-center text-folio-black shadow-2xl shadow-accent-gold/20 transition-all duration-300 z-50 ${
-          isOpen ? 'bg-white rotate-45' : 'bg-accent-gold hover:scale-110'
+        className={`w-16 h-16 rounded-2xl flex items-center justify-center text-folio-black shadow-[0_0_30px_rgba(233,108,38,0.3)] transition-all duration-500 z-50 ${
+          isOpen ? 'bg-white rotate-45 scale-90' : 'bg-accent-gold hover:scale-110 active:scale-95'
         }`}
       >
-        {isOpen ? <Plus size={28} /> : <Plus size={28} strokeWidth={3} />}
+        {isOpen ? <X size={28} /> : <Plus size={28} strokeWidth={3} />}
       </button>
     </div>
   );

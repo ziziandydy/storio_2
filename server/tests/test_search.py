@@ -44,7 +44,10 @@ async def test_search_tmdb_parsing():
     results = await SearchService.search_tmdb(mock_client, "Dune")
 
     # Assert
-    assert len(results) == 1
+    # Now we search both movie and tv endpoints, so we expect 2 results (1 movie + 1 tv from the same mock response)
+    assert len(results) == 2
+    assert results[0].media_type == "movie"
+    assert results[1].media_type == "tv"
     assert results[0].title == "Dune: Part Two"
     assert results[0].source == "tmdb"
     assert "https://image.tmdb.org" in results[0].poster_path

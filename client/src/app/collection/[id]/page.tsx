@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, Star, Loader2, Film, Book as BookIcon, Calendar, Trash2, Edit3, MessageSquarePlus, Info, Quote, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Star, Loader2, Film, Book as BookIcon, Calendar, Trash2, Edit3, MessageSquarePlus, Info, Quote, ChevronRight, Tv } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ToastProvider';
 import { getApiUrl } from '@/lib/api';
@@ -18,7 +18,7 @@ import { useSettingsStore } from '@/store/settingsStore';
 interface CollectionItem {
   id: string;
   title: string;
-  media_type: 'movie' | 'book';
+  media_type: 'movie' | 'book' | 'tv';
   external_id: string;
   poster_path?: string;
   source: string;
@@ -40,6 +40,8 @@ export default function CollectionDetailPage() {
   const [item, setItem] = useState<CollectionItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteInput, setDeleteInput] = useState('');
   
   // UI States
   const [isEditing, setIsEditing] = useState(false);
@@ -102,9 +104,14 @@ export default function CollectionDetailPage() {
     }
   };
 
-  const handleArchive = async () => {
+  const handleArchive = () => {
+    setIsDeleteModalOpen(true);
+    setDeleteInput('');
+  };
+
+  const confirmDelete = async () => {
     if (!token || !item) return;
-    if (!confirm(t.details.remove + "?")) return;
+    if (deleteInput.toUpperCase() !== 'REMOVE') return;
     
     setIsDeleting(true);
     try {
@@ -124,6 +131,7 @@ export default function CollectionDetailPage() {
       showToast(t.common.error, "error");
     } finally {
       setIsDeleting(false);
+      setIsDeleteModalOpen(false);
     }
   };
 
@@ -179,7 +187,7 @@ export default function CollectionDetailPage() {
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <Link href="/collection" className="flex items-center gap-2 text-text-desc hover:text-accent-gold transition-colors text-xs font-bold tracking-widest uppercase">
             <ArrowLeft size={18} />
-            {t.common.back} {t.nav.collection}
+            {t.common.back}
           </Link>
           
           <div className="flex items-center gap-3">
@@ -201,7 +209,7 @@ export default function CollectionDetailPage() {
                     <img src={item.poster_path} alt={item.title} className="w-full h-full object-cover" />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-text-desc bg-white/5">
-                        {item.media_type === 'movie' ? <Film size={48} strokeWidth={1}/> : <BookIcon size={48} strokeWidth={1}/>}
+                        {item.media_type === 'movie' ? <Film size={48} strokeWidth={1}/> : item.media_type === 'tv' ? <Tv size={48} strokeWidth={1}/> : <BookIcon size={48} strokeWidth={1}/>}
                     </div>
                 )}
                 </div>
@@ -210,11 +218,13 @@ export default function CollectionDetailPage() {
             <div className="bg-[#121212] border border-white/5 rounded-2xl p-6 space-y-6 shadow-xl">
               <div className="flex items-center gap-4 text-text-secondary">
                 <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-accent-gold">
-                    {item.media_type === 'movie' ? <Film size={20} /> : <BookIcon size={20} />}
+                    {item.media_type === 'movie' ? <Film size={20} /> : item.media_type === 'tv' ? <Tv size={20} /> : <BookIcon size={20} />}
                 </div>
                 <div className="flex flex-col">
                     <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-text-desc">Category</span>
-                    <span className="text-sm font-bold text-white capitalize">{item.media_type === 'movie' ? t.common.movies : t.common.books}</span>
+                    <span className="text-sm font-bold text-white capitalize">
+                      {item.media_type === 'movie' ? t.common.movies : item.media_type === 'tv' ? t.common.tv : t.common.books}
+                    </span>
                 </div>
               </div>
 
@@ -331,7 +341,7 @@ export default function CollectionDetailPage() {
                         </div>
 
                         {/* Card Content - Lined Paper Effect */}
-                        <div className="p-10 pt-16 flex-grow flex flex-col gap-6">
+                        <div className={`p-10 pt-16 flex-grow flex flex-col ${item.notes ? 'gap-6' : 'gap-4 justify-center'}`}>
                             <div className="flex items-center gap-3 opacity-40 mb-2">
                                 <MessageSquarePlus size={16} className="text-accent-gold" />
                                 <span className="text-[10px] font-bold uppercase tracking-[0.3em]">Personal Archive</span>
@@ -346,19 +356,22 @@ export default function CollectionDetailPage() {
                                     ))}
                                 </div>
                             ) : (
-                                <div className="flex-grow flex flex-col items-center justify-center space-y-8 opacity-20 group-hover:opacity-40 transition-opacity">
-                                    <div className="space-y-4 w-full">
-                                        {[1, 2, 3, 4, 5].map((i) => (
-                                            <div key={i} className="border-b border-white/10 h-10 w-full" />
-                                        ))}
-                                    </div>
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="flex flex-col items-center gap-4">
-                                            <div className="p-4 rounded-full bg-white/5 border border-white/10">
-                                                <Edit3 size={32} strokeWidth={1} className="text-accent-gold" />
-                                            </div>
-                                            <p className="text-xs uppercase tracking-[0.4em] font-black text-white">Record your thoughts</p>
+                                <div className="flex-grow flex flex-col items-center justify-center space-y-8 opacity-20 group-hover:opacity-60 transition-all duration-500">
+                                    <div className="flex flex-col items-center gap-6">
+                                        <div className="p-6 rounded-full bg-white/5 border border-white/10 shadow-inner">
+                                            <Edit3 size={40} strokeWidth={1} className="text-accent-gold" />
                                         </div>
+                                        <div className="text-center">
+                                            <p className="text-xs uppercase tracking-[0.4em] font-black text-white mb-2">{language === 'zh-TW' ? "紀錄你的感悟" : "Inscribe your thoughts"}</p>
+                                            <p className="text-[10px] text-text-desc max-w-[200px] leading-relaxed">
+                                                {language === 'zh-TW' ? "點擊以添加你的私人感悟與評分" : "Tap to add your personal reflections and score."}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="w-full space-y-4 opacity-50">
+                                        {[1, 2].map((i) => (
+                                            <div key={i} className="border-b border-white/5 h-8 w-full" />
+                                        ))}
                                     </div>
                                 </div>
                             )}
@@ -367,10 +380,13 @@ export default function CollectionDetailPage() {
                         {/* Card Footer */}
                         <div className="p-8 pt-0 flex justify-between items-center opacity-30">
                             <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-accent-gold" />
-                                <span className="text-[10px] font-medium uppercase tracking-widest">Archive ID: {item.id.slice(0, 8)}</span>
+                                <div className="w-1.5 h-1.5 rounded-full bg-accent-gold" />
+                                <span className="text-[10px] font-medium uppercase tracking-widest font-mono">FOLIO_REF_{item.id.slice(0, 8).toUpperCase()}</span>
                             </div>
-                            <Edit3 size={14} className="group-hover:text-accent-gold transition-colors" />
+                            <div className="flex items-center gap-2">
+                                <span className="text-[8px] font-bold uppercase tracking-widest">{t.common.inscribe}</span>
+                                <Edit3 size={14} className="group-hover:text-accent-gold transition-colors" />
+                            </div>
                         </div>
                     </div>
                 </motion.div>
@@ -446,6 +462,66 @@ export default function CollectionDetailPage() {
                             <button onClick={() => setIsDetailsOpen(false)} className="text-white hover:text-accent-gold underline">{t.common.back}</button>
                         </div>
                     )}
+                </motion.div>
+            </div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {isDeleteModalOpen && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setIsDeleteModalOpen(false)}
+                    className="absolute inset-0 bg-black/90 backdrop-blur-md"
+                />
+                
+                <motion.div 
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.95, opacity: 0 }}
+                    className="relative w-full max-w-sm bg-folio-card border border-white/10 rounded-2xl p-8 shadow-2xl flex flex-col gap-6"
+                >
+                    <div className="flex flex-col gap-2 text-center">
+                        <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-2 text-red-500">
+                            <Trash2 size={24} />
+                        </div>
+                        <h3 className="text-xl font-bold text-white font-serif">{t.details.remove}?</h3>
+                        <p className="text-sm text-text-desc leading-relaxed">
+                            This action cannot be undone. To confirm, please type <span className="font-bold text-white">REMOVE</span> below.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col gap-4">
+                        <input 
+                            type="text" 
+                            placeholder="Type REMOVE"
+                            value={deleteInput}
+                            onChange={(e) => setDeleteInput(e.target.value)}
+                            className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-center text-white placeholder:text-white/20 focus:outline-none focus:border-red-500/50 transition-colors tracking-widest font-bold uppercase"
+                            autoFocus
+                        />
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                            <button 
+                                onClick={() => setIsDeleteModalOpen(false)}
+                                className="py-3 rounded-xl border border-white/10 hover:bg-white/5 text-text-desc hover:text-white font-bold text-xs uppercase tracking-widest transition-all"
+                            >
+                                {t.common.cancel}
+                            </button>
+                            <button 
+                                onClick={confirmDelete}
+                                disabled={deleteInput.toUpperCase() !== 'REMOVE' || isDeleting}
+                                className="py-3 bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {isDeleting ? <Loader2 size={14} className="animate-spin" /> : null}
+                                {t.common.confirm}
+                            </button>
+                        </div>
+                    </div>
                 </motion.div>
             </div>
         )}

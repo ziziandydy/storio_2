@@ -49,7 +49,7 @@ export default function DetailsPage() {
     fetchDetails();
   }, [type, id]);
 
-  const handleAddToFolio = async (rating: number, notes: string) => {
+  const handleAddToFolio = async (rating: number, notes: string, date?: string) => {
     if (!item || !token) return;
 
     try {
@@ -62,18 +62,20 @@ export default function DetailsPage() {
             body: JSON.stringify({
                 ...item,
                 rating,
-                notes
+                notes,
+                created_at: date ? new Date(date).toISOString() : undefined
             })
         });
 
         if (res.status === 409) {
-            alert("You have already collected this story.");
-            return;
+            return { status: 'duplicate' };
         }
 
         if (!res.ok) {
             throw new Error('Failed to add item');
         }
+
+        return await res.json();
     } catch (error) {
         console.error("Error adding to folio:", error);
         throw error; 

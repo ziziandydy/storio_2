@@ -16,7 +16,9 @@ export const translations = {
       explore: 'Explore',
       movies: 'Movies',
       books: 'Books',
-      tv: 'TV Series',
+      tv: 'Series',
+      add: 'Add',
+      details: 'Details',
     },
     nav: {
       home: 'Home',
@@ -74,6 +76,7 @@ export const translations = {
       plot: 'Plot',
       rating: 'Your Rating',
       reflection: 'Your Reflection',
+      archivedAt: 'Archived At',
       add: 'Add',
       remove: 'Remove',
       share: 'Share',
@@ -86,7 +89,7 @@ export const translations = {
         all: 'All',
         movies: 'Movies',
         books: 'Books',
-        tv: 'TV',
+        tv: 'Series',
       }
     },
     modals: {
@@ -96,6 +99,8 @@ export const translations = {
       successMessage: 'has been successfully added to your Storio.',
       addAnother: 'Add Another Entry',
       viewDetails: 'View Details',
+      continueBrowsing: 'Continue Browsing',
+      goToMyStorio: 'Go to My Storio',
     },
     profile: {
       title: 'Profile',
@@ -157,11 +162,13 @@ export const translations = {
       movies: '電影',
       books: '書籍',
       tv: '影集',
+      add: '加入',
+      details: '詳情',
     },
     nav: {
       home: '首頁',
       search: '探索',
-      collection: '我的館藏',
+      collection: 'My Storio',
       profile: '個人檔案',
     },
     onboarding: {
@@ -175,8 +182,8 @@ export const translations = {
       guestNote: '訪客僅限收藏 <bold>10 Stories</bold>。登入以解鎖無限存檔與雲端同步。',
     },
     home: {
-      heroTitle: 'Your Digital Pensieve',
-      heroSubtitle: 'Collect stories in your Folio.',
+      heroTitle: '你的數位儲思盆',
+      heroSubtitle: '在 Folio 中收藏你的故事。',
       myFolio: 'My Storio',
       viewStorio: '檢視 My Storio',
       trendingMovies: '熱門電影',
@@ -214,6 +221,7 @@ export const translations = {
       plot: '劇情簡介',
       rating: '你的評分',
       reflection: '你的心得',
+      archivedAt: '收藏日期',
       add: '新增',
       remove: '移除',
       share: '分享',
@@ -236,6 +244,8 @@ export const translations = {
       successMessage: '已成功加入你的 Storio。',
       addAnother: '再新增一次',
       viewDetails: '查看詳情',
+      continueBrowsing: '繼續瀏覽',
+      goToMyStorio: '前往 My Storio',
     },
     profile: {
       title: '個人檔案',

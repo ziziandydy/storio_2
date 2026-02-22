@@ -15,7 +15,7 @@ class StoryBase(BaseModel):
     notes: Optional[str] = None
 
 class StoryCreate(StoryBase):
-    pass
+    created_at: Optional[datetime] = None
 
 class StoryInstance(BaseModel):
     id: UUID

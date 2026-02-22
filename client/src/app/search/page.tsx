@@ -16,7 +16,7 @@ import { getApiUrl } from '@/lib/api';
 // 定義與後端一致的型別
 interface StoryResult {
   title: string;
-  media_type: 'movie' | 'book';
+  media_type: 'movie' | 'book' | 'tv';
   external_id: string;
   poster_path?: string;
   source: string;
@@ -30,13 +30,13 @@ function SearchContent() {
   
   // Initialize state from URL params
   const initialQuery = searchParams.get('q') || '';
-  const initialFilter = (searchParams.get('filter') as 'movie' | 'book') || 'movie';
+  const initialFilter = (searchParams.get('filter') as 'movie' | 'book' | 'tv') || 'movie';
 
   const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<StoryResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
-  const [filter, setFilter] = useState<'movie' | 'book'>(initialFilter);
+  const [filter, setFilter] = useState<'movie' | 'book' | 'tv'>(initialFilter);
   const { token, loading: authLoading } = useAuth();
   const { showToast } = useToast();
   const { t } = useTranslation();
@@ -47,24 +47,37 @@ function SearchContent() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   // Filter results based on category
-  const filteredResults = results.filter(item => item.media_type === filter);
+  const filteredResults = results.filter(item => {
+    if (filter === 'movie' || filter === 'tv') {
+      return item.media_type === 'movie' || item.media_type === 'tv';
+    }
+    return item.media_type === filter;
+  });
 
-  // Sync URL when query or filter changes (Debounced)
+  // Sync URL when filter changes
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedQuery(query);
-      
-      // Update URL without full reload
-      const params = new URLSearchParams(searchParams.toString());
-      if (query) params.set('q', query);
-      else params.delete('q');
-      
-      params.set('filter', filter);
-      router.replace(`/search?${params.toString()}`, { scroll: false });
-      
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [query, filter, router, searchParams]);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('filter', filter);
+    // Preserve existing query if present in state, but don't overwrite if not submitting
+    if (debouncedQuery) params.set('q', debouncedQuery);
+    
+    router.replace(`/search?${params.toString()}`, { scroll: false });
+  }, [filter, router]); // Remove query dependency
+
+  // Handle Search Submit
+  const handleSubmit = (e?: React.FormEvent | React.KeyboardEvent) => {
+    if (e && 'key' in e && e.key !== 'Enter') return;
+    e?.preventDefault();
+    
+    setDebouncedQuery(query);
+    
+    const params = new URLSearchParams(searchParams.toString());
+    if (query) params.set('q', query);
+    else params.delete('q');
+    params.set('filter', filter);
+    
+    router.replace(`/search?${params.toString()}`, { scroll: false });
+  };
 
   // Fetch logic
   useEffect(() => {
@@ -108,7 +121,7 @@ function SearchContent() {
     setIsAddModalOpen(true);
   };
 
-  const handleAddToFolio = async (rating: number, notes: string) => {
+  const handleAddToFolio = async (rating: number, notes: string, date?: string) => {
     if (!selectedStory || !token) return;
 
     try {
@@ -121,7 +134,8 @@ function SearchContent() {
         body: JSON.stringify({
           ...selectedStory,
           rating,
-          notes
+          notes,
+          created_at: date ? new Date(date).toISOString() : undefined
         })
       });
 
@@ -246,12 +260,18 @@ function SearchContent() {
           {/* Search Input */}
           <div className="relative group w-full">
             <div className="absolute inset-0 bg-accent-gold/5 blur-xl rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
-            <Search className={`absolute left-6 top-1/2 -translate-y-1/2 transition-colors z-10 ${loading ? 'text-accent-gold animate-pulse' : 'text-text-desc group-focus-within:text-accent-gold'}`} size={20} />
+            <button 
+              onClick={(e) => handleSubmit(e)}
+              className={`absolute left-6 top-1/2 -translate-y-1/2 transition-colors z-10 ${loading ? 'text-accent-gold animate-pulse' : 'text-text-desc hover:text-white group-focus-within:text-accent-gold'}`}
+            >
+              <Search size={20} />
+            </button>
             <input 
               type="text" 
               placeholder={t.search.placeholder}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleSubmit}
               className="w-full bg-folio-card/80 backdrop-blur-md hover:bg-folio-card focus:bg-black border border-white/10 focus:border-accent-gold/50 rounded-full py-4 pl-16 pr-14 text-base text-white placeholder:text-text-desc/50 focus:outline-none focus:ring-4 focus:ring-accent-gold/10 transition-all shadow-xl relative z-0"
               autoFocus
             />

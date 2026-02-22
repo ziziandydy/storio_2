@@ -4,6 +4,7 @@ from app.core.config import settings
 import json
 import datetime
 import asyncio
+import re
 from typing import List, Dict
 
 class GeminiService:
@@ -92,52 +93,68 @@ class GeminiService:
 
     @classmethod
     async def generate_reflection_suggestions(cls, title: str, synopsis: str = None, language: str = "zh-TW") -> List[str]:
-        if not settings.GEMINI_API_KEY:
+        if not settings.GEMINI_API_KEY and not settings.OPENAI_API_KEY:
             return []
 
-        try:
-            cls.configure()
-            model = genai.GenerativeModel('gemini-2.0-flash')
-            
-            lang_name = "Traditional Chinese (繁體中文)" if language == "zh-TW" else "English"
-            
-            context = f"Title: {title}\nSynopsis: {synopsis[:500] if synopsis else 'N/A'}"
-            prompt = f"""
-            Generate 3 short, insightful one-sentence reflection suggestions for the work below.
-            Language: {lang_name}.
-            
-            Requirements:
-            1. Strictly one sentence each.
-            2. Be specific about plot, characters, or themes.
-            3. Tone should feel authentic, like a viewer/reader's real thought.
-            
-            {context}
-            
-            Output ONLY a JSON Array of strings: ["suggestion 1", "suggestion 2", "suggestion 3"]
-            """
-            
-            response = await asyncio.wait_for(
-                model.generate_content_async(prompt),
-                timeout=10.0
-            )
-            
-            text = response.text.replace("```json", "").replace("```", "").strip()
-            parsed_data = json.loads(text)
-            
-            suggestions = []
-            if isinstance(parsed_data, list):
-                for item in parsed_data:
-                    if isinstance(item, str):
-                        suggestions.append(item)
-                    elif isinstance(item, dict):
-                        suggestions.extend(item.values())
-            
-            return suggestions[:3] if suggestions else []
+        lang_name = "Traditional Chinese (繁體中文)" if language == "zh-TW" else "English"
+        context = f"Title: {title}\nSynopsis: {synopsis[:500] if synopsis else 'N/A'}"
+        
+        system_prompt = f"""Role: insightful viewer/reader. 
+        Task: Generate 3 short, insightful one-sentence reflection suggestions.
+        Language: {lang_name}."""
+        
+        user_prompt = f"""
+        Generate 3 reflection suggestions for:
+        {context}
+        
+        Requirements:
+        1. Strictly one sentence each.
+        2. Specific to the work's themes/plot.
+        3. Tone: Personal, authentic.
+        
+        Output ONLY a JSON Array of strings: ["s1", "s2", "s3"]
+        """
 
-        except Exception as e:
-            print(f"Gemini Suggestion Error: {e}")
-            # Simplified fallback or OpenAI call could go here
-            return []
+        # 1. Try Gemini
+        if settings.GEMINI_API_KEY:
+            try:
+                cls.configure()
+                model = genai.GenerativeModel('gemini-2.0-flash')
+                response = await asyncio.wait_for(
+                    model.generate_content_async(f"{system_prompt}\n\n{user_prompt}"),
+                    timeout=10.0
+                )
+                
+                text = response.text.strip()
+                # Clean markdown if present
+                if "```" in text:
+                    match = re.search(r'\[.*\]', text, re.DOTALL)
+                    if match:
+                        text = match.group(0)
+                
+                parsed_data = json.loads(text)
+                if isinstance(parsed_data, list):
+                    return [str(s) for s in parsed_data[:3]]
+            except Exception as e:
+                print(f"Gemini Suggestion Error: {e}")
+
+        # 2. Try OpenAI Fallback
+        if settings.OPENAI_API_KEY:
+            try:
+                text = await cls._call_openai_fallback(system_prompt, user_prompt)
+                text = text.strip()
+                if "```" in text:
+                    match = re.search(r'\[.*\]', text, re.DOTALL)
+                    if match:
+                        text = match.group(0)
+                
+                parsed_data = json.loads(text)
+                if isinstance(parsed_data, list):
+                    return [str(s) for s in parsed_data[:3]]
+            except Exception as e:
+                print(f"OpenAI Suggestion Fallback Error: {e}")
+
+        return []
 
     @classmethod
     async def refine_reflection(cls, content: str, language: str = "zh-TW") -> str:

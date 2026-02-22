@@ -224,7 +224,12 @@ class SearchService:
 
     @staticmethod
     async def _fetch_gbooks_details(client: httpx.AsyncClient, external_id: str, language: str = "zh-TW") -> Optional[ItemDetailResponse]:
-        params = {}
+        params = {"projection": "full"}
+        # Google Books API volumes.get technically doesn't support langRestrict as a filter, 
+        # but passing it might influence some localized fields or it's a no-op. 
+        # However, for consistency and future-proofing:
+        # params["langRestrict"] = language[:2] 
+        
         if settings.GOOGLE_BOOKS_API_KEY:
             params["key"] = settings.GOOGLE_BOOKS_API_KEY
             
@@ -394,12 +399,19 @@ class SearchService:
         if settings.TMDB_ACCESS_TOKEN: headers["Authorization"] = f"Bearer {settings.TMDB_ACCESS_TOKEN}"
         elif settings.TMDB_API_KEY: params["api_key"] = settings.TMDB_API_KEY
         else: return []
+        
         try:
-            response = await client.get(f"{SearchService.BASE_URL_TMDB}/search/movie", params=params, headers=headers)
-            response.raise_for_status()
-            data = response.json()
+            # Search both movies and TV shows
+            movie_task = client.get(f"{SearchService.BASE_URL_TMDB}/search/movie", params=params, headers=headers)
+            tv_task = client.get(f"{SearchService.BASE_URL_TMDB}/search/tv", params=params, headers=headers)
+            
+            responses = await asyncio.gather(movie_task, tv_task)
+            
             results = []
-            for item in data.get("results", [])[:10]:
+            
+            # Process Movie Results
+            movie_data = responses[0].json()
+            for item in movie_data.get("results", [])[:10]:
                 poster = f"https://image.tmdb.org/t/p/w500{item['poster_path']}" if item.get('poster_path') else None
                 if not poster: continue
                 results.append(StoryBase(
@@ -410,9 +422,24 @@ class SearchService:
                     poster_path=poster,
                     source="tmdb"
                 ))
+            
+            # Process TV Results
+            tv_data = responses[1].json()
+            for item in tv_data.get("results", [])[:10]:
+                poster = f"https://image.tmdb.org/t/p/w500{item['poster_path']}" if item.get('poster_path') else None
+                if not poster: continue
+                results.append(StoryBase(
+                    title=item.get("name", "Unknown"),
+                    media_type="tv",
+                    year=SearchService._extract_year(item.get("first_air_date")),
+                    external_id=str(item.get("id")),
+                    poster_path=poster,
+                    source="tmdb"
+                ))
+            
             return results
         except Exception as e:
-            print(f"TMDB Error: {e}")
+            print(f"TMDB Search Error: {e}")
             return []
 
     @staticmethod

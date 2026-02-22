@@ -42,6 +42,7 @@ export default function OnboardingModal({ isOpen, onClose, onLogin, onContinueAs
                     alt="Storio Art" 
                     fill 
                     className="object-cover opacity-50 grayscale hover:grayscale-0 transition-all duration-1000"
+                    sizes="(max-width: 768px) 100vw, 40vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-folio-black via-transparent to-transparent" />
                 <div className="absolute bottom-8 left-8 right-8">
@@ -54,8 +55,8 @@ export default function OnboardingModal({ isOpen, onClose, onLogin, onContinueAs
             <div className="flex-1 p-8 md:p-12 flex flex-col justify-center gap-8">
                 <div className="space-y-4">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-accent-gold rounded-xl flex items-center justify-center">
-                            <Image src="/logo/logo.png" width={24} height={24} alt="Storio" />
+                        <div className="w-10 h-10 flex items-center justify-center">
+                            <Image src="/image/logo/logo.png" width={40} height={40} alt="Storio" className="object-contain" />
                         </div>
                         <h2 className="text-2xl font-bold font-serif text-white tracking-wide">{t.onboarding.welcome}</h2>
                     </div>

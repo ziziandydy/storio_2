@@ -102,7 +102,7 @@ const StoryCard: React.FC<StoryCardProps> = ({
       )}
 
       {/* Main Image Container */}
-      <div className="relative w-full h-full aspect-[2/3]">
+      <div className="relative w-full h-full min-h-[180px]">
         {posterUrl ? (
           <img 
             src={posterUrl} 
@@ -121,22 +121,14 @@ const StoryCard: React.FC<StoryCardProps> = ({
         {/* Content Info */}
         <div className={`absolute inset-x-0 bottom-0 p-4 flex flex-col justify-end gap-1 transition-opacity duration-300 ${isHovered && !onViewDetails ? 'opacity-0' : 'opacity-100'}`}>
           {/* Folio Metadata */}
-          {(addedAt) && (
+          {addedAt && rating && rating > 0 && (
              <div className="flex flex-col gap-1 mb-2">
-               {rating && rating > 0 ? (
-                 <div className="flex items-center gap-2">
-                   <div className="flex items-center gap-1 bg-accent-gold/10 backdrop-blur-md border border-accent-gold/30 px-1.5 py-0.5 rounded text-accent-gold">
-                     <User size={10} strokeWidth={2.5} />
-                     <span className="text-[10px] font-black tracking-wide">{rating}</span>
-                   </div>
+               <div className="flex items-center gap-2">
+                 <div className="flex items-center gap-1 bg-accent-gold/10 backdrop-blur-md border border-accent-gold/30 px-1.5 py-0.5 rounded text-accent-gold">
+                   <User size={10} strokeWidth={2.5} />
+                   <span className="text-[10px] font-black tracking-wide">{rating}</span>
                  </div>
-               ) : (
-                 <div className="flex items-center gap-2 animate-pulse">
-                   <div className="flex items-center gap-1 bg-accent-gold/20 backdrop-blur-md border border-accent-gold/50 px-2 py-1 rounded-full text-accent-gold shadow-[0_0_10px_rgba(233,108,38,0.3)]">
-                     <span className="text-[9px] font-black tracking-widest uppercase">{t.common.rateIt}</span>
-                   </div>
-                 </div>
-               )}
+               </div>
              </div>
           )}
 
@@ -164,7 +156,7 @@ const StoryCard: React.FC<StoryCardProps> = ({
                 className="w-full py-3 bg-accent-gold text-folio-black rounded-lg font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white hover:scale-105 transition-all shadow-xl"
                 >
                 <Plus size={16} strokeWidth={3} />
-                {t.modals.addToFolio}
+                {t.common.add}
                 </button>
             )}
 
@@ -173,7 +165,7 @@ const StoryCard: React.FC<StoryCardProps> = ({
                 className="w-full py-3 bg-white/10 backdrop-blur text-white border border-white/20 rounded-lg font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white/20 hover:border-white/40 transition-all"
             >
                 <Info size={16} />
-                Details
+                {t.common.details}
             </button>
             </div>
         )}

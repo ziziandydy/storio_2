@@ -13,8 +13,8 @@ const config: Config = {
         folio: {
           black: "#0d0d0d",    // Background
           header: "#111111",   // Sticky Header
-          card: "#161616",     // Entry Card
-          "card-hover": "#1f1f1f", 
+          card: "#121212",     // Entry Card
+          "card-hover": "#1a1a1a", 
           outline: "#2a2a2a",
         },
         text: {
@@ -23,7 +23,7 @@ const config: Config = {
           desc: "#888888",
         },
         accent: {
-          gold: "#d4af37",     // Primary Highlight (Memory/Collection)
+          gold: "#c5a059",     // Primary Highlight (Memory/Collection)
           brown: "#8b5a2b",    // Secondary Accents
           "red-brown": "#7b2c1d", // Movie Identification
           tan: "#b69b7d",      // Book Identification

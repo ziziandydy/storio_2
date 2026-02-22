@@ -10,8 +10,10 @@ import { getApiUrl } from '@/lib/api';
 interface RateAndReflectFormProps {
   initialRating?: number;
   initialNotes?: string;
+  initialDate?: string; // Format: YYYY-MM-DD
   title: string;
-  onSave: (rating: number, notes: string) => Promise<void>;
+  overview?: string;
+  onSave: (rating: number, notes: string, date?: string) => Promise<void>;
   onCancel?: () => void;
   isSaving?: boolean;
 }
@@ -19,13 +21,16 @@ interface RateAndReflectFormProps {
 export default function RateAndReflectForm({ 
   initialRating = 0, 
   initialNotes = '', 
+  initialDate,
   title, 
+  overview,
   onSave, 
   onCancel,
   isSaving = false 
 }: RateAndReflectFormProps) {
   const [rating, setRating] = useState(initialRating);
   const [notes, setNotes] = useState(initialNotes);
+  const [date, setDate] = useState(initialDate || new Date().toISOString().split('T')[0]);
   const [hoverRating, setHoverRating] = useState(0);
   const { t } = useTranslation();
   const { language } = useSettingsStore();
@@ -37,10 +42,13 @@ export default function RateAndReflectForm({
   const [refinedProposal, setRefinedProposal] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchSuggestions();
-  }, [title]);
+    if (title) {
+      fetchSuggestions();
+    }
+  }, [title, overview]); // Re-fetch if overview arrives later
 
   const fetchSuggestions = async () => {
+    if (!title) return;
     setLoadingSuggestions(true);
     try {
       const res = await fetch(getApiUrl('/api/v1/ai/suggestions'), {
@@ -49,12 +57,17 @@ export default function RateAndReflectForm({
             'Content-Type': 'application/json',
             'Accept-Language': language
         },
-        body: JSON.stringify({ title })
+        body: JSON.stringify({ 
+          title,
+          synopsis: overview 
+        })
       });
+      if (!res.ok) throw new Error('AI Service Unavailable');
       const data = await res.json();
       setSuggestions(data.suggestions || []);
     } catch (error) {
-      console.error(error);
+      console.error("AI Suggestion Error:", error);
+      setSuggestions([]);
     } finally {
       setLoadingSuggestions(false);
     }
@@ -94,43 +107,64 @@ export default function RateAndReflectForm({
 
   return (
     <div className="flex flex-col gap-6">
-        {/* Rating Section */}
-        <div className="flex flex-col items-center gap-4 bg-white/5 rounded-2xl p-6 border border-white/5">
-            <div className="flex gap-1">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => (
-                <button
-                    key={star}
-                    onMouseEnter={() => setHoverRating(star)}
-                    onMouseLeave={() => setHoverRating(0)}
-                    onClick={() => setRating(star)}
-                    className="flex flex-col items-center gap-1.5 transition-transform hover:scale-110 focus:outline-none group px-0.5"
-                >
-                    <span className={`text-[9px] font-bold transition-colors ${(hoverRating || rating) >= star ? 'text-accent-gold' : 'text-white/30'}`}>
-                        {star}
+        
+        {/* Date Section */}
+        <div className="flex flex-col gap-2">
+            <label className="text-[10px] uppercase font-bold tracking-[0.2em] text-text-desc pl-1">
+                {t.details.archivedAt || 'Archived At'}
+            </label>
+            <div className="relative w-full">
+                <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white font-mono tracking-wider flex items-center justify-between group-hover:border-accent-gold/50 transition-colors cursor-pointer">
+                    <span>
+                        {new Date(date).toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'short', 
+                            day: '2-digit' 
+                        }).replace(/,/g, '').toUpperCase()}
                     </span>
-                    <Star 
-                    size={22} 
-                    className={`${(hoverRating || rating) >= star ? 'fill-accent-gold text-accent-gold shadow-[0_0_10px_rgba(233,108,38,0.5)]' : 'fill-transparent text-white/20 group-hover:text-white/40'} transition-colors duration-200`}
-                    strokeWidth={1.5}
-                    />
-                </button>
-                ))}
+                    <span className="text-white/20">▼</span>
+                </div>
+                <input 
+                    type="date" 
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
             </div>
-            <span className="text-xs uppercase tracking-widest text-white font-bold h-4 transition-all duration-300">
-                {hoverRating === 10 && (language === 'zh-TW' ? "傑作" : "Masterpiece")}
-                {hoverRating >= 8 && hoverRating < 10 && (language === 'zh-TW' ? "極佳" : "Excellent")}
-                {hoverRating >= 6 && hoverRating < 8 && (language === 'zh-TW' ? "很好" : "Very Good")}
-                {hoverRating >= 4 && hoverRating < 6 && (language === 'zh-TW' ? "普通" : "Average")}
-                {hoverRating >= 2 && hoverRating < 4 && (language === 'zh-TW' ? "較差" : "Poor")}
-                {hoverRating === 1 && (language === 'zh-TW' ? "極差" : "Abysmal")}
-                {!hoverRating && rating > 0 && `${rating} / 10`}
-                {!hoverRating && rating === 0 && (language === 'zh-TW' ? "選擇評分" : "Select Rating")}
-            </span>
+        </div>
+
+        {/* Rating Section */}
+        <div className="flex flex-col gap-2">
+            <label className="text-[10px] uppercase font-bold tracking-[0.2em] text-text-desc pl-1">
+                {t.details.rating}
+            </label>
+            <div className="flex items-center justify-between bg-white/5 rounded-xl p-4 border border-white/10">
+                <div className="flex gap-1.5 flex-1 justify-between sm:justify-start sm:gap-2">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => (
+                    <button
+                        key={star}
+                        onMouseEnter={() => setHoverRating(star)}
+                        onMouseLeave={() => setHoverRating(0)}
+                        onClick={() => setRating(star)}
+                        className="flex flex-col items-center gap-1.5 transition-transform hover:scale-110 focus:outline-none group"
+                    >
+                        <Star 
+                        size={20} 
+                        className={`${(hoverRating || rating) >= star ? 'fill-accent-gold text-accent-gold shadow-[0_0_10px_rgba(233,108,38,0.5)]' : 'fill-transparent text-white/10 group-hover:text-white/30'} transition-colors duration-200`}
+                        strokeWidth={1.5}
+                        />
+                    </button>
+                    ))}
+                </div>
+                <span className="text-xs uppercase tracking-widest text-accent-gold font-black w-12 text-right">
+                    {hoverRating || rating > 0 ? `${hoverRating || rating}/10` : '-'}
+                </span>
+            </div>
         </div>
 
         {/* Reflection Section */}
-        <div className="flex-grow relative">
-            <div className="flex items-center justify-between mb-2 px-1">
+        <div className="flex-grow relative flex flex-col gap-2">
+            <div className="flex items-center justify-between pl-1">
                 <label className="text-[10px] uppercase font-bold tracking-[0.2em] text-text-desc">
                 {t.details.reflection}
                 </label>
@@ -144,7 +178,7 @@ export default function RateAndReflectForm({
             </div>
 
             <AnimatePresence>
-                {suggestions.length > 0 && !notes && (
+                {suggestions.length > 0 && (
                 <motion.div 
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
@@ -232,7 +266,7 @@ export default function RateAndReflectForm({
                 </button>
             )}
             <button
-                onClick={() => onSave(rating, notes)}
+                onClick={() => onSave(rating, notes, date)}
                 disabled={isSaving}
                 className="flex-1 py-4 bg-accent-gold text-folio-black rounded-xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-2 hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(233,108,38,0.2)] hover:shadow-[0_0_30px_rgba(233,108,38,0.4)] hover:scale-[1.02] active:scale-[0.98]"
             >

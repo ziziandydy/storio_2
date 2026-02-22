@@ -28,7 +28,7 @@ def test_add_story_success(service, mock_repo):
         id=uuid4(),
         user_id=uuid4(),
         created_at=datetime.utcnow(),
-        **story_in.model_dump()
+        **story_in.model_dump(exclude={"created_at"})
     )
 
     mock_repo.count_user_stories.return_value = 5

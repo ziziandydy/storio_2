@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import StoryCard from '@/components/StoryCard';
 import ViewSwitcher from '@/components/ViewSwitcher';
+import NavigationFAB from '@/components/NavigationFAB';
 import { useAuth } from '@/hooks/useAuth';
 import { useViewStore } from '@/store/viewStore';
 import { Story } from '@/types';
@@ -145,36 +146,11 @@ export default function CollectionPage() {
 
       {/* Floating Action Button - Only show if not empty */}
       {processedStories.length > 0 && (
-        <div className="fixed bottom-8 right-6 z-50">
-          <Link 
-            href="/search"
-            className="group flex items-center justify-center w-14 h-14 bg-accent-gold rounded-full text-folio-black shadow-[0_0_20px_rgba(233,108,38,0.4)] hover:shadow-[0_0_35px_rgba(233,108,38,0.6)] hover:scale-110 transition-all duration-300"
-          >
-            <PlusIcon size={28} strokeWidth={2.5} />
-          </Link>
-        </div>
+        <NavigationFAB />
       )}
 
       {/* Mobile Bottom Safe Area Spacer */}
       <div className="h-12 md:hidden"></div>
     </div>
-  );
-}
-
-function PlusIcon({ size, strokeWidth }: { size: number, strokeWidth: number }) {
-  return (
-    <svg 
-      width={size} 
-      height={size} 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth={strokeWidth} 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-    >
-      <line x1="12" y1="5" x2="12" y2="19"></line>
-      <line x1="5" y1="12" x2="19" y2="12"></line>
-    </svg>
   );
 }

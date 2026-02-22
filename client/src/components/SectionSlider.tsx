@@ -75,10 +75,9 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
     }
   };
 
-  const handleAddToFolio = async (rating: number, notes: string) => {
+  const handleAddToFolio = async (rating: number, notes: string, date?: string) => {
     if (!selectedStory || !token) {
-      alert("Please sign in to collect these stories into your Folio.");
-      return;
+      return { status: 'unauthorized' };
     }
 
     try {
@@ -91,12 +90,13 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
         body: JSON.stringify({
           ...selectedStory,
           rating,
-          notes
+          notes,
+          created_at: date ? new Date(date).toISOString() : undefined
         })
       });
 
       if (res.status === 409) {
-        throw new Error("You have already collected this story.");
+        return { status: 'duplicate' };
       }
 
       if (!res.ok) {
@@ -104,6 +104,7 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
         throw new Error(errorData.detail || 'Failed to add item');
       }
       
+      return await res.json();
     } catch (error: any) {
       throw error; // Let modal handle UI
     }
@@ -150,7 +151,7 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {items.map((item) => (
-            <div key={item.external_id} className="min-w-[200px] md:min-w-[240px] w-[200px] md:w-[240px] snap-center">
+            <div key={item.external_id} className="min-w-[200px] md:min-w-[240px] w-[200px] md:w-[240px] aspect-[2/3] snap-center">
               <StoryCard
                 title={item.title}
                 type={item.media_type}

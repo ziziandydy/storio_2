@@ -51,6 +51,10 @@ class CollectionRepository:
         data = story.model_dump()
         data["user_id"] = user_id
         
+        # Convert datetime to string for JSON serialization
+        if data.get("created_at"):
+            data["created_at"] = data["created_at"].isoformat()
+        
         # Map to DB schema constraints
         data = self._map_to_db(data)
         

@@ -150,7 +150,7 @@ export default function Home() {
           <SectionSlider 
             title={t.home.trendingSeries}
             endpoint="/api/v1/search/trending/series" 
-            viewAllLink="/search?filter=movie"
+            viewAllLink="/search?filter=tv"
           />
           
           <SectionSlider 
@@ -161,17 +161,7 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Floating Action Button (Search) */}
-      <div className="fixed bottom-8 right-6 z-50">
-        <Link 
-          href="/search"
-          className="group flex items-center justify-center w-14 h-14 bg-accent-gold rounded-full text-folio-black shadow-[0_0_20px_rgba(233,108,38,0.4)] hover:shadow-[0_0_35px_rgba(233,108,38,0.6)] hover:scale-110 active:scale-95 transition-all duration-300 relative overflow-hidden"
-        >
-          <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-full" />
-          <Plus size={28} strokeWidth={2.5} className="relative z-10" />
-        </Link>
-      </div>
-
+      <NavigationFAB />
     </div>
   );
 }
