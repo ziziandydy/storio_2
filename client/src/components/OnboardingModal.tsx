@@ -1,10 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogIn, UserPlus, X, ShieldCheck, Sparkles, Star } from 'lucide-react';
+import { LogIn, UserPlus, X, ShieldCheck, Sparkles, Star, Mail, ArrowLeft, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { useTranslation } from '@/hooks/useTranslation';
+import { supabase } from '@/lib/supabase';
+import { useToast } from '@/components/ToastProvider';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -15,6 +17,51 @@ interface OnboardingModalProps {
 
 export default function OnboardingModal({ isOpen, onClose, onLogin, onContinueAsGuest }: OnboardingModalProps) {
   const { t } = useTranslation();
+  const { showToast } = useToast();
+  
+  // State
+  const [authStep, setAuthStep] = useState<'social' | 'email' | 'otp'>('social');
+  const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({ email });
+      if (error) throw error;
+      setAuthStep('otp');
+    } catch (error: any) {
+      console.error(error);
+      showToast(error.message || t.common.error, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otp.length !== 6) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: 'email'
+      });
+      if (error) throw error;
+      onClose(); // Login successful
+    } catch (error: any) {
+      console.error(error);
+      showToast(error.message || t.common.error, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -33,78 +80,192 @@ export default function OnboardingModal({ isOpen, onClose, onLogin, onContinueAs
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full max-w-lg bg-folio-black border border-white/10 rounded-[32px] overflow-hidden shadow-[0_0_100px_rgba(233,108,38,0.15)] flex flex-col md:flex-row h-auto max-h-[90vh]"
+            className={`relative w-full ${authStep === 'social' ? 'max-w-lg' : 'max-w-md'} bg-folio-black border border-white/10 rounded-[32px] overflow-hidden shadow-[0_0_100px_rgba(233,108,38,0.15)] flex flex-col md:flex-row h-auto min-h-[500px] transition-all duration-500`}
           >
-            {/* Left: Visual/Intro (Hidden on small mobile) */}
-            <div className="hidden md:flex md:w-2/5 relative bg-folio-card overflow-hidden">
-                <Image 
-                    src="/image/authBackground.webp" 
-                    alt="Storio Art" 
-                    fill 
-                    className="object-cover opacity-50 grayscale hover:grayscale-0 transition-all duration-1000"
-                    sizes="(max-width: 768px) 100vw, 40vw"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-folio-black via-transparent to-transparent" />
-                <div className="absolute bottom-8 left-8 right-8">
-                    <div className="text-accent-gold mb-2"><Sparkles size={24} /></div>
-                    <h3 className="text-xl font-serif font-bold text-white leading-tight">{t.onboarding.tagline}</h3>
-                </div>
-            </div>
+            {/* Left: Visual/Intro (Hidden when inputting email/otp to save space) */}
+            <AnimatePresence>
+                {authStep === 'social' && (
+                    <motion.div 
+                        initial={{ width: 0, opacity: 0 }}
+                        animate={{ width: '40%', opacity: 1 }}
+                        exit={{ width: 0, opacity: 0 }}
+                        className="hidden md:flex relative bg-folio-card overflow-hidden border-r border-white/5"
+                    >
+                        <Image 
+                            src="/image/authBackground.webp" 
+                            alt="Storio Art" 
+                            fill 
+                            className="object-cover opacity-50 grayscale hover:grayscale-0 transition-all duration-1000"
+                            sizes="20vw"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-folio-black via-transparent to-transparent" />
+                        <div className="absolute bottom-8 left-8 right-8">
+                            <div className="text-accent-gold mb-2"><Sparkles size={24} /></div>
+                            <h3 className="text-xl font-serif font-bold text-white leading-tight">{t.onboarding.tagline}</h3>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Right: Actions */}
-            <div className="flex-1 p-8 md:p-12 flex flex-col justify-center gap-8">
-                <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 flex items-center justify-center">
-                            <Image src="/image/logo/logo.png" width={40} height={40} alt="Storio" className="object-contain" />
+            <div className="flex-1 p-8 md:p-10 flex flex-col justify-center relative">
+                
+                {/* Back Button (Only for Email/OTP flows) */}
+                {authStep !== 'social' && (
+                    <button 
+                        onClick={() => setAuthStep(authStep === 'otp' ? 'email' : 'social')}
+                        className="absolute top-8 left-8 p-2 text-text-desc hover:text-white transition-colors bg-white/5 rounded-full"
+                    >
+                        <ArrowLeft size={18} />
+                    </button>
+                )}
+
+                {/* --- Step 1: Social Login --- */}
+                {authStep === 'social' && (
+                    <div className="flex flex-col gap-8 animate-in fade-in zoom-in-95 duration-300">
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 flex items-center justify-center">
+                                    <Image src="/image/logo/logo.png" width={40} height={40} alt="Storio" className="object-contain" />
+                                </div>
+                                <h2 className="text-2xl font-bold font-serif text-white tracking-wide">{t.onboarding.welcome}</h2>
+                            </div>
+                            <p className="text-text-secondary text-sm leading-relaxed">
+                                {t.onboarding.description}
+                            </p>
                         </div>
-                        <h2 className="text-2xl font-bold font-serif text-white tracking-wide">{t.onboarding.welcome}</h2>
+
+                        <div className="flex flex-col gap-3">
+                            <button 
+                                onClick={() => onLogin('google')}
+                                className="w-full py-4 bg-white text-black rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-gray-200 transition-all shadow-xl active:scale-[0.98]"
+                            >
+                                <Image src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width={18} height={18} alt="Google" />
+                                {t.onboarding.google}
+                            </button>
+                            
+                            <button 
+                                onClick={() => onLogin('apple')}
+                                className="w-full py-4 bg-black border border-white/20 text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-white/5 transition-all active:scale-[0.98]"
+                            >
+                                <Image src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" width={18} height={18} alt="Apple" className="invert" />
+                                {t.onboarding.apple}
+                            </button>
+
+                            <button 
+                                onClick={() => setAuthStep('email')}
+                                className="w-full py-4 bg-white/5 text-white border border-white/10 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-white/10 transition-all active:scale-[0.98]"
+                            >
+                                <Mail size={18} />
+                                {t.onboarding.email}
+                            </button>
+
+                            <div className="relative py-2 flex items-center justify-center">
+                                <div className="absolute inset-x-0 h-px bg-white/5" />
+                                <span className="relative z-10 bg-folio-black px-4 text-[10px] uppercase font-bold tracking-widest text-text-desc">{t.onboarding.or}</span>
+                            </div>
+
+                            <button 
+                                onClick={onContinueAsGuest}
+                                className="w-full py-3 rounded-2xl text-text-desc hover:text-white font-bold uppercase tracking-widest text-[10px] transition-colors border border-dashed border-white/10 hover:border-white/30"
+                            >
+                                {t.onboarding.guest}
+                            </button>
+                        </div>
                     </div>
-                    <p className="text-text-secondary text-sm leading-relaxed">
-                        {t.onboarding.description}
-                    </p>
-                </div>
+                )}
 
-                <div className="flex flex-col gap-3">
-                    <button 
-                        onClick={() => onLogin('google')}
-                        className="w-full py-4 bg-white text-black rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-gray-200 transition-all shadow-xl active:scale-[0.98]"
-                    >
-                        <Image src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width={18} height={18} alt="Google" />
-                        {t.onboarding.google}
-                    </button>
-                    
-                    <button 
-                        onClick={() => onLogin('apple')}
-                        className="w-full py-4 bg-black border border-white/20 text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-white/5 transition-all active:scale-[0.98]"
-                    >
-                        <Image src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" width={18} height={18} alt="Apple" className="invert" />
-                        {t.onboarding.apple}
-                    </button>
+                {/* --- Step 2: Email Input --- */}
+                {authStep === 'email' && (
+                    <form onSubmit={handleEmailSubmit} className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="space-y-3 mt-4">
+                            <h2 className="text-3xl font-bold font-serif text-white tracking-tight">{t.onboarding.email}</h2>
+                            <p className="text-text-desc text-sm leading-relaxed">
+                                Enter your email to receive a secure 6-digit login code.
+                            </p>
+                        </div>
 
-                    <div className="relative py-4 flex items-center justify-center">
-                        <div className="absolute inset-x-0 h-px bg-white/5" />
-                        <span className="relative z-10 bg-folio-black px-4 text-[10px] uppercase font-bold tracking-widest text-text-desc">{t.onboarding.or}</span>
+                        <div className="space-y-6">
+                            <div className="relative group">
+                                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-text-desc group-focus-within:text-accent-gold transition-colors" size={20} />
+                                <input 
+                                    type="email" 
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder={t.onboarding.emailPlaceholder}
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl pl-14 pr-6 py-5 text-white placeholder:text-text-desc/40 focus:outline-none focus:border-accent-gold/50 focus:bg-white/[0.08] transition-all text-base"
+                                    autoFocus
+                                    required
+                                />
+                            </div>
+                            
+                            <button 
+                                type="submit"
+                                disabled={loading}
+                                className="w-full py-5 bg-accent-gold text-folio-black rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-white transition-all shadow-2xl shadow-accent-gold/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {loading ? <Loader2 className="animate-spin" /> : t.onboarding.verify}
+                            </button>
+                        </div>
+                    </form>
+                )}
+
+                {/* --- Step 3: OTP Input --- */}
+                {authStep === 'otp' && (
+                    <form onSubmit={handleOtpSubmit} className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="space-y-3 mt-4 text-center">
+                            <h2 className="text-3xl font-bold font-serif text-white tracking-tight">{t.onboarding.otpTitle}</h2>
+                            <p className="text-text-desc text-sm leading-relaxed">
+                                {t.onboarding.otpDesc} <br/><span className="text-white font-bold">{email}</span>
+                            </p>
+                        </div>
+
+                        <div className="space-y-8">
+                            <input 
+                                type="text" 
+                                value={otp}
+                                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                placeholder="000000"
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-6 text-white placeholder:text-white/5 focus:outline-none focus:border-accent-gold/50 focus:bg-white/[0.08] transition-all text-4xl font-mono tracking-[0.4em] text-center"
+                                autoFocus
+                                maxLength={6}
+                            />
+                            
+                            <div className="flex flex-col gap-4">
+                                <button 
+                                    type="submit"
+                                    disabled={loading || otp.length !== 6}
+                                    className="w-full py-5 bg-accent-gold text-folio-black rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-white transition-all shadow-2xl shadow-accent-gold/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {loading ? <Loader2 className="animate-spin" /> : t.onboarding.verify}
+                                </button>
+
+                                <button 
+                                    type="button"
+                                    onClick={handleEmailSubmit}
+                                    disabled={loading}
+                                    className="w-full py-2 text-text-desc hover:text-white text-[10px] font-black uppercase tracking-[0.2em] transition-colors"
+                                >
+                                    {t.onboarding.resend}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                )}
+
+                {/* Note (Only visible on social step) */}
+                {authStep === 'social' && (
+                    <div className="mt-6 flex items-center gap-3 bg-white/5 p-4 rounded-xl border border-white/5">
+                        <ShieldCheck className="text-accent-gold shrink-0" size={18} />
+                        <p className="text-[10px] text-text-desc leading-tight" dangerouslySetInnerHTML={{ __html: t.onboarding.guestNote.replace('<bold>', '<span class="text-white font-bold">').replace('</bold>', '</span>') }} />
                     </div>
-
-                    <button 
-                        onClick={onContinueAsGuest}
-                        className="w-full py-4 rounded-2xl text-text-desc hover:text-white font-bold uppercase tracking-widest text-[10px] transition-colors border border-dashed border-white/10 hover:border-white/30"
-                    >
-                        {t.onboarding.guest}
-                    </button>
-                </div>
-
-                <div className="flex items-center gap-3 bg-white/5 p-4 rounded-xl border border-white/5">
-                    <ShieldCheck className="text-accent-gold shrink-0" size={18} />
-                    <p className="text-[10px] text-text-desc leading-tight" dangerouslySetInnerHTML={{ __html: t.onboarding.guestNote.replace('<bold>', '<span class="text-white font-bold">').replace('</bold>', '</span>') }} />
-                </div>
+                )}
             </div>
 
             {/* Close Button */}
             <button 
                 onClick={onClose}
-                className="absolute top-6 right-6 p-2 text-text-desc hover:text-white transition-colors"
+                className="absolute top-6 right-6 p-2 text-text-desc hover:text-white transition-colors z-10"
             >
                 <X size={24} />
             </button>

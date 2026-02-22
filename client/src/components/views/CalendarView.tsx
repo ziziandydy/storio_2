@@ -31,8 +31,8 @@ export default function CalendarView({ stories }: CalendarViewProps) {
   const { t, locale } = useTranslation();
   const dateLocale = locale === 'zh-TW' ? zhTW : enUS;
   
-  // Initial state: current month and previous month
-  const [months, setMonths] = useState<Date[]>([subMonths(new Date(), 1), new Date()]);
+  // Initial state: current month and one future month for space
+  const [months, setMonths] = useState<Date[]>([new Date(), addMonths(new Date(), 1)]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   
   const containerRef = useRef<HTMLDivElement>(null);
@@ -66,29 +66,21 @@ export default function CalendarView({ stories }: CalendarViewProps) {
         // Prepend 2 months
         return [subMonths(first, 2), subMonths(first, 1), ...prev];
       } else {
-        const last = prev[prev.length - 1];
-        
-        // Check if we are already at the current month or future
-        // If last month is same as current month (or later), do not load more
-        if (isSameMonth(last, new Date()) || last > new Date()) {
-            return prev;
-        }
-
-        isFetchingRef.current = true;
-        setTimeout(() => { isFetchingRef.current = false; }, 500);
-
-        // Append 2 months
-        return [...prev, addMonths(last, 1), addMonths(last, 2)];
+        // Disable auto-loading further into the future
+        return prev;
       }
     });
   }, []);
 
-  // Initial scroll to bottom (current month)
+  // Initial scroll to Current Month
   useEffect(() => {
-    // Small timeout to ensure DOM is ready
     const timer = setTimeout(() => {
-      bottomSentinelRef.current?.scrollIntoView({ behavior: 'instant', block: 'end' });
-    }, 50);
+      const currentMonthId = `month-${format(new Date(), 'yyyy-MM')}`;
+      const element = document.getElementById(currentMonthId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'instant', block: 'start' });
+      }
+    }, 100);
     return () => clearTimeout(timer);
   }, []);
 
@@ -249,6 +241,8 @@ export default function CalendarView({ stories }: CalendarViewProps) {
 
 // Sub-component for individual month grid
 function MonthGrid({ month, storiesByDate, onDayClick, locale }: { month: Date, storiesByDate: Record<string, Story[]>, onDayClick: (d: Date, s: Story[]) => void, locale: any }) {
+    const isFuture = month > new Date() && !isSameMonth(month, new Date());
+
     const days = useMemo(() => {
         const start = startOfWeek(startOfMonth(month));
         const end = endOfWeek(endOfMonth(month));
@@ -259,8 +253,12 @@ function MonthGrid({ month, storiesByDate, onDayClick, locale }: { month: Date, 
       ? ['日', '一', '二', '三', '四', '五', '六']
       : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+    if (isFuture) {
+        return <div id={`month-${format(month, 'yyyy-MM')}`} className="h-[60vh] w-full" />;
+    }
+
     return (
-        <div>
+        <div id={`month-${format(month, 'yyyy-MM')}`}>
              {/* Header */}
             <div className="flex items-center justify-between mb-4 px-2 sticky top-16 z-20 bg-folio-black/95 backdrop-blur py-2 border-b border-white/5">
                 <h2 className="text-xl font-serif font-bold text-accent-gold capitalize">
