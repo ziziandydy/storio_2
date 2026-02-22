@@ -32,12 +32,17 @@ async def trending_books(language: str = Depends(get_language)):
         return await SearchService.get_trending_books(client, language)
 
 @router.get("/details/{media_type}/{external_id}", response_model=ItemDetailResponse)
-async def get_details(media_type: str, external_id: str, language: str = Depends(get_language)):
+async def get_details(
+    media_type: str, 
+    external_id: str, 
+    language: str = Depends(get_language),
+    region: str = Query("TW", description="ISO 3166-1 region code for streaming providers")
+):
     """
     Get detailed information for a specific movie or book.
     """
     async with httpx.AsyncClient() as client:
-        details = await SearchService.get_item_details(client, media_type, external_id, language)
+        details = await SearchService.get_item_details(client, media_type, external_id, language, region)
         if not details:
             raise HTTPException(status_code=404, detail="Item details not found")
         return details

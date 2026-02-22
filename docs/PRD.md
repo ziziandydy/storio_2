@@ -73,6 +73,7 @@
 *   **Bottom-Focused Design**: 
     *   搜尋框與過濾器固定於底部。
     *   **Manual Trigger**: 輸入時不自動搜尋，需按下 Enter (自動收起鍵盤) 或點擊搜尋圖示才觸發。
+    *   **UX Optimization**: 搜尋按鈕移至輸入框右側 (使用 ArrowUp Icon)，與清除按鈕整合，提升單手操作性。解決了 CJK 輸入法重複問題。
     *   **Filters**: Movies / Series (合併顯示), Books。
 *   **API 整合**:
     *   **Movies/Series**: 整合 TMDB API (雙重搜尋)。
@@ -86,7 +87,13 @@
 *   **Content**:
     *   顯示 Cast (演員/作者群)。
     *   顯示 Overview (支援展開)。
-    *   **Related Media**: 預告片與劇照區塊，移至左側欄位最下方 (Overview 之後)。
+    *   **The Dossier (檔案卷宗)**: 2x2 數據網格。
+        *   Movie/Series: Box Office, Studio, Origin, Language.
+        *   Book: ISBN (可複製), Publisher, Pages, Language.
+    *   **Where to Watch/Read**:
+        *   Movie/Series: 串流與租借平台 Logo (TMDB Provider)。
+        *   Book: Google Play 購買連結 (若可販售)。
+    *   **Related Media**: 預告片與劇照區塊，移至左側欄位最下方 (Overview 之後)。書籍包含 "Read Sample" 與多尺寸封面。
 *   **Actions**:
     *   Sticky "Add" 按鈕 (或 "Edit" 若已收藏)。
     *   若已收藏，顯示個人的評分與心得卡片。

@@ -51,10 +51,25 @@ class MediaAsset(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
 
+class StreamingProvider(BaseModel):
+    provider_name: str
+    logo_path: str
+    type: str # 'flatrate', 'rent', 'buy'
+
 class ItemDetailResponse(StoryBase):
     overview: Optional[str] = None
     synopsis: Optional[str] = None
     genres: List[str] = []
+    status: Optional[str] = None # Released, Planned, etc.
+    revenue: Optional[int] = None
+    budget: Optional[int] = None
+    original_language: Optional[str] = None
+    # Book specific fields
+    isbn: Optional[str] = None
+    subtitle: Optional[str] = None
+    page_count: Optional[int] = None
+    
+    streaming_providers: List[StreamingProvider] = []
     reviews: List[Review] = []
     top_reviews: List[Review] = []
     cast: List[str] = []
@@ -62,7 +77,7 @@ class ItemDetailResponse(StoryBase):
     authors: List[str] = []
     publisher: Optional[str] = None
     production_companies: List[str] = []
-    origin_country: Optional[str] = None
+    origin_country: Optional[str] = None # ISO Code
     original_language: Optional[str] = None
     spoken_languages: List[str] = []
     quotes: List[str] = []

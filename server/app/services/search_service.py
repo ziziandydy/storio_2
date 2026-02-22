@@ -61,14 +61,14 @@ class SearchService:
     # --- Public Detail Method ---
 
     @staticmethod
-    async def get_item_details(client: httpx.AsyncClient, media_type: str, external_id: str, language: str = "zh-TW") -> Optional[ItemDetailResponse]:
+    async def get_item_details(client: httpx.AsyncClient, media_type: str, external_id: str, language: str = "zh-TW", region: str = "TW") -> Optional[ItemDetailResponse]:
         """
         Fetch full details for an item, including synopsis and reviews.
         """
         if media_type == "movie":
-            return await SearchService._fetch_tmdb_details(client, external_id, is_tv=False, language=language)
+            return await SearchService._fetch_tmdb_details(client, external_id, is_tv=False, language=language, region=region)
         elif media_type == "tv":
-            return await SearchService._fetch_tmdb_details(client, external_id, is_tv=True, language=language)
+            return await SearchService._fetch_tmdb_details(client, external_id, is_tv=True, language=language, region=region)
         elif media_type == "book":
             return await SearchService._fetch_gbooks_details(client, external_id, language=language)
         return None
@@ -96,10 +96,10 @@ class SearchService:
     # --- Internal Fetchers (Source of Truth) ---
 
     @staticmethod
-    async def _fetch_tmdb_details(client: httpx.AsyncClient, external_id: str, is_tv: bool = False, language: str = "zh-TW") -> Optional[ItemDetailResponse]:
+    async def _fetch_tmdb_details(client: httpx.AsyncClient, external_id: str, is_tv: bool = False, language: str = "zh-TW", region: str = "TW") -> Optional[ItemDetailResponse]:
         headers = {}
-        # Append credits, reviews, videos, and images
-        params = {"language": language, "append_to_response": "credits,reviews,videos,images"}
+        # Append credits, reviews, videos, images AND watch/providers
+        params = {"language": language, "append_to_response": "credits,reviews,videos,images,watch/providers"}
         
         if settings.TMDB_ACCESS_TOKEN:
             headers["Authorization"] = f"Bearer {settings.TMDB_ACCESS_TOKEN}"
@@ -142,6 +142,24 @@ class SearchService:
             spoken_langs = [l.get("english_name") or l.get("name") for l in data.get("spoken_languages", [])]
             production_companies = [c.get("name") for c in data.get("production_companies", [])]
 
+            # Streaming Providers
+            streaming_providers = []
+            if "watch/providers" in data and "results" in data["watch/providers"]:
+                # Get providers for the requested region (default TW)
+                region_data = data["watch/providers"]["results"].get(region)
+                if region_data:
+                    from app.schemas.item import StreamingProvider
+                    # Process flatrate (subscription), rent, and buy
+                    for p_type in ['flatrate', 'rent', 'buy']:
+                        if p_type in region_data:
+                            for provider in region_data[p_type]:
+                                if provider.get("logo_path"):
+                                    streaming_providers.append(StreamingProvider(
+                                        provider_name=provider.get("provider_name"),
+                                        logo_path=f"https://image.tmdb.org/t/p/original{provider.get('logo_path')}",
+                                        type=p_type
+                                    ))
+            
             # Reviews
             reviews = []
             for r in data.get("reviews", {}).get("results", [])[:3]:
@@ -204,11 +222,15 @@ class SearchService:
                 source="tmdb",
                 synopsis=data.get("overview"),
                 overview=data.get("overview"),
+                status=data.get("status"),
+                revenue=data.get("revenue"),
+                budget=data.get("budget"),
+                original_language=original_lang,
+                streaming_providers=streaming_providers,
                 cast=cast_list,
                 directors=directors,
                 production_companies=production_companies,
                 origin_country=country_str,
-                original_language=original_lang,
                 spoken_languages=spoken_langs,
                 quotes=[],
                 related_media=media_assets,
@@ -242,10 +264,27 @@ class SearchService:
 
             poster = SearchService._optimize_gb_cover(info.get("imageLinks", {}))
             
-            # Media Assets
+            # Media Assets (Covers)
             media_assets = []
+            image_links = info.get("imageLinks", {})
+            if image_links:
+                # Add various sizes as image assets
+                for size in ['extraLarge', 'large', 'medium', 'small', 'thumbnail']:
+                    if url := image_links.get(size):
+                        # Optimize URL
+                        clean_url = url.replace("&edge=curl", "").replace("http://", "https://")
+                        if "zoom=" in clean_url:
+                            clean_url = re.sub(r'zoom=[0-9]', 'zoom=0', clean_url) # zoom=0 often gives best quality relative to size
+                        
+                        media_assets.append(MediaAsset(
+                            type="image",
+                            url=clean_url,
+                            thumbnail=clean_url,
+                            title=f"Cover ({size})"
+                        ))
+
             if access_info.get("webReaderLink"):
-                media_assets.append(MediaAsset(
+                media_assets.insert(0, MediaAsset(
                     type="link",
                     url=access_info.get("webReaderLink"),
                     title="Read Sample"
@@ -253,8 +292,35 @@ class SearchService:
             
             description = SearchService._clean_html(info.get("description"))
             
+            # Streaming Providers (Where to Buy)
+            streaming_providers = []
+            sale_info = data.get("saleInfo", {})
+            if sale_info.get("saleability") == "FOR_SALE" and sale_info.get("buyLink"):
+                from app.schemas.item import StreamingProvider
+                
+                price = ""
+                if list_price := sale_info.get("listPrice"):
+                    price = f" {list_price.get('amount')} {list_price.get('currencyCode')}"
+                
+                streaming_providers.append(StreamingProvider(
+                    provider_name=f"Google Play{price}",
+                    logo_path="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Google_Play_Books_icon.svg/512px-Google_Play_Books_icon.svg.png", # Stable PNG
+                    type="buy"
+                ))
+
+            # Extract ISBN-13
+            isbn = None
+            for ident in info.get("industryIdentifiers", []):
+                if ident.get("type") == "ISBN_13":
+                    isbn = ident.get("identifier")
+                    break
+            if not isbn and info.get("industryIdentifiers"):
+                 # Fallback to whatever is first
+                 isbn = info.get("industryIdentifiers")[0].get("identifier")
+
             return ItemDetailResponse(
                 title=info.get("title", "Unknown"),
+                subtitle=info.get("subtitle"),
                 media_type="book",
                 year=SearchService._extract_year(info.get("publishedDate")),
                 external_id=external_id,
@@ -270,8 +336,11 @@ class SearchService:
                 spoken_languages=[info.get("language")] if info.get("language") else [],
                 quotes=[],
                 related_media=media_assets,
+                streaming_providers=streaming_providers,
                 runtime=f"{info.get('pageCount', '?')} pages",
+                page_count=info.get("pageCount"),
                 genres=info.get("categories", []),
+                isbn=isbn,
                 public_rating=info.get("averageRating"),
                 top_reviews=[],
                 reviews=[]

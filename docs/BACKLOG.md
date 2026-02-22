@@ -26,9 +26,14 @@ Captured following UAT on 2026-02-21.
 10. **Search**:
     - Implemented manual search trigger (Enter/Click).
     - Fixed keyboard dismissal on mobile.
+    - Optimized input layout (Right-side submit button, uncontrolled input for CJK).
 11. **AI**:
     - Added OpenAI fallback for suggestions.
     - Fixed suggestions rendering logic (pass synopsis).
+12. **Book Details**:
+    - Added ISBN (copyable), Publisher, Pages to Dossier.
+    - Added "Where to Read" section (Google Play link).
+    - Added "Read Sample" and cover thumbnails to Media section.
 
 ## 🚀 SPRINT 4: Social & Identity (Current)
 - [ ] **Share Memory Card**: Implement `html-to-image` generation for single story sharing (Instagram Story format).
