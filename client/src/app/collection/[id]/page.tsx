@@ -11,9 +11,11 @@ import { getApiUrl } from '@/lib/api';
 import { ItemDetail } from '@/types';
 import StoryDetailsView from '@/components/StoryDetailsView';
 import RateAndReflectForm from '@/components/RateAndReflectForm';
+import ShareModal from '@/components/ShareModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useSettingsStore } from '@/store/settingsStore';
+import { Share2 } from 'lucide-react';
 
 interface CollectionItem {
   id: string;
@@ -26,6 +28,7 @@ interface CollectionItem {
   notes?: string;
   created_at: string;
   viewing_number: number;
+  year?: number;
 }
 
 export default function CollectionDetailPage() {
@@ -46,6 +49,7 @@ export default function CollectionDetailPage() {
   // UI States
   const [isEditing, setIsEditing] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [detailsItem, setDetailsItem] = useState<ItemDetail | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
@@ -194,6 +198,13 @@ export default function CollectionDetailPage() {
              <div className="text-[10px] font-black tracking-widest uppercase text-accent-gold/60 border border-accent-gold/20 px-3 py-1 rounded-full">
                 {getOrdinal(item.viewing_number).toUpperCase()} {t.collection.card.view}
              </div>
+             <button 
+                onClick={() => setIsShareModalOpen(true)}
+                className="flex items-center gap-2 px-3 py-1 rounded-full bg-accent-gold text-folio-black text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all shadow-[0_0_15px_rgba(233,108,38,0.4)] hover:scale-105 active:scale-95"
+             >
+                <Share2 size={12} />
+                {t.details.share}
+             </button>
           </div>
         </div>
       </header>
@@ -341,7 +352,8 @@ export default function CollectionDetailPage() {
                         </div>
 
                         {/* Card Content - Lined Paper Effect */}
-                        <div className={`p-10 pt-16 flex-grow flex flex-col ${item.notes ? 'gap-6' : 'gap-4 justify-center'}`}>
+                        <div className={`p-10 pt-16 flex-grow flex flex-col ${item.notes ? 'gap-6' : 'gap-4 justify-center'} relative`}>
+                            
                             <div className="flex items-center gap-3 opacity-40 mb-2">
                                 <MessageSquarePlus size={16} className="text-accent-gold" />
                                 <span className="text-[10px] font-bold uppercase tracking-[0.3em]">Personal Archive</span>
@@ -526,6 +538,25 @@ export default function CollectionDetailPage() {
             </div>
         )}
       </AnimatePresence>
+
+      {/* Share Modal */}
+      {item && (
+        <ShareModal 
+            isOpen={isShareModalOpen}
+            onClose={() => setIsShareModalOpen(false)}
+            title={t.details.share}
+            fileName={`storio-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
+            item={{
+                title: item.title,
+                year: item.year || new Date(item.created_at).getFullYear(),
+                posterPath: item.poster_path || '',
+                rating: item.rating / 2, // 10分制轉為5星制
+                reflection: item.notes,
+                type: item.media_type,
+                page_count: (item as any).page_count // 可能存在於 metadata 中
+            }}
+        />
+      )}
     </div>
   );
 }
