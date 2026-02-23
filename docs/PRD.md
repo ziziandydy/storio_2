@@ -67,11 +67,23 @@
 
 ### 3.4 詳情頁 (Details)
 *   **Backdrop-First Design**: 頂部大面積背景海報，文字資訊位於海報下方黑色區塊。
-*   **Social Sharing (Memory Card)**:
-    *   **功能**: 將單一作品轉化為精美分享圖。
-    *   **觸發**: 個人心得卡片右上角的分享圖示。
-    *   **規格**: 9:16 PNG 格式（Instagram Story 優化）。
-    *   **狀態**: 已實作，待 UAT 驗證。
+*   **Social Sharing & Visual Templates (New Feature)**:
+    *   **核心功能**: 將單一作品轉化為高度客製化的精美分享圖 (PNG)，支援原生系統分享 (Web Share API) 與下載。
+    *   **互動模式**: 
+        *   點擊詳情頁分享按鈕開啟全螢幕預覽。
+        *   底部抽屜 (Drawer) 提供模板切換、比例調整 (9:16, 4:5, 1:1) 與內容開關。
+        *   點擊預覽區域時，抽屜自動收合，方便檢視完整視覺效果。
+    *   **視覺模板 (Templates)**:
+        *   **Default (Blur)**: 經典高斯模糊背景，搭配懸浮卡片與統一的「印章評分 (Stamp Rating)」。
+        *   **Pure (Image)**: 極簡滿版海報，資訊與印章直接疊加 (Overlay)，強調視覺衝擊力。
+        *   **Ticket (Cinema)**: 復古電影票根設計，帶有虛線打孔細節，移除多餘的 QR Code 以保持俐落。
+        *   **Retro TV (CRT)**: 復古 CRT 螢幕外框，帶有掃描線與螢幕反光效果。
+            *   針對 "TV" 類型顯示 "TV Series" 標籤。
+            *   海報採用 `object-contain` 確保完整顯示不被裁切。
+        *   **3D Book (Hardcover)**: 擬真 3D 精裝書模型。
+            *   **環境**: 置於深色木紋書櫃上，帶有柔和頂部光源與陰影。
+            *   **細節**: 固定書背寬度 (120px) 展現厚實感，亮白色頁面與紙張紋理，書背顯示縮小版封面與標題。
+    *   **統一語彙**: 所有模板皆採用統一設計的 **Stamp Rating (印章評分)** 元件，以傾斜角度與粗襯線字體呈現，強化「審核/收藏」的儀式感。
 
 ### 3.5 收藏與心得 (Add to Folio Flow)
 *   **Guest Data Migration (Sprint 4)**:

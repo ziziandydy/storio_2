@@ -243,7 +243,7 @@ export default function CalendarView({ stories }: CalendarViewProps) {
                         )}
                       </div>
                       {story.notes && (
-                        <p className="text-xs text-text-desc mt-2 line-clamp-2 italic opacity-70">"{story.notes}"</p>
+                        <p className="text-xs text-text-desc mt-2 line-clamp-2 italic opacity-70">&quot;{story.notes}&quot;</p>
                       )}
                     </div>
                   </div>

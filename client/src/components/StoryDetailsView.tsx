@@ -363,7 +363,7 @@ export default function StoryDetailsView({ item, showAddButton = true, onAddClic
                   <div>
                     <div className="text-[10px] uppercase tracking-[0.2em] text-text-desc font-bold mb-2 opacity-50">{t.details.reflection}</div>
                     <p className="text-sm text-text-desc italic leading-relaxed">
-                      "{item.notes || 'No reflection inscribed yet.'}"
+                      &quot;{item.notes || 'No reflection inscribed yet.'}&quot;
                     </p>
                   </div>
                 </div>

@@ -226,7 +226,7 @@ export default function RateAndReflectForm({
                         </div>
                     </div>
                     <div className="p-4">
-                        <p className="text-sm text-gray-200 leading-relaxed italic">"{refinedProposal}"</p>
+                        <p className="text-sm text-gray-200 leading-relaxed italic">&quot;{refinedProposal}&quot;</p>
                     </div>
                 </motion.div>
                 )}

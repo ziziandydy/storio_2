@@ -175,7 +175,7 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
                 <Search size={24} />
               </div>
               <p className="text-xs text-text-desc font-medium leading-relaxed group-hover:text-text-primary">
-                Not what you're looking for?
+Not what you&apos;re looking for?
               </p>
               <span className="text-[10px] uppercase font-bold tracking-widest text-accent-gold border-b border-accent-gold/30 pb-0.5">
                 Find Stories

@@ -92,7 +92,7 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-2 font-serif">Successfully add to storio</h2>
                   <p className="text-text-desc text-sm">
-                    <span className="text-accent-gold font-bold">"{title}"</span> {t.modals.successMessage}
+                    <span className="text-accent-gold font-bold">&quot;{title}&quot;</span> {t.modals.successMessage}
                   </p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
@@ -123,7 +123,7 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-4 font-serif">Already in your Folio</h2>
                   <p className="text-text-desc text-sm leading-relaxed">
-                    You've already curated <span className="text-white font-bold">"{title}"</span>. 
+                    You&apos;ve already curated <span className="text-white font-bold">&quot;{title}&quot;</span>. 
                     Are you logging a <span className="text-accent-gold font-bold">re-watch / re-read</span>?
                   </p>
                 </div>

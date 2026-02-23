@@ -34,15 +34,28 @@
     - 在檔案區加入 ISBN (可複製)、出版商、頁數資訊。
     - 加入「閱讀指南」(Google Play 連結)。
     - 在媒體區加入「試閱」與封面縮圖。
+13. **深度客製化分享 (Share & Export)**:
+    - 實作 `ShareModal` 提供即時預覽、比例切換 (9:16, 4:5, 1:1) 與內容開關。
+    - **視覺模板完成**:
+        - **Default**: 模糊背景 + 懸浮卡片。
+        - **Pure**: 極簡滿版海報 Overlay。
+        - **Ticket**: 復古電影票根 (移除 QR Code，優化佈局)。
+        - **Retro TV**: CRT 螢幕效果，支援 "TV Series" 標籤與完整海報顯示。
+        - **3D Book**: 書櫃場景、厚實書背 (120px)、亮白頁面細節。
+    - **統一設計**: 全模板導入 **Stamp Rating (印章評分)** 元件。
+    - **原生分享**: 整合 Web Share API，支援 iOS/Android 原生分享選單。
+14. **測試強韌性 (Test Robustness)**:
+    - 重構 Playwright 測試 (`guest_limit`, `search_and_collect`) 以支援多語系環境與 UI 動畫等待。
 
-## 🚀 SPRINT 5: 深度客製化分享 (目前進行中)
-- [ ] **分享控制中心**: 實作 `ShareModal` 提供即時預覽、比例切換 (9:16, 4:5, 1:1) 與內容開關。
-- [ ] **主視覺模板**:
-    - [ ] **預設模糊 (Default Blur)**: 高品質的高斯模糊背景搭配懸浮卡片。
-    - [ ] **純海報 (Pure Image)**: 極簡的全海報輸出。
-    - [ ] **電影票根 (Cinema Ticket)**: 帶有打孔虛線的復古票根設計。
-    - [ ] **3D立體書 (3D Paperback)**: 依據頁數動態調整書背厚度的 3D 渲染書本。
-- [ ] **原生分享 (Native Sharing)**: 整合 Web Share API，在手機上實現無縫的系統級分享。
+## 🚀 SPRINT 5: 深度客製化分享 (已完成大部分核心功能)
+- [x] **分享控制中心**: 實作 `ShareModal` 提供即時預覽、比例切換 (9:16, 4:5, 1:1) 與內容開關。
+- [x] **主視覺模板**:
+    - [x] **預設模糊 (Default Blur)**
+    - [x] **純海報 (Pure Image)**
+    - [x] **電影票根 (Cinema Ticket)**
+    - [x] **3D立體書 (3D Paperback)**: 包含書櫃環境與厚度優化。
+    - [x] **復古電視 (Retro TV)**: 新增模板。
+- [x] **原生分享 (Native Sharing)**: 整合 Web Share API。
 
 ## 📅 SPRINT 6: 月度回顧與社交 (Recap & Social)
 - [ ] **月度回顧**: 實作行事曆視圖的總結分享 (Instagram 貼文格式)。

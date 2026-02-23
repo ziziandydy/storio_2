@@ -93,7 +93,7 @@ export default function MemoryCardTemplate({
                     {showReflection && reflection && (
                         <div className="relative pl-4 border-l-2 border-accent-gold/50">
                             <p className="text-xs font-medium text-white/90 leading-relaxed italic line-clamp-3 drop-shadow-md">
-                                "{reflection}"
+                                &quot;{reflection}&quot;
                             </p>
                         </div>
                     )}
@@ -166,7 +166,7 @@ export default function MemoryCardTemplate({
                 {showReflection && reflection && (
                     <div className="bg-black/40 border border-white/10 p-3 rounded-lg backdrop-blur-sm w-full">
                         <p className="text-[10px] text-text-desc leading-relaxed line-clamp-3">
-                            "{reflection}"
+                            &quot;{reflection}&quot;
                         </p>
                     </div>
                 )}
@@ -222,7 +222,7 @@ export default function MemoryCardTemplate({
                         )}
                         {showReflection && reflection && (
                             <p className="text-[10px] leading-relaxed italic border-l-2 border-folio-black pl-3 py-1 font-sans font-medium line-clamp-3 text-center w-full">
-                                "{reflection}"
+                                &quot;{reflection}&quot;
                             </p>
                         )}
                     </div>
@@ -249,140 +249,163 @@ export default function MemoryCardTemplate({
 
   // --- 3D Book Template ---
   if (selectedTemplate === '3d') {
-    // Standardized spine width for aesthetic consistency
-    const spineWidth = 120;
+    // 3:4 Aspect Ratio (e.g. 240px x 320px)
+    const bookWidth = 240;
+    const bookHeight = 320;
+    // Thickness ~18-20% of width
+    const spineWidth = 45; 
     
     return (
-        <div style={currentDim} className="bg-[#1a1a1a] flex flex-col items-center justify-center overflow-hidden relative font-serif">
-            {/* Bookshelf Background Environment */}
+        <div style={currentDim} className="bg-[#1a1a1a] flex flex-col items-center justify-center overflow-hidden relative font-serif perspective-[2000px]">
+            {/* Environment / Background */}
             <div className="absolute inset-0 bg-[#120f0d]">
-                {/* Wall/Back of shelf */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05),transparent_70%)] opacity-50" />
-                <div className="absolute inset-0" style={{ 
-                    backgroundImage: 'repeating-linear-gradient(90deg, rgba(0,0,0,0.2) 0px, rgba(0,0,0,0.2) 1px, transparent 1px, transparent 40px)',
-                    opacity: 0.1 
-                }} />
+                {/* Subtle spotlight from top-left */}
+                <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_60%)] pointer-events-none" />
                 
-                {/* The Shelf Surface */}
-                <div className="absolute bottom-0 inset-x-0 h-32 bg-[#2d241e] shadow-[0_-5px_20px_rgba(0,0,0,0.5)] border-t border-[#3e322a]">
-                    <div className="absolute inset-0 opacity-20" style={{ 
-                        backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' viewBox=\'0 0 100 100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100\' height=\'100\' filter=\'url(%23noise)\' opacity=\'0.5\'/%3E%3C/svg%3E")',
-                    }} />
-                    {/* Shadow cast by book on shelf */}
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-8 bg-black/60 blur-xl rounded-full transform scale-x-150 translate-y-2" />
-                </div>
+                {/* Floor Surface */}
+                <div className="absolute bottom-0 inset-x-0 h-[40%] bg-gradient-to-t from-[#000000] to-[#1a1614] opacity-80" />
             </div>
 
-            {/* Lighting Spot */}
-            <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-orange-100/10 to-transparent pointer-events-none z-10 blur-3xl" />
-            
             {/* 3D Book Container */}
-            <div className="relative z-20 perspective-[1200px] mb-12">
+            {/* Pitch: -10deg (tilt back), Yaw: 20deg (rotate right), Roll: 0 */}
+            <div 
+                className="relative z-20 transform-style-3d transition-transform duration-500 ease-out"
+                style={{ 
+                    width: `${bookWidth}px`, 
+                    height: `${bookHeight}px`,
+                    transform: 'rotateX(-10deg) rotateY(20deg)',
+                    marginTop: '-20px' // Center visually
+                }}
+            >
+                {/* --- Front Cover --- */}
                 <div 
-                    className="relative transform-style-3d transition-transform duration-500 ease-out hover:rotate-y-[-15deg] hover:rotate-x-[5deg]"
-                    style={{ 
-                        width: '220px', 
-                        height: '340px', 
-                        transform: 'rotateY(-25deg) rotateX(5deg) rotateZ(-2deg)' 
+                    className="absolute inset-0 z-30 rounded-[3px] bg-[#1a1a1a] backface-hidden"
+                    style={{
+                        transform: `translateZ(${spineWidth / 2}px)`,
+                        boxShadow: 'inset 4px 0 10px rgba(0,0,0,0.5), inset -1px 0 2px rgba(255,255,255,0.1)' // Lighting cues
                     }}
                 >
-                    {/* Front Cover */}
-                    <div className="absolute inset-0 z-30 rounded-[2px] overflow-hidden bg-[#1a1a1a] shadow-[-2px_0_5px_rgba(0,0,0,0.5)]">
-                        <img src={posterPath} alt={title} className="w-full h-full object-cover" crossOrigin="anonymous" />
-                        
-                        {/* Realistic Lighting/Sheen on cover */}
-                        <div className="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-white/10 mix-blend-overlay" />
-                        <div className="absolute inset-y-0 left-0 w-4 bg-gradient-to-r from-black/60 to-transparent opacity-80" /> {/* Spine crease shadow */}
-                        
-                         {/* Hardcover indentation line */}
-                        <div className="absolute left-3 inset-y-0 w-[1px] bg-white/20 opacity-30 mix-blend-overlay" />
-                    </div>
+                    <img src={posterPath} alt={title} className="w-full h-full object-cover rounded-[3px]" crossOrigin="anonymous" />
                     
-                    {/* Spine */}
-                    <div 
-                        className="absolute top-0 right-full h-full bg-[#111] origin-right flex flex-col items-center justify-center overflow-hidden border-l border-white/5"
-                        style={{ 
-                            width: `${spineWidth}px`, 
-                            transform: 'rotateY(-90deg)',
-                        }}
-                    >
-                        {/* Spine texture/color extracted from poster (approximated dark) */}
-                         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-black/80 z-10" />
-                         <img src={posterPath} alt="" className="absolute w-full h-full object-cover blur-sm brightness-50" crossOrigin="anonymous" />
-                         
-                         {/* Spine Text */}
-                        <div className="relative z-20 w-full h-full flex flex-col items-center justify-between py-6">
-                            <span className="text-[8px] font-black text-accent-gold/60 uppercase tracking-widest rotate-90 whitespace-nowrap">Storio</span>
-                            <span className="text-[10px] font-bold text-white/90 uppercase tracking-wider rotate-90 line-clamp-2 w-48 text-center" style={{ textShadow: '0 1px 2px black' }}>{title}</span>
-                            <span className="text-[8px] font-mono text-white/40 rotate-90">{year}</span>
-                        </div>
+                    {/* Cover Lighting/Sheen */}
+                    <div className="absolute inset-0 bg-gradient-to-tr from-black/60 via-transparent to-white/10 mix-blend-overlay pointer-events-none" />
+                    {/* Spine Crease (Indentation) */}
+                    <div className="absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-black/40 to-transparent opacity-60" />
+                </div>
+                
+                {/* --- Spine --- */}
+                <div 
+                    className="absolute top-0 left-0 h-full bg-[#111] flex flex-col items-center justify-center overflow-hidden"
+                    style={{ 
+                        width: `${spineWidth}px`, 
+                        transform: `rotateY(-90deg) translateZ(${spineWidth / 2}px)`, // Positioned at left edge
+                        transformOrigin: 'center'
+                    }}
+                >
+                    {/* Spine Texture */}
+                     <div className="absolute inset-0 bg-[#0d0d0d]">
+                        <img src={posterPath} alt="" className="w-full h-full object-cover blur-sm brightness-[0.4]" crossOrigin="anonymous" />
+                     </div>
+                     
+                     {/* Spine Text */}
+                    <div className="relative z-20 w-full h-full flex flex-col items-center justify-between py-6">
+                        <span className="text-[8px] font-black text-accent-gold/60 uppercase tracking-widest rotate-90 whitespace-nowrap">Storio</span>
+                        <span className="text-[10px] font-bold text-white/90 uppercase tracking-wider rotate-90 line-clamp-2 w-32 text-center" style={{ textShadow: '0 1px 2px black' }}>{title}</span>
+                        <span className="text-[8px] font-mono text-white/40 rotate-90">{year}</span>
                     </div>
 
-                    {/* Back Cover (Visible slightly) */}
-                    <div 
-                        className="absolute top-0 left-0 h-full w-full bg-[#1a1a1a] origin-left -z-10"
-                        style={{ 
-                            transform: `translateZ(-${spineWidth}px)`,
-                            boxShadow: '-10px 10px 30px rgba(0,0,0,0.8)'
-                        }}
-                    >
-                        <div className="absolute inset-0 bg-gradient-to-l from-black/80 to-transparent" />
-                    </div>
+                    {/* Spine Rounding/Highlights */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-white/5 to-black/80 pointer-events-none" />
+                </div>
 
-                    {/* Pages (Top) */}
-                    <div 
-                        className="absolute top-0 left-0 w-full bg-[#fdfdfd] origin-top"
-                        style={{ 
-                            height: `${spineWidth - 4}px`, 
-                            transform: `translateY(2px) translateZ(-${spineWidth - 2}px) rotateX(90deg)`,
-                            backgroundImage: 'repeating-linear-gradient(90deg, #fdfdfd, #fdfdfd 1px, #f0f0f0 2px, #f0f0f0 3px)'
-                        }}
-                    />
+                {/* --- Back Cover --- */}
+                <div 
+                    className="absolute top-0 left-0 h-full w-full bg-[#151515] rounded-[3px]"
+                    style={{ 
+                        transform: `translateZ(-${spineWidth / 2}px) rotateY(180deg)`,
+                        boxShadow: 'inset 0 0 20px rgba(0,0,0,0.8)'
+                    }}
+                >
+                     {/* Back cover usually plain or dark */}
+                     <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-black opacity-50" />
+                </div>
 
-                    {/* Pages (Right) */}
-                    <div 
-                        className="absolute top-[2px] right-[2px] h-[calc(100%-4px)] bg-[#fdfdfd] origin-right"
-                        style={{ 
-                            width: `${spineWidth - 4}px`, 
-                            transform: `translateZ(-2px) rotateY(90deg)`,
-                            backgroundImage: 'repeating-linear-gradient(to bottom, #fdfdfd, #fdfdfd 1px, #f0f0f0 2px, #f0f0f0 3px)',
-                            boxShadow: 'inset 5px 0 10px -5px rgba(0,0,0,0.2)'
-                        }}
-                    />
+                {/* --- Pages Block (The "Block" of paper) --- */}
+                {/* We create a box slightly smaller than the covers to simulate overhang */}
+                {/* Right Edge of Pages */}
+                <div 
+                    className="absolute top-[3px] right-[4px] bottom-[3px] bg-[#fdfdfd] origin-right"
+                    style={{ 
+                        width: `${spineWidth - 2}px`, // Slightly thinner than spine
+                        transform: `translateZ(${spineWidth/2 - 1}px) rotateY(90deg) translateZ(${-2}px)`, // Push back slightly
+                        backgroundImage: 'repeating-linear-gradient(to right, #f8f8f8, #f8f8f8 1px, #e8e8e8 1px, #e8e8e8 2px)', // Vertical page lines on side
+                        boxShadow: 'inset 5px 0 15px -5px rgba(0,0,0,0.2)' // Shadow near spine
+                    }}
+                />
+                
+                {/* Top Edge of Pages */}
+                <div 
+                    className="absolute top-[3px] left-0 w-[calc(100%-6px)] bg-[#fdfdfd] origin-top"
+                    style={{ 
+                        height: `${spineWidth - 2}px`, 
+                        transform: `translateX(3px) translateZ(${spineWidth/2 - 1}px) rotateX(90deg)`,
+                        backgroundImage: 'repeating-linear-gradient(to bottom, #f8f8f8, #f8f8f8 1px, #e8e8e8 1px, #e8e8e8 2px)',
+                    }}
+                />
 
-                    {/* Pages (Bottom) */}
-                    <div 
-                        className="absolute bottom-0 left-0 w-full bg-[#fdfdfd] origin-bottom"
-                        style={{ 
-                            height: `${spineWidth - 4}px`, 
-                            transform: `translateY(-2px) translateZ(-${spineWidth - 2}px) rotateX(-90deg)`,
-                             backgroundImage: 'repeating-linear-gradient(90deg, #fdfdfd, #fdfdfd 1px, #f0f0f0 2px, #f0f0f0 3px)'
-                        }}
-                    />
+                 {/* Bottom Edge of Pages */}
+                 <div 
+                    className="absolute bottom-[3px] left-0 w-[calc(100%-6px)] bg-[#fdfdfd] origin-bottom"
+                    style={{ 
+                        height: `${spineWidth - 2}px`, 
+                        transform: `translateX(3px) translateZ(${spineWidth/2 - 1}px) rotateX(-90deg)`,
+                        backgroundImage: 'repeating-linear-gradient(to top, #f8f8f8, #f8f8f8 1px, #e8e8e8 1px, #e8e8e8 2px)',
+                    }}
+                />
+
+                {/* --- Shadows & Reflection --- */}
+                
+                {/* Contact Shadow (Ambient Occlusion on "Floor") */}
+                <div 
+                    className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-[90%] h-12 bg-black/80 blur-xl"
+                    style={{
+                        transform: 'rotateX(90deg) translateZ(1px)', // Lie flat
+                        opacity: 0.6
+                    }}
+                />
+                
+                {/* Mirror Reflection (Faint) */}
+                 <div 
+                    className="absolute -bottom-[320px] left-0 w-full h-full opacity-10 pointer-events-none"
+                    style={{
+                        transform: 'scaleY(-1) skewX(5deg)', // Simple reflection transform
+                        maskImage: 'linear-gradient(to top, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 100%)',
+                        WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,0) 20%, rgba(0,0,0,0.5) 100%)'
+                    }}
+                >
+                     <img src={posterPath} alt="" className="w-full h-full object-cover blur-[2px]" crossOrigin="anonymous" />
                 </div>
             </div>
 
-            {/* Info Overlay (Floating above shelf) */}
-            <div className="relative z-30 text-center space-y-3 max-w-[280px] flex flex-col items-center">
-                {/* Title Card */}
+            {/* Floating Info Card (Bottom Left usually, or Centered below) */}
+            <div className="absolute bottom-10 left-0 right-0 z-30 flex flex-col items-center pointer-events-none">
                 {showTitle && (
-                    <div className="bg-black/60 backdrop-blur-md border border-white/10 px-6 py-4 rounded-xl shadow-2xl w-full">
-                        <h2 className="text-xl font-bold text-white tracking-tight leading-tight line-clamp-2">{title}</h2>
-                        {year && <p className="text-[10px] font-mono text-accent-gold mt-1 tracking-widest">{year}</p>}
+                    <div className="bg-black/40 backdrop-blur-md border border-white/10 px-6 py-3 rounded-full shadow-2xl mb-4 transform translate-y-4">
+                        <h2 className="text-sm font-bold text-white tracking-tight uppercase shadow-black drop-shadow-md">{title}</h2>
                     </div>
                 )}
                 
                 {showRating && rating > 0 && (
-                    <div className="transform scale-75">
+                     <div className="transform scale-[0.6] origin-bottom">
                         <StampRating />
                     </div>
                 )}
             </div>
             
-            {/* Branding Plate on Shelf */}
-            <div className="absolute bottom-6 flex items-center gap-2 opacity-60 mix-blend-screen">
-                <img src="/image/logo/logo.png" width={14} height={14} className="grayscale" crossOrigin="anonymous" />
-                <span className="text-[10px] font-black tracking-[0.3em] text-[#c5a059] uppercase">Storio Library</span>
+            {/* Branding Plate */}
+            <div className="absolute top-6 right-6 flex items-center gap-2 opacity-30 mix-blend-screen">
+                <img src="/image/logo/logo.png" width={12} height={12} className="grayscale" crossOrigin="anonymous" />
+                <span className="text-[8px] font-black tracking-[0.3em] text-[#c5a059] uppercase">Storio</span>
             </div>
         </div>
     );
@@ -444,7 +467,7 @@ export default function MemoryCardTemplate({
             <div className="w-full">
                 <div className="relative p-4 bg-black/30 border border-white/5 rounded-xl backdrop-blur-md">
                     <p className="text-xs font-medium text-white/90 leading-relaxed text-center italic line-clamp-3">
-                        "{reflection || "A story preserved in the folio."}"
+                        &quot;{reflection || "A story preserved in the folio."}&quot;
                     </p>
                 </div>
             </div>

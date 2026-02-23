@@ -44,27 +44,54 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
 
   // Create a proxied version of the item for CORS-safe capturing
+  const [base64Poster, setBase64Poster] = useState<string | null>(null);
+
+  // Pre-fetch image as Base64 to guarantee capture success
+  React.useEffect(() => {
+    if (!item?.posterPath) return;
+
+    let isMounted = true;
+    const loadBase64 = async () => {
+      try {
+        let url = item.posterPath;
+        
+        // Use proxy for TMDB/Google Books
+        if (url.includes('image.tmdb.org')) {
+            url = url.replace('https://image.tmdb.org/t/p/', '/proxy/tmdb/');
+        } else if (url.includes('books.google.com')) {
+            url = url.replace(/^https?:\/\/books\.google\.com\//, '/proxy/googlebooks/');
+        }
+        
+        // Add cache buster
+        url += `${url.includes('?') ? '&' : '?'}t=${new Date().getTime()}`;
+
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            if (isMounted && typeof reader.result === 'string') {
+                setBase64Poster(reader.result);
+            }
+        };
+        reader.readAsDataURL(blob);
+      } catch (e) {
+        console.error("Failed to preload image:", e);
+        // Fallback to original URL if fetch fails (though it might still fail in canvas)
+        if (isMounted) setBase64Poster(null);
+      }
+    };
+
+    loadBase64();
+    return () => { isMounted = false; };
+  }, [item?.posterPath]);
+
   const proxiedItem = useMemo(() => {
     if (!item) return undefined;
-    
-    const timestamp = new Date().getTime();
-    let proxiedPoster = item.posterPath;
-
-    // Replace domains with our local proxy
-    if (proxiedPoster.includes('image.tmdb.org')) {
-        proxiedPoster = proxiedPoster.replace('https://image.tmdb.org/t/p/', '/proxy/tmdb/');
-    } else if (proxiedPoster.includes('books.google.com')) {
-        proxiedPoster = proxiedPoster.replace(/^https?:\/\/books\.google\.com\//, '/proxy/googlebooks/');
-    }
-
-    // Append cache buster to force new request through proxy
-    proxiedPoster += `${proxiedPoster.includes('?') ? '&' : '?'}t=${timestamp}`;
-
     return {
       ...item,
-      posterPath: proxiedPoster
+      posterPath: base64Poster || item.posterPath // Use Base64 if available
     };
-  }, [item]);
+  }, [item, base64Poster]);
 
   // Template visibility logic
   const TEMPLATES: { id: TemplateType; icon: any; label: string; hidden?: boolean }[] = [
@@ -92,6 +119,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
         cacheBust: true,
         pixelRatio: 2,
         backgroundColor: '#0d0d0d',
+        skipAutoScale: true, // Prevent random scaling issues
       });
       return dataUrl;
     } catch (error) {
@@ -168,7 +196,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
           >
             {/* Top: Preview Area */}
             <div 
-                className={`flex-1 relative w-full flex items-center justify-center p-8 overflow-hidden transition-all duration-500 cursor-pointer`}
+                className={`flex-1 relative w-full flex items-center justify-center p-4 sm:p-8 overflow-hidden transition-all duration-500 cursor-pointer`}
                 onClick={() => setIsDrawerOpen(false)}
             >
                 {/* Visual Preview */}
@@ -176,7 +204,10 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
                     <div 
                         className="relative shadow-2xl overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] origin-center will-change-transform"
                         style={{
-                            transform: isDrawerOpen ? 'translateY(-10%) scale(0.85)' : 'translateY(0) scale(1)',
+                            // Responsive scaling: smaller on mobile to fit width
+                            transform: isDrawerOpen 
+                                ? 'translateY(-10%) scale(0.65) sm:scale(0.85)' 
+                                : 'translateY(0) scale(0.8) sm:scale(1)',
                             maxHeight: '100%',
                             maxWidth: '100%'
                         }}
