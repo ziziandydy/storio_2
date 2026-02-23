@@ -45,75 +45,27 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
   // Create a proxied version of the item for CORS-safe capturing
   const proxiedItem = useMemo(() => {
     if (!item) return undefined;
+    
+    const timestamp = new Date().getTime();
+    let proxiedPoster = item.posterPath;
+
+    // Replace domains with our local proxy
+    if (proxiedPoster.includes('image.tmdb.org')) {
+        proxiedPoster = proxiedPoster.replace('https://image.tmdb.org/t/p/', '/proxy/tmdb/');
+    } else if (proxiedPoster.includes('books.google.com')) {
+        proxiedPoster = proxiedPoster.replace(/^https?:\/\/books\.google\.com\//, '/proxy/googlebooks/');
+    }
+
+    // Append cache buster to force new request through proxy
+    proxiedPoster += `${proxiedPoster.includes('?') ? '&' : '?'}t=${timestamp}`;
+
     return {
       ...item,
-      posterPath: item.posterPath
-        .replace('https://image.tmdb.org/t/p/', '/proxy/tmdb/')
-        .replace(/^https?:\/\/books\.google\.com\//, '/proxy/googlebooks/')
+      posterPath: proxiedPoster
     };
   }, [item]);
 
-  const handleCapture = async () => {
-    if (!templateRef.current) return null;
-    
-    setIsGenerating(true);
-    try {
-      // Wait a bit to ensure the proxied image in the hidden div is loaded
-      // In a real prod app, we might want to use an onLoad handler for the image
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const dataUrl = await toPng(templateRef.current, {
-        cacheBust: true,
-        pixelRatio: 3, 
-        backgroundColor: '#0d0d0d',
-      });
-      return dataUrl;
-    } catch (err) {
-      console.error('Failed to generate image:', err);
-      return null;
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleDownload = async () => {
-    const dataUrl = await handleCapture();
-    if (dataUrl) {
-      download(dataUrl, `${fileName}.png`);
-      setIsDownloaded(true);
-      setTimeout(() => setIsDownloaded(false), 3000);
-    }
-  };
-
-  const handleShare = async () => {
-    const dataUrl = await handleCapture();
-    if (!dataUrl) return;
-
-    try {
-      const blob = await (await fetch(dataUrl)).blob();
-      const file = new File([blob], `${fileName}.png`, { type: 'image/png' });
-
-      if (navigator.share && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: title,
-          text: 'Shared from Storio.',
-        });
-      } else {
-        handleDownload();
-      }
-    } catch (err) {
-      console.error('Share failed:', err);
-      handleDownload();
-    }
-  };
-
-  const ASPECT_RATIOS: { id: AspectRatio; icon: any; label: string }[] = [
-    { id: '9:16', icon: RectangleVertical, label: 'Story' },
-    { id: '4:5', icon: Layout, label: 'Post' },
-    { id: '1:1', icon: Square, label: 'Square' },
-  ];
-
+  // Template visibility logic
   const TEMPLATES: { id: TemplateType; icon: any; label: string; hidden?: boolean }[] = [
     { id: 'default', icon: Palette, label: 'Default' },
     { id: 'pure', icon: ImageIcon, label: 'Pure' },
