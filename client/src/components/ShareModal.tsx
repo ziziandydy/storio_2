@@ -2,14 +2,14 @@
 
 import React, { useRef, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, Share2, Loader2, Check, Layout, Square, RectangleVertical, Type, Star, MessageSquare, Palette, Ticket, Book as BookIcon, Image as ImageIcon } from 'lucide-react';
+import { X, Download, Share2, Loader2, Check, Layout, Square, RectangleVertical, Type, Star, MessageSquare, Palette, Ticket, Book as BookIcon, Image as ImageIcon, Tv } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import download from 'downloadjs';
 import { useTranslation } from '@/hooks/useTranslation';
 import MemoryCardTemplate from './share/MemoryCardTemplate';
 
 type AspectRatio = '9:16' | '4:5' | '1:1';
-type TemplateType = 'default' | 'pure' | 'ticket' | '3d';
+type TemplateType = 'default' | 'pure' | 'ticket' | '3d' | 'tv';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -41,8 +41,6 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDownloaded, setIsDownloaded] = useState(false);
-
-  // ... (handleCapture, handleDownload, handleShare remain same)
 
   const handleCapture = async () => {
     if (!templateRef.current) return null;
@@ -107,6 +105,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
     { id: 'default', icon: Palette, label: 'Default' },
     { id: 'pure', icon: ImageIcon, label: 'Pure' },
     { id: 'ticket', icon: Ticket, label: 'Ticket', hidden: item?.type === 'book' },
+    { id: 'tv', icon: Tv, label: 'Retro TV', hidden: item?.type === 'book' },
     { id: '3d', icon: BookIcon, label: '3D Book', hidden: item?.type !== 'book' },
   ];
 

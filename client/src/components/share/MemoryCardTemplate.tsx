@@ -12,7 +12,7 @@ interface MemoryCardTemplateProps {
   type: string;
   page_count?: number;
   aspectRatio?: '9:16' | '4:5' | '1:1';
-  selectedTemplate?: 'default' | 'pure' | 'ticket' | '3d';
+  selectedTemplate?: 'default' | 'pure' | 'ticket' | '3d' | 'tv';
   showTitle?: boolean;
   showRating?: boolean;
   showReflection?: boolean;
@@ -42,16 +42,87 @@ export default function MemoryCardTemplate({
 
   const currentDim = dimensions[aspectRatio];
 
-  // Template Styles
+  // --- Pure Image Template ---
   if (selectedTemplate === 'pure') {
     return (
-        <div style={currentDim} className="bg-folio-black flex items-center justify-center overflow-hidden">
+        <div style={currentDim} className="bg-folio-black flex items-center justify-center overflow-hidden relative">
             <img 
                 src={posterPath} 
                 alt={title} 
                 className="w-full h-full object-cover" 
                 crossOrigin="anonymous"
             />
+            <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-2">
+                <img src="/image/logo/logo.png" width={12} height={12} alt="Storio" crossOrigin="anonymous" />
+                <span className="text-[8px] font-black tracking-widest text-white uppercase">Storio</span>
+            </div>
+        </div>
+    );
+  }
+
+  // --- Retro TV Template (New) ---
+  if (selectedTemplate === 'tv') {
+    return (
+        <div style={currentDim} className="bg-[#1a1a1a] flex flex-col items-center justify-center p-8 overflow-hidden relative font-mono">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+            
+            {/* TV Frame */}
+            <div className="relative bg-[#2b2b2b] p-4 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.8)] border-4 border-[#3a3a3a] w-full max-w-[320px]">
+                {/* Screen */}
+                <div className="relative aspect-[4/3] bg-black rounded-[20px] overflow-hidden border-4 border-black shadow-inner">
+                    <img src={posterPath} alt={title} className="w-full h-full object-cover opacity-90 contrast-125 saturate-125" crossOrigin="anonymous" />
+                    
+                    {/* Scanlines Effect */}
+                    <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-10 bg-[length:100%_4px,6px_100%] pointer-events-none"></div>
+                    
+                    {/* Screen Glare */}
+                    <div className="absolute top-0 right-0 w-2/3 h-full bg-gradient-to-l from-white/5 to-transparent skew-x-12 opacity-30 z-20"></div>
+                </div>
+
+                {/* TV Controls */}
+                <div className="flex justify-between items-center mt-4 px-2">
+                    <div className="flex gap-2">
+                        <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse"></div>
+                        <span className="text-[8px] text-white/40 tracking-widest uppercase">REC</span>
+                    </div>
+                    <div className="flex gap-3">
+                        <div className="w-8 h-8 rounded-full border-2 border-[#111] bg-[#222] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)] flex items-center justify-center">
+                            <div className="w-1 h-3 bg-white/20 rounded-full"></div>
+                        </div>
+                        <div className="w-8 h-8 rounded-full border-2 border-[#111] bg-[#222] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)] flex items-center justify-center">
+                            <div className="w-3 h-3 border-t-2 border-white/20 rounded-full rotate-45"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Info Overlay */}
+            <div className="mt-8 text-center space-y-3 z-10 max-w-[280px]">
+                {showTitle && <h2 className="text-xl font-bold text-white tracking-tight uppercase truncate">{title}</h2>}
+                
+                {showRating && (
+                    <div className="flex justify-center gap-1">
+                        {[1, 2, 3, 4, 5].map(s => (
+                            <Star key={s} size={14} fill={s <= rating ? "#c5a059" : "none"} className={s <= rating ? "text-accent-gold" : "text-white/10"} />
+                        ))}
+                    </div>
+                )}
+
+                {showReflection && reflection && (
+                    <div className="bg-black/40 border border-white/10 p-3 rounded-lg backdrop-blur-sm">
+                        <p className="text-[10px] text-text-desc leading-relaxed line-clamp-3">
+                            "{reflection}"
+                        </p>
+                    </div>
+                )}
+            </div>
+
+            {/* Footer Logo */}
+            <div className="absolute bottom-6 flex items-center gap-2 opacity-40">
+                <img src="/image/logo/logo.png" width={14} height={14} alt="Storio" crossOrigin="anonymous" className="grayscale" />
+                <span className="text-[10px] font-black tracking-[0.3em] text-white uppercase">Storio</span>
+            </div>
         </div>
     );
   }
@@ -108,7 +179,7 @@ export default function MemoryCardTemplate({
                 {/* Ticket Footer / Stub */}
                 <div className="p-6 border-t-2 border-dashed border-folio-black/20 bg-black/5 flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                        <img src="/image/logo/logo.png" width={14} height={14} className="grayscale" />
+                        <img src="/image/logo/logo.png" width={14} height={14} className="grayscale" crossOrigin="anonymous" />
                         <span className="text-[10px] font-black tracking-tighter">STORIO FOLIO</span>
                     </div>
                     {/* Fake QR/Barcode Placeholder */}
@@ -198,7 +269,7 @@ export default function MemoryCardTemplate({
             </div>
             
             <div className="absolute bottom-8 flex items-center gap-2 opacity-30">
-                <img src="/image/logo/logo.png" width={12} height={12} className="grayscale" />
+                <img src="/image/logo/logo.png" width={12} height={12} className="grayscale" crossOrigin="anonymous" />
                 <span className="text-[8px] font-black tracking-widest text-white">STORIO</span>
             </div>
         </div>
