@@ -11,28 +11,21 @@ const safeKey = supabaseAnonKey || 'tmp-key';
 
 export const supabase = createClient(safeUrl, safeKey);
 
-/**
- * 產生絕對 URL，用於 OAuth 重導向。
- * 在瀏覽器端優先使用 window.location.origin，
- * 伺服器端則依序嘗試環境變數。
- */
 export const getURL = (path: string = '') => {
-  let url = '';
-
-  if (typeof window !== 'undefined' && window.location.origin) {
-    // 瀏覽器端優先使用當前網域
-    url = window.location.origin;
-  } else {
-    // 伺服器端或 SSR 期間使用環境變數
-    url =
-      process.env.NEXT_PUBLIC_SITE_URL ??
-      process.env.NEXT_PUBLIC_VERCEL_URL ??
-      'http://localhost:3010';
+  let url =
+    process.env.NEXT_PUBLIC_APP_URL ?? // 優先使用專屬應用程式網址
+    process.env.NEXT_PUBLIC_SITE_URL ?? // 其次使用正式網址
+    process.env.NEXT_PUBLIC_VERCEL_URL ?? // Vercel 自動生成的預覽網址
+    (typeof window !== 'undefined' ? window.location.origin : ''); // 客戶端動態抓取備援
+  
+  // 如果完全沒有抓到網址，回退到 localhost
+  if (!url) {
+    url = 'http://localhost:3010';
   }
   
-  // 確保包含協定
+  // 確保包含協定 (針對 VERCEL_URL 有時不含協定的情況)
   url = url.startsWith('http') ? url : `https://${url}`;
-  // 確保結尾沒有斜線，方便後面拼接
+  // 確保結尾沒有斜線
   url = url.endsWith('/') ? url.slice(0, -1) : url;
   
   // 確保路徑以斜線開頭
