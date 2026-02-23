@@ -55,21 +55,21 @@ test('Guest limit is enforced when adding 11th item', async ({ page }) => {
   await card.hover();
 
   // Click the Add button
-  const addButton = card.getByRole('button', { name: /Add/i });
+  const addButton = card.locator('button').filter({ hasText: /(Add|加入)/i });
   await expect(addButton).toBeVisible({ timeout: 10000 });
   await addButton.click({ force: true });
 
   // Wait for modal to open (Check for header)
-  const modalHeader = page.getByRole('heading', { name: /Add to Storio/i });
+  const modalHeader = page.locator('h2').filter({ hasText: /(Add to Storio|加入 Storio)/i });
   await expect(modalHeader).toBeVisible({ timeout: 15000 });
 
   // Modal is open, click Save
-  // The button text is "Save to Storio"
-  const saveButton = page.getByRole('button', { name: /Save to Storio/i });
+  const saveButton = page.locator('button').filter({ hasText: /(Save|儲存)/i });
   await expect(saveButton).toBeVisible({ timeout: 15000 });
   await saveButton.click();
 
   // Expect Toast with error message
+  // The error message from backend is English "Guest limit reached"
   const toast = page.getByText(/Guest limit/i);
-  await expect(toast).toBeVisible({ timeout: 10000 });
+  await expect(toast).toBeVisible({ timeout: 15000 });
 });

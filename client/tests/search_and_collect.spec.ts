@@ -32,8 +32,13 @@ test('Guest can search and see results', async ({ page }) => {
 
   // 2. Click Search (via FAB)
   const fabButton = page.locator('div.fixed.bottom-8.right-6 button');
+  await expect(fabButton).toBeVisible();
   await fabButton.click();
-  await page.click('a[href="/search"]');
+  
+  // Wait for the search link to be visible in the menu
+  const searchLink = page.locator('a[href="/search"]');
+  await expect(searchLink).toBeVisible({ timeout: 10000 });
+  await searchLink.click();
   await expect(page).toHaveURL(/.*search/);
 
   // 3. Type "Dune" and Search

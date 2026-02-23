@@ -41,6 +41,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDownloaded, setIsDownloaded] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(true);
 
   // Create a proxied version of the item for CORS-safe capturing
   const proxiedItem = useMemo(() => {
@@ -74,12 +75,72 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
     { id: '3d', icon: BookIcon, label: '3D Book', hidden: item?.type !== 'book' },
   ];
 
+  const ASPECT_RATIOS: { id: AspectRatio; icon: any; label: string }[] = [
+    { id: '9:16', icon: RectangleVertical, label: 'Story' },
+    { id: '4:5', icon: Layout, label: 'Portrait' },
+    { id: '1:1', icon: Square, label: 'Square' },
+  ];
+
   const isSingleItem = !!item;
+
+  const handleCapture = async () => {
+    if (!templateRef.current) return null;
+    setIsGenerating(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 100)); // Ensure render
+      const dataUrl = await toPng(templateRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        backgroundColor: '#0d0d0d',
+      });
+      return dataUrl;
+    } catch (error) {
+      console.error('Failed to generate image:', error);
+      return null;
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleShare = async () => {
+    const dataUrl = await handleCapture();
+    if (!dataUrl) return;
+
+    try {
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], `${fileName}.png`, { type: 'image/png' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: title,
+          text: `Check out my collection on Storio: ${title}`,
+          files: [file],
+        });
+      } else {
+        download(dataUrl, `${fileName}.png`);
+        setIsDownloaded(true);
+        setTimeout(() => setIsDownloaded(false), 2000);
+      }
+    } catch (error) {
+      console.error('Share failed:', error);
+      // Fallback if share API fails unexpectedly
+      download(dataUrl, `${fileName}.png`);
+    }
+  };
+
+  const handleDownload = async () => {
+    const dataUrl = await handleCapture();
+    if (dataUrl) {
+      download(dataUrl, `${fileName}.png`);
+      setIsDownloaded(true);
+      setTimeout(() => setIsDownloaded(false), 2000);
+    }
+  };
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center sm:p-4 overflow-hidden">
           {/* Backdrop */}
           <motion.div 
             initial={{ opacity: 0 }}
@@ -89,171 +150,197 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
             className="fixed inset-0 bg-black/95 backdrop-blur-xl"
           />
 
-          {/* Modal Content */}
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className={`relative w-full ${isSingleItem ? 'max-w-xl' : 'max-w-md'} bg-folio-black border border-white/10 rounded-[32px] overflow-hidden shadow-2xl flex flex-col md:flex-row h-auto md:h-[85vh] max-h-[900px]`}
+          {/* Close Button (Outside content, Top Right) */}
+          <button 
+            onClick={onClose} 
+            className="fixed top-6 right-6 z-[120] p-3 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all backdrop-blur-md"
           >
-            {/* Left: Preview Area (Visible to User) */}
-            <div className={`flex-[1.2] bg-black/40 flex flex-col items-center justify-center p-6 relative overflow-hidden min-h-[400px]`}>
-              <div className="absolute top-6 left-6 z-10">
-                <span className="text-[10px] font-black tracking-[0.2em] text-accent-gold/50 uppercase">Preview</span>
-              </div>
-              
-              {/* Scaled Preview Container (Visible to User) */}
-              <div className="relative shadow-2xl rounded-xl overflow-hidden border border-white/10 scale-[0.6] sm:scale-[0.7] md:scale-[0.8] lg:scale-90 transition-transform origin-center">
-                <div className="bg-folio-black overflow-hidden">
-                  {item ? (
-                    <MemoryCardTemplate 
-                        {...item}
-                        aspectRatio={aspectRatio}
-                        selectedTemplate={selectedTemplate}
-                        showTitle={showTitle}
-                        showRating={showRating}
-                        showReflection={showReflection}
-                    />
-                  ) : template}
-                </div>
-              </div>
+            <X size={24} />
+          </button>
 
-              {/* Hidden Capture Container (With Proxied Images) */}
-              <div className="absolute top-0 left-0 opacity-0 pointer-events-none -z-50">
-                 <div ref={templateRef} className="bg-folio-black overflow-hidden">
-                  {proxiedItem ? (
-                    <MemoryCardTemplate 
-                        {...proxiedItem}
-                        aspectRatio={aspectRatio}
-                        selectedTemplate={selectedTemplate}
-                        showTitle={showTitle}
-                        showRating={showRating}
-                        showReflection={showReflection}
-                    />
-                  ) : template}
+          {/* Modal Container */}
+          <motion.div 
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className={`relative w-full h-full sm:h-[90vh] sm:max-w-4xl sm:rounded-[32px] overflow-hidden flex flex-col sm:bg-folio-black sm:border sm:border-white/10 sm:shadow-2xl`}
+          >
+            {/* Top: Preview Area */}
+            <div 
+                className={`flex-1 relative w-full flex items-center justify-center p-8 overflow-hidden transition-all duration-500 cursor-pointer`}
+                onClick={() => setIsDrawerOpen(false)}
+            >
+                {/* Visual Preview */}
+                <div className="relative w-full h-full flex items-center justify-center">
+                    <div 
+                        className="relative shadow-2xl overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] origin-center will-change-transform"
+                        style={{
+                            transform: isDrawerOpen ? 'translateY(-10%) scale(0.85)' : 'translateY(0) scale(1)',
+                            maxHeight: '100%',
+                            maxWidth: '100%'
+                        }}
+                    >
+                         <div className="bg-folio-black overflow-hidden rounded-xl border border-white/10">
+                            {proxiedItem ? (
+                                <MemoryCardTemplate 
+                                    {...proxiedItem}
+                                    aspectRatio={aspectRatio}
+                                    selectedTemplate={selectedTemplate}
+                                    showTitle={showTitle}
+                                    showRating={showRating}
+                                    showReflection={showReflection}
+                                />
+                            ) : template}
+                        </div>
+                    </div>
                 </div>
-              </div>
+
+                {/* Hidden Capture Container (With Proxied Images) */}
+                <div className="absolute top-0 left-0 opacity-0 pointer-events-none -z-50">
+                    <div ref={templateRef} className="bg-folio-black overflow-hidden">
+                        {proxiedItem ? (
+                            <MemoryCardTemplate 
+                                {...proxiedItem}
+                                aspectRatio={aspectRatio}
+                                selectedTemplate={selectedTemplate}
+                                showTitle={showTitle}
+                                showRating={showRating}
+                                showReflection={showReflection}
+                            />
+                        ) : template}
+                    </div>
+                </div>
             </div>
 
-            {/* Right: Control Panel (Only for single item) */}
-            <div className={`flex-1 border-l border-white/5 flex flex-col h-full bg-folio-card overflow-y-auto ${!isSingleItem ? 'hidden md:flex' : ''}`}>
-              <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                <h2 className="text-sm font-bold font-serif text-white tracking-widest uppercase">{t.details.share}</h2>
-                <button onClick={onClose} className="p-2 text-text-desc hover:text-white transition-colors bg-white/5 rounded-full">
-                  <X size={16} />
-                </button>
-              </div>
-
-              {isSingleItem ? (
-                <div className="flex-1 p-6 space-y-8">
-                    {/* 1. Templates */}
-                    <section className="space-y-3">
-                    <label className="text-[10px] uppercase font-black tracking-widest text-text-desc opacity-50 flex items-center gap-2">
-                        <Palette size={12} /> Visual Style
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                        {TEMPLATES.filter(t => !t.hidden).map((temp) => (
-                        <button
-                            key={temp.id}
-                            onClick={() => setSelectedTemplate(temp.id)}
-                            className={`flex items-center gap-3 p-3 rounded-2xl border text-xs font-bold transition-all ${
-                            selectedTemplate === temp.id 
-                            ? 'bg-accent-gold border-accent-gold text-folio-black shadow-lg shadow-accent-gold/20' 
-                            : 'bg-white/5 border-white/5 text-white hover:border-white/20'
-                            }`}
-                        >
-                            <temp.icon size={14} />
-                            {temp.label}
-                        </button>
-                        ))}
-                    </div>
-                    </section>
-
-                    {/* 2. Aspect Ratio */}
-                    <section className="space-y-3">
-                    <label className="text-[10px] uppercase font-black tracking-widest text-text-desc opacity-50 flex items-center gap-2">
-                        <Layout size={12} /> Format
-                    </label>
-                    <div className="flex gap-2">
-                        {ASPECT_RATIOS.map((ratio) => (
-                        <button
-                            key={ratio.id}
-                            onClick={() => setAspectRatio(ratio.id)}
-                            className={`flex-1 flex flex-col items-center gap-2 p-3 rounded-2xl border text-[10px] font-bold transition-all ${
-                            aspectRatio === ratio.id 
-                            ? 'bg-accent-gold border-accent-gold text-folio-black shadow-lg shadow-accent-gold/20' 
-                            : 'bg-white/5 border-white/5 text-white hover:border-white/20'
-                            }`}
-                        >
-                            <ratio.icon size={16} />
-                            {ratio.label}
-                        </button>
-                        ))}
-                    </div>
-                    </section>
-
-                    {/* 3. Content Toggles */}
-                    <section className="space-y-3">
-                    <label className="text-[10px] uppercase font-black tracking-widest text-text-desc opacity-50 flex items-center gap-2">
-                        <Type size={12} /> Visible Content
-                    </label>
-                    <div className="space-y-2">
-                        {[
-                        { id: 'title', state: showTitle, setter: setShowTitle, icon: Type, label: 'Title' },
-                        { id: 'rating', state: showRating, setter: setShowRating, icon: Star, label: 'Rating' },
-                        { id: 'reflection', state: showReflection, setter: setShowReflection, icon: MessageSquare, label: 'Reflection' },
-                        ].map((toggle) => (
-                        <button
-                            key={toggle.id}
-                            onClick={() => toggle.setter(!toggle.state)}
-                            className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
-                            toggle.state 
-                            ? 'bg-white/5 border-accent-gold/30 text-white' 
-                            : 'bg-transparent border-white/5 text-text-desc opacity-50'
-                            }`}
-                        >
-                            <div className="flex items-center gap-3">
-                            <toggle.icon size={14} className={toggle.state ? 'text-accent-gold' : ''} />
-                            <span className="text-xs font-bold">{toggle.label}</span>
-                            </div>
-                            <div className={`w-8 h-4 rounded-full transition-colors relative flex items-center px-1 ${toggle.state ? 'bg-accent-gold' : 'bg-white/10'}`}>
-                            <div className={`w-2 h-2 bg-white rounded-full transition-transform ${toggle.state ? 'translate-x-4' : 'translate-x-0'}`} />
-                            </div>
-                        </button>
-                        ))}
-                    </div>
-                    </section>
-                </div>
-              ) : (
-                <div className="flex-1 flex items-center justify-center p-8 text-center">
-                    <p className="text-xs text-text-desc opacity-60 italic leading-relaxed">
-                        Customization is currently optimized for single memories. Monthly recaps use a predefined elegant grid.
-                    </p>
-                </div>
-              )}
-
-              {/* Actions Footer */}
-              <div className="p-6 bg-folio-black/50 border-t border-white/5 space-y-3">
-                <button 
-                  onClick={handleShare}
-                  disabled={isGenerating}
-                  className="w-full py-4 bg-accent-gold text-folio-black rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-white transition-all shadow-xl active:scale-[0.98] disabled:opacity-50"
+            {/* Bottom: Controls Drawer */}
+            <motion.div 
+                initial={false}
+                animate={{ 
+                    height: isDrawerOpen ? 'auto' : '80px',
+                    y: 0
+                }}
+                className={`absolute bottom-0 left-0 right-0 z-[115] bg-[#121212] border-t border-white/10 rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden max-h-[70vh]`}
+            >
+                {/* Drawer Handle / Header */}
+                <div 
+                    onClick={() => setIsDrawerOpen(!isDrawerOpen)}
+                    className="w-full h-12 flex items-center justify-center cursor-pointer hover:bg-white/5 transition-colors shrink-0 border-b border-white/5"
                 >
-                  {isGenerating ? (
-                    <Loader2 className="animate-spin" size={18} />
-                  ) : (
-                    <><Share2 size={18} /> Share Memory</>
-                  )}
-                </button>
-                <button 
-                  onClick={handleDownload}
-                  disabled={isGenerating}
-                  className="w-full py-3 bg-white/5 text-white/60 hover:text-white rounded-2xl font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all"
-                >
-                  {isDownloaded ? <><Check size={14} /> Downloaded</> : <><Download size={14} /> Download Image</>}
-                </button>
-              </div>
-            </div>
+                    <div className="w-12 h-1 bg-white/20 rounded-full mb-1" />
+                    {/* Optional: Icon indicator */}
+                    {/* {isDrawerOpen ? <ChevronDown size={16} className="text-white/40 ml-2" /> : <ChevronUp size={16} className="text-white/40 ml-2" />} */}
+                </div>
+
+                {/* Controls Content */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-32 sm:pb-6">
+                     {isSingleItem ? (
+                        <>
+                            {/* Visual Style & Format Row */}
+                            <div className="flex flex-col gap-6">
+                                {/* Templates */}
+                                <div className="space-y-3">
+                                    <label className="text-[10px] uppercase font-black tracking-widest text-text-desc opacity-50 flex items-center gap-2">
+                                        <Palette size={12} /> Visual Style
+                                    </label>
+                                    <div className={item?.type === 'movie' ? "grid grid-cols-2 gap-3 pb-2" : "flex gap-3 overflow-x-auto pb-2 scrollbar-hide"}>
+                                        {TEMPLATES.filter(t => !t.hidden).map((temp) => (
+                                            <button
+                                                key={temp.id}
+                                                onClick={() => setSelectedTemplate(temp.id)}
+                                                className={`flex items-center gap-2 px-4 py-3 rounded-2xl border text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
+                                                selectedTemplate === temp.id 
+                                                ? 'bg-accent-gold border-accent-gold text-folio-black shadow-lg shadow-accent-gold/20' 
+                                                : 'bg-white/5 border-white/5 text-white hover:border-white/20'
+                                                }`}
+                                            >
+                                                <temp.icon size={14} />
+                                                {temp.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Aspect Ratio */}
+                                <div className="space-y-3">
+                                    <label className="text-[10px] uppercase font-black tracking-widest text-text-desc opacity-50 flex items-center gap-2">
+                                        <Layout size={12} /> Format
+                                    </label>
+                                    <div className="flex gap-2">
+                                        {ASPECT_RATIOS.map((ratio) => (
+                                            <button
+                                                key={ratio.id}
+                                                onClick={() => setAspectRatio(ratio.id)}
+                                                className={`flex-1 flex flex-col items-center gap-2 p-3 rounded-2xl border text-[10px] font-bold transition-all ${
+                                                aspectRatio === ratio.id 
+                                                ? 'bg-accent-gold border-accent-gold text-folio-black shadow-lg shadow-accent-gold/20' 
+                                                : 'bg-white/5 border-white/5 text-white hover:border-white/20'
+                                                }`}
+                                            >
+                                                <ratio.icon size={16} />
+                                                {ratio.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Toggles */}
+                            <div className="space-y-3">
+                                <label className="text-[10px] uppercase font-black tracking-widest text-text-desc opacity-50 flex items-center gap-2">
+                                    <Type size={12} /> Content
+                                </label>
+                                <div className="grid grid-cols-3 gap-3">
+                                    {[
+                                    { id: 'title', state: showTitle, setter: setShowTitle, icon: Type, label: 'Title' },
+                                    { id: 'rating', state: showRating, setter: setShowRating, icon: Star, label: 'Rating' },
+                                    { id: 'reflection', state: showReflection, setter: setShowReflection, icon: MessageSquare, label: 'Note' },
+                                    ].map((toggle) => (
+                                    <button
+                                        key={toggle.id}
+                                        onClick={() => toggle.setter(!toggle.state)}
+                                        className={`flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all ${
+                                        toggle.state 
+                                        ? 'bg-white/10 border-accent-gold/50 text-white' 
+                                        : 'bg-transparent border-white/5 text-text-desc opacity-50'
+                                        }`}
+                                    >
+                                        <toggle.icon size={14} className={toggle.state ? 'text-accent-gold' : ''} />
+                                        <span className="text-[10px] font-bold">{toggle.label}</span>
+                                    </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </>
+                     ) : (
+                        <div className="text-center py-8">
+                            <p className="text-sm text-text-desc opacity-60">Ready to share your collection.</p>
+                        </div>
+                     )}
+
+                     {/* Action Buttons */}
+                     <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                        <button 
+                            onClick={handleShare}
+                            disabled={isGenerating}
+                            className="flex-1 py-4 bg-accent-gold text-folio-black rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-white transition-all shadow-xl active:scale-[0.98] disabled:opacity-50"
+                        >
+                            {isGenerating ? (
+                            <Loader2 className="animate-spin" size={18} />
+                            ) : (
+                            <><Share2 size={18} /> Share</>
+                            )}
+                        </button>
+                        <button 
+                            onClick={handleDownload}
+                            disabled={isGenerating}
+                            className="flex-1 py-4 bg-white/5 text-white hover:bg-white/10 rounded-2xl font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all border border-white/10"
+                        >
+                            {isDownloaded ? <><Check size={14} /> Saved</> : <><Download size={14} /> Download</>}
+                        </button>
+                     </div>
+                </div>
+            </motion.div>
           </motion.div>
         </div>
       )}
