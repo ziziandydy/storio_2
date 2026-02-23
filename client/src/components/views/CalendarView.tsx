@@ -21,6 +21,9 @@ import { useRouter } from 'next/navigation';
 import { Story } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '@/hooks/useTranslation';
+import { Share2 } from 'lucide-react';
+import ShareModal from '@/components/ShareModal';
+import MonthRecapTemplate from '@/components/share/MonthRecapTemplate';
 
 interface CalendarViewProps {
   stories: Story[];
@@ -34,6 +37,7 @@ export default function CalendarView({ stories }: CalendarViewProps) {
   // Initial state: current month and one future month for space
   const [months, setMonths] = useState<Date[]>([new Date(), addMonths(new Date(), 1)]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [sharingMonth, setSharingMonth] = useState<Date | null>(null);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const topSentinelRef = useRef<HTMLDivElement>(null);
@@ -140,6 +144,20 @@ export default function CalendarView({ stories }: CalendarViewProps) {
     ? storiesByDate[format(selectedDate, 'yyyy-MM-dd')] || [] 
     : [];
 
+  // Helper to get all stories for a specific month
+  const getMonthStories = (month: Date) => {
+    return stories.filter(s => isSameMonth(parseISO(s.created_at), month))
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  };
+
+  const sharingMonthStories = sharingMonth ? getMonthStories(sharingMonth) : [];
+  const sharingMonthStats = {
+    total: sharingMonthStories.length,
+    movies: sharingMonthStories.filter(s => s.media_type === 'movie').length,
+    series: sharingMonthStories.filter(s => s.media_type === 'series' || s.media_type === 'tv').length,
+    books: sharingMonthStories.filter(s => s.media_type === 'book').length,
+  };
+
   return (
     <div className="w-full relative animate-in fade-in duration-500 pb-20">
       
@@ -155,6 +173,7 @@ export default function CalendarView({ stories }: CalendarViewProps) {
                 month={month} 
                 storiesByDate={storiesByDate}
                 onDayClick={handleDayClick}
+                onShareClick={(m) => setSharingMonth(m)}
                 locale={dateLocale}
             />
         ))}
@@ -235,12 +254,29 @@ export default function CalendarView({ stories }: CalendarViewProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Month Recap Share Modal */}
+      {sharingMonth && (
+        <ShareModal 
+            isOpen={!!sharingMonth}
+            onClose={() => setSharingMonth(null)}
+            title={t.profile.items.share}
+            fileName={`storio-recap-${format(sharingMonth, 'yyyy-MM')}`}
+            template={
+                <MonthRecapTemplate 
+                    monthName={format(sharingMonth, 'MMMM yyyy', { locale: dateLocale })}
+                    stories={sharingMonthStories}
+                    stats={sharingMonthStats}
+                />
+            }
+        />
+      )}
     </div>
   );
 }
 
 // Sub-component for individual month grid
-function MonthGrid({ month, storiesByDate, onDayClick, locale }: { month: Date, storiesByDate: Record<string, Story[]>, onDayClick: (d: Date, s: Story[]) => void, locale: any }) {
+function MonthGrid({ month, storiesByDate, onDayClick, onShareClick, locale }: { month: Date, storiesByDate: Record<string, Story[]>, onDayClick: (d: Date, s: Story[]) => void, onShareClick: (m: Date) => void, locale: any }) {
     const isFuture = month > new Date() && !isSameMonth(month, new Date());
 
     const days = useMemo(() => {
@@ -264,6 +300,14 @@ function MonthGrid({ month, storiesByDate, onDayClick, locale }: { month: Date, 
                 <h2 className="text-xl font-serif font-bold text-accent-gold capitalize">
                 {format(month, 'MMMM yyyy', { locale })}
                 </h2>
+                
+                {/* Share Button for the Month */}
+                <button 
+                    onClick={() => onShareClick(month)}
+                    className="p-2 rounded-full bg-white/5 text-accent-gold hover:bg-accent-gold hover:text-folio-black transition-all"
+                >
+                    <Share2 size={16} />
+                </button>
             </div>
 
             {/* Week Days Header - Only show if it's the first month? No, show for each to be clear */}

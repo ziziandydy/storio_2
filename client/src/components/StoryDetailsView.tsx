@@ -10,6 +10,8 @@ import Image from 'next/image';
 import { useTranslation } from '@/hooks/useTranslation';
 import { ItemDetail } from '@/types';
 import { useToast } from '@/components/ToastProvider';
+import ShareModal from '@/components/ShareModal';
+import MemoryCardTemplate from '@/components/share/MemoryCardTemplate';
 
 interface StoryDetailsViewProps {
   item: ItemDetail;
@@ -22,6 +24,7 @@ export default function StoryDetailsView({ item, showAddButton = true, onAddClic
   const { t } = useTranslation();
   const { showToast } = useToast();
   const [isExpanded, setIsExpanded] = React.useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = React.useState(false);
   
   if (!item) return null;
 
@@ -327,7 +330,7 @@ export default function StoryDetailsView({ item, showAddButton = true, onAddClic
 
               {/* Personal Reflection Snippet (if collected) */}
               {item.created_at && (
-                <div className="bg-folio-card border border-white/5 rounded-3xl p-8 space-y-6 shadow-2xl animate-in zoom-in-95 duration-500">
+                <div className="bg-folio-card border border-white/5 rounded-3xl p-8 space-y-6 shadow-2xl animate-in zoom-in-95 duration-500 relative group/archive">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="bg-accent-gold/10 p-2 rounded-xl">
@@ -335,7 +338,16 @@ export default function StoryDetailsView({ item, showAddButton = true, onAddClic
                       </div>
                       <span className="text-xs uppercase tracking-widest font-black text-white">{t.profile.title}</span>
                     </div>
-                    <span className="text-[10px] text-text-desc font-bold opacity-50">{new Date(item.created_at).toLocaleDateString()}</span>
+                    <div className="flex items-center gap-3">
+                        <span className="text-[10px] text-text-desc font-bold opacity-50">{new Date(item.created_at).toLocaleDateString()}</span>
+                        <button 
+                            onClick={() => setIsShareModalOpen(true)}
+                            className="p-2 rounded-full bg-white/5 text-accent-gold hover:bg-accent-gold hover:text-folio-black transition-all hover:scale-110 active:scale-95 shadow-xl"
+                            title={t.details.share}
+                        >
+                            <Share2 size={14} />
+                        </button>
+                    </div>
                   </div>
 
                   <div>
@@ -360,6 +372,26 @@ export default function StoryDetailsView({ item, showAddButton = true, onAddClic
           </div>
         </div>
       </div>
+
+      {/* Share Modal */}
+      {item.created_at && (
+        <ShareModal 
+            isOpen={isShareModalOpen}
+            onClose={() => setIsShareModalOpen(false)}
+            title={t.details.share}
+            fileName={`storio-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
+            template={
+                <MemoryCardTemplate 
+                    title={item.title}
+                    year={item.year}
+                    posterPath={item.poster_path || ''}
+                    rating={(item.rating || 0) / 2} // Convert 10-scale to 5-stars
+                    reflection={item.notes}
+                    type={item.media_type}
+                />
+            }
+        />
+      )}
     </div>
   );
 }

@@ -13,7 +13,7 @@ import SplashScreen from '@/components/SplashScreen';
 import OnboardingModal from '@/components/OnboardingModal';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
+import { supabase, getURL } from '@/lib/supabase';
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
@@ -21,6 +21,7 @@ export default function Home() {
   const [scrollY, setScrollY] = useState(0);
   const [showSplash, setShowSplash] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState<'social' | 'email' | 'otp' | 'profile'>('social');
 
   useEffect(() => {
     // Check if splash has been shown in this session
@@ -35,10 +36,27 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!authLoading && user?.is_anonymous !== false) {
-      const hasSeenOnboarding = sessionStorage.getItem('hasSeenOnboarding');
-      if (!hasSeenOnboarding && !showSplash) {
+    if (!authLoading) {
+      // Case 1: Logged in user missing profile info
+      const isRegistered = user && user.is_anonymous === false;
+      const hasSkippedProfile = sessionStorage.getItem('storio_skipped_profile');
+      
+      // Check if profile is explicitly marked as completed
+      const isProfileIncomplete = isRegistered && !user.user_metadata?.profile_completed;
+      
+      if (isProfileIncomplete && !hasSkippedProfile) {
+        setOnboardingStep('profile');
         setShowOnboarding(true);
+        return;
+      }
+
+      // Case 2: Guest user seeing onboarding for the first time
+      if (user?.is_anonymous !== false) {
+        const hasSeenOnboarding = sessionStorage.getItem('hasSeenOnboarding');
+        if (!hasSeenOnboarding && !showSplash) {
+          setOnboardingStep('social');
+          setShowOnboarding(true);
+        }
       }
     }
   }, [authLoading, user, showSplash]);
@@ -58,7 +76,7 @@ export default function Home() {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: provider as any,
             options: {
-                redirectTo: `${window.location.origin}/auth/callback`
+                redirectTo: getURL('/auth/callback')
             }
         });
         if (error) throw error;
@@ -78,6 +96,7 @@ export default function Home() {
         onClose={handleOnboardingClose}
         onLogin={handleLogin}
         onContinueAsGuest={handleOnboardingClose}
+        initialStep={onboardingStep}
       />
 
       {/* Background Layer */}
@@ -110,8 +129,12 @@ export default function Home() {
            <span className={`text-sm font-bold tracking-widest uppercase text-white/90 ${scrollY > 20 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'} transition-all duration-500`}>Storio</span>
         </div>
         
-        <Link href="/profile" className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 backdrop-blur border border-white/10 flex items-center justify-center transition-all hover:scale-105 active:scale-95 group">
-          <User size={16} className="text-white/70 group-hover:text-white transition-colors" />
+        <Link href="/profile" className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 backdrop-blur border border-white/10 flex items-center justify-center transition-all hover:scale-105 active:scale-95 group overflow-hidden">
+          {user?.user_metadata?.avatar_url ? (
+            <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+          ) : (
+            <User size={16} className="text-white/70 group-hover:text-white transition-colors" />
+          )}
         </Link>
       </header>
 

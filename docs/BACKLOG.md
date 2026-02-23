@@ -36,6 +36,8 @@ Captured following UAT on 2026-02-21.
     - Added "Read Sample" and cover thumbnails to Media section.
 
 ## 🚀 SPRINT 4: Social & Identity (Current)
+- [ ] **User Profile Expansion**: Collect **Age** and **Gender** during the registration process (OAuth or Email OTP). These fields must be **read-only** in the Profile view.
+- [ ] **Guest Data Migration**: Ensure that when an anonymous "Guest" user registers or logs in, their existing Folio (saved stories) is automatically transferred to their new authenticated account without data loss.
 - [ ] **Share Memory Card**: Implement `html-to-image` generation for single story sharing (Instagram Story format).
 - [ ] **Share Monthly Recap**: Implement calendar view summary sharing (Instagram Post format).
 - [ ] **Share Modal**: Create a reusable preview & download modal for sharing features.

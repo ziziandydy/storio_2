@@ -32,10 +32,14 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      // 確保 path 格式正確
+      const redirectPath = next.startsWith('/') ? next : `/${next}`;
+      return NextResponse.redirect(`${origin}${redirectPath}`);
     }
+    
+    console.error('Auth code exchange error:', error);
   }
 
-  // return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/auth/auth-code-error`);
+  // 即使沒有 code 或出現錯誤，也回到首頁 (Hash 或狀態可能在客戶端處理)
+  return NextResponse.redirect(`${origin}/`);
 }

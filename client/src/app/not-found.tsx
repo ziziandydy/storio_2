@@ -16,12 +16,12 @@ export default function NotFound() {
         The page you are looking for has not been archived in the folio yet.
       </p>
 
-      <Link 
-        href="/"
-        className="flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-white text-xs font-bold uppercase tracking-widest transition-all hover:scale-105"
-      >
-        <ArrowLeft size={16} /> Return to Folio
-      </Link>
+          <Link 
+            href="/" 
+            className="px-8 py-4 bg-accent-gold text-folio-black rounded-full font-black uppercase tracking-widest text-xs hover:bg-white transition-all shadow-[0_0_30px_rgba(233,108,38,0.4)] flex items-center gap-2"
+          >
+            <ArrowLeft size={16} /> Return to Storio
+          </Link>
     </div>
   );
 }

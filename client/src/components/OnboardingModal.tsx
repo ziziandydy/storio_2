@@ -2,28 +2,93 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogIn, UserPlus, X, ShieldCheck, Sparkles, Star, Mail, ArrowLeft, Loader2 } from 'lucide-react';
+import { LogIn, UserPlus, X, ShieldCheck, Sparkles, Star, Mail, ArrowLeft, Loader2, Camera, User, ChevronDown } from 'lucide-react';
 import Image from 'next/image';
 import { useTranslation } from '@/hooks/useTranslation';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ToastProvider';
+import { useAuth } from '@/hooks/useAuth';
 
 interface OnboardingModalProps {
   isOpen: boolean;
   onClose: () => void;
   onLogin: (provider: 'google' | 'apple' | 'email') => void;
   onContinueAsGuest: () => void;
+  initialStep?: 'social' | 'email' | 'otp' | 'profile';
 }
 
-export default function OnboardingModal({ isOpen, onClose, onLogin, onContinueAsGuest }: OnboardingModalProps) {
+export default function OnboardingModal({ isOpen, onClose, onLogin, onContinueAsGuest, initialStep = 'social' }: OnboardingModalProps) {
   const { t } = useTranslation();
   const { showToast } = useToast();
+  const { updateProfile } = useAuth();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   
   // State
-  const [authStep, setAuthStep] = useState<'social' | 'email' | 'otp'>('social');
+  const [authStep, setAuthStep] = useState<'social' | 'email' | 'otp' | 'profile'>(initialStep);
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
+  const [gender, setGender] = useState('');
+  const [birthday, setBirthday] = useState('');
+  const [username, setUsername] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  // Sync initialStep if it changes externally
+  React.useEffect(() => {
+    if (isOpen) {
+      setAuthStep(initialStep);
+      // Pre-fill only if metadata exists
+      if (initialStep === 'profile') {
+        supabase.auth.getUser().then(({ data: { user } }) => {
+          if (user) {
+            setUsername(user.user_metadata?.display_name || user.user_metadata?.full_name || '');
+            setGender(user.user_metadata?.gender || '');
+            setBirthday(user.user_metadata?.birthday || '');
+            setAvatarUrl(user.user_metadata?.avatar_url || '');
+          }
+        });
+      }
+    }
+  }, [initialStep, isOpen]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('Image must be less than 5MB', 'error');
+        return;
+    }
+
+    setUploading(true);
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('User not found');
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('avatars')
+            .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(filePath);
+
+        setAvatarUrl(publicUrl);
+        showToast('Avatar uploaded', 'success');
+    } catch (error: any) {
+        console.error(error);
+        showToast(error.message || 'Upload failed', 'error');
+    } finally {
+        setUploading(false);
+    }
+  };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,19 +113,56 @@ export default function OnboardingModal({ isOpen, onClose, onLogin, onContinueAs
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
+      const { data, error } = await supabase.auth.verifyOtp({
         email,
         token: otp,
         type: 'email'
       });
       if (error) throw error;
-      onClose(); // Login successful
+      
+      const user = data.user;
+      
+      // Immediately after login, if metadata is missing, show profile step
+      if (user && !user.user_metadata?.profile_completed) {
+        setUsername(user.user_metadata?.display_name || user.user_metadata?.full_name || '');
+        setAvatarUrl(user.user_metadata?.avatar_url || '');
+        setAuthStep('profile');
+      } else {
+        onClose(); 
+      }
     } catch (error: any) {
       console.error(error);
       showToast(error.message || t.common.error, 'error');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleProfileSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
+    setLoading(true);
+    try {
+        const { error } = await updateProfile({
+            gender,
+            birthday,
+            display_name: username,
+            avatar_url: avatarUrl,
+            profile_completed: true
+        });
+        if (error) throw error;
+        onClose();
+    } catch (error: any) {
+        console.error(error);
+        showToast(error.message || t.common.error, 'error');
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const handleSkip = () => {
+    sessionStorage.setItem('storio_skipped_profile', 'true');
+    onClose();
   };
 
   return (
@@ -82,7 +184,7 @@ export default function OnboardingModal({ isOpen, onClose, onLogin, onContinueAs
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             className={`relative w-full ${authStep === 'social' ? 'max-w-lg' : 'max-w-md'} bg-folio-black border border-white/10 rounded-[32px] overflow-hidden shadow-[0_0_100px_rgba(233,108,38,0.15)] flex flex-col md:flex-row h-auto min-h-[500px] transition-all duration-500`}
           >
-            {/* Left: Visual/Intro (Hidden when inputting email/otp to save space) */}
+            {/* Left: Visual/Intro */}
             <AnimatePresence>
                 {authStep === 'social' && (
                     <motion.div 
@@ -110,8 +212,8 @@ export default function OnboardingModal({ isOpen, onClose, onLogin, onContinueAs
             {/* Right: Actions */}
             <div className="flex-1 p-8 md:p-10 flex flex-col justify-center relative">
                 
-                {/* Back Button (Only for Email/OTP flows) */}
-                {authStep !== 'social' && (
+                {/* Back Button */}
+                {(authStep === 'email' || authStep === 'otp') && (
                     <button 
                         onClick={() => setAuthStep(authStep === 'otp' ? 'email' : 'social')}
                         className="absolute top-8 left-8 p-2 text-text-desc hover:text-white transition-colors bg-white/5 rounded-full"
@@ -253,7 +355,115 @@ export default function OnboardingModal({ isOpen, onClose, onLogin, onContinueAs
                     </form>
                 )}
 
-                {/* Note (Only visible on social step) */}
+                {/* --- Step 4: Profile Completion --- */}
+                {authStep === 'profile' && (
+                    <form onSubmit={handleProfileSubmit} className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="space-y-2 mt-4">
+                            <h2 className="text-2xl font-bold font-serif text-white tracking-tight">{t.onboarding.profileTitle}</h2>
+                            <p className="text-text-desc text-[10px] leading-relaxed">
+                                {t.onboarding.profileDesc}
+                            </p>
+                        </div>
+
+                        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide">
+                            {/* Avatar Edit */}
+                            <div className="flex flex-col items-center gap-3 mb-2">
+                                <div 
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="w-20 h-20 rounded-full bg-accent-gold flex items-center justify-center border-4 border-white/5 shadow-xl overflow-hidden relative group/avatar cursor-pointer"
+                                >
+                                    {avatarUrl ? (
+                                        <img src={avatarUrl} alt="Avatar Preview" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <User size={40} className="text-folio-black" />
+                                    )}
+                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
+                                        <Camera size={20} className="text-white" />
+                                    </div>
+                                    {uploading && (
+                                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                            <Loader2 size={20} className="text-white animate-spin" />
+                                        </div>
+                                    )}
+                                </div>
+                                <input 
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleAvatarUpload}
+                                    accept="image/*"
+                                    className="hidden"
+                                />
+                                <span className="text-[10px] font-bold text-accent-gold uppercase tracking-widest">{t.onboarding.editAvatar}</span>
+                            </div>
+
+                            {/* Username Input */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] uppercase font-bold tracking-widest text-text-desc ml-1">{t.onboarding.username}</label>
+                                <input 
+                                    type="text" 
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    placeholder="Curator Name"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-accent-gold/50 transition-all text-sm font-bold"
+                                />
+                            </div>
+
+                            {/* Gender Selection */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] uppercase font-bold tracking-widest text-text-desc ml-1">{t.onboarding.gender}</label>
+                                <div className="relative group">
+                                    <select 
+                                        value={gender}
+                                        onChange={(e) => setGender(e.target.value)}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-3 text-white appearance-none focus:outline-none focus:border-accent-gold/50 transition-all text-sm font-bold [color-scheme:dark]"
+                                    >
+                                        <option value="" className="bg-folio-black text-text-desc">Select Gender</option>
+                                        <option value="male" className="bg-folio-black text-white">{t.onboarding.genderMale}</option>
+                                        <option value="female" className="bg-folio-black text-white">{t.onboarding.genderFemale}</option>
+                                        <option value="non-binary" className="bg-folio-black text-white">{t.onboarding.genderNonBinary}</option>
+                                        <option value="not-say" className="bg-folio-black text-white">{t.onboarding.genderPreferNotToSay}</option>
+                                    </select>
+                                    <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-text-desc group-focus-within:text-accent-gold transition-colors">
+                                        <ChevronDown size={16} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Birthday Input */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] uppercase font-bold tracking-widest text-text-desc ml-1">{t.onboarding.birthday}</label>
+                                <div className="relative group">
+                                    <input 
+                                        type="date"
+                                        value={birthday}
+                                        onChange={(e) => setBirthday(e.target.value)}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-accent-gold/50 transition-all text-sm font-bold [color-scheme:dark]"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="flex flex-col gap-3 mt-2">
+                            <button 
+                                type="submit"
+                                disabled={loading}
+                                className="w-full py-4 bg-accent-gold text-folio-black rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-white transition-all shadow-2xl shadow-accent-gold/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {loading ? <Loader2 className="animate-spin" /> : t.onboarding.complete}
+                            </button>
+
+                            <button 
+                                type="button"
+                                onClick={handleSkip}
+                                className="w-full py-2 text-text-desc hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors"
+                            >
+                                {t.onboarding.skip}
+                            </button>
+                        </div>
+                    </form>
+                )}
+
+                {/* Note */}
                 {authStep === 'social' && (
                     <div className="mt-6 flex items-center gap-3 bg-white/5 p-4 rounded-xl border border-white/5">
                         <ShieldCheck className="text-accent-gold shrink-0" size={18} />
@@ -263,12 +473,14 @@ export default function OnboardingModal({ isOpen, onClose, onLogin, onContinueAs
             </div>
 
             {/* Close Button */}
-            <button 
-                onClick={onClose}
-                className="absolute top-6 right-6 p-2 text-text-desc hover:text-white transition-colors z-10"
-            >
-                <X size={24} />
-            </button>
+            {(authStep !== 'profile') && (
+                <button 
+                    onClick={onClose}
+                    className="absolute top-6 right-6 p-2 text-text-desc hover:text-white transition-colors z-10"
+                >
+                    <X size={24} />
+                </button>
+            )}
           </motion.div>
         </div>
       )}

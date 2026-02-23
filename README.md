@@ -28,7 +28,7 @@
 - **Backend**: Python 3.12 (FastAPI), Pydantic
 - **Database**: Supabase (PostgreSQL)
 - **Auth**: Supabase Auth (Anonymous Login)
-- **Design System**: "Folio Black" (#0d0d0d) + "Storio Gold" (#e96c26)
+- **Design System**: "Folio Black" (#0d0d0d) + "Storio Gold" (#c5a059)
 
 ## 4. 特色功能 (v2.1)
 - **Curated Stats Dashboard**: 首頁沉浸式數據儀表板，支援輪播展示個人收藏統計（7天/30天/年度/趨勢圖），並可於 Profile 頁面客製化。
