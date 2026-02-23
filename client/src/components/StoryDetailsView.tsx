@@ -380,16 +380,15 @@ export default function StoryDetailsView({ item, showAddButton = true, onAddClic
             onClose={() => setIsShareModalOpen(false)}
             title={t.details.share}
             fileName={`storio-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
-            template={
-                <MemoryCardTemplate 
-                    title={item.title}
-                    year={item.year}
-                    posterPath={item.poster_path || ''}
-                    rating={(item.rating || 0) / 2} // Convert 10-scale to 5-stars
-                    reflection={item.notes}
-                    type={item.media_type}
-                />
-            }
+            item={{
+                title: item.title,
+                year: item.year,
+                posterPath: item.poster_path || '',
+                rating: (item.rating || 0) / 2, // 10分制轉為5星制
+                reflection: item.notes,
+                type: item.media_type,
+                page_count: item.page_count
+            }}
         />
       )}
     </div>

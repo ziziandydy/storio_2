@@ -1,72 +1,79 @@
-# Sprint 5 需求規格書
+# Sprint 5 需求規格書: Memory Card 深度客製化分享
 
-**版本**: 1.0 (Zh-TW)
-**狀態**: 草稿
+**版本**: 1.1 (Zh-TW)
+**狀態**: 進行中
 **日期**: 2026-02-23
 
 ---
 
 ## 1. 核心需求概覽
 
-本 Sprint 將重點放在社交分享功能，產出精美的圖片，讓用戶分享至社群媒體。
+本 Sprint 專注於 **Memory Card (單一作品分享)** 的極致化體驗。目標是讓每一位策展人都能將自己的收藏，轉化為風格各異、極具質感的數位藝術品，分享至社交平台。
+
+*   **註**: 月度回顧 (Monthly Recap) 已移至 Sprint 6。
 
 ---
 
-## 2. 需求 C: 社交分享功能 (Social Sharing)
+## 2. 需求 C: Memory Card 社交分享功能
 
 ### 2.1 功能規格 (Functional Specs)
-**目標**: 產出精美的圖片，讓用戶分享至各種社群媒體 (如 Instagram, LINE, WhatsApp 等)。
 
-1.  **分享機制 (Sharing Mechanism)**:
-    *   **無需個別串接 API**: 優先使用瀏覽器原生的 **Web Share API** (`navigator.share`)，這會自動喚起使用者的 iOS/Android 系統分享選單，讓用戶直接選擇本機已安裝的 App (LINE, IG, 訊息等) 進行分享。若環境不支援，則提供「下載圖片」與「複製圖片」作為替代方案。
-2.  **Memory Card (單一作品分享)**:
-    *   **格式選項 (可客製化)**:
-        *   **比例**: 提供 9:16 (適合 IG Story/手機全螢幕)、4:5 或 1:1 (適合貼文 Feed) 等選項。
-        *   **版面元素**: 包含海報、標題、Storio Logo、QR Code (透過 env 變數，如 `NEXT_PUBLIC_APP_URL` 連結至 Storio 首頁)。
-        *   **客製化開關 (於 Poster 下方操作)**: 允許用戶自由勾選是否顯示「標題 (Title)」、「用戶評分 (Rating)」、「用戶心得 (Reflection)」。(預設不顯示年份)
-    *   **主視覺與版型 (Templates)**:
-        *   **預設風格**: 高斯模糊背景，卡片式設計，帶有質感陰影與導角。
-        *   **純海報/劇照 (Pure Image)**: 僅輸出原始海報或劇照，不加任何背景框，適合最純粹的視覺分享。
-        *   **顏色萃取 (Color Extraction)**: 解析海報/劇照主色調，作為背景漸層取代高斯模糊。
-        *   **影視專屬 (Movies / Series)**:
-            1.  **Screen Display (螢幕)**: 將劇照鑲嵌於復古電視或平板螢幕外框中。
-            2.  **Cinema Ticket (票根)**: 復古電影票設計，邊緣帶有虛線與缺口，包含評分與條碼 (QR Code)。
-            3.  **Film Reel (膠卷)**: 放置於電影底片框架中。
-        *   **閱讀專屬 (Books)**:
-            1.  **3D Paperback (實體書)**: 利用 CSS 3D 渲染立體書本，並**依據 `pages` 屬性動態計算書背厚度**。可選擇放置於純色背景或原圖高斯模糊背景上。
-            2.  **E-Reader (電子書)**: 將封面轉為灰階電子墨水風格 (e-ink)，並鑲嵌於電子書閱讀器邊框中。
-3.  **Monthly Recap (月度回顧)**:
-    *   **格式**: 4:5 (1080x1350px) 或 1:1, PNG。
-    *   **內容**: "February 2026 in Storio" 標題、Bento Grid 排列的海報集合、統計數據 (5 Movies, 2 Books)。
+1.  **分享控制中心 (Share Control Modal)**:
+    *   **即時預覽**: 所有的調整（比例、模板、開關）需立即反映在預覽區域。
+    *   **比例切換 (Aspect Ratio)**:
+        *   `9:16`: Instagram Story / 手機桌布。
+        *   `4:5`: Instagram Feed / 質感貼文。
+        *   `1:1`: 經典正方形。
+    *   **內容開關 (Content Toggles)**:
+        *   顯示/隱藏標題 (Title)。
+        *   顯示/隱藏評分 (Rating)。
+        *   顯示/隱藏心得 (Reflection)。
+    *   **分享機制**:
+        *   優先使用 Web Share API 呼叫系統分享。
+        *   備援提供「下載圖片」與「複製圖片」。
 
-### 2.2 線框圖 (Wireframe) - Memory Card Preview
+2.  **主視覺模板 (Visual Templates)**:
+    *   **[通用] Default Blur**: 高斯模糊海報背景 + 懸浮卡片感。
+    *   **[通用] Pure Image**: 僅保留原始海報，適合極簡主義者。
+    *   **[影視專屬] Cinema Ticket**: 
+        *   設計成復古電影票根。
+        *   邊緣帶有打孔虛線感。
+        *   包含作品資訊、評分與專屬 QR Code 條碼。
+    *   **[書籍專屬] 3D Paperback**:
+        *   將封面渲染為立體書本。
+        *   **書背厚度**: 依據 `pages` 屬性動態調整 (頁數越多書越厚)。
+        *   搭配簡約背景。
+
+### 2.2 使用者流程 (User Flow)
+```mermaid
+graph TD
+    A[詳情頁點擊分享] --> B(開啟 Share Modal)
+    B --> C{調整客製化選項}
+    C -->|切換比例| D[更新預覽容器尺寸]
+    C -->|切換模板| E[切換渲染組件]
+    C -->|勾選內容| F[隱藏/顯示文字元素]
+    D & E & F --> G[點擊分享/下載]
+    G --> H[html-to-image 捕捉 DOM]
+    H --> I[喚起系統分享選單]
+```
+
+### 2.3 線框圖 (Wireframe)
 ```text
 +--------------------------------------------------+
-|  [X] Close                     [ Download Icon ] |
+|  [X] Close                                       |
 |                                                  |
 |  +--------------------------------------------+  |
-|  |             (Blurred Background)           |  |
+|  |             (Live Preview Area)            |  |
 |  |                                            |  |
-|  |  +--------------------------------------+  |  |
-|  |  |           [ Poster Image ]           |  |  |
-|  |  |           (or Backdrop)              |  |  |
-|  |  +--------------------------------------+  |  |
-|  |                                            |  |
-|  |  Title: Inception                          |  |
-|  |  My Rating: [ 印章風格 (Stamp Style) ]     |  |
-|  |  "A masterpiece of dream logic..."         |  |
-|  |                                            |  |
-|  |  [ QR Code ]    [ Storio Logo ]            |  |
+|  |       [ Dynamic Template Rendering ]       |  |
 |  |                                            |  |
 |  +--------------------------------------------+  |
 |                                                  |
-|  [ Template: Default | Pure | Ticket | 3D... ]   |
-|  [ Aspect Ratio: 9:16 | 4:5 | 1:1 ]              |
+|  [ 模板: 預設 | 純海報 | 票根 | 3D立體書 ]       |
+|  [ 比例: 9:16 | 4:5 | 1:1 ]                      |
 |                                                  |
-|  [v] Show Title                                  |
-|  [v] Show Rating                                 |
-|  [v] Show Reflection                             |
+|  顯示內容: [v] 標題  [v] 評分  [v] 心得          |
 |                                                  |
-|  [         Share (Native System Sheet)       ]   |
+|  [         一鍵分享 (Share Memory)           ]   |
 +--------------------------------------------------+
 ```

@@ -35,12 +35,18 @@ Captured following UAT on 2026-02-21.
     - Added "Where to Read" section (Google Play link).
     - Added "Read Sample" and cover thumbnails to Media section.
 
-## 🚀 SPRINT 4: Social & Identity (Current)
-- [ ] **User Profile Expansion**: Collect **Age** and **Gender** during the registration process (OAuth or Email OTP). These fields must be **read-only** in the Profile view.
-- [ ] **Guest Data Migration**: Ensure that when an anonymous "Guest" user registers or logs in, their existing Folio (saved stories) is automatically transferred to their new authenticated account without data loss.
-- [ ] **Share Memory Card**: Implement `html-to-image` generation for single story sharing (Instagram Story format).
-- [ ] **Share Monthly Recap**: Implement calendar view summary sharing (Instagram Post format).
-- [ ] **Share Modal**: Create a reusable preview & download modal for sharing features.
+## 🚀 SPRINT 5: Customizable Sharing (Current)
+- [ ] **Share Control Center**: Implement `ShareModal` with real-time preview, aspect ratio switching (9:16, 4:5, 1:1), and content toggles.
+- [ ] **Visual Templates**:
+    - [ ] **Default Blur**: High-quality blurred background with floating card.
+    - [ ] **Pure Image**: Minimalist full-poster export.
+    - [ ] **Cinema Ticket (Movies)**: Retro ticket stub design with perforated edges.
+    - [ ] **3D Paperback (Books)**: 3D rendered book with dynamic spine thickness based on page count.
+- [ ] **Native Sharing**: Integrate Web Share API for seamless system-level sharing on mobile.
+
+## 📅 SPRINT 6: Recap & Social
+- [ ] **Monthly Recap**: Implement calendar view summary sharing (Instagram Post format).
+- [ ] **Community Feed**: (Optional Concept) View shared memories from other curators.
 
 ## 🎨 UI/UX Polish
 - [ ] **Multi-View Navigation**: If an item has been viewed multiple times (re-watched):
