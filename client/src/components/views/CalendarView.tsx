@@ -15,13 +15,12 @@ import {
   isSameDay
 } from 'date-fns';
 import { zhTW, enUS } from 'date-fns/locale';
-import { X, User } from 'lucide-react';
+import { X, User, Share2 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Story } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '@/hooks/useTranslation';
-import { Share2 } from 'lucide-react';
 import ShareModal from '@/components/ShareModal';
 import MonthRecapTemplate from '@/components/share/MonthRecapTemplate';
 

@@ -7,16 +7,18 @@ export function useAuth() {
   const { user, token, loading, setUser, setToken, setLoading, fetchSession } = useUserStore();
 
   useEffect(() => {
-    // Initial fetch if not already done
+    // Initial Session Check
+    const initAuth = async () => {
+      await fetchSession();
+      // Session check is now handled inside onAuthStateChange or after fetchSession
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        await signInAnonymously();
+      }
+    };
+
     if (loading && !user) {
-      fetchSession().then(() => {
-        // If still no session after fetch, sign in anonymously
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (!session) {
-            signInAnonymously();
-          }
-        });
-      });
+      initAuth();
     }
 
     // Listen for auth changes
