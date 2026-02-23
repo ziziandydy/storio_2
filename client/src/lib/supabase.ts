@@ -12,22 +12,31 @@ const safeKey = supabaseAnonKey || 'tmp-key';
 export const supabase = createClient(safeUrl, safeKey);
 
 /**
- * 產生絕對 URL，優先使用環境變數中的 SITE_URL，
- * 其次是 Vercel 的預覽 URL，最後回退到 window.location.origin。
+ * 產生絕對 URL，用於 OAuth 重導向。
+ * 在瀏覽器端優先使用 window.location.origin，
+ * 伺服器端則依序嘗試環境變數。
  */
 export const getURL = (path: string = '') => {
-  let url =
-    process.env.NEXT_PUBLIC_SITE_URL ?? // 正式環境網址
-    process.env.NEXT_PUBLIC_VERCEL_URL ?? // Vercel 自動生成的網址
-    'http://localhost:3010/';
+  let url = '';
+
+  if (typeof window !== 'undefined' && window.location.origin) {
+    // 瀏覽器端優先使用當前網域
+    url = window.location.origin;
+  } else {
+    // 伺服器端或 SSR 期間使用環境變數
+    url =
+      process.env.NEXT_PUBLIC_SITE_URL ??
+      process.env.NEXT_PUBLIC_VERCEL_URL ??
+      'http://localhost:3010';
+  }
   
   // 確保包含協定
   url = url.startsWith('http') ? url : `https://${url}`;
-  // 確保結尾有斜線
-  url = url.endsWith('/') ? url : `${url}/`;
+  // 確保結尾沒有斜線，方便後面拼接
+  url = url.endsWith('/') ? url.slice(0, -1) : url;
   
-  // 移除路徑開頭的斜線
-  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  // 確保路徑以斜線開頭
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
   
   return `${url}${cleanPath}`;
 };
