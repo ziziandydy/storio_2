@@ -42,12 +42,25 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDownloaded, setIsDownloaded] = useState(false);
 
+  // Create a proxied version of the item for CORS-safe capturing
+  const proxiedItem = useMemo(() => {
+    if (!item) return undefined;
+    return {
+      ...item,
+      posterPath: item.posterPath
+        .replace('https://image.tmdb.org/t/p/', '/proxy/tmdb/')
+        .replace(/^https?:\/\/books\.google\.com\//, '/proxy/googlebooks/')
+    };
+  }, [item]);
+
   const handleCapture = async () => {
     if (!templateRef.current) return null;
     
     setIsGenerating(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Wait a bit to ensure the proxied image in the hidden div is loaded
+      // In a real prod app, we might want to use an onLoad handler for the image
+      await new Promise(resolve => setTimeout(resolve, 800));
       
       const dataUrl = await toPng(templateRef.current, {
         cacheBust: true,
@@ -131,18 +144,34 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             className={`relative w-full ${isSingleItem ? 'max-w-xl' : 'max-w-md'} bg-folio-black border border-white/10 rounded-[32px] overflow-hidden shadow-2xl flex flex-col md:flex-row h-auto md:h-[85vh] max-h-[900px]`}
           >
-            {/* Left: Preview Area */}
+            {/* Left: Preview Area (Visible to User) */}
             <div className={`flex-[1.2] bg-black/40 flex flex-col items-center justify-center p-6 relative overflow-hidden min-h-[400px]`}>
               <div className="absolute top-6 left-6 z-10">
                 <span className="text-[10px] font-black tracking-[0.2em] text-accent-gold/50 uppercase">Preview</span>
               </div>
               
-              {/* Scaled Preview Container */}
+              {/* Scaled Preview Container (Visible to User) */}
               <div className="relative shadow-2xl rounded-xl overflow-hidden border border-white/10 scale-[0.6] sm:scale-[0.7] md:scale-[0.8] lg:scale-90 transition-transform origin-center">
-                <div ref={templateRef} className="bg-folio-black overflow-hidden">
+                <div className="bg-folio-black overflow-hidden">
                   {item ? (
                     <MemoryCardTemplate 
                         {...item}
+                        aspectRatio={aspectRatio}
+                        selectedTemplate={selectedTemplate}
+                        showTitle={showTitle}
+                        showRating={showRating}
+                        showReflection={showReflection}
+                    />
+                  ) : template}
+                </div>
+              </div>
+
+              {/* Hidden Capture Container (With Proxied Images) */}
+              <div className="absolute top-0 left-0 opacity-0 pointer-events-none -z-50">
+                 <div ref={templateRef} className="bg-folio-black overflow-hidden">
+                  {proxiedItem ? (
+                    <MemoryCardTemplate 
+                        {...proxiedItem}
                         aspectRatio={aspectRatio}
                         selectedTemplate={selectedTemplate}
                         showTitle={showTitle}

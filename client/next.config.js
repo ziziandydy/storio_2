@@ -34,6 +34,18 @@ const nextConfig = {
             },
         ],
     },
+    async rewrites() {
+        return [
+            {
+                source: '/proxy/tmdb/:path*',
+                destination: 'https://image.tmdb.org/t/p/:path*',
+            },
+            {
+                source: '/proxy/googlebooks/:path*',
+                destination: 'https://books.google.com/:path*',
+            },
+        ];
+    },
 };
 
 module.exports = nextConfig;
