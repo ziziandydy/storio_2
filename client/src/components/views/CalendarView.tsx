@@ -154,7 +154,7 @@ export default function CalendarView({ stories }: CalendarViewProps) {
   const sharingMonthStats = {
     total: sharingMonthStories.length,
     movies: sharingMonthStories.filter(s => s.media_type === 'movie').length,
-    series: sharingMonthStories.filter(s => s.media_type === 'series' || s.media_type === 'tv').length,
+    series: sharingMonthStories.filter(s => s.media_type === 'tv').length,
     books: sharingMonthStories.filter(s => s.media_type === 'book').length,
   };
 
