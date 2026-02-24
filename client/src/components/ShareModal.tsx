@@ -116,11 +116,23 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
 
   const isSingleItem = !!item;
 
+  const waitForAllImages = async (element: HTMLElement) => {
+    const images = Array.from(element.querySelectorAll('img'));
+    await Promise.all(images.map((img) => {
+      if (img.complete) return Promise.resolve();
+      return new Promise((resolve) => {
+        img.onload = resolve;
+        img.onerror = resolve; // resolve on error to prevent hanging
+      });
+    }));
+  };
+
   const handleCapture = async () => {
     if (!templateRef.current) return null;
     setIsGenerating(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 100)); // Ensure render
+      await waitForAllImages(templateRef.current);
+      await new Promise(resolve => setTimeout(resolve, 500)); // Ensure paint is fully settled
 
       // Limit pixel ratio for mobile Safari to prevent memory crash
       const ratio = window.devicePixelRatio > 2 ? 2 : window.devicePixelRatio;

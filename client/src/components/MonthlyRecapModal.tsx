@@ -119,10 +119,22 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
         { id: '9:16', icon: RectangleVertical, label: t.shareModal.formats.story },
     ];
 
+    const waitForAllImages = async (element: HTMLElement) => {
+        const images = Array.from(element.querySelectorAll('img'));
+        await Promise.all(images.map((img) => {
+            if (img.complete) return Promise.resolve();
+            return new Promise((resolve) => {
+                img.onload = resolve;
+                img.onerror = resolve; // resolve on error to prevent hanging
+            });
+        }));
+    };
+
     const handleCapture = async () => {
         if (!templateRef.current) return null;
         setIsGenerating(true);
         try {
+            await waitForAllImages(templateRef.current);
             // Wait slightly longer to ensure DOM and fonts fully painted and layout settled
             await new Promise(resolve => setTimeout(resolve, 500));
             // Limit pixel ratio for mobile Safari to prevent memory crash
