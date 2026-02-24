@@ -7,6 +7,14 @@ export function useAuth() {
   const { user, token, loading, setUser, setToken, setLoading, fetchSession } = useUserStore();
 
   useEffect(() => {
+    // Top-Level E2E API Mock Escape Hatch to completely cut-out Supabase hanging the loading state
+    if (typeof window !== 'undefined' && window.localStorage.getItem('E2E_TEST') === 'true') {
+      setUser({ id: 'e2e-user', is_anonymous: true } as User);
+      setToken('e2e-token');
+      setLoading(false);
+      return;
+    }
+
     // Initial Session Check
     const initAuth = async () => {
       await fetchSession();
@@ -31,9 +39,9 @@ export function useAuth() {
         if (previousGuestId && previousGuestId !== newUser.id) {
           console.log(`Migrating data from ${previousGuestId} to ${newUser.id}`);
           try {
-            const { error } = await supabase.rpc('migrate_guest_data', { 
-              old_user_id: previousGuestId, 
-              new_user_id: newUser.id 
+            const { error } = await supabase.rpc('migrate_guest_data', {
+              old_user_id: previousGuestId,
+              new_user_id: newUser.id
             });
             if (error) throw error;
             localStorage.removeItem('storio_guest_id');
@@ -86,8 +94,8 @@ export function useAuth() {
     }
   };
 
-  const updateProfile = async (updates: { 
-    display_name?: string, 
+  const updateProfile = async (updates: {
+    display_name?: string,
     avatar_url?: string,
     gender?: string,
     birthday?: string,

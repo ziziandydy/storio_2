@@ -39,7 +39,7 @@ def test_add_story_success(service, mock_repo):
 
     # Assert
     assert result.title == "Dune"
-    mock_repo.count_user_stories.assert_called_once_with(user_id)
+    mock_repo.count_user_stories.assert_not_called()
     mock_repo.create_story.assert_called_once()
 
 def test_add_story_limit_reached(service, mock_repo):
@@ -56,7 +56,7 @@ def test_add_story_limit_reached(service, mock_repo):
 
     # Act & Assert
     with pytest.raises(Exception) as excinfo:
-        service.add_story(user_id, story_in)
+        service.add_story(user_id, story_in, is_anonymous=True)
 
     assert "Guest limit reached" in str(excinfo.value)
     mock_repo.create_story.assert_not_called()

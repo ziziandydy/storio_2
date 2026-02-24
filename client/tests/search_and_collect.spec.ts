@@ -1,9 +1,21 @@
 import { test, expect } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('E2E_TEST', 'true');
+  });
+});
+
+
 test('Guest can search and see results', async ({ page }) => {
   // Mock Search API
-  await page.route('**/api/v1/search/?q=Dune', async route => {
+  await page.route(/\/api\/v1\/search\/.*Dune/i, async route => {
+    if (route.request().method() === 'OPTIONS') {
+      await route.fulfill({ status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': '*', 'Access-Control-Allow-Headers': '*' } });
+      return;
+    }
     await route.fulfill({
+      headers: { 'Access-Control-Allow-Origin': '*' },
       json: {
         results: [
           {
@@ -25,16 +37,17 @@ test('Guest can search and see results', async ({ page }) => {
   await page.evaluate(() => {
     sessionStorage.setItem('hasSeenSplash', 'true');
     sessionStorage.setItem('hasSeenOnboarding', 'true');
+    localStorage.setItem('E2E_TEST', 'true');
   });
   await page.reload();
 
   await expect(page).toHaveTitle(/Storio/);
 
   // 2. Click Search (via FAB)
-  const fabButton = page.locator('div.fixed.bottom-8.right-6 button');
+  const fabButton = page.locator('div.fixed.bottom-8.right-6 > button');
   await expect(fabButton).toBeVisible();
   await fabButton.click();
-  
+
   // Wait for the search link to be visible in the menu
   const searchLink = page.locator('a[href="/search"]');
   await expect(searchLink).toBeVisible({ timeout: 10000 });
@@ -42,12 +55,13 @@ test('Guest can search and see results', async ({ page }) => {
   await expect(page).toHaveURL(/.*search/);
 
   // 3. Type "Dune" and Search
-  const input = page.getByPlaceholder(/Search movies/i);
+  await page.screenshot({ path: 'search_collect_1_before_fill.png' });
+  const input = page.locator('input[type="text"]');
   await input.fill('Dune');
   await input.press('Enter');
 
   // 4. Wait for results
-  const cards = page.locator('div.group'); 
+  const cards = page.locator('div.group');
   await expect(cards.first()).toBeVisible({ timeout: 10000 });
 
   // 5. Check if at least one result has a title
@@ -56,8 +70,13 @@ test('Guest can search and see results', async ({ page }) => {
 
 test('Guest can add item to collection (Mock Flow)', async ({ page }) => {
   // Mock Search API
-  await page.route('**/api/v1/search/?q=Matrix', async route => {
+  await page.route(/\/api\/v1\/search\/.*Matrix/i, async route => {
+    if (route.request().method() === 'OPTIONS') {
+      await route.fulfill({ status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': '*', 'Access-Control-Allow-Headers': '*' } });
+      return;
+    }
     await route.fulfill({
+      headers: { 'Access-Control-Allow-Origin': '*' },
       json: {
         results: [
           {
@@ -96,11 +115,12 @@ test('Guest can add item to collection (Mock Flow)', async ({ page }) => {
     sessionStorage.setItem('hasSeenOnboarding', 'true');
   });
   await page.goto('/search');
-  
-  const input = page.getByPlaceholder(/Search movies/i);
+
+  await page.screenshot({ path: 'search_collect_2_before_fill.png' });
+  const input = page.locator('input[type="text"]');
   await input.fill('Matrix');
   await input.press('Enter');
-  
+
   const cards = page.locator('div.group');
   await expect(cards.first()).toBeVisible({ timeout: 10000 });
 

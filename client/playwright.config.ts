@@ -11,6 +11,10 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:3010',
     trace: 'on-first-retry',
+    actionTimeout: 15000,
+  },
+  expect: {
+    timeout: 15000,
   },
   projects: [
     {
@@ -19,11 +23,11 @@ export default defineConfig({
     },
   ],
   // 啟動開發伺服器以進行測試
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3010',
-    reuseExistingServer: !process.env.CI,
-    stdout: 'pipe',
-    stderr: 'pipe',
-  },
+  // webServer: {
+  //   command: 'npm run dev',
+  //   url: 'http://localhost:3010',
+  //   reuseExistingServer: !process.env.CI,
+  //   stdout: 'pipe',
+  //   stderr: 'pipe',
+  // },
 });

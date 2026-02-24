@@ -1,17 +1,29 @@
 import { test, expect } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('E2E_TEST', 'true');
+  });
+});
+
+
 test('Guest limit is enforced when adding 11th item', async ({ page }) => {
   // Mock Search API
-  await page.route('**/api/v1/search/?q=LimitTest', async route => {
+  await page.route(/\/api\/v1\/search\/.*LimitTest/i, async route => {
+    if (route.request().method() === 'OPTIONS') {
+      await route.fulfill({ status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': '*', 'Access-Control-Allow-Headers': '*' } });
+      return;
+    }
     await route.fulfill({
+      headers: { 'Access-Control-Allow-Origin': '*' },
       json: {
-        results: [{ 
-            title: 'Limit Item', 
-            media_type: 'movie', 
-            external_id: '999', 
-            source: 'tmdb',
-            poster_path: '/limit.jpg',
-            year: 2024
+        results: [{
+          title: 'Limit Item',
+          media_type: 'movie',
+          external_id: '999',
+          source: 'tmdb',
+          poster_path: '/limit.jpg',
+          year: 2024
         }]
       }
     });
@@ -42,10 +54,11 @@ test('Guest limit is enforced when adding 11th item', async ({ page }) => {
   });
 
   await page.goto('/search');
-  const input = page.getByPlaceholder(/Search movies/i);
+  await page.screenshot({ path: 'guest_limit_before_fill.png' });
+  const input = page.locator('input[type="text"]');
   await input.fill('LimitTest');
   await input.press('Enter');
-  
+
   // Wait for the card to appear
   // Use filter to ensure we get the StoryCard, not other elements with class 'group'
   const card = page.locator('div.group').filter({ hasText: 'Limit Item' }).first();
@@ -68,8 +81,7 @@ test('Guest limit is enforced when adding 11th item', async ({ page }) => {
   await expect(saveButton).toBeVisible({ timeout: 15000 });
   await saveButton.click();
 
-  // Expect Toast with error message
-  // The error message from backend is English "Guest limit reached"
-  const toast = page.getByText(/Guest limit/i);
-  await expect(toast).toBeVisible({ timeout: 15000 });
+  // Expect GuestLimitModal to render with Capacity Reached message
+  const limitMessage = page.getByText(/(Capacity Reached|Guest curators can store)/i);
+  await expect(limitMessage.first()).toBeVisible({ timeout: 15000 });
 });

@@ -24,7 +24,7 @@ def test_guest_limit_reached():
     
     # Act & Assert
     with pytest.raises(HTTPException) as excinfo:
-        service.add_story(user_id, story_in)
+        service.add_story(user_id, story_in, is_anonymous=True)
     
     assert excinfo.value.status_code == status.HTTP_403_FORBIDDEN
     assert "Guest limit reached" in excinfo.value.detail
@@ -47,7 +47,7 @@ def test_guest_limit_not_reached():
     )
     
     # Act
-    service.add_story(user_id, story_in)
+    service.add_story(user_id, story_in, is_anonymous=True)
     
     # Assert
     mock_repo.create_story.assert_called_once()
