@@ -18,11 +18,12 @@ export const translations = {
       books: 'Books',
       tv: 'Series',
       add: 'Add',
+      saving: 'Saving...',
       details: 'Details',
     },
     nav: {
       home: 'Home',
-      search: 'Search',
+      search: 'Explore',
       collection: 'My Storio',
       profile: 'Profile',
     },
@@ -97,7 +98,7 @@ export const translations = {
       rating: 'Your Rating',
       reflection: 'Your Reflection',
       archivedAt: 'Archived At',
-      add: 'Add',
+      add: 'Add to Storio',
       remove: 'Remove',
       share: 'Share',
       source: 'Based on',
@@ -114,10 +115,11 @@ export const translations = {
       publisher: 'Publisher',
       pages: 'Pages',
       subtitle: 'Subtitle',
+      score: 'Rating',
       shareMessage: 'Hey! Check out my Storio collection, and you could collect your one in here:',
     },
     search: {
-      placeholder: 'Search movies, books, TV shows...',
+      placeholder: 'Explore movies, books, TV shows...',
       noResults: 'No results found',
       tabs: {
         all: 'All',
@@ -200,7 +202,7 @@ export const translations = {
       toggles: {
         title: 'Title',
         rating: 'Rating',
-        note: 'Note',
+        note: 'Reflection',
       }
     }
   },
@@ -223,6 +225,7 @@ export const translations = {
       books: '書籍',
       tv: '影集',
       add: '加入',
+      saving: '儲存中...',
       details: '詳情',
     },
     nav: {
@@ -302,7 +305,7 @@ export const translations = {
       rating: '你的評分',
       reflection: '你的心得',
       archivedAt: '收藏日期',
-      add: '新增',
+      add: '加入 Storio',
       remove: '移除',
       share: '分享',
       source: '資料來源',
@@ -319,10 +322,11 @@ export const translations = {
       publisher: '出版商',
       pages: '頁數',
       subtitle: '副標題',
+      score: '評分',
       shareMessage: 'Hey! Check out my Storio collection, and you could collect your one in here:',
     },
     search: {
-      placeholder: '搜尋電影、書籍、影集...',
+      placeholder: '探索電影、書籍、影集...',
       noResults: '找不到相關結果',
       tabs: {
         all: '全部',

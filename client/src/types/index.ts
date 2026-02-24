@@ -39,7 +39,8 @@ export interface ItemDetail {
   notes?: string;
   created_at?: string;
   viewing_number?: number;
-  
+  public_rating?: number;
+
   // Enhanced Details
   genres?: string[];
   status?: string;
@@ -53,7 +54,7 @@ export interface ItemDetail {
   subtitle?: string;
   page_count?: number;
   publisher?: string;
-  
+
   streaming_providers?: StreamingProvider[];
   related_media?: {
     type: 'video' | 'image' | 'link';

@@ -88,7 +88,7 @@ export default function MemoryCardTemplate({
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
                                     <span className="px-2 py-0.5 bg-accent-gold/20 backdrop-blur-md rounded text-[8px] font-black uppercase tracking-widest text-accent-gold border border-accent-gold/20">
-                                        {type}
+                                        {type === 'tv' ? 'TV SERIES' : type}
                                     </span>
                                     <span className="text-[10px] font-bold text-white/60 tracking-widest uppercase">{year}</span>
                                 </div>
@@ -211,7 +211,7 @@ export default function MemoryCardTemplate({
                         </div>
                         <div className="text-right">
                             <p className="text-[10px] font-black">{year}</p>
-                            <p className="text-[8px] font-bold uppercase">{type}</p>
+                            <p className="text-[8px] font-bold uppercase">{type === 'tv' ? 'TV SERIES' : type}</p>
                         </div>
                     </div>
 
@@ -561,7 +561,7 @@ export default function MemoryCardTemplate({
                             <div className="bg-black/40 backdrop-blur-md px-6 py-4 rounded-2xl shadow-xl w-full">
                                 <div className="flex items-center gap-2 mb-2">
                                     <span className="px-2 py-0.5 bg-accent-gold/20 backdrop-blur-md rounded text-[8px] font-black uppercase tracking-widest text-accent-gold border border-accent-gold/20">
-                                        {type}
+                                        {type === 'tv' ? 'TV SERIES' : type}
                                     </span>
                                     <span className="text-[10px] font-bold text-white/60 tracking-widest uppercase">{year}</span>
                                 </div>
@@ -612,7 +612,7 @@ export default function MemoryCardTemplate({
             <div className="relative z-10 w-full flex justify-center pt-2">
                 <div className="px-3 py-1 bg-black/20 backdrop-blur-md border border-white/10 rounded-full">
                     <span className="text-[8px] font-black tracking-[0.3em] uppercase text-accent-gold/90 shadow-sm">
-                        {type} Memory
+                        {type === 'tv' ? 'TV SERIES' : type} Memory
                     </span>
                 </div>
             </div>

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Search, Layers, X } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Plus, Search, Layers, Home, X } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -9,11 +10,17 @@ import { useTranslation } from '@/hooks/useTranslation';
 export default function NavigationFAB() {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
+  const pathname = usePathname();
 
-  const menuItems = [
-    { icon: Search, label: t.nav.search, href: '/search', color: 'bg-folio-card border border-white/10 text-white' },
-    { icon: Layers, label: t.nav.collection, href: '/collection', color: 'bg-folio-card border border-white/10 text-white' },
-  ];
+  const menuItems = pathname?.startsWith('/collection')
+    ? [
+      { icon: Home, label: t.nav.home, href: '/', color: 'bg-folio-card border border-white/10 text-white' },
+      { icon: Search, label: t.nav.search, href: '/search', color: 'bg-folio-card border border-white/10 text-white' },
+    ]
+    : [
+      { icon: Search, label: t.nav.search, href: '/search', color: 'bg-folio-card border border-white/10 text-white' },
+      { icon: Layers, label: t.nav.collection, href: '/collection', color: 'bg-folio-card border border-white/10 text-white' },
+    ];
 
   return (
     <div className="fixed bottom-8 right-6 z-50 flex flex-col items-end gap-4">
@@ -28,7 +35,7 @@ export default function NavigationFAB() {
                 exit={{ opacity: 0, y: 10, scale: 0.8 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <Link 
+                <Link
                   href={item.href}
                   className="flex items-center gap-4 group"
                   onClick={() => setIsOpen(false)}
@@ -48,9 +55,8 @@ export default function NavigationFAB() {
 
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-16 h-16 rounded-2xl flex items-center justify-center text-folio-black shadow-[0_0_30px_rgba(233,108,38,0.3)] transition-all duration-500 z-50 ${
-          isOpen ? 'bg-white rotate-45 scale-90' : 'bg-accent-gold hover:scale-110 active:scale-95'
-        }`}
+        className={`w-16 h-16 rounded-2xl flex items-center justify-center text-folio-black shadow-[0_0_30px_rgba(233,108,38,0.3)] transition-all duration-500 z-50 ${isOpen ? 'bg-white rotate-45 scale-90' : 'bg-accent-gold hover:scale-110 active:scale-95'
+          }`}
       >
         {isOpen ? <X size={28} /> : <Plus size={28} strokeWidth={3} />}
       </button>
