@@ -52,3 +52,32 @@
 ✅ **[Fix] 移除本地 CORS 並修復海報跨域**: 更新 `getImageProps` 判定。
 ✅ **[Enhancement] 日期邏輯與穩定性配置**: 套用 `parseISO` 與穩定 Hash 演算法取代 `Math.random()`。
 ✅ **[UX/UI] 骨架圖載入動畫與 i18n 支持**: 取代文字 loading 並補齊 i18n。
+
+## 5. 跨平台 (iOS/Safari) 深度除錯紀錄 (Debugging Scenarios)
+為了在 Dev 環境 (尤其是電腦版 Chrome/Safari) 重現 iOS Production 環境中 WebKit 引擎特有的嚴格渲染與 CORS 限制問題，我們採取了以下多種情境的模擬與分析：
+
+### 5.1 模擬「圖片缺失」 (CORS & 加載時機)
+*   **現象**: 截圖只有背景，海報變成純粹的黑影。
+*   **重現方式**: 
+    1.  於 DevTools 的 Network 面板切換為 `Slow 4G` 網路。
+    2.  檢查圖片是否於截圖函數 (例如 `toPng`) 啟動**之後**才載入完畢。
+*   **根本原因**: 過去的截圖代碼只依賴 `setTimeout(..., 500)` 死等待。當網路環境較差，圖片尚未觸發 `onload` 事件或解碼尚未完成時，Canvas 就已經強制擷取畫面。
+*   **最終解法**: 實作了強制的 `Promise.all` 等待函數 (`waitForAllImages`)，擷取所有的 `<img />`，必須等待 `img.complete` 或觸發 `onload`/`onerror` 後，才放行 `html-to-image` 的渲染管道。
+
+### 5.2 模擬「高斯模糊」或 SVG 濾鏡崩潰 (CSS Rendering)
+*   **現象**: 背景毛玻璃消失，或是 SVG 圖片、Logo 直接不見。
+*   **重現方式**:
+    1.  使用 Mac 版本的 Safari 檢查渲染結果 (因為 Chrome 的 Blink 引擎對 `foreignObject` 支援度極高且不挑剔)。
+    2.  如果仍難以重現，直接將 iPhone 接上 Mac，透過 **「網頁偵測器」 (Web Inspector)** 查看手機實機 Console。
+*   **根本原因**: iOS WebKit 引擎的記憶體回收機制極度暴躁。若發現某個 DOM 樹分支中夾帶了 `backdrop-filter: blur` 或是單純標籤有 `filter: grayscale()` 濾鏡，常在從 DOM 轉匯出 Canvas 的當下直接崩潰捨棄渲染 (Render fail)。
+*   **最終解法**: 徹底移除所有非必要的 `filter: grayscale` 樣式。將「截圖隱藏區塊」改為 `absolute top-0 left-0 opacity-0 -z-50`，而非挪用至可視範圍外 (`left-[-2000px]`) 觸發系統捨棄繪製。
+
+### 5.3 模擬「圖片 Caching / Proxy 阻擋」
+*   **現象**: 圖片因為 CDN 緩存，或是重定向代理規則造成 `Tainted Canvas`。
+*   **根本原因**: 早期使用的手寫 Vercel Edge Server Rewrite (`/proxy/tmdb`) 所配發的 CORS 標頭極不穩定，在不同網路節點下常常導致 iOS Webkit 拒絕繪製。
+*   **最終解法**: 正面採用 Next.js 最強大的基礎設施，所有外部 URL 通過 `/_next/image?url=...` 正規代理服務轉化為同源 (Same-origin) 並預先壓縮，保證瀏覽器暢通無阻放行 Blob。
+
+## 6. 最新修復進度與保障 (v2)
+✅ **[Critical Fix] CSS WebKit Crash**: 已移除 Logo 的 `grayscale` 等高危險 CSS 濾鏡，並修復隱藏畫布定位導致的 Paint Drop。
+✅ **[Critical Fix] Same-Origin Proxy**: 關閉自建 rewrite，統一透過 `_next/image` 作為圖片優化及 CORS 同源轉換器。
+✅ **[Root Cause Resolved] Async DOM Paint**: 完整導入 `waitForAllImages` Promise Hook，保證 100% 圖片與 Base64 解析完畢後再進行 `html-to-image` 截圖。
