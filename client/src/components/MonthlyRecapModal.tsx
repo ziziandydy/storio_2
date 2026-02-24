@@ -261,7 +261,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                                     </div>
 
                                     {/* Hidden Capture Container */}
-                                    <div className="fixed top-[-2000px] left-[-2000px] opacity-0 pointer-events-none -z-50 flex items-center justify-center">
+                                    <div className="absolute top-0 left-0 opacity-0 pointer-events-none -z-50 flex items-center justify-center">
                                         <div ref={templateRef} className="bg-folio-black overflow-hidden flex-shrink-0">
                                             <MonthlyRecapTemplate
                                                 monthName={monthName}
@@ -343,10 +343,27 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                                             </div>
                                         </div>
                                     </>
+                                ) : loading ? (
+                                    <div className="flex flex-col gap-6 animate-pulse opacity-50">
+                                        <div className="space-y-3">
+                                            <div className="w-24 h-3 bg-white/20 rounded-full" />
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {[1, 2, 3, 4].map(i => (
+                                                    <div key={i} className="h-10 bg-white/10 rounded-2xl border border-white/5" />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <div className="w-24 h-3 bg-white/20 rounded-full" />
+                                            <div className="flex gap-2">
+                                                <div className="h-14 flex-1 bg-white/10 rounded-2xl border border-white/5" />
+                                            </div>
+                                        </div>
+                                    </div>
                                 ) : (
                                     <div className="text-center py-8">
                                         <p className="text-sm text-text-desc opacity-60">
-                                            {loading ? '' : 'No memories to share for this month.'}
+                                            No memories to share for this month.
                                         </p>
                                     </div>
                                 )}

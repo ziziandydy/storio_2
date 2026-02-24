@@ -194,6 +194,7 @@ class CollectionRepository:
                 "title": mapped_row.get("title"),
                 "media_type": m_type,
                 "poster_url": mapped_row.get("poster_path"),
+                "created_at": mapped_row.get("created_at"),
                 "dominant_color": None 
             })
             
