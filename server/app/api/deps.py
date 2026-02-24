@@ -20,12 +20,12 @@ def get_language(accept_language: str = Header("zh-TW")) -> str:
         return "en-US"
     return "zh-TW"
 
-def get_current_user_id(
+def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     supabase: Client = Depends(get_supabase_client)
-) -> str:
+):
     """
-    Verifies the Supabase JWT and returns the User ID.
+    Verifies the Supabase JWT and returns the User object.
     """
     token = credentials.credentials
     try:
@@ -37,7 +37,7 @@ def get_current_user_id(
                 detail="Invalid authentication credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        return user_response.user.id
+        return user_response.user
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

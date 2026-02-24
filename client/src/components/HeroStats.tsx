@@ -24,9 +24,9 @@ export default function HeroStats() {
         .then(data => {
           const c = Array.isArray(data) ? data.length : 0;
           setCount(c);
-          if (c > 50) setLevel('Grand Archivist');
-          else if (c > 20) setLevel('Keeper');
-          else if (c > 10) setLevel('Curator');
+          if (c > 99) setLevel('Pharaoh');
+          else if (c >= 50) setLevel('Architect');
+          else if (c >= 10) setLevel('Scribe');
           else setLevel('Apprentice');
         })
         .catch(err => console.error("Failed to fetch stats", err));
@@ -41,7 +41,7 @@ export default function HeroStats() {
       </div>
 
       <h1 className="text-5xl md:text-7xl font-black text-text-primary mb-2 font-serif tracking-tight">
-        {count} <span className="text-xl md:text-3xl text-text-desc font-light">Stories</span>
+        {count.toLocaleString()}
       </h1>
 
       <p className="text-text-desc text-sm max-w-xs mb-8 leading-relaxed">

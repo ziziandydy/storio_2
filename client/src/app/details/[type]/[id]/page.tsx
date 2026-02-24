@@ -27,7 +27,7 @@ export default function DetailsPage() {
   useEffect(() => {
     const fetchDetails = async () => {
       if (!type || !id) return;
-      
+
       setLoading(true);
       try {
         const res = await fetch(getApiUrl(`/api/v1/details/${type}/${id}`), {
@@ -53,32 +53,36 @@ export default function DetailsPage() {
     if (!item || !token) return;
 
     try {
-        const res = await fetch(getApiUrl('/api/v1/collection/'), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                ...item,
-                rating,
-                notes,
-                created_at: date ? new Date(date).toISOString() : undefined
-            })
-        });
+      const res = await fetch(getApiUrl('/api/v1/collection/'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...item,
+          rating,
+          notes,
+          created_at: date ? new Date(date).toISOString() : undefined
+        })
+      });
 
-        if (res.status === 409) {
-            return { status: 'duplicate' };
-        }
+      if (res.status === 409) {
+        return { status: 'duplicate' };
+      }
 
-        if (!res.ok) {
-            throw new Error('Failed to add item');
-        }
+      if (res.status === 403) {
+        return { status: 'capacity_reached' };
+      }
 
-        return await res.json();
+      if (!res.ok) {
+        throw new Error('Failed to add item');
+      }
+
+      return await res.json();
     } catch (error) {
-        console.error("Error adding to folio:", error);
-        throw error; 
+      console.error("Error adding to folio:", error);
+      throw error;
     }
   };
 
@@ -86,9 +90,9 @@ export default function DetailsPage() {
     <div className="min-h-screen bg-[#000000] flex items-center justify-center">
       <div className="flex flex-col items-center gap-6">
         <div className="relative w-48 h-48">
-          <Image 
-            src="/image/loading.gif" 
-            alt="Loading..." 
+          <Image
+            src="/image/loading.gif"
+            alt="Loading..."
             fill
             className="object-contain"
             unoptimized
@@ -108,24 +112,24 @@ export default function DetailsPage() {
 
   return (
     <>
-      <StoryDetailsView 
-        item={item} 
+      <StoryDetailsView
+        item={item}
         onAddClick={() => setIsAddModalOpen(true)}
         showAddButton={true}
         onBack={() => router.back()}
       />
 
       {/* Add Modal */}
-      <AddToFolioModal 
-        isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
-        onSave={handleAddToFolio} 
+      <AddToFolioModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSave={handleAddToFolio}
         onViewDetails={(id) => {
-            if (id) {
-                router.push(`/collection/${id}`);
-            }
+          if (id) {
+            router.push(`/collection/${id}`);
+          }
         }}
-        title={item.title} 
+        title={item.title}
         external_id={item.external_id}
       />
     </>

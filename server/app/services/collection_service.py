@@ -76,14 +76,15 @@ class CollectionService:
         instances = [StoryInstance(**i) for i in instances_data]
         return StoryCheckResponse(exists=len(instances) > 0, instances=instances)
 
-    def add_story(self, user_id: str, story_in: StoryCreate) -> StoryResponse:
-        # Check limit
-        current_count = self.repo.count_user_stories(user_id)
-        if current_count >= 10:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Guest limit reached (10 items). Please register to collect more."
-            )
+    def add_story(self, user_id: str, story_in: StoryCreate, is_anonymous: bool = False) -> StoryResponse:
+        # Check limit only for anonymous users
+        if is_anonymous:
+            current_count = self.repo.count_user_stories(user_id)
+            if current_count >= 10:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Guest limit reached (10 items). Please register to collect more."
+                )
             
         return self.repo.create_story(user_id, story_in)
 

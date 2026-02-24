@@ -27,7 +27,7 @@ interface StoryResult {
 function SearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // Initialize state from URL params
   const initialQuery = searchParams.get('q') || '';
   const initialFilter = (searchParams.get('filter') as 'movie' | 'book' | 'tv') || 'movie';
@@ -44,7 +44,7 @@ function SearchContent() {
   const { showToast } = useToast();
   const { t } = useTranslation();
   const { language } = useSettingsStore();
-  
+
   // Add To Folio Modal State
   const [selectedStory, setSelectedStory] = useState<StoryResult | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -52,8 +52,8 @@ function SearchContent() {
   // Sync input value with URL param on mount/update if needed
   useEffect(() => {
     if (inputRef.current && inputRef.current.value !== initialQuery) {
-        inputRef.current.value = initialQuery;
-        setQuery(initialQuery); // Sync state for clear button visibility
+      inputRef.current.value = initialQuery;
+      setQuery(initialQuery); // Sync state for clear button visibility
     }
   }, [initialQuery]);
 
@@ -70,7 +70,7 @@ function SearchContent() {
     const params = new URLSearchParams(searchParams.toString());
     params.set('filter', filter);
     if (debouncedQuery) params.set('q', debouncedQuery);
-    
+
     router.replace(`/search?${params.toString()}`, { scroll: false });
   }, [filter, router]);
 
@@ -78,30 +78,30 @@ function SearchContent() {
   const handleSubmit = (e?: React.FormEvent | React.KeyboardEvent | React.MouseEvent) => {
     // Ignore keyboard events that aren't Enter
     if (e && 'key' in e && e.key !== 'Enter') return;
-    
+
     // Ignore composition events (when user is selecting CJK characters via Enter)
     if (e && 'nativeEvent' in e && (e.nativeEvent as any).isComposing) return;
 
     e?.preventDefault();
     inputRef.current?.blur(); // Dismiss keyboard
-    
+
     const currentVal = inputRef.current?.value || '';
     setQuery(currentVal);
     setDebouncedQuery(currentVal);
-    
+
     const params = new URLSearchParams(searchParams.toString());
     if (currentVal) params.set('q', currentVal);
     else params.delete('q');
     params.set('filter', filter);
-    
+
     router.replace(`/search?${params.toString()}`, { scroll: false });
   };
 
   // Handle Clear
   const handleClear = () => {
     if (inputRef.current) {
-        inputRef.current.value = '';
-        inputRef.current.focus();
+      inputRef.current.value = '';
+      inputRef.current.focus();
     }
     setQuery('');
     setDebouncedQuery('');
@@ -124,9 +124,9 @@ function SearchContent() {
           }
         });
         if (!res.ok) {
-            console.error("Search API returned non-OK status");
-            setResults([]);
-            return;
+          console.error("Search API returned non-OK status");
+          setResults([]);
+          return;
         }
         const data = await res.json();
         if (data.results) {
@@ -169,7 +169,11 @@ function SearchContent() {
       });
 
       if (res.status === 409) {
-        throw new Error("You have already collected this story.");
+        return { status: 'duplicate' };
+      }
+
+      if (res.status === 403) {
+        return { status: 'capacity_reached' };
       }
 
       if (!res.ok) {
@@ -190,9 +194,9 @@ function SearchContent() {
         <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
           <div className="flex flex-col items-center gap-6">
             <div className="relative w-48 h-48">
-              <Image 
-                src="/image/loading.gif" 
-                alt="Loading..." 
+              <Image
+                src="/image/loading.gif"
+                alt="Loading..."
                 fill
                 className="object-contain"
                 unoptimized
@@ -219,13 +223,13 @@ function SearchContent() {
           <div className="flex flex-col items-center justify-center h-[60vh] select-none pointer-events-none">
             {/* Minimal Horizon Layout */}
             <div className="flex items-center gap-6 text-white/20 mb-6">
-                <Film size={32} strokeWidth={1} />
-                <div className="w-1 h-1 rounded-full bg-white/10" />
-                <BookOpen size={32} strokeWidth={1} />
-                <div className="w-1 h-1 rounded-full bg-white/10" />
-                <Ticket size={32} strokeWidth={1} />
+              <Film size={32} strokeWidth={1} />
+              <div className="w-1 h-1 rounded-full bg-white/10" />
+              <BookOpen size={32} strokeWidth={1} />
+              <div className="w-1 h-1 rounded-full bg-white/10" />
+              <Ticket size={32} strokeWidth={1} />
             </div>
-            
+
             <h2 className="text-3xl font-serif text-white/40 tracking-wide font-bold">
               Find the stories here
             </h2>
@@ -235,7 +239,7 @@ function SearchContent() {
         {filteredResults.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-8">
             {filteredResults.map((item) => (
-              <StoryCard 
+              <StoryCard
                 key={`${item.source}-${item.external_id}`}
                 external_id={item.external_id}
                 title={item.title}
@@ -249,7 +253,7 @@ function SearchContent() {
             ))}
           </div>
         )}
-        
+
         {debouncedQuery && !loading && filteredResults.length === 0 && (
           <div className="text-center text-text-desc mt-20 flex flex-col items-center">
             <div className="w-12 h-px bg-folio-outline mb-6"></div>
@@ -263,24 +267,21 @@ function SearchContent() {
         <div className="max-w-md mx-auto flex flex-col gap-4">
           {/* Segmented Control */}
           <div className="w-full bg-folio-card/80 backdrop-blur-xl p-1 rounded-full border border-white/10 flex relative overflow-hidden shadow-2xl">
-            <div 
-              className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-accent-gold rounded-full transition-all duration-300 ease-out ${
-                filter === 'book' ? 'translate-x-[calc(100%+4px)]' : 'translate-x-0'
-              }`}
+            <div
+              className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-accent-gold rounded-full transition-all duration-300 ease-out ${filter === 'book' ? 'translate-x-[calc(100%+4px)]' : 'translate-x-0'
+                }`}
             />
             <button
               onClick={() => setFilter('movie')}
-              className={`flex-1 py-2 text-[10px] font-bold tracking-[0.2em] uppercase transition-colors relative z-10 ${
-                filter === 'movie' ? 'text-folio-black' : 'text-text-desc hover:text-white'
-              }`}
+              className={`flex-1 py-2 text-[10px] font-bold tracking-[0.2em] uppercase transition-colors relative z-10 ${filter === 'movie' ? 'text-folio-black' : 'text-text-desc hover:text-white'
+                }`}
             >
               {t.search.tabs.movies} / {t.search.tabs.tv}
             </button>
             <button
               onClick={() => setFilter('book')}
-              className={`flex-1 py-2 text-[10px] font-bold tracking-[0.2em] uppercase transition-colors relative z-10 ${
-                filter === 'book' ? 'text-folio-black' : 'text-text-desc hover:text-white'
-              }`}
+              className={`flex-1 py-2 text-[10px] font-bold tracking-[0.2em] uppercase transition-colors relative z-10 ${filter === 'book' ? 'text-folio-black' : 'text-text-desc hover:text-white'
+                }`}
             >
               {t.search.tabs.books}
             </button>
@@ -289,9 +290,9 @@ function SearchContent() {
           {/* Search Input */}
           <div className="relative group w-full">
             <div className="absolute inset-0 bg-accent-gold/5 blur-xl rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
-            <input 
+            <input
               ref={inputRef}
-              type="text" 
+              type="text"
               placeholder={t.search.placeholder}
               defaultValue={initialQuery}
               onChange={(e) => setQuery(e.target.value)} // Just for UI state (clear btn)
@@ -299,33 +300,32 @@ function SearchContent() {
               className="w-full bg-folio-card/80 backdrop-blur-md hover:bg-folio-card focus:bg-black border border-white/10 focus:border-accent-gold/50 rounded-full py-4 pl-7 pr-32 text-base text-white placeholder:text-text-desc/50 focus:outline-none focus:border-accent-gold transition-all shadow-xl relative z-0"
               autoFocus
             />
-            
+
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10">
-                {query && !loading && (
-                    <button 
-                        onClick={handleClear}
-                        className="text-text-desc hover:text-white bg-white/5 rounded-full p-2 hover:bg-white/10 transition-all"
-                        title="Clear"
-                    >
-                        <X size={16} />
-                    </button>
-                )}
-
-                {loading && (
-                    <div className="p-2">
-                        <Loader2 className="text-accent-gold animate-spin" size={20} />
-                    </div>
-                )}
-
-                <button 
-                    onClick={(e) => handleSubmit(e)}
-                    className={`flex items-center justify-center w-12 h-12 rounded-full transition-all ${
-                        loading ? 'bg-white/5 text-text-desc' : 'bg-accent-gold text-folio-black hover:bg-white hover:scale-105 active:scale-95 shadow-lg'
-                    }`}
-                    title="Search"
+              {query && !loading && (
+                <button
+                  onClick={handleClear}
+                  className="text-text-desc hover:text-white bg-white/5 rounded-full p-2 hover:bg-white/10 transition-all"
+                  title="Clear"
                 >
-                    <ArrowUp size={22} strokeWidth={3} />
+                  <X size={16} />
                 </button>
+              )}
+
+              {loading && (
+                <div className="p-2">
+                  <Loader2 className="text-accent-gold animate-spin" size={20} />
+                </div>
+              )}
+
+              <button
+                onClick={(e) => handleSubmit(e)}
+                className={`flex items-center justify-center w-12 h-12 rounded-full transition-all ${loading ? 'bg-white/5 text-text-desc' : 'bg-accent-gold text-folio-black hover:bg-white hover:scale-105 active:scale-95 shadow-lg'
+                  }`}
+                title="Search"
+              >
+                <ArrowUp size={22} strokeWidth={3} />
+              </button>
             </div>
           </div>
         </div>
@@ -333,10 +333,10 @@ function SearchContent() {
 
       {/* Add To Folio Modal */}
       {selectedStory && (
-        <AddToFolioModal 
-          isOpen={isAddModalOpen} 
-          onClose={() => setIsAddModalOpen(false)} 
-          onSave={handleAddToFolio} 
+        <AddToFolioModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onSave={handleAddToFolio}
           onViewDetails={(id) => {
             if (id) {
               router.push(`/collection/${id}`);
@@ -344,7 +344,7 @@ function SearchContent() {
               router.push(`/details/${selectedStory.media_type}/${selectedStory.external_id}`);
             }
           }}
-          title={selectedStory.title} 
+          title={selectedStory.title}
           external_id={selectedStory.external_id}
         />
       )}

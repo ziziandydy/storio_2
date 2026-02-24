@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
-from app.api.deps import get_current_user_id, security
+from app.api.deps import get_current_user, security
 
 client = TestClient(app)
 
@@ -12,7 +12,8 @@ def test_get_stats_structure():
     """
     
     # Override dependencies to bypass auth
-    app.dependency_overrides[get_current_user_id] = lambda: "test-user-id"
+    mock_user = type('obj', (object,), {'id': 'test-user-id', 'is_anonymous': False})
+    app.dependency_overrides[get_current_user] = lambda: mock_user
     app.dependency_overrides[security] = lambda: type('obj', (object,), {'credentials': 'mock-token'})
 
     # Mock the service call to avoid actual DB connection issues in unit test

@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  X, CheckCircle2, Bookmark, ExternalLink, 
+import {
+  X, CheckCircle2, Bookmark, ExternalLink,
   Plus, History, MessageSquare, Star, ArrowRight,
   Loader2
 } from 'lucide-react';
 import Image from 'next/image';
 import RateAndReflectForm from './RateAndReflectForm';
+import GuestLimitModal from './GuestLimitModal';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getApiUrl } from '@/lib/api';
 
@@ -26,6 +27,7 @@ interface AddToFolioModalProps {
 
 export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails, title, external_id, overview }: AddToFolioModalProps) {
   const [mode, setShowMode] = useState<'add' | 'prompt' | 'view_existing' | 'success'>('add');
+  const [showGuestLimit, setShowGuestLimit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newlyCreatedId, setNewlyCreatedId] = useState<string | undefined>(undefined);
   const [forceAdd, setForceAdd] = useState(false);
@@ -45,9 +47,14 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
     setIsSubmitting(true);
     try {
       const result = await onSave(rating, notes, date);
-      
+
       if (result && result.status === 'duplicate' && !forceAdd) {
         setShowMode('prompt');
+        return;
+      }
+
+      if (result && result.status === 'capacity_reached') {
+        setShowGuestLimit(true);
         return;
       }
 
@@ -68,7 +75,7 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
       {isOpen && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6">
           {/* Backdrop */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -77,7 +84,7 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
           />
 
           {/* Modal Content */}
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -96,15 +103,15 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
                   </p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-                  <button 
+                  <button
                     onClick={onClose}
                     className="py-4 bg-white/5 text-white rounded-2xl font-bold text-xs uppercase tracking-widest border border-white/10 hover:bg-white/10 transition-all"
                   >
                     {t.modals.continueBrowsing}
                   </button>
-                  <button 
+                  <button
                     onClick={() => {
-                        window.location.href = '/collection';
+                      window.location.href = '/collection';
                     }}
                     className="py-4 bg-accent-gold text-folio-black rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white transition-all flex items-center justify-center gap-2"
                   >
@@ -123,30 +130,30 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-4 font-serif">Already in your Folio</h2>
                   <p className="text-text-desc text-sm leading-relaxed">
-                    You&apos;ve already curated <span className="text-white font-bold">&quot;{title}&quot;</span>. 
+                    You&apos;ve already curated <span className="text-white font-bold">&quot;{title}&quot;</span>.
                     Are you logging a <span className="text-accent-gold font-bold">re-watch / re-read</span>?
                   </p>
                 </div>
                 <div className="grid grid-cols-1 gap-3 w-full">
-                  <button 
+                  <button
                     onClick={() => {
-                        setForceAdd(true);
-                        setShowMode('add');
+                      setForceAdd(true);
+                      setShowMode('add');
                     }}
                     className="w-full py-4 bg-accent-gold text-folio-black rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white transition-all flex items-center justify-center gap-2"
                   >
                     <Plus size={16} strokeWidth={3} /> Log as Re-watch
                   </button>
-                  <button 
+                  <button
                     onClick={() => {
-                        onViewDetails();
-                        onClose();
+                      onViewDetails();
+                      onClose();
                     }}
                     className="w-full py-4 bg-white/5 text-white rounded-2xl font-bold text-xs uppercase tracking-widest border border-white/10 hover:bg-white/10 transition-all flex items-center justify-center gap-2"
                   >
                     <ExternalLink size={16} /> View Existing Record
                   </button>
-                  <button 
+                  <button
                     onClick={onClose}
                     className="w-full py-3 text-text-desc hover:text-white text-[10px] font-bold uppercase tracking-[0.2em] transition-colors"
                   >
@@ -175,15 +182,15 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
                   <div className="mb-8">
                     <h3 className="text-2xl font-black text-white leading-tight">{title}</h3>
                     {forceAdd && (
-                        <div className="mt-2 text-[10px] font-black uppercase tracking-widest text-accent-gold flex items-center gap-2">
-                            <History size={12} /> New Viewing Log
-                        </div>
+                      <div className="mt-2 text-[10px] font-black uppercase tracking-widest text-accent-gold flex items-center gap-2">
+                        <History size={12} /> New Viewing Log
+                      </div>
                     )}
                   </div>
 
-                  <RateAndReflectForm 
-                    onSave={handleSave} 
-                    isSaving={isSubmitting} 
+                  <RateAndReflectForm
+                    onSave={handleSave}
+                    isSaving={isSubmitting}
                     title={title}
                     overview={overview} // Pass overview
                   />
@@ -193,6 +200,17 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
           </motion.div>
         </div>
       )}
+
+      {/* Guest Limit Modal overlay */}
+      <GuestLimitModal
+        isOpen={showGuestLimit}
+        onClose={() => setShowGuestLimit(false)}
+        onLogin={(provider) => {
+          // We might want to close AddToFolioModal too, or trigger logic
+          // To keep it simple, we redirect to login here or store auth attempt
+          window.location.href = `/login?provider=${provider}`;
+        }}
+      />
     </AnimatePresence>
   );
 }

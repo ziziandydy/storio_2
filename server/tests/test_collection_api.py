@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from fastapi.security import HTTPAuthorizationCredentials
 from unittest.mock import MagicMock
 from app.main import app
-from app.api.deps import get_current_user_id, security
+from app.api.deps import get_current_user, security
 from app.services.collection_service import CollectionService
 from uuid import uuid4
 
@@ -15,9 +15,10 @@ def mock_service():
 def test_api_add_collection_success():
     # Arrange
     user_id = str(uuid4())
+    mock_user = type('obj', (object,), {'id': user_id, 'is_anonymous': False})
     
     # Override the Auth dependency
-    app.dependency_overrides[get_current_user_id] = lambda: user_id
+    app.dependency_overrides[get_current_user] = lambda: mock_user
     app.dependency_overrides[security] = lambda: HTTPAuthorizationCredentials(scheme="Bearer", credentials="mock_token")
     
     client = TestClient(app)
@@ -60,7 +61,8 @@ def test_api_add_collection_success():
 def test_api_get_collection():
     # Arrange
     user_id = str(uuid4())
-    app.dependency_overrides[get_current_user_id] = lambda: user_id
+    mock_user = type('obj', (object,), {'id': user_id, 'is_anonymous': False})
+    app.dependency_overrides[get_current_user] = lambda: mock_user
     app.dependency_overrides[security] = lambda: HTTPAuthorizationCredentials(scheme="Bearer", credentials="mock_token")
     client = TestClient(app)
 
