@@ -45,8 +45,14 @@ export default function MemoryCardTemplate({
     const getImageProps = (src: string) => {
         return {
             src: src || '/image/defaultMoviePoster.svg',
+            // Only use crossOrigin for external URLs (proxied)
+            // Local assets should NOT have it to avoid Safari issues
+            ...(src && (src.startsWith('http') || src.startsWith('/proxy')) ? { crossOrigin: 'anonymous' as const } : {})
         };
     };
+
+    // Base64 Logo to guarantee rendering in Canvas (Bypass CORS/Loading issues)
+    const LOGO_BASE64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAACi0lEQVR4nO2Zy0tVQRzHf+e+Wy+tF62MpChIqI2o2YVoE1SLaBFE0C+I/oO2bdtW0T9Q0CIEbdq0qaCfEBVEhSRFZGZmpfe+z2nMOTPp3vE1c+Xcw4EfnLnMnN/5zG/mnO8MBSGEEEIIIYQQQggh5D8R0Q4MAiPAIGv8B94CT4FnoK2SgSKiAfgIvAQeZFy2A5+Bl0BjJQNFRAPwEngC3Eu59AA8A54DjZUMFBENwGvgEXA35dJd4CnwFGiuZKCIqAM+Ag+B2ymXbgMPgMdASyUDRUQd8A54ANxKuXQLeAA8ApoqGSgi6oB3wH3gVsqlm8A94BHQXMlAEVEHvAHuAjdTLt0A7gKPgOZKBupE1AGvgLvAjZRL14G7wEOguZKBOhF1wEvgDnAz5dI14A7wEGiuZKCIqANeAHeAGymXrgJ3gIdAcyUDRUQd8Bx4ANxIuXQFuAM8ApqrGehE1AGvF4BvAzdSLl0BbgOPgOZqBupE1AGvF4DvAldTLl0BbgOPgeZqBjoRdcDrBeBbwNWUS5eB28BjoLmagToRdcDrBeAbwNWUS5eB28BjoLmagToRdcBr4A5wNeXSZeA28BhorgagTkQd8Bq4A1xNuXQZuA08ApqrGehE1AGvF4BvAJdTLl0CbgOPgeZqBjoRdcDrBeAbwOWUS5eA28BjoLmagToRdcDrBeDrwOWUSxeB28BjoLmagToRdcDrBeDrwKWUSxeB28AjoLmagToRdcDrBeDrwKWUSxeBW8BjoLmagToRdcDrBeBrwKWUSxeBW8AjoLmagToRdcDrBeBrwMWUSxeBW8BjoLmagToRdcDrBeBrwMWUSxeBW8AjoLmagToRdcDrBeBrwMWUSxeAW8BjoLmagToR9S/5t/wFhBBCCCHk7/MC7XW0t5s8Z3MAAAAASUVORK5CYII=";
 
     // --- Helper: Stamp Component ---
     const StampRating = () => (
@@ -106,7 +112,7 @@ export default function MemoryCardTemplate({
 
                     {/* Branding */}
                     <div className="pt-4 border-t border-white/10 flex items-center gap-2 opacity-80">
-                        <img src="/image/logo/logo.png" width={14} height={14} alt="Storio" className="grayscale opacity-80" />
+                        <img src={LOGO_BASE64} width={14} height={14} alt="Storio" className="grayscale opacity-80" />
                         <span className="text-[10px] font-black tracking-[0.3em] text-white uppercase">Storio</span>
                     </div>
                 </div>
@@ -178,7 +184,7 @@ export default function MemoryCardTemplate({
 
                 {/* Footer Logo */}
                 <div className="absolute bottom-6 flex items-center gap-2 opacity-40">
-                    <img src="/image/logo/logo.png" width={14} height={14} alt="Storio" className="grayscale opacity-80" />
+                    <img src={LOGO_BASE64} width={14} height={14} alt="Storio" className="grayscale opacity-80" />
                     <span className="text-[10px] font-black tracking-[0.3em] text-white uppercase">Storio</span>
                 </div>
             </div>
@@ -235,7 +241,7 @@ export default function MemoryCardTemplate({
                     {/* Ticket Footer / Stub */}
                     <div className="p-6 border-t-2 border-dashed border-folio-black/20 bg-black/5 flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                            <img src="/image/logo/logo.png" width={14} height={14} className="grayscale opacity-80" />
+                            <img src={LOGO_BASE64} width={14} height={14} alt="Storio" className="grayscale opacity-80" />
                             <span className="text-[10px] font-black tracking-tighter">STORIO</span>
                         </div>
                     </div>
@@ -464,7 +470,7 @@ export default function MemoryCardTemplate({
 
                 {/* Branding Plate */}
                 <div className="absolute top-6 right-6 flex items-center gap-2 opacity-30 mix-blend-screen">
-                    <img src="/image/logo/logo.png" width={12} height={12} className="grayscale opacity-80" />
+                    <img src={LOGO_BASE64} width={12} height={12} className="grayscale opacity-80" />
                     <span className="text-[8px] font-black tracking-[0.3em] text-[#c5a059] uppercase">Storio</span>
                 </div>
             </div>
@@ -582,7 +588,7 @@ export default function MemoryCardTemplate({
 
                 {/* Branding Plate - Very subtle for flat lay */}
                 <div className="absolute bottom-6 left-8 flex items-center gap-2 opacity-50 z-40 mix-blend-multiply pointer-events-none">
-                    <img src="/image/logo/logo.png" width={12} height={12} className="grayscale opacity-80" />
+                    <img src={LOGO_BASE64} width={12} height={12} className="grayscale opacity-80" />
                     <span className="text-[8px] font-black tracking-[0.3em] text-black uppercase">Storio</span>
                 </div>
             </div>
@@ -651,7 +657,7 @@ export default function MemoryCardTemplate({
                 )}
 
                 <div className="pt-4 flex items-center gap-2 opacity-70">
-                    <img src="/image/logo/logo.png" width={14} height={14} alt="" className="grayscale opacity-80" />
+                    <img src={LOGO_BASE64} width={14} height={14} alt="" className="grayscale opacity-80" />
                     <span className="text-[10px] font-black tracking-[0.4em] uppercase text-white">Storio</span>
                 </div>
             </div>

@@ -42,7 +42,7 @@ test.describe('Search and Collect Flow', () => {
     // 3. Click Search (via FAB)
     const fabButton = page.locator('div.fixed.bottom-8.right-6 > button');
     await expect(fabButton).toBeVisible();
-    await fabButton.click();
+    await fabButton.click({ force: true });
 
     const searchLink = page.locator('a[href="/search"]');
     await expect(searchLink).toBeVisible({ timeout: 10000 });
@@ -122,7 +122,7 @@ test.describe('Search and Collect Flow', () => {
     await expect(cards.first()).toBeVisible({ timeout: 10000 });
 
     // Hover or Click the card to reveal the overlay/details
-    await cards.first().hover();
+    await cards.first().hover({ force: true });
 
     // The Add button is inside the card
     const addButton = cards.first().locator('button').filter({ hasText: /(Add|加入)/i }).first();

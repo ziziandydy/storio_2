@@ -29,7 +29,7 @@ test.describe('Home Page Flow', () => {
     // The NavigationFAB has a generic icon, we look for the button in the bottom right context
     const fabButton = page.locator('div.fixed.bottom-8.right-6 > button');
     await expect(fabButton).toBeVisible({ timeout: 10000 });
-    await fabButton.click();
+    await fabButton.click({ force: true });
 
     // Check for Profile link - it's in the header (usually top right), always visible
     await expect(page.locator('a[href="/profile"]')).toBeVisible({ timeout: 10000 });

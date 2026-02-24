@@ -125,11 +125,19 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
     setIsGenerating(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 100)); // Ensure render
+      
+      // Limit pixel ratio for mobile Safari to prevent memory crash
+      const ratio = window.devicePixelRatio > 2 ? 2 : window.devicePixelRatio;
+      
       const dataUrl = await toPng(templateRef.current, {
         cacheBust: true,
-        pixelRatio: 2,
+        pixelRatio: ratio,
         backgroundColor: '#0d0d0d',
         skipAutoScale: true, // Prevent random scaling issues
+        style: {
+           transform: 'scale(1)', // Force reset scale during capture
+           transformOrigin: 'top left'
+        }
       });
       return dataUrl;
     } catch (error) {

@@ -116,7 +116,7 @@ export const translations = {
       pages: 'Pages',
       subtitle: 'Subtitle',
       score: 'Rating',
-      shareMessage: 'Hey! Check out my Storio collection, and you could collect your one in here:',
+      shareMessage: 'Check out what I’ve been collecting on Storio! you can start your own right here:',
     },
     search: {
       placeholder: 'Explore movies, books, TV shows...',
@@ -326,7 +326,7 @@ export const translations = {
       pages: '頁數',
       subtitle: '副標題',
       score: '評分',
-      shareMessage: 'Hey! Check out my Storio collection, and you could collect your one in here:',
+      shareMessage: '來看看我在 Storio 上的收藏！你也可以在這裡開始你的旅程：',
     },
     search: {
       placeholder: '探索電影、書籍、影集...',
