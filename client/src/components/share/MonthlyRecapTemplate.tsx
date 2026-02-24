@@ -160,7 +160,7 @@ export default function MonthlyRecapTemplate({
 
                 <div className="flex justify-between items-end border-t border-white/20 pt-4 px-2 relative z-20">
                     <div className="flex items-center gap-2 opacity-90">
-                        <img src={LOGO_BASE64} className="w-4 h-4 grayscale opacity-80" />
+                        <img src={LOGO_BASE64} className="w-4 h-4" />
                         <span className="text-xs font-black tracking-widest uppercase text-accent-gold drop-shadow-md">Storio</span>
                     </div>
                     <div className="text-right flex items-center h-full">
@@ -194,7 +194,7 @@ export default function MonthlyRecapTemplate({
 
                 <div className="mb-6 mt-4 relative z-20 flex flex-col items-center gap-2 text-center w-full">
                     <div className="flex items-center gap-1.5 opacity-90 mb-1">
-                        <img src={LOGO_BASE64} className="w-6 h-6 grayscale opacity-80" />
+                        <img src={LOGO_BASE64} className="w-6 h-6" />
                         <span className="text-[12px] font-black tracking-[0.2em] uppercase text-accent-gold drop-shadow-md pt-0.5">Storio</span>
                     </div>
                     <h1 className="text-5xl font-black tracking-tight text-accent-gold leading-none uppercase drop-shadow-md w-full">{monthShort}</h1>
@@ -271,7 +271,7 @@ export default function MonthlyRecapTemplate({
                 </div>
 
                 <div className="absolute top-6 right-6 z-20 flex items-center gap-1.5 opacity-90 drop-shadow-md bg-black/40 backdrop-blur p-2 rounded-lg">
-                    <img src={LOGO_BASE64} className="w-4 h-4 grayscale opacity-80" />
+                    <img src={LOGO_BASE64} className="w-4 h-4" />
                     <span className="text-[10px] font-black tracking-[0.3em] uppercase text-accent-gold">Storio</span>
                 </div>
             </div>
@@ -376,7 +376,7 @@ export default function MonthlyRecapTemplate({
                 </div>
 
                 <div className="absolute bottom-8 flex items-center gap-2 opacity-80 z-20">
-                    <img src={LOGO_BASE64} className="w-6 h-6 grayscale opacity-80" />
+                    <img src={LOGO_BASE64} className="w-6 h-6" />
                     <span className="text-[14px] font-black tracking-[0.4em] uppercase text-white drop-shadow-md">Storio</span>
                 </div>
             </div>

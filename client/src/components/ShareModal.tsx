@@ -56,22 +56,18 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
       try {
         let url = item.posterPath;
 
-        // Use proxy for TMDB/Google Books
-        if (url.includes('image.tmdb.org')) {
-          url = url.replace('https://image.tmdb.org/t/p/', '/proxy/tmdb/');
-        } else if (url.includes('books.google.com')) {
-          url = url.replace(/^https?:\/\/books\.google\.com\//, '/proxy/googlebooks/');
+        // Automatically use Next.js built-in Image Optimization as a universal proxy
+        let optimizedUrl = url;
+        if (url.startsWith('http')) {
+          optimizedUrl = `/_next/image?url=${encodeURIComponent(url)}&w=640&q=75`;
         }
 
-        // Add cache buster
-        url += `${url.includes('?') ? '&' : '?'}t=${new Date().getTime()}`;
-
-        // Ensure absolute URL if proxy is used
-        if (url.startsWith('/')) {
-          url = window.location.origin + url;
+        let absoluteUrl = optimizedUrl;
+        if (absoluteUrl.startsWith('/')) {
+          absoluteUrl = window.location.origin + absoluteUrl;
         }
 
-        const response = await fetch(url);
+        const response = await fetch(absoluteUrl);
         const blob = await response.blob();
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -125,18 +121,18 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
     setIsGenerating(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 100)); // Ensure render
-      
+
       // Limit pixel ratio for mobile Safari to prevent memory crash
       const ratio = window.devicePixelRatio > 2 ? 2 : window.devicePixelRatio;
-      
+
       const dataUrl = await toPng(templateRef.current, {
         cacheBust: true,
         pixelRatio: ratio,
         backgroundColor: '#0d0d0d',
         skipAutoScale: true, // Prevent random scaling issues
         style: {
-           transform: 'scale(1)', // Force reset scale during capture
-           transformOrigin: 'top left'
+          transform: 'scale(1)', // Force reset scale during capture
+          transformOrigin: 'top left'
         }
       });
       return dataUrl;

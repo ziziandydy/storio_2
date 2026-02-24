@@ -32,11 +32,12 @@
 
 ### 3.2 修正 `MemoryCardTemplate.tsx` 與 `MonthlyRecapTemplate.tsx` 的圖片標籤
 *   **Logo 處理**: 
-    *   移除本地 Logo圖片的 `crossOrigin="anonymous"` 屬性。
+    *         **[Critical Bug]**: 發現 Safari SVG (`foreignObject`) 引擎不支援在匯出圖片時帶有 `filter: grayscale()`。加上此 CSS class 會導致整張 Logo 被 Safari 判定成隱形 (Blank)。已移除所有 `grayscale` 濾鏡。
     *   已將 Logo 轉為 Base64 字串 (`LOGO_BASE64`) 直接嵌入 Component，徹底解決 Safari (尤其是 iOS) 掛載本地圖片時產生的 Tainted Canvas 錯誤。 
 *   **Poster 處理**:
-    *   外部或 Proxy 圖檔 (`http` 或 `/proxy` 開頭) 仍必須加上 `crossOrigin="anonymous"`。
-    *   已於 `getImageProps` 函數加入條件判斷。
+    *   **[Critical Bug]**: Vercel Edge Cache + TMDB Custom Rewrite Proxy (`/proxy/tmdb/`) 在部分環境會回傳不穩定的 Headers 導致 Safari `fetch` 阻擋，或丟失 CORS preflight。
+    *   外部圖檔 (`http` 開頭) 現已全面改由 **Next.js 內建最佳化 API (`/_next/image?url=...&w=640&q=75`)** 作為同源代理伺服器 (Same-Origin Proxy)，大幅提升在 Production 環境抓取跨站圖片生出 Blob 的穩定度。
+    *   已於 `getImageProps` 函數更新條件判斷。
 
 ### 3.3 行事曆 (Calendar) 日期與版面偏移修復
 *   **日期時區校正**: 統一改用 `date-fns` 的 `parseISO` 確保 `created_at` 解析後得到的 `getDate()` 必定與本地時區一致（比照 `CalendarView.tsx` 邏輯）。

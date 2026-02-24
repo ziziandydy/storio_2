@@ -64,19 +64,18 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                                 continue;
                             }
                             try {
-                                if (url.includes('image.tmdb.org')) {
-                                    url = url.replace('https://image.tmdb.org/t/p/', '/proxy/tmdb/');
-                                    url = url.replace('http://image.tmdb.org/t/p/', '/proxy/tmdb/');
-                                } else if (url.includes('books.google.com')) {
-                                    url = url.replace(/^https?:\/\/books\.google\.com\//, '/proxy/googlebooks/');
+                                // Automatically use Next.js built-in Image Optimization as a universal proxy
+                                // This solves TMDB vs GoogleBooks routing issues and forces clean headers
+                                let optimizedUrl = url;
+                                if (url.startsWith('http')) {
+                                    optimizedUrl = `/_next/image?url=${encodeURIComponent(url)}&w=640&q=75`;
                                 }
-                                url += `${url.includes('?') ? '&' : '?'}t=${new Date().getTime()}`;
-                                let absoluteUrl = url;
+                                let absoluteUrl = optimizedUrl;
                                 if (absoluteUrl.startsWith('/')) {
                                     absoluteUrl = window.location.origin + absoluteUrl;
                                 }
 
-                                const imgRes = await fetch(absoluteUrl, { credentials: 'omit', mode: 'cors' });
+                                const imgRes = await fetch(absoluteUrl);
                                 if (!imgRes.ok) throw new Error(`Proxy load failed: ${imgRes.status}`);
                                 const blob = await imgRes.blob();
                                 const base64Data = await new Promise((resolve, reject) => {
