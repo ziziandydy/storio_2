@@ -50,6 +50,7 @@ export default function MonthlyRecapTemplate({
     }, [summary]);
 
     const monthShort = monthName.toUpperCase();
+    const latestPosterUrl = [...items].reverse().find(i => i.poster_url)?.poster_url || null;
 
     // ==========================
     // T1: Calendar Template
@@ -84,17 +85,25 @@ export default function MonthlyRecapTemplate({
 
         return (
             <div style={currentDim} className="bg-folio-black border-2 border-white/5 relative flex flex-col font-sans p-6 overflow-hidden">
-                <div className="flex flex-col items-center justify-center pt-3 pb-6">
-                    <h1 className="text-4xl font-sans font-black tracking-widest text-white mt-2">{monthShort}</h1>
+                {/* Blurred Background */}
+                <div className="absolute inset-0 z-0">
+                    <div className="absolute inset-0 bg-folio-black opacity-80 z-10" />
+                    {latestPosterUrl && (
+                        <img {...getImageProps(latestPosterUrl)} className="w-full h-full object-cover opacity-40 blur-2xl scale-110" />
+                    )}
                 </div>
 
-                <div className="grid grid-cols-7 mb-2 opacity-40">
+                <div className="flex flex-col items-center justify-center pt-3 pb-6 relative z-20">
+                    <h1 className="text-4xl font-sans font-black tracking-widest text-accent-gold mt-2 drop-shadow-md">{monthShort}</h1>
+                </div>
+
+                <div className="grid grid-cols-7 mb-2 opacity-60 relative z-20">
                     {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                        <div key={i} className="text-center text-[10px] font-black font-sans uppercase text-white">{day}</div>
+                        <div key={i} className="text-center text-[10px] font-black font-sans uppercase text-accent-gold">{day}</div>
                     ))}
                 </div>
 
-                <div className="grid grid-cols-7 gap-1.5 flex-1 mb-6">
+                <div className="grid grid-cols-7 gap-1.5 flex-1 mb-6 relative z-20">
                     {calendarCells.map((cell, i) => {
                         if (!cell.isCurrentMonth) {
                             return <div key={i} className="aspect-square rounded flex-shrink-0 bg-white/5"></div>;
@@ -135,13 +144,13 @@ export default function MonthlyRecapTemplate({
                     })}
                 </div>
 
-                <div className="flex justify-between items-end border-t border-white/10 pt-4 px-2">
-                    <div className="flex items-center gap-2 opacity-50">
-                        <img src="/image/logo/logo.png" className="w-4 h-4 grayscale" />
-                        <span className="text-xs font-black tracking-widest uppercase text-white">Storio</span>
+                <div className="flex justify-between items-end border-t border-white/20 pt-4 px-2 relative z-20">
+                    <div className="flex items-center gap-2 opacity-90">
+                        <img src="/image/logo/logo.png" className="w-4 h-4" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(996%) hue-rotate(345deg) brightness(88%) contrast(87%)' }} />
+                        <span className="text-xs font-black tracking-widest uppercase text-accent-gold drop-shadow-md">Storio</span>
                     </div>
                     <div className="text-right flex items-center h-full">
-                        <span className="text-sm font-bold text-white tracking-wide">{statsString}</span>
+                        <span className="text-sm font-bold text-white tracking-wide drop-shadow-md">{statsString}</span>
                     </div>
                 </div>
             </div>
@@ -160,9 +169,19 @@ export default function MonthlyRecapTemplate({
 
         return (
             <div style={currentDim} className="bg-[#1f1f1f] p-6 relative flex flex-col justify-between overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none z-0" />
-                <div className="mb-6 mt-4 relative z-10">
-                    <h1 className="text-6xl font-black tracking-tight text-white leading-none uppercase">{monthShort}</h1>
+                <div className="absolute inset-0 z-0">
+                    <div className="absolute inset-0 bg-[#1f1f1f] opacity-80 z-10 mix-blend-multiply" />
+                    {latestPosterUrl && (
+                        <img {...getImageProps(latestPosterUrl)} className="w-full h-full object-cover opacity-50 blur-3xl scale-110" />
+                    )}
+                </div>
+
+                <div className="mb-6 mt-4 relative z-20 flex justify-between items-start">
+                    <h1 className="text-6xl font-black tracking-tight text-accent-gold leading-none uppercase drop-shadow-md">{monthShort}</h1>
+                    <div className="flex flex-col items-end gap-1 opacity-90">
+                        <img src="/image/logo/logo.png" className="w-6 h-6" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(996%) hue-rotate(345deg) brightness(88%) contrast(87%)' }} />
+                        <span className="text-[10px] font-black tracking-[0.2em] uppercase text-accent-gold drop-shadow-md mr-1">Storio</span>
+                    </div>
                 </div>
 
                 <div className="flex-1 flex flex-col justify-center min-h-0 relative z-10">
@@ -181,12 +200,8 @@ export default function MonthlyRecapTemplate({
                     </div>
                 </div>
 
-                <div className="mt-6 mb-2 flex justify-between items-end">
-                    <div className="text-xl font-bold text-white tracking-wider">{statsString}</div>
-                    <div className="flex items-center gap-2 opacity-60">
-                        <img src="/image/logo/logo.png" className="w-5 h-5 grayscale" />
-                        <span className="text-sm font-black tracking-widest uppercase text-white">Storio</span>
-                    </div>
+                <div className="mt-6 mb-2 flex justify-start items-end relative z-20">
+                    <div className="text-xl font-bold text-white tracking-wider drop-shadow-md">{statsString}</div>
                 </div>
             </div>
         )
@@ -206,8 +221,8 @@ export default function MonthlyRecapTemplate({
 
         return (
             <div style={currentDim} className="bg-folio-black relative flex overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none z-0">
-                    <h1 className="text-[80px] font-black tracking-widest text-white rotate-[-10deg] leading-none text-center">{monthShort}</h1>
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+                    <img src="/image/logo/logo.png" className="w-[300px] h-auto grayscale opacity-[0.05]" />
                 </div>
 
                 <div className="absolute inset-0 grid grid-cols-[4fr_5fr_4fr] gap-3 z-10 -mx-6">
@@ -230,14 +245,14 @@ export default function MonthlyRecapTemplate({
                     </div>
                 </div>
 
-                <div className="absolute bottom-6 left-6 z-20 bg-black/60 backdrop-blur-xl p-4 rounded-2xl border border-white/20 shadow-2xl">
-                    <h2 className="text-2xl font-black uppercase text-white mb-1">{monthShort}</h2>
-                    <p className="text-[10px] font-bold text-accent-gold uppercase tracking-wider">{statsString}</p>
+                <div className="absolute bottom-6 left-6 z-20 bg-black/60 backdrop-blur-xl p-4 rounded-2xl border border-accent-gold/20 shadow-2xl">
+                    <h2 className="text-2xl font-black uppercase text-accent-gold mb-1">{monthShort}</h2>
+                    <p className="text-[10px] font-bold text-white uppercase tracking-wider">{statsString}</p>
                 </div>
 
-                <div className="absolute top-6 right-6 z-20 flex items-center gap-1.5 opacity-80 mix-blend-screen bg-black/40 backdrop-blur p-2 rounded-lg">
-                    <img src="/image/logo/logo.png" className="w-4 h-4 grayscale" />
-                    <span className="text-[10px] font-black tracking-[0.3em] uppercase text-white">Storio</span>
+                <div className="absolute top-6 right-6 z-20 flex items-center gap-1.5 opacity-90 drop-shadow-md bg-black/40 backdrop-blur p-2 rounded-lg">
+                    <img src="/image/logo/logo.png" className="w-4 h-4" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(996%) hue-rotate(345deg) brightness(88%) contrast(87%)' }} />
+                    <span className="text-[10px] font-black tracking-[0.3em] uppercase text-accent-gold">Storio</span>
                 </div>
             </div>
         )
@@ -247,102 +262,98 @@ export default function MonthlyRecapTemplate({
     // T4: Shelf Template
     // ==========================
     if (selectedTemplate === 'shelf') {
-        const stacks: any[][] = [];
-        if (items.length > 7) {
-            stacks.push(items.slice(0, Math.ceil(items.length / 2)));
-            stacks.push(items.slice(Math.ceil(items.length / 2)));
-        } else {
-            stacks.push(items);
-        }
+        const stack = items; // Only one single stack now
 
         return (
-            <div style={currentDim} className="bg-[#1a0f0a] relative flex flex-col items-center overflow-hidden font-serif">
-                <div className="absolute inset-0 bg-gradient-to-b from-[#2a1a10] to-[#0a0502] z-0 opacity-80" />
+            <div style={currentDim} className="bg-[#241710] relative flex flex-col items-center overflow-hidden font-serif">
+                <div className="absolute inset-0 bg-gradient-to-b from-[#3a2518] to-[#120a06] z-0 opacity-80" />
 
                 <div className="absolute top-10 z-10 w-full text-center">
-                    <h1 className="text-[42px] font-black text-white/90 drop-shadow-lg tracking-tight uppercase">{monthShort}</h1>
+                    <h1 className="text-[48px] font-black text-accent-gold drop-shadow-lg tracking-tight uppercase">{monthShort}</h1>
                 </div>
 
-                <div className="relative z-10 flex-1 w-full flex flex-col justify-end px-10 pb-20">
-                    <div className="w-full border-b-[14px] border-[#3e2723] shadow-[0_30px_50px_rgba(0,0,0,0.9)] relative flex justify-center items-end gap-12 pb-1">
+                <div className="relative z-10 flex-1 w-full flex flex-col justify-end px-12 pb-24">
+                    <div className="w-full border-b-[20px] border-[#5e4334] shadow-[0_40px_60px_rgba(0,0,0,0.9)] relative flex justify-center items-end pb-1 bg-gradient-to-b from-transparent to-[#2d1b13]">
 
-                        <div className="absolute left-[-30px] right-[-30px] bottom-[-14px] h-[14px] bg-[#2d1b13] border-t border-[#6d4c41]/30"></div>
-
-                        {stacks.map((stack, stackIdx) => (
-                            <div key={stackIdx} className="flex flex-col-reverse items-center relative z-20">
-                                {stack.map((item, idx) => {
-                                    const isBook = item.media_type === 'book';
-                                    const colors = ['#8b0000', '#2f4f4f', '#4682b4', '#d2691e', '#556b2f', '#4169e1', '#000000', '#222222', '#1a1a1a'];
-                                    const randomIdx = item.id ? item.id.charCodeAt(0) % colors.length : idx % colors.length;
-                                    const bgColor = isBook ? (item.dominant_color || colors[randomIdx]) : '#111';
-
-                                    const w = isBook ? 140 - (idx % 3) * 6 : 130;
-                                    const h = isBook ? 20 : 16;
-
-                                    return (
-                                        <div
-                                            key={idx}
-                                            className="relative flex items-center justify-center shadow-[0_-2px_6px_rgba(0,0,0,0.6)] border border-white/10"
-                                            style={{
-                                                width: `${w}px`,
-                                                height: `${h}px`,
-                                                backgroundColor: bgColor,
-                                                marginBottom: '0px',
-                                                borderRadius: isBook ? '1px' : '0 2px 2px 0'
-                                            }}
-                                        >
-                                            {isBook ? (
-                                                <div className="w-full h-full flex items-center justify-center px-4 relative overflow-hidden">
-                                                    <div className="absolute top-0 w-full h-[1px] bg-white/20 left-0" />
-                                                    <div className="absolute bottom-0 w-full h-[2px] bg-black/40 left-0" />
-                                                    <span className="text-[7px] font-bold text-white uppercase tracking-widest drop-shadow-md truncate w-full text-center">
-                                                        {item.title}
-                                                    </span>
-                                                </div>
-                                            ) : (
-                                                <div className="w-full h-full flex bg-[#111] relative overflow-hidden">
-                                                    <div className="w-3 h-full bg-blue-900 border-r border-black flex items-center justify-center">
-                                                        <div className="w-1 h-3 bg-white/50 rounded-full" />
-                                                    </div>
-                                                    <div className="flex-1 h-full bg-[#111] relative flex items-center px-2">
-                                                        <img {...getImageProps(item.poster_url)} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-luminosity" />
-                                                        <span className="relative z-10 text-[6px] font-bold text-white truncate w-full text-center drop-shadow-lg">
-                                                            {item.title}
-                                                        </span>
-                                                    </div>
-                                                    <div className="w-6 h-full flex justify-center items-center bg-black/80">
-                                                        <span className="text-[3px] text-white">STORIO</span>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        ))}
+                        <div className="absolute left-[-40px] right-[-40px] bottom-[-20px] h-[20px] bg-[#3a261c] border-t border-[#8c6751]/30"></div>
 
                         {/* Tag */}
-                        <div className="absolute top-[-50px] right-[5%] w-[60px] h-[90px] origin-top bg-[#efebd8] transform rotate-[10deg] border border-[#d7cbb6] shadow-[8px_8px_15px_rgba(0,0,0,0.8)] flex flex-col justify-center items-center rounded-[2px] z-50">
-                            <div className="absolute top-2 w-2 h-2 rounded-full bg-[#3e2723] shadow-inner" />
-                            <div className="absolute top-0 right-1/2 w-[1px] h-[30px] bg-white/40 -mt-[30px] origin-bottom transform rotate-[-15deg]" />
+                        <div className="absolute top-[-100px] left-[5%] w-[80px] h-[110px] origin-top bg-[#efebd8] transform rotate-[-8deg] border border-[#d7cbb6] shadow-[10px_10px_20px_rgba(0,0,0,0.8)] flex flex-col justify-center items-center rounded-[3px] z-50">
+                            <div className="absolute top-3 w-3 h-3 rounded-full bg-[#3e2723] shadow-inner" />
+                            <div className="absolute top-0 right-1/2 w-[2px] h-[40px] bg-white/40 -mt-[40px] origin-bottom transform rotate-[15deg]" />
 
-                            <div className="mt-4 text-center px-1 w-full flex flex-col items-center">
-                                <p className="text-[10px] font-black text-[#5a4634] uppercase tracking-widest">{monthShort}</p>
-                                <div className="w-4/5 h-px bg-[#5a4634]/30 my-1.5" />
+                            <div className="mt-5 text-center px-1 w-full flex flex-col items-center">
+                                <p className="text-[12px] font-black text-[#5a4634] uppercase tracking-widest">{monthShort}</p>
+                                <div className="w-4/5 h-px bg-[#5a4634]/30 my-2" />
                                 <div className="space-y-1 w-full text-center">
-                                    {summary.movie > 0 && <p className="text-[7px] font-bold text-[#3e2723] uppercase">{summary.movie} Movies</p>}
-                                    {summary.book > 0 && <p className="text-[7px] font-bold text-[#3e2723] uppercase">{summary.book} Books</p>}
-                                    {summary.tv > 0 && <p className="text-[7px] font-bold text-[#3e2723] uppercase">{summary.tv} Series</p>}
+                                    {summary.movie > 0 && <p className="text-[9px] font-bold text-[#3e2723] uppercase">{summary.movie} Movies</p>}
+                                    {summary.book > 0 && <p className="text-[9px] font-bold text-[#3e2723] uppercase">{summary.book} Books</p>}
+                                    {summary.tv > 0 && <p className="text-[9px] font-bold text-[#3e2723] uppercase">{summary.tv} Series</p>}
                                 </div>
                             </div>
                         </div>
 
+                        {/* Stacked Items (Books & Media) */}
+                        <div className="flex flex-col-reverse items-center relative z-20">
+                            {stack.map((item, idx) => {
+                                const isBook = item.media_type === 'book';
+                                const colors = ['#8b0000', '#2f4f4f', '#4682b4', '#d2691e', '#556b2f', '#4169e1', '#000000', '#222222', '#1a1a1a'];
+                                const randomIdx = item.id ? item.id.charCodeAt(0) % colors.length : idx % colors.length;
+                                const bgColor = isBook ? (item.dominant_color || colors[randomIdx]) : '#1a1a1a';
+
+                                // Make items 2.5x larger compared to before
+                                const w = isBook ? 320 - (idx % 3) * 12 : 300;
+                                const h = isBook ? 48 : 36;
+
+                                return (
+                                    <div
+                                        key={idx}
+                                        className="relative flex items-center justify-center shadow-[0_-3px_10px_rgba(0,0,0,0.7)] border border-white/20"
+                                        style={{
+                                            width: `${w}px`,
+                                            height: `${h}px`,
+                                            backgroundColor: bgColor,
+                                            marginBottom: '0px',
+                                            borderRadius: isBook ? '3px' : '0 4px 4px 0',
+                                            backgroundImage: isBook ? 'linear-gradient(90deg, rgba(0,0,0,0.4) 0%, rgba(255,255,255,0.1) 10%, rgba(0,0,0,0.2) 90%, rgba(0,0,0,0.5) 100%)' : 'none',
+                                        }}
+                                    >
+                                        {isBook ? (
+                                            <div className="w-full h-full flex items-center justify-center px-6 relative overflow-hidden">
+                                                <div className="absolute top-1 bottom-1 left-2 w-[2px] border-l border-white/20 border-r border-black/40" />
+                                                <div className="absolute top-1 bottom-1 right-2 w-[2px] border-l border-white/20 border-r border-black/40" />
+                                                <div className="absolute top-0 w-full h-[2px] bg-white/30 left-0" />
+                                                <div className="absolute bottom-0 w-full h-[4px] bg-black/60 left-0" />
+                                                <span className="text-[14px] font-bold text-white uppercase tracking-widest drop-shadow-[1px_1px_2px_rgba(0,0,0,0.8)] truncate w-full text-center" style={{ fontFamily: 'Georgia, serif' }}>
+                                                    {item.title}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <div className="w-full h-full flex bg-[#1a1a1a] relative overflow-hidden">
+                                                <div className="w-6 h-full bg-blue-900 border-r-2 border-black flex items-center justify-center">
+                                                    <div className="w-2 h-6 bg-white/40 rounded-full shadow-inner" />
+                                                </div>
+                                                <div className="flex-1 h-full bg-[#1a1a1a] relative flex items-center px-4">
+                                                    <img {...getImageProps(item.poster_url)} className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-luminosity" />
+                                                    <span className="relative z-10 text-[12px] font-bold text-white truncate w-full text-center drop-shadow-[1px_1px_3px_black]">
+                                                        {item.title}
+                                                    </span>
+                                                </div>
+                                                <div className="w-12 h-full flex justify-center items-center bg-black/90 border-l border-white/10">
+                                                    <span className="text-[6px] font-black text-accent-gold tracking-widest">STORIO</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            })}
+                        </div>
                     </div>
                 </div>
 
-                <div className="absolute bottom-6 flex items-center gap-1.5 opacity-40 z-0">
-                    <img src="/image/logo/logo.png" className="w-4 h-4 grayscale" />
-                    <span className="text-[10px] font-black tracking-[0.4em] uppercase text-white">Storio</span>
+                <div className="absolute bottom-8 flex items-center gap-2 opacity-80 z-20">
+                    <img src="/image/logo/logo.png" className="w-6 h-6 grayscale" />
+                    <span className="text-[14px] font-black tracking-[0.4em] uppercase text-white drop-shadow-md">Storio</span>
                 </div>
             </div>
         )

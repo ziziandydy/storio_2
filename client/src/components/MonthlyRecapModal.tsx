@@ -62,7 +62,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                                 if (!url) return item;
                                 try {
                                     if (url.includes('image.tmdb.org')) {
-                                        url = url.replace('https://image.tmdb.org/t/p/', '/proxy/tmdb/');
+                                        url = url.replace(/^https?:\/\/image\.tmdb\.org\/t\/p\//, '/proxy/tmdb/');
                                     } else if (url.includes('books.google.com')) {
                                         url = url.replace(/^https?:\/\/books\.google\.com\//, '/proxy/googlebooks/');
                                     }
@@ -70,15 +70,18 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                                     if (url.startsWith('/')) url = window.location.origin + url;
 
                                     const imgRes = await fetch(url);
+                                    if (!imgRes.ok) throw new Error(`Proxy load failed: ${imgRes.status}`);
                                     const blob = await imgRes.blob();
-                                    return new Promise((resolve) => {
+                                    return new Promise((resolve, reject) => {
                                         const reader = new FileReader();
                                         reader.onloadend = () => {
                                             resolve({ ...item, poster_url: reader.result });
                                         };
+                                        reader.onerror = reject;
                                         reader.readAsDataURL(blob);
                                     });
                                 } catch (e) {
+                                    console.warn("Image Preload Error:", url, e);
                                     return item;
                                 }
                             })
@@ -219,7 +222,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                                                 maxWidth: '100%'
                                             }}
                                         >
-                                            <div className="bg-folio-black overflow-hidden rounded-xl border border-white/10">
+                                            <div className="bg-folio-black overflow-hidden rounded-xl border border-white/10 inline-block align-top">
                                                 <MonthlyRecapTemplate
                                                     monthName={monthName}
                                                     monthValue={monthValue}
@@ -232,8 +235,8 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                                     </div>
 
                                     {/* Hidden Capture Container */}
-                                    <div className="absolute top-0 left-0 opacity-0 pointer-events-none -z-50">
-                                        <div ref={templateRef} className="bg-folio-black overflow-hidden">
+                                    <div className="fixed top-[-2000px] left-[-2000px] opacity-0 pointer-events-none -z-50">
+                                        <div ref={templateRef} className="bg-folio-black overflow-hidden inline-block align-top">
                                             <MonthlyRecapTemplate
                                                 monthName={monthName}
                                                 monthValue={monthValue}

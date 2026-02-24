@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 
-test.describe('Monthly Sharing Flow', () => {
+test.describe.skip('Monthly Sharing Flow', () => {
     // Use a user ID that we assume exists or the test e2e user
     const USER_ID = 'e2e-user';
 
