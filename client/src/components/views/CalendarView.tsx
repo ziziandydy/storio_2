@@ -21,8 +21,7 @@ import { useRouter } from 'next/navigation';
 import { Story } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '@/hooks/useTranslation';
-import ShareModal from '@/components/ShareModal';
-import MonthRecapTemplate from '@/components/share/MonthRecapTemplate';
+import MonthlyRecapModal from '@/components/MonthlyRecapModal';
 
 interface CalendarViewProps {
   stories: Story[];
@@ -149,14 +148,6 @@ export default function CalendarView({ stories }: CalendarViewProps) {
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   };
 
-  const sharingMonthStories = sharingMonth ? getMonthStories(sharingMonth) : [];
-  const sharingMonthStats = {
-    total: sharingMonthStories.length,
-    movies: sharingMonthStories.filter(s => s.media_type === 'movie').length,
-    series: sharingMonthStories.filter(s => s.media_type === 'tv').length,
-    books: sharingMonthStories.filter(s => s.media_type === 'book').length,
-  };
-
   return (
     <div className="w-full relative animate-in fade-in duration-500 pb-20">
 
@@ -260,18 +251,11 @@ export default function CalendarView({ stories }: CalendarViewProps) {
 
       {/* Month Recap Share Modal */}
       {sharingMonth && (
-        <ShareModal
+        <MonthlyRecapModal
           isOpen={!!sharingMonth}
           onClose={() => setSharingMonth(null)}
-          title={t.profile.items.share}
-          fileName={`storio-recap-${format(sharingMonth, 'yyyy-MM')}`}
-          template={
-            <MonthRecapTemplate
-              monthName={format(sharingMonth, 'MMMM yyyy', { locale: dateLocale })}
-              stories={sharingMonthStories}
-              stats={sharingMonthStats}
-            />
-          }
+          monthValue={format(sharingMonth, 'yyyy-MM')}
+          monthName={format(sharingMonth, 'MMMM yyyy', { locale: dateLocale })}
         />
       )}
     </div>

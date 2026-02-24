@@ -156,3 +156,48 @@ class CollectionRepository:
             stats["daily_counts_30d"].append({"date": day, "count": daily_counts[day]})
             
         return stats
+
+    def get_monthly_stats(self, user_id: str, month: str) -> dict:
+        from datetime import datetime
+        import calendar
+        import logging
+        
+        try:
+            year, m = map(int, month.split('-'))
+            start_date = datetime(year, m, 1)
+            _, last_day = calendar.monthrange(year, m)
+            end_date = datetime(year, m, last_day, 23, 59, 59, 999999)
+        except Exception as e:
+            logging.error(f"Error parsing month {month}: {e}")
+            return {"items": [], "summary": {"movie": 0, "book": 0, "tv": 0}}
+            
+        start_iso = start_date.isoformat() + "Z"
+        end_iso = end_date.isoformat() + "Z"
+        logging.info(f"Querying monthly stats for {user_id} between {start_iso} and {end_iso}")
+        
+        response = self.table.select("id, external_id, title, media_type, subtype, poster_path, created_at").eq("user_id", user_id).gte("created_at", start_iso).lte("created_at", end_iso).order("created_at", desc=False).execute()
+        logging.info(f"Found {len(response.data)} items.")
+        
+        items = []
+        summary = {"movie": 0, "book": 0, "tv": 0}
+        
+        for row in response.data:
+            mapped_row = self._map_from_db(row)
+            m_type = mapped_row.get("media_type")
+            
+            if m_type in summary:
+                summary[m_type] += 1
+                
+            items.append({
+                "id": str(mapped_row["id"]),
+                "external_id": mapped_row.get("external_id"),
+                "title": mapped_row.get("title"),
+                "media_type": m_type,
+                "poster_url": mapped_row.get("poster_path"),
+                "dominant_color": None 
+            })
+            
+        return {
+            "summary": summary,
+            "items": items
+        }

@@ -42,6 +42,18 @@ def get_collection_stats(
     service = CollectionService(token=credentials.credentials)
     return service.get_stats(user.id)
 
+@router.get("/stats/monthly", response_model=dict)
+def get_monthly_collection_stats(
+    month: str,
+    user = Depends(get_current_user),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+):
+    """
+    Get collection statistics for a specific month (YYYY-MM).
+    """
+    service = CollectionService(token=credentials.credentials)
+    return service.get_monthly_stats(user.id, month)
+
 @router.get("/{story_id}", response_model=StoryResponse)
 def read_collection_item(
     story_id: UUID,

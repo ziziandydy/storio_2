@@ -104,3 +104,6 @@ class CollectionService:
 
     def get_stats(self, user_id: str) -> dict:
         return self.repo.get_collection_stats(user_id)
+
+    def get_monthly_stats(self, user_id: str, month: str) -> dict:
+        return self.repo.get_monthly_stats(user_id, month)

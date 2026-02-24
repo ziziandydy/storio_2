@@ -80,7 +80,7 @@ test.describe('Search Page Integration', () => {
     await input.press('Enter');
 
     // Identifying the empty state text across different locales or generic message
-    const emptyStateHeading = page.locator('h2', { hasText: /(No results found|找不到相關結果)/i });
-    await expect(emptyStateHeading).toBeVisible({ timeout: 10000 });
+    const emptyStateText = page.locator('p', { hasText: /(No results found|找不到相關結果)/i });
+    await expect(emptyStateText).toBeVisible({ timeout: 10000 });
   });
 });

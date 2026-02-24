@@ -193,6 +193,9 @@ export const translations = {
         retroTv: 'Retro TV',
         shelf: 'Shelf',
         desk: 'Desk',
+        monthlyCalendar: 'Calendar',
+        monthlyCollage: 'Collage',
+        monthlyWaterfall: 'Waterfall',
       },
       formats: {
         story: '9:16',
@@ -400,6 +403,9 @@ export const translations = {
         retroTv: '復古電視',
         shelf: 'Shelf',
         desk: '桌面平放',
+        monthlyCalendar: '行事曆',
+        monthlyCollage: '海報牆',
+        monthlyWaterfall: '瀑布流',
       },
       formats: {
         story: '9:16',
