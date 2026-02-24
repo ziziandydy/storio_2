@@ -114,6 +114,7 @@ export const translations = {
       publisher: 'Publisher',
       pages: 'Pages',
       subtitle: 'Subtitle',
+      shareMessage: 'Hey! Check out my Storio collection, and you could collect your one in here:',
     },
     search: {
       placeholder: 'Search movies, books, TV shows...',
@@ -174,6 +175,32 @@ export const translations = {
         'year': 'This Year',
         'trend7': '7-Day Trend Chart',
         'trend30': '30-Day Trend Chart',
+      }
+    },
+    shareModal: {
+      visualStyle: 'Visual Style',
+      format: 'Format',
+      content: 'Content',
+      readyToShare: 'Ready to share your collection.',
+      download: 'Download',
+      saved: 'Saved',
+      templates: {
+        default: 'Default',
+        pure: 'Pure',
+        ticket: 'Ticket',
+        retroTv: 'Retro TV',
+        bookshelf: 'Bookshelf',
+        desk: 'Desk',
+      },
+      formats: {
+        story: '9:16',
+        portrait: '4:5',
+        square: '1:1',
+      },
+      toggles: {
+        title: 'Title',
+        rating: 'Rating',
+        note: 'Note',
       }
     }
   },
@@ -292,6 +319,7 @@ export const translations = {
       publisher: '出版商',
       pages: '頁數',
       subtitle: '副標題',
+      shareMessage: 'Hey! Check out my Storio collection, and you could collect your one in here:',
     },
     search: {
       placeholder: '搜尋電影、書籍、影集...',
@@ -352,6 +380,32 @@ export const translations = {
         'year': '今年',
         'trend7': '7日趨勢圖',
         'trend30': '30日趨勢圖',
+      }
+    },
+    shareModal: {
+      visualStyle: '視覺風格',
+      format: '版面比例',
+      content: '顯示內容',
+      readyToShare: '準備分享你的典藏',
+      download: '下載',
+      saved: '已儲存',
+      templates: {
+        default: '預設模糊',
+        pure: '純淨海報',
+        ticket: '電影票根',
+        retroTv: '復古電視',
+        bookshelf: '3D 書櫃',
+        desk: '桌面平放',
+      },
+      formats: {
+        story: '9:16',
+        portrait: '4:5',
+        square: '1:1',
+      },
+      toggles: {
+        title: '標題',
+        rating: '評分',
+        note: '心得',
       }
     }
   }

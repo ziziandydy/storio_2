@@ -45,6 +45,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
 
   // Create a proxied version of the item for CORS-safe capturing
   const [base64Poster, setBase64Poster] = useState<string | null>(null);
+  const [isImageLoading, setIsImageLoading] = useState(false);
 
   // Pre-fetch image as Base64 to guarantee capture success
   React.useEffect(() => {
@@ -65,6 +66,11 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
         // Add cache buster
         url += `${url.includes('?') ? '&' : '?'}t=${new Date().getTime()}`;
 
+        // Ensure absolute URL if proxy is used
+        if (url.startsWith('/')) {
+          url = window.location.origin + url;
+        }
+
         const response = await fetch(url);
         const blob = await response.blob();
         const reader = new FileReader();
@@ -78,9 +84,12 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
         console.error("Failed to preload image:", e);
         // Fallback to original URL if fetch fails (though it might still fail in canvas)
         if (isMounted) setBase64Poster(null);
+      } finally {
+        if (isMounted) setIsImageLoading(false);
       }
     };
 
+    setIsImageLoading(true);
     loadBase64();
     return () => { isMounted = false; };
   }, [item?.posterPath]);
@@ -95,18 +104,18 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
 
   // Template visibility logic
   const TEMPLATES: { id: TemplateType; icon: any; label: string; hidden?: boolean }[] = [
-    { id: 'default', icon: Palette, label: 'Default' },
-    { id: 'pure', icon: ImageIcon, label: 'Pure' },
-    { id: 'ticket', icon: Ticket, label: 'Ticket', hidden: item?.type === 'book' },
-    { id: 'tv', icon: Tv, label: 'Retro TV', hidden: item?.type === 'book' },
-    { id: '3d', icon: BookIcon, label: 'Bookshelf', hidden: item?.type !== 'book' },
-    { id: 'desk', icon: Layout, label: 'Desk', hidden: item?.type !== 'book' },
+    { id: 'default', icon: Palette, label: t.shareModal.templates.default },
+    { id: 'pure', icon: ImageIcon, label: t.shareModal.templates.pure },
+    { id: 'ticket', icon: Ticket, label: t.shareModal.templates.ticket, hidden: item?.type === 'book' },
+    { id: 'tv', icon: Tv, label: t.shareModal.templates.retroTv, hidden: item?.type === 'book' },
+    { id: '3d', icon: BookIcon, label: t.shareModal.templates.bookshelf, hidden: item?.type !== 'book' },
+    { id: 'desk', icon: Layout, label: t.shareModal.templates.desk, hidden: item?.type !== 'book' },
   ];
 
   const ASPECT_RATIOS: { id: AspectRatio; icon: any; label: string; hidden?: boolean }[] = [
-    { id: '9:16', icon: RectangleVertical, label: 'Story' },
-    { id: '4:5', icon: Layout, label: 'Portrait', hidden: true },
-    { id: '1:1', icon: Square, label: 'Square', hidden: true },
+    { id: '9:16', icon: RectangleVertical, label: t.shareModal.formats.story },
+    { id: '4:5', icon: Layout, label: t.shareModal.formats.portrait, hidden: true },
+    { id: '1:1', icon: Square, label: t.shareModal.formats.square, hidden: true },
   ];
 
   const isSingleItem = !!item;
@@ -142,7 +151,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           title: title,
-          text: `Check out my collection on Storio: ${title}`,
+          text: `${t.details.shareMessage} ${window.location.origin}`,
           files: [file],
         });
       } else {
@@ -203,12 +212,11 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
               {/* Visual Preview */}
               <div className="relative w-full h-full flex items-center justify-center">
                 <div
-                  className="relative shadow-2xl overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] origin-center will-change-transform"
+                  className={`relative shadow-2xl overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] origin-center will-change-transform ${isDrawerOpen
+                      ? '-translate-y-[10%] scale-[0.65] sm:scale-[0.85]'
+                      : 'translate-y-0 scale-[0.8] sm:scale-100'
+                    }`}
                   style={{
-                    // Responsive scaling: smaller on mobile to fit width
-                    transform: isDrawerOpen
-                      ? 'translateY(-10%) scale(0.65) sm:scale(0.85)'
-                      : 'translateY(0) scale(0.8) sm:scale(1)',
                     maxHeight: '100%',
                     maxWidth: '100%'
                   }}
@@ -273,7 +281,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
                       {/* Templates */}
                       <div className="space-y-3">
                         <label className="text-[10px] uppercase font-black tracking-widest text-text-desc opacity-50 flex items-center gap-2">
-                          <Palette size={12} /> Visual Style
+                          <Palette size={12} /> {t.shareModal.visualStyle}
                         </label>
                         <div className="grid grid-cols-2 gap-3 pb-2">
                           {TEMPLATES.filter(t => !t.hidden).map((temp) => (
@@ -295,7 +303,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
                       {/* Aspect Ratio */}
                       <div className="space-y-3">
                         <label className="text-[10px] uppercase font-black tracking-widest text-text-desc opacity-50 flex items-center gap-2">
-                          <Layout size={12} /> Format
+                          <Layout size={12} /> {t.shareModal.format}
                         </label>
                         <div className="flex gap-2">
                           {ASPECT_RATIOS.filter(r => !r.hidden).map((ratio) => (
@@ -318,13 +326,13 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
                     {/* Toggles */}
                     <div className="space-y-3">
                       <label className="text-[10px] uppercase font-black tracking-widest text-text-desc opacity-50 flex items-center gap-2">
-                        <Type size={12} /> Content
+                        <Type size={12} /> {t.shareModal.content}
                       </label>
                       <div className="grid grid-cols-3 gap-3">
                         {[
-                          { id: 'title', state: showTitle, setter: setShowTitle, icon: Type, label: 'Title' },
-                          { id: 'rating', state: showRating, setter: setShowRating, icon: Star, label: 'Rating' },
-                          { id: 'reflection', state: showReflection, setter: setShowReflection, icon: MessageSquare, label: 'Note' },
+                          { id: 'title', state: showTitle, setter: setShowTitle, icon: Type, label: t.shareModal.toggles.title },
+                          { id: 'rating', state: showRating, setter: setShowRating, icon: Star, label: t.shareModal.toggles.rating },
+                          { id: 'reflection', state: showReflection, setter: setShowReflection, icon: MessageSquare, label: t.shareModal.toggles.note },
                         ].map((toggle) => (
                           <button
                             key={toggle.id}
@@ -343,7 +351,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
                   </>
                 ) : (
                   <div className="text-center py-8">
-                    <p className="text-sm text-text-desc opacity-60">Ready to share your collection.</p>
+                    <p className="text-sm text-text-desc opacity-60">{t.shareModal.readyToShare}</p>
                   </div>
                 )}
 
@@ -351,21 +359,21 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
                 <div className="flex flex-col sm:flex-row gap-3 pt-4">
                   <button
                     onClick={handleShare}
-                    disabled={isGenerating}
+                    disabled={isGenerating || isImageLoading}
                     className="flex-1 py-4 bg-accent-gold text-folio-black rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-white transition-all shadow-xl active:scale-[0.98] disabled:opacity-50"
                   >
-                    {isGenerating ? (
+                    {isGenerating || isImageLoading ? (
                       <Loader2 className="animate-spin" size={18} />
                     ) : (
-                      <><Share2 size={18} /> Share</>
+                      <><Share2 size={18} /> {t.details.share}</>
                     )}
                   </button>
                   <button
                     onClick={handleDownload}
-                    disabled={isGenerating}
-                    className="flex-1 py-4 bg-white/5 text-white hover:bg-white/10 rounded-2xl font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all border border-white/10"
+                    disabled={isGenerating || isImageLoading}
+                    className="flex-1 py-4 bg-white/5 text-white hover:bg-white/10 rounded-2xl font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all border border-white/10 disabled:opacity-50"
                   >
-                    {isDownloaded ? <><Check size={14} /> Saved</> : <><Download size={14} /> Download</>}
+                    {isDownloaded ? <><Check size={14} /> {t.shareModal.saved}</> : <><Download size={14} /> {t.shareModal.download}</>}
                   </button>
                 </div>
               </div>

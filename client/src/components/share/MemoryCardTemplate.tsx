@@ -42,6 +42,15 @@ export default function MemoryCardTemplate({
 
     const currentDim = dimensions[aspectRatio];
 
+    // --- Helper: Get img props to avoid crossOrigin issues with data URLs ---
+    const getImageProps = (src: string) => {
+        const isDataUrl = src.startsWith('data:');
+        return {
+            src,
+            ...(isDataUrl ? {} : { crossOrigin: 'anonymous' as const })
+        };
+    };
+
     // --- Helper: Stamp Component ---
     const StampRating = () => (
         <div className="border-4 border-accent-gold/40 rounded-xl px-4 py-2 flex flex-col items-center justify-center transform -rotate-12 backdrop-blur-sm bg-black/10 shadow-lg">
@@ -57,10 +66,9 @@ export default function MemoryCardTemplate({
         return (
             <div style={currentDim} className="bg-folio-black flex items-center justify-center overflow-hidden relative">
                 <img
-                    src={posterPath}
+                    {...getImageProps(posterPath)}
                     alt={title}
                     className="w-full h-full object-cover"
-                    crossOrigin="anonymous"
                 />
                 {/* Overlay Gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
@@ -123,10 +131,9 @@ export default function MemoryCardTemplate({
                     {/* Screen */}
                     <div className="relative w-full aspect-square bg-black rounded-[20px] overflow-hidden border-4 border-black shadow-inner">
                         <img
-                            src={posterPath}
+                            {...getImageProps(posterPath)}
                             alt={title}
                             className="w-full h-full object-contain opacity-90 contrast-125 saturate-125 bg-black/40"
-                            crossOrigin="anonymous"
                         />
 
                         {/* Scanlines Effect */}
@@ -211,7 +218,7 @@ export default function MemoryCardTemplate({
                     {/* Main Content */}
                     <div className="flex-1 p-6 flex flex-col items-center min-h-0 w-full">
                         <div className="relative flex-1 w-full rounded-md overflow-hidden border-2 border-folio-black mb-4 min-h-0 bg-white/40">
-                            <img src={posterPath} alt="" className="w-full h-full object-contain contrast-125" crossOrigin="anonymous" />
+                            <img {...getImageProps(posterPath)} alt="" className="w-full h-full object-contain contrast-125" />
                         </div>
 
                         <div className="space-y-4 shrink-0 flex flex-col items-center w-full">
@@ -308,7 +315,7 @@ export default function MemoryCardTemplate({
                             boxShadow: 'inset 4px 0 10px rgba(255,255,255,0.1), inset -4px 0 15px rgba(0,0,0,0.6)' // Lighting from top-left, shadow on right
                         }}
                     >
-                        <img src={posterPath} alt={title} className="w-full h-full object-cover rounded-r-[4px] rounded-l-[2px]" crossOrigin="anonymous" />
+                        <img {...getImageProps(posterPath)} alt={title} className="w-full h-full object-cover rounded-r-[4px] rounded-l-[2px]" />
                         <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-black/40 mix-blend-overlay pointer-events-none" />
                         <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-black/60 via-black/20 to-transparent opacity-80" /> {/* Spine crease shadow */}
                     </div>
@@ -326,7 +333,7 @@ export default function MemoryCardTemplate({
                         }}
                     >
                         <div className="absolute inset-0 bg-[#050505]">
-                            <img src={posterPath} alt="" className="w-full h-full object-cover blur-sm brightness-[0.5] saturate-50" crossOrigin="anonymous" />
+                            <img {...getImageProps(posterPath)} alt="" className="w-full h-full object-cover blur-sm brightness-[0.5] saturate-50" />
                         </div>
                         <div className="relative z-20 w-full h-full flex flex-col items-center justify-between py-8">
                             <span className="text-[8px] font-black text-accent-gold/90 uppercase tracking-widest rotate-90 whitespace-nowrap drop-shadow-md">Storio</span>
@@ -430,7 +437,7 @@ export default function MemoryCardTemplate({
                             WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,0) 60%, rgba(0,0,0,0.8) 100%)'
                         }}
                     >
-                        <img src={posterPath} alt="" className="w-full h-full object-cover blur-[1px]" crossOrigin="anonymous" />
+                        <img {...getImageProps(posterPath)} alt="" className="w-full h-full object-cover blur-[1px]" />
                     </div>
                 </div>
 
@@ -514,7 +521,7 @@ export default function MemoryCardTemplate({
 
                     {/* The book cover wrapper */}
                     <div className="absolute inset-0 rounded-[4px_8px_8px_4px] overflow-hidden bg-[#111] z-10 text-center flex flex-col items-center">
-                        <img src={posterPath} alt={title} className="absolute inset-0 w-full h-full object-cover" crossOrigin="anonymous" />
+                        <img {...getImageProps(posterPath)} alt={title} className="absolute inset-0 w-full h-full object-cover" />
 
                         {/* Left hinge / spine crease */}
                         <div
@@ -594,10 +601,9 @@ export default function MemoryCardTemplate({
             {/* Background Blur */}
             <div className="absolute inset-0 z-0">
                 <img
-                    src={posterPath}
+                    {...getImageProps(posterPath)}
                     alt=""
                     className="w-full h-full object-cover blur-[50px] opacity-60 scale-110"
-                    crossOrigin="anonymous"
                 />
                 <div className="absolute inset-0 bg-black/40" />
             </div>
@@ -614,7 +620,7 @@ export default function MemoryCardTemplate({
             {/* Center Poster - Adaptive Size */}
             <div className="relative z-10 flex-1 w-full flex items-center justify-center py-6 min-h-0">
                 <div className="relative max-h-full aspect-[2/3] rounded-lg shadow-[0_20px_50px_rgba(0,0,0,0.6)] border border-white/10 overflow-hidden">
-                    <img src={posterPath} alt={title} className="w-full h-full object-cover" crossOrigin="anonymous" />
+                    <img {...getImageProps(posterPath)} alt={title} className="w-full h-full object-cover" />
                 </div>
             </div>
 

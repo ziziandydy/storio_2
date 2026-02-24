@@ -49,6 +49,8 @@
     - **原生分享**: 整合 Web Share API，支援 iOS/Android 原生分享選單。
 14. **測試強韌性 (Test Robustness)**:
     - 重構 Playwright 測試 (`guest_limit`, `search_and_collect`) 以支援多語系環境與 UI 動畫等待。
+15. **基礎建設 (Infrastructure)**:
+    - 實作 PWA 支援，使用者可將 Web App 加入主畫面。
 
 ## 🚀 SPRINT 5: 深度客製化分享 (已完成大部分核心功能)
 - [x] **分享控制中心**: 實作 `ShareModal` 提供即時預覽、比例切換 (9:16, 4:5, 1:1) 與內容開關。
@@ -60,10 +62,15 @@
     - [x] **復古電視 (Retro TV)**: 新增模板。
 - [x] **原生分享 (Native Sharing)**: 整合 Web Share API。
 
-## 📅 SPRINT 6: 月度回顧與社交 (Recap & Social)
+## 📅 SPRINT 6: 月度回顧與擴充功能 (Recap & Expansions)
 - [ ] **月度回顧**: 實作行事曆視圖的總結分享 (Instagram 貼文格式)。
-- [ ] **社群動態 (選配概念)**: 瀏覽其他策展人分享的記憶。
+- [ ] **分享格式擴充**: 實作不同比例的圖片分享 (Portrait 4:5, Square 1:1)。
+- [ ] **智慧提醒 (Notifications)**: 規劃與客製化推播通知功能，提醒用戶記錄。
+- [ ] **影像辨識 (Vision AI)**: 支援上傳票根或截圖，自動辨識並快速加入 Memory。
+- [ ] **新增類別 (Shows)**: 擴充系統以支援「展演 (Show)」類別（如表演、劇場、演唱會等），包含搜索與建立 Memory。
+- [ ] **Apple Sign-in**: 待註冊 Apple Developer 帳號後串接。
 
 ## 🎨 UI/UX 優化 (UI/UX Polish)
 - [ ] **導覽選單調整 (Navigation FAB)**: 在 `/collection` 頁面右下角的點擊「＋」鍵時，其彈出選項應為「首頁 (Home)」與「搜尋 (Search)」，避免顯示當前所在頁面 (館藏)。
-- [ ] **多次觀看記錄 (Multi-View Navigation)**: 如果一個項目被觀看多次 (re-watched) 的處理邏輯。
+- [x] **多次觀看記錄 (Multi-View)**: 已確立設計方向，針對重複觀看同一作品，將建立**多張獨立的 Memory Card**。
+- [x] **社群功能**: 目前確認**沒有社群發佈的規劃**，專注於個人典藏室體驗。

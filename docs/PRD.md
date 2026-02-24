@@ -69,9 +69,15 @@
 *   **Backdrop-First Design**: 頂部大面積背景海報，文字資訊位於海報下方黑色區塊。
 *   **Social Sharing & Visual Templates (New Feature)**:
     *   **核心功能**: 將單一作品轉化為高度客製化的精美分享圖 (PNG)，支援原生系統分享 (Web Share API) 與下載。
+    *   **分享機制**:
+        *   優先使用 Web Share API 呼叫系統分享。
+        *   分享時的預設文案需跟隨系統語系 (`i18n/locales.ts`) 翻譯，並附帶 `Frontend URL` 連結。
+        *   備援提供「下載圖片」與「複製圖片」。
     *   **互動模式**: 
         *   點擊詳情頁分享按鈕開啟全螢幕預覽。
+        *   為提升行動端相容性，所有變形語法（`transform` 與 `scale`）皆需使用 Tailwind CSS `className` 實作，避免 inline `style` 被忽略導致未置中。
         *   底部抽屜 (Drawer) 提供模板切換、比例調整 (9:16, 4:5, 1:1) 與內容開關。
+        *   所有的選項按鈕與文字標籤皆已全面接入 i18n 多國語系架構，隨設定即時切換。
         *   點擊預覽區域時，抽屜自動收合，方便檢視完整視覺效果。
     *   **視覺模板 (Templates)** (呈兩欄式網格排列):
         *   **Default (Blur)**: 經典高斯模糊背景，搭配懸浮卡片與統一的「印章評分 (Stamp Rating)」。
@@ -107,6 +113,7 @@
 
 ### 4.1 Frontend (Client)
 *   **State Management**: Zustand (`userStore` 處理全域用戶狀態同步, `viewStore`, `settingsStore`)。
+*   **Localization (i18n)**: 內建靜態字典檔 (`locales.ts`) 與 `useTranslation` hook，支援 `en-US` 與 `zh-TW`。所有新增的 UI 文本（包含 Web Share API 所需字串）均需加入翻譯字典。
 *   **Utility**: `getURL` 工具函式確保絕對 URL 重導向的健壯性。
 *   **Libraries**: `html-to-image`, `downloadjs`。
 
@@ -119,6 +126,10 @@
 
 ## 5. 待優化與未來規劃 (Roadmap)
 *   **Social Sharing UAT**: 驗證分享圖片在行動端之佈局與下載正確性 (Current Focus)。
-*   **PWA**: 實作 PWA 支援 (Next Step)。
+*   **Share Formats**: 支援不同比例的分享圖片 (4:5, 1:1)。
+*   **Notifications**: 實作推播通知客製化提醒用戶記錄。
+*   **Vision AI**: 支援影像辨識票根或截圖來快速加入 Memory。
+*   **New Category (Shows)**: 擴充對「展演 (Show)」類別的支援 (表演、劇場、演唱會)。
+*   ~~**PWA**: 實作 PWA 支援 (Next Step)。~~ (✅ 已完成，使用者可將網頁加入主畫面)
 *   **Profile Page**: 完善個人檔案頁面的統計圖表 (Charts)。
 *   **Export**: 匯出 Folio 資料 (CSV/JSON)。
