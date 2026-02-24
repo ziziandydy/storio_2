@@ -106,7 +106,7 @@ export default function MonthlyRecapTemplate({
                 <div className="grid grid-cols-7 gap-1.5 flex-1 mb-6 relative z-20">
                     {calendarCells.map((cell, i) => {
                         if (!cell.isCurrentMonth) {
-                            return <div key={i} className="aspect-square rounded flex-shrink-0 bg-white/5"></div>;
+                            return <div key={i} className="aspect-square rounded flex-shrink-0 bg-transparent"></div>;
                         }
 
                         const count = cell.dayItems.length;
@@ -146,7 +146,7 @@ export default function MonthlyRecapTemplate({
 
                 <div className="flex justify-between items-end border-t border-white/20 pt-4 px-2 relative z-20">
                     <div className="flex items-center gap-2 opacity-90">
-                        <img src="/image/logo/logo.png" className="w-4 h-4" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(996%) hue-rotate(345deg) brightness(88%) contrast(87%)' }} />
+                        <img src="/image/logo/logo.png" crossOrigin="anonymous" className="w-4 h-4" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(996%) hue-rotate(345deg) brightness(88%) contrast(87%)' }} />
                         <span className="text-xs font-black tracking-widest uppercase text-accent-gold drop-shadow-md">Storio</span>
                     </div>
                     <div className="text-right flex items-center h-full">
@@ -168,18 +168,14 @@ export default function MonthlyRecapTemplate({
         if (count === 1) cols = 1;
 
         return (
-            <div style={currentDim} className="bg-[#1f1f1f] p-6 relative flex flex-col justify-between overflow-hidden">
-                <div className="absolute inset-0 z-0">
-                    <div className="absolute inset-0 bg-[#1f1f1f] opacity-80 z-10 mix-blend-multiply" />
-                    {latestPosterUrl && (
-                        <img {...getImageProps(latestPosterUrl)} className="w-full h-full object-cover opacity-50 blur-3xl scale-110" />
-                    )}
-                </div>
+            <div style={currentDim} className="bg-[#121212] p-8 relative flex flex-col justify-between overflow-hidden">
+                <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] border-[16px] border-[#0a0a0a] mix-blend-multiply" />
+                <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/10 to-transparent pointer-events-none z-10" />
 
                 <div className="mb-6 mt-4 relative z-20 flex justify-between items-start">
-                    <h1 className="text-6xl font-black tracking-tight text-accent-gold leading-none uppercase drop-shadow-md">{monthShort}</h1>
+                    <h1 className="text-5xl font-black tracking-tight text-accent-gold leading-none uppercase drop-shadow-md">{monthShort}</h1>
                     <div className="flex flex-col items-end gap-1 opacity-90">
-                        <img src="/image/logo/logo.png" className="w-6 h-6" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(996%) hue-rotate(345deg) brightness(88%) contrast(87%)' }} />
+                        <img src="/image/logo/logo.png" crossOrigin="anonymous" className="w-6 h-6" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(996%) hue-rotate(345deg) brightness(88%) contrast(87%)' }} />
                         <span className="text-[10px] font-black tracking-[0.2em] uppercase text-accent-gold drop-shadow-md mr-1">Storio</span>
                     </div>
                 </div>
@@ -193,15 +189,15 @@ export default function MonthlyRecapTemplate({
                         }}
                     >
                         {items.map((item, i) => (
-                            <div key={i} className="relative w-full h-full rounded-xl overflow-hidden shadow-xl bg-folio-card">
-                                <img {...getImageProps(item.poster_url)} className="absolute inset-0 w-full h-full object-cover rounded-xl border-2 border-white/10" />
+                            <div key={i} className="relative w-full h-full bg-[#f8f8f8] p-1.5 sm:p-2 shadow-[0_15px_30px_rgba(0,0,0,0.9)] border-[3px] border-[#1a1a1a]">
+                                <img {...getImageProps(item.poster_url)} className="absolute inset-0 w-full h-full object-cover shadow-[inset_0_2px_10px_rgba(0,0,0,0.3)]" />
                             </div>
                         ))}
                     </div>
                 </div>
 
                 <div className="mt-6 mb-2 flex justify-start items-end relative z-20">
-                    <div className="text-xl font-bold text-white tracking-wider drop-shadow-md">{statsString}</div>
+                    <div className="text-xl font-bold font-serif text-white tracking-wider drop-shadow-md opacity-80">{statsString}</div>
                 </div>
             </div>
         )
@@ -222,7 +218,7 @@ export default function MonthlyRecapTemplate({
         return (
             <div style={currentDim} className="bg-folio-black relative flex overflow-hidden">
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-                    <img src="/image/logo/logo.png" className="w-[300px] h-auto grayscale opacity-[0.05]" />
+                    <img src="/image/logo/logo.png" crossOrigin="anonymous" className="w-[300px] h-auto grayscale opacity-[0.05]" />
                 </div>
 
                 <div className="absolute inset-0 grid grid-cols-[4fr_5fr_4fr] gap-3 z-10 -mx-6">
@@ -251,7 +247,7 @@ export default function MonthlyRecapTemplate({
                 </div>
 
                 <div className="absolute top-6 right-6 z-20 flex items-center gap-1.5 opacity-90 drop-shadow-md bg-black/40 backdrop-blur p-2 rounded-lg">
-                    <img src="/image/logo/logo.png" className="w-4 h-4" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(996%) hue-rotate(345deg) brightness(88%) contrast(87%)' }} />
+                    <img src="/image/logo/logo.png" crossOrigin="anonymous" className="w-4 h-4" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(996%) hue-rotate(345deg) brightness(88%) contrast(87%)' }} />
                     <span className="text-[10px] font-black tracking-[0.3em] uppercase text-accent-gold">Storio</span>
                 </div>
             </div>
@@ -278,7 +274,7 @@ export default function MonthlyRecapTemplate({
                         <div className="absolute left-[-40px] right-[-40px] bottom-[-20px] h-[20px] bg-[#3a261c] border-t border-[#8c6751]/30"></div>
 
                         {/* Tag */}
-                        <div className="absolute top-[-100px] left-[5%] w-[80px] h-[110px] origin-top bg-[#efebd8] transform rotate-[-8deg] border border-[#d7cbb6] shadow-[10px_10px_20px_rgba(0,0,0,0.8)] flex flex-col justify-center items-center rounded-[3px] z-50">
+                        <div className="absolute top-[-110px] left-[-15px] w-[80px] h-[110px] origin-top bg-[#efebd8] transform rotate-[-8deg] border border-[#d7cbb6] shadow-[10px_10px_20px_rgba(0,0,0,0.8)] flex flex-col justify-center items-center rounded-[3px] z-50">
                             <div className="absolute top-3 w-3 h-3 rounded-full bg-[#3e2723] shadow-inner" />
                             <div className="absolute top-0 right-1/2 w-[2px] h-[40px] bg-white/40 -mt-[40px] origin-bottom transform rotate-[15deg]" />
 
@@ -339,8 +335,8 @@ export default function MonthlyRecapTemplate({
                                                         {item.title}
                                                     </span>
                                                 </div>
-                                                <div className="w-12 h-full flex justify-center items-center bg-black/90 border-l border-white/10">
-                                                    <span className="text-[6px] font-black text-accent-gold tracking-widest">STORIO</span>
+                                                <div className="w-12 h-full flex justify-center items-center bg-black/90 border-l border-white/10 relative overflow-hidden">
+                                                    <span className="text-[6px] font-black text-accent-gold tracking-widest leading-none rotate-[-90deg] whitespace-nowrap">STORIO</span>
                                                 </div>
                                             </div>
                                         )}
@@ -352,7 +348,7 @@ export default function MonthlyRecapTemplate({
                 </div>
 
                 <div className="absolute bottom-8 flex items-center gap-2 opacity-80 z-20">
-                    <img src="/image/logo/logo.png" className="w-6 h-6 grayscale" />
+                    <img src="/image/logo/logo.png" crossOrigin="anonymous" className="w-6 h-6 grayscale" />
                     <span className="text-[14px] font-black tracking-[0.4em] uppercase text-white drop-shadow-md">Storio</span>
                 </div>
             </div>

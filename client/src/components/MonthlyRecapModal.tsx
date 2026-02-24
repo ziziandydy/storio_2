@@ -56,36 +56,44 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                     const data = await res.json();
                     if (isMounted) {
                         // Also preload images for the items to prevent CORS issues on capture
-                        const itemsWithProxiedImages = await Promise.all(
-                            data.items.map(async (item: any) => {
-                                let url = item.poster_url;
-                                if (!url) return item;
-                                try {
-                                    if (url.includes('image.tmdb.org')) {
-                                        url = url.replace(/^https?:\/\/image\.tmdb\.org\/t\/p\//, '/proxy/tmdb/');
-                                    } else if (url.includes('books.google.com')) {
-                                        url = url.replace(/^https?:\/\/books\.google\.com\//, '/proxy/googlebooks/');
-                                    }
-                                    url += `${url.includes('?') ? '&' : '?'}t=${new Date().getTime()}`;
-                                    if (url.startsWith('/')) url = window.location.origin + url;
-
-                                    const imgRes = await fetch(url);
-                                    if (!imgRes.ok) throw new Error(`Proxy load failed: ${imgRes.status}`);
-                                    const blob = await imgRes.blob();
-                                    return new Promise((resolve, reject) => {
-                                        const reader = new FileReader();
-                                        reader.onloadend = () => {
-                                            resolve({ ...item, poster_url: reader.result });
-                                        };
-                                        reader.onerror = reject;
-                                        reader.readAsDataURL(blob);
-                                    });
-                                } catch (e) {
-                                    console.warn("Image Preload Error:", url, e);
-                                    return item;
+                        const itemsWithProxiedImages = [];
+                        for (const item of data.items) {
+                            let url = item.poster_url;
+                            if (!url) {
+                                itemsWithProxiedImages.push(item);
+                                continue;
+                            }
+                            try {
+                                if (url.includes('image.tmdb.org')) {
+                                    url = url.replace('https://image.tmdb.org/t/p/', '/proxy/tmdb/');
+                                    url = url.replace('http://image.tmdb.org/t/p/', '/proxy/tmdb/');
+                                } else if (url.includes('books.google.com')) {
+                                    url = url.replace(/^https?:\/\/books\.google\.com\//, '/proxy/googlebooks/');
                                 }
-                            })
-                        );
+                                url += `${url.includes('?') ? '&' : '?'}t=${new Date().getTime()}`;
+                                let absoluteUrl = url;
+                                if (absoluteUrl.startsWith('/')) {
+                                    absoluteUrl = window.location.origin + absoluteUrl;
+                                }
+
+                                const imgRes = await fetch(absoluteUrl);
+                                if (!imgRes.ok) throw new Error(`Proxy load failed: ${imgRes.status}`);
+                                const blob = await imgRes.blob();
+                                const base64Data = await new Promise((resolve, reject) => {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                        resolve(reader.result);
+                                    };
+                                    reader.onerror = reject;
+                                    reader.readAsDataURL(blob);
+                                });
+                                itemsWithProxiedImages.push({ ...item, poster_url: base64Data });
+                            } catch (e) {
+                                console.warn("Image Preload Error, using proxied absolute URL as fallback:", url, e);
+                                let fallbackUrl = url.startsWith('/') ? window.location.origin + url : url;
+                                itemsWithProxiedImages.push({ ...item, poster_url: fallbackUrl });
+                            }
+                        }
                         setStatsData({
                             summary: data.summary,
                             items: itemsWithProxiedImages
@@ -213,16 +221,18 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                                     {/* Visual Preview */}
                                     <div className="relative w-full h-full flex items-center justify-center">
                                         <div
-                                            className={`relative shadow-2xl overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] origin-center will-change-transform ${isDrawerOpen
+                                            className={`relative shadow-2xl rounded-xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] origin-center will-change-transform flex items-center justify-center ${isDrawerOpen
                                                 ? '-translate-y-[10%] scale-[0.65] sm:scale-[0.85]'
                                                 : 'translate-y-0 scale-[0.8] sm:scale-100'
                                                 }`}
                                             style={{
                                                 maxHeight: '100%',
-                                                maxWidth: '100%'
+                                                maxWidth: '100%',
+                                                width: 'auto',
+                                                height: 'auto'
                                             }}
                                         >
-                                            <div className="bg-folio-black overflow-hidden rounded-xl border border-white/10 inline-block align-top">
+                                            <div className="bg-folio-black overflow-hidden rounded-xl border border-white/10 flex-shrink-0">
                                                 <MonthlyRecapTemplate
                                                     monthName={monthName}
                                                     monthValue={monthValue}
@@ -235,8 +245,8 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                                     </div>
 
                                     {/* Hidden Capture Container */}
-                                    <div className="fixed top-[-2000px] left-[-2000px] opacity-0 pointer-events-none -z-50">
-                                        <div ref={templateRef} className="bg-folio-black overflow-hidden inline-block align-top">
+                                    <div className="fixed top-[-2000px] left-[-2000px] opacity-0 pointer-events-none -z-50 flex items-center justify-center">
+                                        <div ref={templateRef} className="bg-folio-black overflow-hidden flex-shrink-0">
                                             <MonthlyRecapTemplate
                                                 monthName={monthName}
                                                 monthValue={monthValue}
