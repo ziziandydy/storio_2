@@ -348,6 +348,21 @@ function MonthGrid({ month, storiesByDate, onDayClick, onShareClick, locale }: {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
                     </div>
+                  ) : dayStories.length === 2 ? (
+                    // Two Items - 1x2 Grid
+                    <div className="w-full h-full grid grid-cols-2 grid-rows-1 gap-0.5 rounded overflow-hidden ring-1 ring-white/10 bg-folio-black">
+                      {sortedStories.map((story) => (
+                        <div key={story.id} className="relative w-full h-full bg-folio-card">
+                          <Image
+                            src={story.poster_path || '/image/defaultMoviePoster.svg'}
+                            alt={story.title}
+                            fill
+                            className="object-cover"
+                            sizes="5vw"
+                          />
+                        </div>
+                      ))}
+                    </div>
                   ) : (
                     // Multiple Items - 2x2 Grid Collage
                     <div className="w-full h-full grid grid-cols-2 grid-rows-2 gap-0.5 rounded overflow-hidden ring-1 ring-white/10 bg-folio-black">

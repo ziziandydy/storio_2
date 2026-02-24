@@ -32,10 +32,8 @@ export default function MonthlyRecapTemplate({
     const currentDim = dimensions[aspectRatio];
 
     const getImageProps = (src: string) => {
-        const isDataUrl = src?.startsWith('data:');
         return {
             src: src || '/image/defaultMoviePoster.svg',
-            ...(isDataUrl ? {} : { crossOrigin: 'anonymous' as const })
         };
     };
 
@@ -84,14 +82,10 @@ export default function MonthlyRecapTemplate({
         });
 
         return (
-            <div style={currentDim} className="bg-folio-black border-2 border-white/5 relative flex flex-col font-sans p-6 overflow-hidden">
-                {/* Blurred Background */}
-                <div className="absolute inset-0 z-0">
-                    <div className="absolute inset-0 bg-folio-black opacity-80 z-10" />
-                    {latestPosterUrl && (
-                        <img {...getImageProps(latestPosterUrl)} className="w-full h-full object-cover opacity-40 blur-2xl scale-110" />
-                    )}
-                </div>
+            <div style={currentDim} className="bg-folio-black relative flex flex-col font-sans p-6 overflow-hidden">
+                {/* Dark Gray Grid Frame Background */}
+                <div className="absolute inset-0 z-0 opacity-10" style={{ backgroundImage: 'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+                <div className="absolute inset-0 z-0 ring-1 ring-white/10 ring-inset m-2 rounded-lg" />
 
                 <div className="flex flex-col items-center justify-center pt-3 pb-6 relative z-20">
                     <h1 className="text-4xl font-sans font-black tracking-widest text-accent-gold mt-2 drop-shadow-md">{monthShort}</h1>
@@ -120,6 +114,14 @@ export default function MonthlyRecapTemplate({
                                     <div className="absolute inset-0 z-10 p-0.5 pt-3">
                                         {count === 1 ? (
                                             <img {...getImageProps(cell.dayItems[0].poster_url)} className="w-full h-full object-cover rounded-[2px] border border-white/10" />
+                                        ) : count === 2 ? (
+                                            <div className="w-full h-full grid grid-cols-2 grid-rows-1 gap-[1px] rounded-[2px] overflow-hidden border border-white/10">
+                                                {cell.dayItems.map((story, idx) => (
+                                                    <div key={idx} className="relative w-full h-full bg-folio-black">
+                                                        <img {...getImageProps(story.poster_url)} className="w-full h-full object-cover" />
+                                                    </div>
+                                                ))}
+                                            </div>
                                         ) : (
                                             <div className="w-full h-full grid grid-cols-2 grid-rows-2 gap-[1px] rounded-[2px] overflow-hidden border border-white/10">
                                                 {cell.dayItems.slice(0, 4).map((story, idx) => {
@@ -146,7 +148,7 @@ export default function MonthlyRecapTemplate({
 
                 <div className="flex justify-between items-end border-t border-white/20 pt-4 px-2 relative z-20">
                     <div className="flex items-center gap-2 opacity-90">
-                        <img src="/image/logo/logo.png" crossOrigin="anonymous" className="w-4 h-4" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(996%) hue-rotate(345deg) brightness(88%) contrast(87%)' }} />
+                        <img src="/image/logo/logo.svg" className="w-4 h-4" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(996%) hue-rotate(345deg) brightness(88%) contrast(87%)' }} />
                         <span className="text-xs font-black tracking-widest uppercase text-accent-gold drop-shadow-md">Storio</span>
                     </div>
                     <div className="text-right flex items-center h-full">
@@ -172,12 +174,12 @@ export default function MonthlyRecapTemplate({
                 <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] border-[16px] border-[#0a0a0a] mix-blend-multiply" />
                 <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/10 to-transparent pointer-events-none z-10" />
 
-                <div className="mb-6 mt-4 relative z-20 flex justify-between items-start">
-                    <h1 className="text-5xl font-black tracking-tight text-accent-gold leading-none uppercase drop-shadow-md">{monthShort}</h1>
-                    <div className="flex flex-col items-end gap-1 opacity-90">
-                        <img src="/image/logo/logo.png" crossOrigin="anonymous" className="w-6 h-6" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(996%) hue-rotate(345deg) brightness(88%) contrast(87%)' }} />
-                        <span className="text-[10px] font-black tracking-[0.2em] uppercase text-accent-gold drop-shadow-md mr-1">Storio</span>
+                <div className="mb-6 mt-4 relative z-20 flex flex-col items-center gap-2 text-center w-full">
+                    <div className="flex items-center gap-1.5 opacity-90 mb-1">
+                        <img src="/image/logo/logo.svg" className="w-6 h-6" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(996%) hue-rotate(345deg) brightness(88%) contrast(87%)' }} />
+                        <span className="text-[12px] font-black tracking-[0.2em] uppercase text-accent-gold drop-shadow-md pt-0.5">Storio</span>
                     </div>
+                    <h1 className="text-5xl font-black tracking-tight text-accent-gold leading-none uppercase drop-shadow-md w-full">{monthShort}</h1>
                 </div>
 
                 <div className="flex-1 flex flex-col justify-center min-h-0 relative z-10">
@@ -217,8 +219,11 @@ export default function MonthlyRecapTemplate({
 
         return (
             <div style={currentDim} className="bg-folio-black relative flex overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-                    <img src="/image/logo/logo.png" crossOrigin="anonymous" className="w-[300px] h-auto grayscale opacity-[0.05]" />
+                {/* Month Watermark Background (instead of logo) */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
+                    <span className="text-[180px] font-black text-white/5 whitespace-nowrap -rotate-90 select-none tracking-tighter">
+                        {monthShort}
+                    </span>
                 </div>
 
                 <div className="absolute inset-0 grid grid-cols-[4fr_5fr_4fr] gap-3 z-10 -mx-6">
@@ -247,7 +252,7 @@ export default function MonthlyRecapTemplate({
                 </div>
 
                 <div className="absolute top-6 right-6 z-20 flex items-center gap-1.5 opacity-90 drop-shadow-md bg-black/40 backdrop-blur p-2 rounded-lg">
-                    <img src="/image/logo/logo.png" crossOrigin="anonymous" className="w-4 h-4" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(996%) hue-rotate(345deg) brightness(88%) contrast(87%)' }} />
+                    <img src="/image/logo/logo.svg" className="w-4 h-4" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(996%) hue-rotate(345deg) brightness(88%) contrast(87%)' }} />
                     <span className="text-[10px] font-black tracking-[0.3em] uppercase text-accent-gold">Storio</span>
                 </div>
             </div>
@@ -315,14 +320,18 @@ export default function MonthlyRecapTemplate({
                                         }}
                                     >
                                         {isBook ? (
-                                            <div className="w-full h-full flex items-center justify-center px-6 relative overflow-hidden">
-                                                <div className="absolute top-1 bottom-1 left-2 w-[2px] border-l border-white/20 border-r border-black/40" />
-                                                <div className="absolute top-1 bottom-1 right-2 w-[2px] border-l border-white/20 border-r border-black/40" />
-                                                <div className="absolute top-0 w-full h-[2px] bg-white/30 left-0" />
-                                                <div className="absolute bottom-0 w-full h-[4px] bg-black/60 left-0" />
-                                                <span className="text-[14px] font-bold text-white uppercase tracking-widest drop-shadow-[1px_1px_2px_rgba(0,0,0,0.8)] truncate w-full text-center" style={{ fontFamily: 'Georgia, serif' }}>
+                                            <div className="w-full h-full flex items-center justify-center px-6 relative overflow-hidden group">
+                                                {/* Map cover image to spine backdrop with overlay blend mode so it preserves dominant color */}
+                                                <img {...getImageProps(item.poster_url)} className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-60 z-0 blur-[1px]" />
+                                                <div className="absolute top-1 bottom-1 left-2 w-[2px] border-l border-white/20 border-r border-black/40 z-10" />
+                                                <div className="absolute top-1 bottom-1 right-2 w-[2px] border-l border-white/20 border-r border-black/40 z-10" />
+                                                <div className="absolute top-0 w-full h-[2px] bg-white/30 left-0 z-10" />
+                                                <div className="absolute bottom-0 w-full h-[4px] bg-black/60 left-0 z-10" />
+                                                <span className="relative z-20 text-[14px] font-bold text-white uppercase tracking-widest drop-shadow-[1px_1px_2px_rgba(0,0,0,0.8)] truncate w-full text-center mix-blend-normal" style={{ fontFamily: 'Georgia, serif' }}>
                                                     {item.title}
                                                 </span>
+                                                {/* Textures */}
+                                                <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent pointer-events-none z-10" />
                                             </div>
                                         ) : (
                                             <div className="w-full h-full flex bg-[#1a1a1a] relative overflow-hidden">
@@ -348,7 +357,7 @@ export default function MonthlyRecapTemplate({
                 </div>
 
                 <div className="absolute bottom-8 flex items-center gap-2 opacity-80 z-20">
-                    <img src="/image/logo/logo.png" crossOrigin="anonymous" className="w-6 h-6 grayscale" />
+                    <img src="/image/logo/logo.svg" className="w-6 h-6 grayscale" />
                     <span className="text-[14px] font-black tracking-[0.4em] uppercase text-white drop-shadow-md">Storio</span>
                 </div>
             </div>
