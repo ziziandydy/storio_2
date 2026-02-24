@@ -20,7 +20,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 export default function CollectionPage() {
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
-  const { token, loading: authLoading } = useAuth();
+  const { token, loading: authLoading, user } = useAuth();
   const { currentView } = useViewStore();
   const { t } = useTranslation();
   const router = useRouter();
@@ -78,9 +78,9 @@ export default function CollectionPage() {
       <div className="min-h-screen bg-[#000000] flex items-center justify-center">
         <div className="flex flex-col items-center gap-6">
           <div className="relative w-48 h-48">
-            <Image 
-              src="/image/loading.gif" 
-              alt="Loading..." 
+            <Image
+              src="/image/loading.gif"
+              alt="Loading..."
               fill
               className="object-contain"
               unoptimized
@@ -102,14 +102,14 @@ export default function CollectionPage() {
             </Link>
             <div className="flex items-center gap-3">
               <img src="/image/logo/logo.svg" alt="Storio Logo" className="w-6 h-6" />
-<h1 className="text-2xl md:text-3xl font-bold font-serif tracking-tight text-white flex items-center gap-3">
-            {t.collection.title}
-          </h1>
+              <h1 className="text-2xl md:text-3xl font-bold font-serif tracking-tight text-white flex items-center gap-3">
+                {t.collection.title}
+              </h1>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-text-desc bg-folio-card px-4 py-1.5 rounded-full border border-white/5 flex items-center gap-2">
-              <span>{stories.length} / 10</span>
+              <span>{user?.is_anonymous === false ? stories.length.toLocaleString() : `${stories.length} / 10`}</span>
               <Library size={12} className="text-accent-gold" />
             </div>
             <ViewSwitcher />
@@ -125,14 +125,14 @@ export default function CollectionPage() {
             </div>
             <h2 className="text-2xl font-bold mb-3 text-text-primary">{t.collection.emptyTitle}</h2>
             <p className="max-w-xs mb-10 text-text-desc text-sm">{t.collection.emptyDesc}</p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 w-full max-w-xs justify-center">
-                <Link href="/search" className="flex-1 px-8 py-3.5 bg-accent-gold text-folio-black font-black rounded-xl hover:bg-white transition-all shadow-xl shadow-accent-gold/10 uppercase text-[10px] tracking-widest">
+              <Link href="/search" className="flex-1 px-8 py-3.5 bg-accent-gold text-folio-black font-black rounded-xl hover:bg-white transition-all shadow-xl shadow-accent-gold/10 uppercase text-[10px] tracking-widest">
                 {t.common.explore}
-                </Link>
-                <Link href="/" className="flex-1 px-8 py-3.5 bg-white/5 text-white font-bold rounded-xl border border-white/10 hover:bg-white/10 transition-all uppercase text-[10px] tracking-widest">
+              </Link>
+              <Link href="/" className="flex-1 px-8 py-3.5 bg-white/5 text-white font-bold rounded-xl border border-white/10 hover:bg-white/10 transition-all uppercase text-[10px] tracking-widest">
                 {t.nav.home}
-                </Link>
+              </Link>
             </div>
           </div>
         ) : (
