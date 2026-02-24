@@ -76,14 +76,12 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                                     absoluteUrl = window.location.origin + absoluteUrl;
                                 }
 
-                                const imgRes = await fetch(absoluteUrl);
+                                const imgRes = await fetch(absoluteUrl, { credentials: 'omit', mode: 'cors' });
                                 if (!imgRes.ok) throw new Error(`Proxy load failed: ${imgRes.status}`);
                                 const blob = await imgRes.blob();
                                 const base64Data = await new Promise((resolve, reject) => {
                                     const reader = new FileReader();
-                                    reader.onloadend = () => {
-                                        resolve(reader.result);
-                                    };
+                                    reader.onloadend = () => resolve(reader.result);
                                     reader.onerror = reject;
                                     reader.readAsDataURL(blob);
                                 });
@@ -126,12 +124,20 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
         if (!templateRef.current) return null;
         setIsGenerating(true);
         try {
-            await new Promise(resolve => setTimeout(resolve, 100));
+            // Wait slightly longer to ensure DOM and fonts fully painted and layout settled
+            await new Promise(resolve => setTimeout(resolve, 500));
+            // Limit pixel ratio for mobile Safari to prevent memory crash
+            const ratio = window.devicePixelRatio > 2 ? 2 : window.devicePixelRatio;
+
             const dataUrl = await toPng(templateRef.current, {
                 cacheBust: true,
-                pixelRatio: 2,
+                pixelRatio: ratio,
                 backgroundColor: '#0d0d0d',
                 skipAutoScale: true,
+                style: {
+                    transform: 'scale(1)', // Force reset scale during capture
+                    transformOrigin: 'top left'
+                }
             });
             return dataUrl;
         } catch (error) {
@@ -340,7 +346,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                                 ) : (
                                     <div className="text-center py-8">
                                         <p className="text-sm text-text-desc opacity-60">
-                                            {loading ? t.common.loading : 'No memories to share for this month.'}
+                                            {loading ? '' : 'No memories to share for this month.'}
                                         </p>
                                     </div>
                                 )}
