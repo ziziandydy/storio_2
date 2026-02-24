@@ -83,9 +83,14 @@ export default function MonthlyRecapTemplate({
 
         return (
             <div style={currentDim} className="bg-folio-black relative flex flex-col font-sans p-6 overflow-hidden">
-                {/* Dark Gray Grid Frame Background */}
-                <div className="absolute inset-0 z-0 opacity-10" style={{ backgroundImage: 'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-                <div className="absolute inset-0 z-0 ring-1 ring-white/10 ring-inset m-2 rounded-lg" />
+                {/* Blurred Background */}
+                <div className="absolute inset-0 z-0">
+                    <div className="absolute inset-0 bg-folio-black opacity-80 z-10" />
+                    {latestPosterUrl && (
+                        <img {...getImageProps(latestPosterUrl)} className="absolute inset-0 w-full h-full object-cover opacity-40 blur-2xl scale-110" />
+                    )}
+                </div>
+                <div className="absolute inset-0 z-0 ring-1 ring-white/10 ring-inset m-2 rounded-lg pointer-events-none" />
 
                 <div className="flex flex-col items-center justify-center pt-3 pb-6 relative z-20">
                     <h1 className="text-4xl font-sans font-black tracking-widest text-accent-gold mt-2 drop-shadow-md">{monthShort}</h1>
@@ -148,7 +153,7 @@ export default function MonthlyRecapTemplate({
 
                 <div className="flex justify-between items-end border-t border-white/20 pt-4 px-2 relative z-20">
                     <div className="flex items-center gap-2 opacity-90">
-                        <img src="/image/logo/logo.svg" className="w-4 h-4" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(996%) hue-rotate(345deg) brightness(88%) contrast(87%)' }} />
+                        <img src="/image/logo/logo.png" className="w-4 h-4 grayscale opacity-80" />
                         <span className="text-xs font-black tracking-widest uppercase text-accent-gold drop-shadow-md">Storio</span>
                     </div>
                     <div className="text-right flex items-center h-full">
@@ -171,12 +176,18 @@ export default function MonthlyRecapTemplate({
 
         return (
             <div style={currentDim} className="bg-[#121212] p-8 relative flex flex-col justify-between overflow-hidden">
-                <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] border-[16px] border-[#0a0a0a] mix-blend-multiply" />
+                <div className="absolute inset-0 z-0">
+                    <div className="absolute inset-0 bg-gradient-to-b from-[#1a1a1a] via-black to-[#0a0a0a] opacity-80 z-10 mix-blend-multiply" />
+                    {latestPosterUrl && (
+                        <img {...getImageProps(latestPosterUrl)} className="absolute inset-0 w-full h-full object-cover opacity-40 blur-3xl scale-110 z-0" />
+                    )}
+                </div>
+                <div className="absolute inset-0 z-0 border-[16px] border-[#0a0a0a]/50 pointer-events-none" />
                 <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/10 to-transparent pointer-events-none z-10" />
 
                 <div className="mb-6 mt-4 relative z-20 flex flex-col items-center gap-2 text-center w-full">
                     <div className="flex items-center gap-1.5 opacity-90 mb-1">
-                        <img src="/image/logo/logo.svg" className="w-6 h-6" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(996%) hue-rotate(345deg) brightness(88%) contrast(87%)' }} />
+                        <img src="/image/logo/logo.png" className="w-6 h-6 grayscale opacity-80" />
                         <span className="text-[12px] font-black tracking-[0.2em] uppercase text-accent-gold drop-shadow-md pt-0.5">Storio</span>
                     </div>
                     <h1 className="text-5xl font-black tracking-tight text-accent-gold leading-none uppercase drop-shadow-md w-full">{monthShort}</h1>
@@ -219,11 +230,12 @@ export default function MonthlyRecapTemplate({
 
         return (
             <div style={currentDim} className="bg-folio-black relative flex overflow-hidden">
-                {/* Month Watermark Background (instead of logo) */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
-                    <span className="text-[180px] font-black text-white/5 whitespace-nowrap -rotate-90 select-none tracking-tighter">
-                        {monthShort}
-                    </span>
+                {/* Blurred Background */}
+                <div className="absolute inset-0 z-0">
+                    <div className="absolute inset-0 bg-folio-black opacity-80 z-10" />
+                    {latestPosterUrl && (
+                        <img {...getImageProps(latestPosterUrl)} className="absolute inset-0 w-full h-full object-cover opacity-40 blur-2xl scale-110" />
+                    )}
                 </div>
 
                 <div className="absolute inset-0 grid grid-cols-[4fr_5fr_4fr] gap-3 z-10 -mx-6">
@@ -252,7 +264,7 @@ export default function MonthlyRecapTemplate({
                 </div>
 
                 <div className="absolute top-6 right-6 z-20 flex items-center gap-1.5 opacity-90 drop-shadow-md bg-black/40 backdrop-blur p-2 rounded-lg">
-                    <img src="/image/logo/logo.svg" className="w-4 h-4" style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(996%) hue-rotate(345deg) brightness(88%) contrast(87%)' }} />
+                    <img src="/image/logo/logo.png" className="w-4 h-4 grayscale opacity-80" />
                     <span className="text-[10px] font-black tracking-[0.3em] uppercase text-accent-gold">Storio</span>
                 </div>
             </div>
@@ -357,7 +369,7 @@ export default function MonthlyRecapTemplate({
                 </div>
 
                 <div className="absolute bottom-8 flex items-center gap-2 opacity-80 z-20">
-                    <img src="/image/logo/logo.svg" className="w-6 h-6 grayscale" />
+                    <img src="/image/logo/logo.png" className="w-6 h-6 grayscale opacity-80" />
                     <span className="text-[14px] font-black tracking-[0.4em] uppercase text-white drop-shadow-md">Storio</span>
                 </div>
             </div>
