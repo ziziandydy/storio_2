@@ -61,11 +61,16 @@
         *   **觸發**: 新用戶首次登入後彈出，包含：使用者名稱、性別 (下拉選單)、生日 (日期選擇器)。
         *   **頭像上傳**: 支援點擊頭像區域選取檔案或拍照上傳至 Supabase Storage (限制 5MB)。
         *   **跳過機制**: 使用者可選「暫時跳過」，標記存於 `sessionStorage`，確保不會在同一次 Session 中重複干擾。
-    *   **Guest Mode**: 允許免登入試用，限制收藏 10 筆。
+*   **Guest Mode**: 允許免登入試用，限制收藏 10 筆。達上限時出現 `GuestLimitModal` 引導註冊。
 
 ### 3.2 首頁 (Home)
 *   **Hero Section**: 標題 "Your Digital Pensieve"。
-*   **Stats Dashboard**: 顯示收藏總數、總時數，支援輪播切換統計維度。
+*   **Stats Dashboard**: 顯示收藏總數。
+*   **稱號系統 (Title System)**: 依據收藏數給予成就稱號：
+    *   `> 99`: Pharaoh
+    *   `>= 50`: Architect
+    *   `>= 10`: Scribe
+    *   `< 10`: Apprentice
 *   **Section Sliders**: 包含 Trending Movies, Series, Books。
 
 ### 3.3 搜尋與探索 (Search)

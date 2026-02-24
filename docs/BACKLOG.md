@@ -72,6 +72,7 @@
     - [x] **電影票根 (Cinema Ticket)**
     - [x] **3D立體書 (3D Paperback)**: 包含書櫃環境與厚度優化。
     - [x] **復古電視 (Retro TV)**: 新增模板。
+- [x] **典藏容量限制 (Guest Limit Upsell)**: 完成訪客 10 筆上限與引導註冊流程。
 - [x] **原生分享 (Native Sharing)**: 整合 Web Share API。
 
 ## 📅 SPRINT 6: 月度回顧與擴充功能 (Recap & Expansions)
