@@ -13,7 +13,14 @@
 *   **用戶體驗目標**: 靜謐、沉浸、精緻。每一次的「收藏」都是一次「銘刻 (Inscription)」。
 *   **術語規範**:
     *   ❌ **嚴禁使用**: Desert, Pyramid, Sand, Dig, Bricks (雖然主色調為沙漠金，但文案需保持現代與典藏感，避免考古隱喻)。
-    *   ✅ **必須使用**: Folio (館藏), Stories (故事/藏品), Memories (記憶), Inscription (撰寫心得), Curator (策展人/用戶).
+    *   ✅ **必須使用**: Folio (館藏), Stories (故事/藏品), Memories (記憶), Curator (策展人/用戶).
+    *   ✅ **UI 術語統一**: 
+        *   首頁導航探索: "Explore" (探索) 
+        *   加入館藏行為: "Add to Storio" (加入 / 加入 Storio)
+        *   撰寫心得: "Reflection" (心得)
+        *   社群評分: "Rating" (評分) 
+        *   個人評分指標 (未評分時): "SCORE" (取代舊的 RATE)
+        *   Collection ID: 統一使用 `REF_` 開頭。
 
 ---
 
@@ -66,7 +73,7 @@
 *   **API 整合**: 整合 TMDB 與 Google Books API。
 
 ### 3.4 詳情頁 (Details)
-*   **Backdrop-First Design**: 頂部大面積背景海報，文字資訊位於海報下方黑色區塊。
+*   **Backdrop-First Design**: 頂部大面積背景海報，文字資訊位於海報下方黑色區塊 (包含支援 TMDB/Google Books 之 Community Rating)。
 *   **Social Sharing & Visual Templates (New Feature)**:
     *   **核心功能**: 將單一作品轉化為高度客製化的精美分享圖 (PNG)，支援原生系統分享 (Web Share API) 與下載。
     *   **分享機制**:
@@ -95,6 +102,7 @@
     *   **統一語彙**: 所有模板皆採用統一設計的 **Stamp Rating (印章評分)** 元件，以傾斜角度與粗襯線字體呈現，強化「審核/收藏」的儀式感。
 
 ### 3.5 收藏與心得 (Add to Folio Flow)
+*   **字數限制機制**: 寫入心得 (Reflection) 時，強制實施 100 字上限，以維持紀錄的精煉與卡片排版的美觀。AI 建議與潤飾內容也會受到同樣的 100 字限制。
 *   **Guest Data Migration (Sprint 4)**:
     *   **功能**: 當訪客決定註冊時，其收藏紀錄自動轉移至新帳號。
     *   **實現**: 透過後端 RPC `migrate_guest_data` 處理。

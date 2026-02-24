@@ -49,7 +49,19 @@
     - **原生分享**: 整合 Web Share API，支援 iOS/Android 原生分享選單。
 14. **測試強韌性 (Test Robustness)**:
     - 重構 Playwright 測試 (`guest_limit`, `search_and_collect`) 以支援多語系環境與 UI 動畫等待。
-15. **基礎建設 (Infrastructure)**:
+15. **Sprint 5.5 UI/UX 細節優化 (Terminology & Consistency)**:
+    - **多國語系字串與術語統一**:
+        - "加入" 動作統一為 "Add to Storio" / "加入"。
+        - 切換頁籤的 "Search" 改為 "Explore" / "探索"。
+        - 撰寫心得統一為 "Reflection" / "心得" (取代 Note/Inscribe)。
+        - 英文版社群評分顯示 "Rating"，中文顯示 "評分"。
+    - **視覺與排版修正**:
+        - 針對未評分卡片的金色呼吸字串從 `RATE` 改為 `SCORE`。
+        - 詳情頁 (`StoryDetailsView`) 重新接回後台 `public_rating` 資料，顯示社群評分 (Star icon)。
+        - 強制將撰寫心得 (`RateAndReflectForm`) 的輸入框與 AI 潤飾限制在 100 字 (含字數計數器)。
+        - 館藏 ID 前綴由 `FOLIO_REF_` 簡化為 `REF_`。
+        - 修正首頁 `HeroStats` 與 `RateAndReflectForm` 按鈕中 Hardcoded 寫死的英文字串，全面接入 `locales.ts`。
+16. **基礎建設 (Infrastructure)**:
     - 實作 PWA 支援，使用者可將 Web App 加入主畫面。
 
 ## 🚀 SPRINT 5: 深度客製化分享 (已完成大部分核心功能)
@@ -71,6 +83,6 @@
 - [ ] **Apple Sign-in**: 待註冊 Apple Developer 帳號後串接。
 
 ## 🎨 UI/UX 優化 (UI/UX Polish)
-- [ ] **導覽選單調整 (Navigation FAB)**: 在 `/collection` 頁面右下角的點擊「＋」鍵時，其彈出選項應為「首頁 (Home)」與「搜尋 (Search)」，避免顯示當前所在頁面 (館藏)。
 - [x] **多次觀看記錄 (Multi-View)**: 已確立設計方向，針對重複觀看同一作品，將建立**多張獨立的 Memory Card**。
+- [x] **社群功能**: 目前確認**沒有社群發佈的規劃**，專注於個人典藏室體驗。
 - [x] **社群功能**: 目前確認**沒有社群發佈的規劃**，專注於個人典藏室體驗。
