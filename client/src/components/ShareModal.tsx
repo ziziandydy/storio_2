@@ -108,7 +108,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
     { id: 'pure', icon: ImageIcon, label: t.shareModal.templates.pure },
     { id: 'ticket', icon: Ticket, label: t.shareModal.templates.ticket, hidden: item?.type === 'book' },
     { id: 'tv', icon: Tv, label: t.shareModal.templates.retroTv, hidden: item?.type === 'book' },
-    { id: '3d', icon: BookIcon, label: t.shareModal.templates.bookshelf, hidden: item?.type !== 'book' },
+    { id: '3d', icon: BookIcon, label: t.shareModal.templates.shelf, hidden: item?.type !== 'book' },
     { id: 'desk', icon: Layout, label: t.shareModal.templates.desk, hidden: item?.type !== 'book' },
   ];
 
@@ -213,8 +213,8 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
               <div className="relative w-full h-full flex items-center justify-center">
                 <div
                   className={`relative shadow-2xl overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] origin-center will-change-transform ${isDrawerOpen
-                      ? '-translate-y-[10%] scale-[0.65] sm:scale-[0.85]'
-                      : 'translate-y-0 scale-[0.8] sm:scale-100'
+                    ? '-translate-y-[10%] scale-[0.65] sm:scale-[0.85]'
+                    : 'translate-y-0 scale-[0.8] sm:scale-100'
                     }`}
                   style={{
                     maxHeight: '100%',

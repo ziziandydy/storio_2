@@ -43,7 +43,7 @@
         - **Pure**: 極簡滿版海報 Overlay (底部 Logo 簡化)。
         - **Ticket**: 復古電影票根 (Logo 簡化)。
         - **Retro TV**: CRT 螢幕效果，支援 "TV Series" 標籤。
-        - **Bookshelf**: 深色圖書館背景，評分移至上方，心得移至下方浮水印卡片。
+        - **Shelf**: 深色圖書館背景，評分移至上方，心得移至下方浮水印卡片。
         - **Desk (New)**: 桌面平放視角 (`desk_bg.jpg`)，書本完美置中，文字與評分完全移出書本封面，展現極致寫實感。
     - **統一設計**: 全模板導入 **Stamp Rating (印章評分)** 元件。
     - **原生分享**: 整合 Web Share API，支援 iOS/Android 原生分享選單。

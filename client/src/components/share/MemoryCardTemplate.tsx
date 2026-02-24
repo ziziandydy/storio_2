@@ -263,7 +263,7 @@ export default function MemoryCardTemplate({
 
         return (
             <div style={currentDim} className="bg-[#1a1a1a] flex flex-col items-center justify-center overflow-hidden relative font-serif perspective-[2000px]">
-                {/* Environment / Background - Dark Library Bookshelf */}
+                {/* Environment / Background - Dark Library Shelf */}
                 <div className="absolute inset-0 bg-[#2a1a10] overflow-hidden">
                     {/* Back wall of the shelf (Dark Library) */}
                     <div

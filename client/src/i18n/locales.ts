@@ -191,7 +191,7 @@ export const translations = {
         pure: 'Pure',
         ticket: 'Ticket',
         retroTv: 'Retro TV',
-        bookshelf: 'Bookshelf',
+        shelf: 'Shelf',
         desk: 'Desk',
       },
       formats: {
@@ -398,7 +398,7 @@ export const translations = {
         pure: '純淨海報',
         ticket: '電影票根',
         retroTv: '復古電視',
-        bookshelf: '3D 書櫃',
+        shelf: 'Shelf',
         desk: '桌面平放',
       },
       formats: {

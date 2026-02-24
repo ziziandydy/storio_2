@@ -1,54 +1,41 @@
 import { test, expect } from '@playwright/test';
+import { setupE2EContext } from './utils';
 
-test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
-    window.localStorage.setItem('E2E_TEST', 'true');
+test.describe('Home Page Flow', () => {
+
+  test('homepage has correct title and design elements', async ({ page }) => {
+    await page.goto('/');
+    await expect(page).toHaveTitle(/Storio/);
+
+    // Close onboarding if it appears
+    const closeOnboarding = page.getByRole('button', { name: /Continue as Guest/i });
+    if (await closeOnboarding.isVisible()) {
+      await closeOnboarding.click();
+    }
+
+    // Verify Storio text exists on the page
+    const heading = page.getByRole('heading', { name: 'Storio', exact: true });
+    await expect(heading).toBeVisible();
   });
-});
 
+  test('navigation links are present', async ({ page }) => {
+    // Inject the robust setup to bypass splash screen and set standard fake Auth
+    await setupE2EContext(page);
+    await page.goto('/');
 
-test('homepage has correct title and design elements', async ({ page }) => {
-  await page.goto('/');
-  await expect(page).toHaveTitle(/Storio/);
+    // Ensure the page fully loaded and bypassed splash
+    await expect(page.locator('h1').filter({ hasText: 'Storio' })).toBeVisible({ timeout: 10000 });
 
-  // Close onboarding if it appears
-  const closeOnboarding = page.getByRole('button', { name: /Continue as Guest/i });
-  if (await closeOnboarding.isVisible()) {
-    await closeOnboarding.click();
-  }
+    // The NavigationFAB has a generic icon, we look for the button in the bottom right context
+    const fabButton = page.locator('div.fixed.bottom-8.right-6 > button');
+    await expect(fabButton).toBeVisible({ timeout: 10000 });
+    await fabButton.click();
 
-  // 驗證 Storio 字樣 (Using heading to be specific)
-  await expect(page.getByRole('heading', { name: 'Storio', exact: true })).toBeVisible();
+    // Check for Profile link - it's in the header (usually top right), always visible
+    await expect(page.locator('a[href="/profile"]')).toBeVisible({ timeout: 10000 });
 
-  // 驗證 Bento Grid 中的 StoryCards 是否存在 (Check SectionSlider loaded)
-  // SectionSlider renders StoryCards. StoryCard has "Add" button.
-  // Wait for loading to finish
-  // const addButtons = page.locator('button:has-text("Add")');
-  // await expect(addButtons.first()).toBeVisible();
-});
-
-test('navigation links are present', async ({ page }) => {
-  await page.goto('/');
-  await page.evaluate(() => {
-    sessionStorage.setItem('hasSeenSplash', 'true');
-    sessionStorage.setItem('hasSeenOnboarding', 'true');
-    localStorage.setItem('E2E_TEST', 'true');
+    // Search and Collection are in the FAB menu, which is now open
+    await expect(page.locator('a[href="/search"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/collection"]').first()).toBeVisible();
   });
-  await page.reload(); // Reload to apply storage changes
-
-  // Click FAB to open menu
-  const fabButton = page.locator('div.fixed.bottom-8.right-6 > button');
-
-  // Wait for FAB to be visible
-  await page.screenshot({ path: 'home_fab_before_click.png' });
-  await expect(fabButton).toBeVisible();
-  await fabButton.click();
-
-  // Check for Profile link or FAB menu items
-  // Profile is in the header, always visible
-  await expect(page.locator('a[href="/profile"]')).toBeVisible();
-
-  // Search and Collection are in the FAB menu
-  await expect(page.locator('a[href="/search"]')).toBeVisible();
-  await expect(page.locator('a[href="/collection"]').last()).toBeVisible();
 });

@@ -1,78 +1,86 @@
 import { test, expect } from '@playwright/test';
+import { setupE2EContext } from './utils';
 
 test.describe('Search Page Integration', () => {
 
   test.beforeEach(async ({ page }) => {
-    page.on('console', msg => console.log('BROWSER LOG:', msg.text()));
-
-    await page.addInitScript(() => {
-      window.localStorage.setItem('E2E_TEST', 'true');
-    });
+    await setupE2EContext(page);
   });
 
   test('should display results when user types query', async ({ page }) => {
-    // 1. Intercept API call to mock backend response
-    await page.route('**/api/v1/search/**', async route => {
-      const url = route.request().url();
+    // 1. Intercept API call using wildcard
+    await page.route('**/api/v1/search/**', async (route) => {
+      const url = route.request().url().toLowerCase();
+
       if (route.request().method() === 'OPTIONS') {
         await route.fulfill({ status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': '*', 'Access-Control-Allow-Headers': '*' } });
         return;
       }
-      if (!url.toLowerCase().includes('dune')) {
+
+      if (!url.includes('dune')) {
         await route.continue();
         return;
       }
-      console.log('Intercepted:', route.request().method(), url);
-      const json = {
-        results: [
-          {
+
+      await route.fulfill({
+        status: 200,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        json: {
+          results: [{
             title: 'Dune: E2E Test Movie',
             media_type: 'movie',
             external_id: 'e2e-1',
-            poster_path: 'https://via.placeholder.com/300',
+            poster_path: '/placeholder.jpg',
             source: 'tmdb'
-          }
-        ],
-        total: 1
-      };
-      await route.fulfill({ headers: { 'Access-Control-Allow-Origin': '*' }, json });
+          }],
+          total: 1
+        }
+      });
     });
 
     // 2. Go to Search Page
     await page.goto('/search');
 
     // 3. Type in Search Box
-    await page.screenshot({ path: 'search_before_fill.png' });
     const input = page.locator('input[type="text"]');
     await input.fill('Dune');
     await input.press('Enter');
 
-    // 4. Wait for results (StoryCard)
-    // We expect the mocked title to appear
-    await expect(page.getByText('Dune: E2E Test Movie')).toBeVisible();
-    // Source badge is hidden now, so we skip checking it
+    // 4. Wait for results
+    // We expect the mocked title to appear in the StoryCard heading (h3)
+    const resultTitle = page.locator('h3', { hasText: /Dune: E2E Test Movie/i });
+    await expect(resultTitle).toBeVisible({ timeout: 10000 });
   });
 
   test('should show empty state when no results', async ({ page }) => {
-    await page.route('**/api/v1/search/**', async route => {
+    await page.route('**/api/v1/search/**', async (route) => {
+      const url = route.request().url().toLowerCase();
+
       if (route.request().method() === 'OPTIONS') {
         await route.fulfill({ status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': '*', 'Access-Control-Allow-Headers': '*' } });
         return;
       }
-      const url = route.request().url();
-      if (!url.toLowerCase().includes('nothing')) {
+
+      if (!url.includes('nothing')) {
         await route.continue();
         return;
       }
-      await route.fulfill({ headers: { 'Access-Control-Allow-Origin': '*' }, json: { results: [], total: 0 } });
+
+      await route.fulfill({
+        status: 200,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        json: { results: [], total: 0 }
+      });
     });
 
     await page.goto('/search');
-    await page.screenshot({ path: 'search_empty_state_before.png' });
+
     const input = page.locator('input[type="text"]');
-    await input.fill('Nothing'); // Update placeholder
+    await input.fill('Nothing');
     await input.press('Enter');
 
-    await expect(page.getByText(/No matches found/i)).toBeVisible();
+    // Identifying the empty state text across different locales or generic message
+    const emptyStateHeading = page.locator('h2', { hasText: /(No results found|找不到相關結果)/i });
+    await expect(emptyStateHeading).toBeVisible({ timeout: 10000 });
   });
 });
