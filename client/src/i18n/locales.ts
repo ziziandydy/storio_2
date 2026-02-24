@@ -401,7 +401,7 @@ export const translations = {
         pure: '純淨海報',
         ticket: '電影票根',
         retroTv: '復古電視',
-        shelf: 'Shelf',
+        shelf: '個人書架',
         desk: '桌面平放',
         monthlyCalendar: '行事曆',
         monthlyCollage: '海報牆',

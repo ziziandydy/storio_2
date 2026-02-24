@@ -30,40 +30,24 @@
 *   **限制 Pixel Ratio**: 針對行動裝置，將 `pixelRatio` 限制為 `2` 甚至 `1.5`，避免記憶體溢出。
 *   **Font Embed**: 確保字型已載入，避免 FOUT (Flash of Unstyled Text)。
 
-### 3.2 修正 `MemoryCardTemplate.tsx` 的圖片標籤
+### 3.2 修正 `MemoryCardTemplate.tsx` 與 `MonthlyRecapTemplate.tsx` 的圖片標籤
 *   **Logo 處理**: 
-    *   移除本地 Logo圖片的 `crossOrigin="anonymous"` 屬性 (因為它是同源的，不需要 CORS 檢查，加上反而可能被 Safari 阻擋)。
-    *   或是將 Logo 轉為 Base64 字串直接嵌入，一勞永逸解決加載問題。
+    *   移除本地 Logo圖片的 `crossOrigin="anonymous"` 屬性。
+    *   已將 Logo 轉為 Base64 字串 (`LOGO_BASE64`) 直接嵌入 Component，徹底解決 Safari (尤其是 iOS) 掛載本地圖片時產生的 Tainted Canvas 錯誤。 
 *   **Poster 處理**:
-    *   維持 `crossOrigin="anonymous"`。
-    *   在 `ShareModal` 中預先將海報轉為 **Base64** (目前已實作，需確認是否生效)。
+    *   外部或 Proxy 圖檔 (`http` 或 `/proxy` 開頭) 仍必須加上 `crossOrigin="anonymous"`。
+    *   已於 `getImageProps` 函數加入條件判斷。
 
-### 3.3 CSS 屬性調整
-*   **Backdrop Filter**: 在生成圖片時，`html-to-image` 可能無法抓取 `backdrop-filter`。
-    *   **解法**: 改用絕對定位的 `<img>` 加上 `filter: blur(...)` 來模擬背景模糊，而非依賴 CSS `backdrop-filter`。目前 Default Template 已採用此法 (`object-cover blur-[50px]`)，需檢查是否因 `scale-110` 超出容器而被裁切掉。
+### 3.3 行事曆 (Calendar) 日期與版面偏移修復
+*   **日期時區校正**: 統一改用 `date-fns` 的 `parseISO` 確保 `created_at` 解析後得到的 `getDate()` 必定與本地時區一致（比照 `CalendarView.tsx` 邏輯）。
+*   **隨機佈局修復**: 原本若 `created_at` 不存在，會呼叫 `Math.random()` 決定放置日期，這導致每次元件重新渲染 (例如抽屜開關時) 行事曆內容都會大搬風。現已改用基於 ID/Title 進行 `Hash` 運算，保證即使未紀錄日期，排列也是固定的。
 
-## 4. 具體修復步驟 (Action Items)
+### 3.4 載入畫面與多國語言體驗優化
+*   **Skeleton Loading**: 在 `MonthlyRecapModal` 載入過程中，移除了「查詢Storio」的 Spinner 與文字，改以閃爍的骨架圖 (Skeleton) 卡片替代。
+*   **i18n 多國語系**: 已將月度分享設定面板的標籤 (例如 "Shelf" 翻譯為 "個人書架"、並確保分享訊息多語系支援) 帶入 `locales.ts`。
 
-1.  **[Critical] Logo Base64 化**: 將 `logo.png` 轉為 Base64 string 常數放入代碼中，確保 Logo 永遠顯示。
-2.  **[Critical] 調整 `html-to-image` 選項**:
-    ```typescript
-    const dataUrl = await toPng(templateRef.current, {
-      cacheBust: true,
-      pixelRatio: window.devicePixelRatio > 2 ? 2 : window.devicePixelRatio, // 限制最大倍率
-      backgroundColor: '#0d0d0d',
-      skipAutoScale: true,
-      style: {
-        transform: 'scale(1)', // 強制重置 transform 避免偏移
-      }
-    });
-    ```
-3.  **[Fix] 移除本地圖片 CORS**: 在 `MemoryCardTemplate` 中，針對 `/image/logo/...` 的圖片移除 `crossOrigin` 屬性。
-
-```tsx
-// Before
-<img src="/image/logo/logo.png" crossOrigin="anonymous" ... />
-
-// After (Local Asset)
-<img src="/image/logo/logo.png" ... /> 
-// 或者更好：使用 Base64
-```
+## 4. 具體修復與狀態 (Action Items Completed)
+✅ **[Critical] Logo Base64 化**: 將 `logo.png` 轉為 Base64 string。
+✅ **[Fix] 移除本地 CORS 並修復海報跨域**: 更新 `getImageProps` 判定。
+✅ **[Enhancement] 日期邏輯與穩定性配置**: 套用 `parseISO` 與穩定 Hash 演算法取代 `Math.random()`。
+✅ **[UX/UI] 骨架圖載入動畫與 i18n 支持**: 取代文字 loading 並補齊 i18n。

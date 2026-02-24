@@ -212,9 +212,19 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                             onClick={() => setIsDrawerOpen(false)}
                         >
                             {loading || !statsData ? (
-                                <div className="flex flex-col items-center opacity-50 space-y-4">
-                                    <Loader2 className="animate-spin" size={32} />
-                                    <span className="text-xs tracking-widest uppercase font-bold">{t.common.loading}</span>
+                                <div className="w-full h-full flex items-center justify-center p-8">
+                                    <div className={`w-[280px] sm:w-[350px] aspect-[9/16] bg-white/5 rounded-2xl border border-white/10 animate-pulse flex flex-col items-center shadow-2xl transition-all duration-500 origin-center ${isDrawerOpen ? '-translate-y-[10%] scale-[0.65] sm:scale-[0.85]' : 'scale-[0.8] sm:scale-100'}`}>
+                                        <div className="w-full flex-1 flex flex-col items-center justify-center gap-6 opacity-30">
+                                            <div className="w-16 h-16 rounded-full bg-white/20" />
+                                            <div className="w-32 h-6 rounded-lg bg-white/20" />
+                                            <div className="grid grid-cols-2 gap-4 mt-8 w-full px-8">
+                                                <div className="w-full aspect-[2/3] rounded-lg bg-white/20" />
+                                                <div className="w-full aspect-[2/3] rounded-lg bg-white/20" />
+                                                <div className="w-full aspect-[2/3] rounded-lg bg-white/20" />
+                                                <div className="w-full aspect-[2/3] rounded-lg bg-white/20" />
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             ) : (
                                 <>
