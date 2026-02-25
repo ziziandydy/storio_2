@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useRef, useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Download, Share2, Loader2, Check, Layout, Square, RectangleVertical, Type, Star, MessageSquare, Palette, Ticket, Book as BookIcon, Image as ImageIcon, Tv } from 'lucide-react';
 import { toPng } from 'html-to-image';

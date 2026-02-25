@@ -38,6 +38,31 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
     const [isDownloaded, setIsDownloaded] = useState(false);
     const [isDrawerOpen, setIsDrawerOpen] = useState(true);
 
+    // Safari Canvas Fix: Prefetch Logo as Blob
+    const [blobLogo, setBlobLogo] = useState<string | null>(null);
+    useEffect(() => {
+        let isMounted = true;
+        const loadLogo = async () => {
+            try {
+                console.log('[ShareDebug] Monthly: Converting Logo to Blob...');
+                const res = await fetch('/image/logo/logo.png');
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                if (isMounted) {
+                    console.log('[ShareDebug] Monthly: Logo Blob created:', url);
+                    setBlobLogo(url);
+                }
+            } catch (e) {
+                console.error('[ShareDebug] Monthly: Logo Blob failed:', e);
+            }
+        };
+        loadLogo();
+        return () => {
+            isMounted = false;
+            if (blobLogo) URL.revokeObjectURL(blobLogo);
+        };
+    }, []);
+
     // Data State
     const [loading, setLoading] = useState(false);
     const [statsData, setStatsData] = useState<MonthlyStatsResponse | null>(null);
@@ -56,41 +81,24 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                     const data = await res.json();
                     if (isMounted) {
                         // Also preload images for the items to prevent CORS issues on capture
-                        const itemsWithProxiedImages = [];
-                        for (const item of data.items) {
+                        const itemsWithProxiedImages = data.items.map((item: any) => {
                             let url = item.poster_url;
-                            if (!url) {
-                                itemsWithProxiedImages.push(item);
-                                continue;
-                            }
-                            try {
-                                // Automatically use Next.js built-in Image Optimization as a universal proxy
-                                // This solves TMDB vs GoogleBooks routing issues and forces clean headers
-                                let optimizedUrl = url;
-                                if (url.startsWith('http')) {
-                                    optimizedUrl = `/_next/image?url=${encodeURIComponent(url)}&w=640&q=75`;
-                                }
-                                let absoluteUrl = optimizedUrl;
-                                if (absoluteUrl.startsWith('/')) {
-                                    absoluteUrl = window.location.origin + absoluteUrl;
-                                }
+                            if (!url) return item;
 
-                                const imgRes = await fetch(absoluteUrl);
-                                if (!imgRes.ok) throw new Error(`Proxy load failed: ${imgRes.status}`);
-                                const blob = await imgRes.blob();
-                                const base64Data = await new Promise((resolve, reject) => {
-                                    const reader = new FileReader();
-                                    reader.onloadend = () => resolve(reader.result);
-                                    reader.onerror = reject;
-                                    reader.readAsDataURL(blob);
-                                });
-                                itemsWithProxiedImages.push({ ...item, poster_url: base64Data });
-                            } catch (e) {
-                                console.warn("Image Preload Error, using proxied absolute URL as fallback:", url, e);
-                                let fallbackUrl = url.startsWith('/') ? window.location.origin + url : url;
-                                itemsWithProxiedImages.push({ ...item, poster_url: fallbackUrl });
+                            // Use proxy for TMDB/Google Books directly
+                            if (url.includes('image.tmdb.org')) {
+                                url = url.replace('https://image.tmdb.org/t/p/', '/proxy/tmdb/');
+                            } else if (url.includes('books.google.com')) {
+                                url = url.replace(/^https?:\/\/books\.google\.com\//, '/proxy/googlebooks/');
                             }
-                        }
+
+                            // Add cache buster to force fresh fetch and avoid Tainted Canvas
+                            // Check if url already has params
+                            url += `${url.includes('?') ? '&' : '?'}t=${new Date().getTime()}`;
+
+                            return { ...item, poster_url: url };
+                        });
+                        
                         setStatsData({
                             summary: data.summary,
                             items: itemsWithProxiedImages
@@ -121,16 +129,19 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
 
     const waitForAllImages = async (element: HTMLElement) => {
         const images = Array.from(element.querySelectorAll('img'));
-        await Promise.all(images.map((img) => {
+        console.log(`[ShareDebug] Monthly Recap: Found ${images.length} images in capture area.`);
+        await Promise.all(images.map((img, i) => {
+            console.log(`[ShareDebug] Monthly Image ${i} src:`, img.src.substring(0, 50) + '...', 'Complete:', img.complete);
             if (img.complete) return Promise.resolve();
             return new Promise((resolve) => {
-                img.onload = resolve;
-                img.onerror = resolve; // resolve on error to prevent hanging
+                img.onload = () => { console.log(`[ShareDebug] Monthly Image ${i} loaded`); resolve(undefined); };
+                img.onerror = () => { console.error(`[ShareDebug] Monthly Image ${i} failed:`, img.src); resolve(undefined); }; // resolve on error to prevent hanging
             });
         }));
     };
 
     const handleCapture = async () => {
+        console.log('[ShareDebug] Starting Monthly Capture Process...');
         if (!templateRef.current) return null;
         setIsGenerating(true);
         try {
@@ -139,6 +150,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
             await new Promise(resolve => setTimeout(resolve, 500));
             // Limit pixel ratio for mobile Safari to prevent memory crash
             const ratio = window.devicePixelRatio > 2 ? 2 : window.devicePixelRatio;
+            console.log('[ShareDebug] Monthly Pixel Ratio:', ratio);
 
             const dataUrl = await toPng(templateRef.current, {
                 cacheBust: true,
@@ -150,9 +162,10 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                     transformOrigin: 'top left'
                 }
             });
+            console.log('[ShareDebug] Monthly Capture success. Data URL length:', dataUrl.length);
             return dataUrl;
         } catch (error) {
-            console.error('Failed to generate image:', error);
+            console.error('[ShareDebug] Monthly Capture failed:', error);
             return null;
         } finally {
             setIsGenerating(false);
@@ -266,6 +279,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                                                     statsData={statsData}
                                                     aspectRatio={aspectRatio}
                                                     selectedTemplate={selectedTemplate}
+                                                    customLogoPath={blobLogo}
                                                 />
                                             </div>
                                         </div>
@@ -280,6 +294,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                                                 statsData={statsData}
                                                 aspectRatio={aspectRatio}
                                                 selectedTemplate={selectedTemplate}
+                                                customLogoPath={blobLogo}
                                             />
                                         </div>
                                     </div>

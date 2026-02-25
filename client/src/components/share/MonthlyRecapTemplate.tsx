@@ -12,6 +12,7 @@ interface MonthlyRecapTemplateProps {
     };
     aspectRatio: '9:16' | '4:5' | '1:1';
     selectedTemplate: 'calendar' | 'collage' | 'waterfall' | 'shelf';
+    customLogoPath?: string | null;
 }
 
 export default function MonthlyRecapTemplate({
@@ -19,7 +20,8 @@ export default function MonthlyRecapTemplate({
     monthValue,
     statsData,
     aspectRatio,
-    selectedTemplate
+    selectedTemplate,
+    customLogoPath
 }: MonthlyRecapTemplateProps) {
 
     // Dimensions based on ratio
@@ -34,18 +36,18 @@ export default function MonthlyRecapTemplate({
     const getImageProps = (src: string) => {
         const isDataUrl = src.startsWith('data:');
         const isLocalAsset = src.startsWith('/');
+        const isBlobUrl = src.startsWith('blob:');
         return {
             src: src || '/image/defaultMoviePoster.svg',
             // Only use crossOrigin for external absolute URLs (proxied)
-            // Data URLs don't need it. 
-            // Local assets (starting with /) SHOULD NOT have it in Safari unless server sends headers, 
-            // which Vercel static files usually don't for same-origin.
-            ...((isDataUrl || isLocalAsset) ? {} : { crossOrigin: 'anonymous' as const })
+            // Data URLs and Blob URLs don't need it. 
+            // Local assets SHOULD NOT have it in Safari.
+            ...((isDataUrl || isLocalAsset || isBlobUrl) ? {} : { crossOrigin: 'anonymous' as const })
         };
     };
 
-    // Use standard path. CrossOrigin handled by getImageProps.
-    const LOGO_PATH = "/image/logo/logo.png";
+    // Use standard path or custom path (blob). CrossOrigin handled by getImageProps.
+    const LOGO_PATH = customLogoPath || "/image/logo/logo.png";
 
     const { items, summary } = statsData;
 
