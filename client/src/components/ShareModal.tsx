@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useMemo, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { X, Download, Share2, Loader2, Check, Layout, Square, RectangleVertical, Type, Star, MessageSquare, Palette, Ticket, Book as BookIcon, Image as ImageIcon, Tv } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import download from 'downloadjs';
@@ -198,6 +198,20 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
     }
   };
 
+  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const offset = info.offset.y;
+    const velocity = info.velocity.y;
+
+    // Drag up (negative) -> Open
+    if (offset < -50 || velocity < -500) {
+        setIsDrawerOpen(true);
+    }
+    // Drag down (positive) -> Close
+    else if (offset > 50 || velocity > 500) {
+        setIsDrawerOpen(false);
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -286,14 +300,18 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
               className={`absolute bottom-0 left-0 right-0 z-[115] bg-[#121212] border-t border-white/10 rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden max-h-[70vh]`}
             >
               {/* Drawer Handle / Header */}
-              <div
+              <motion.div
                 onClick={() => setIsDrawerOpen(!isDrawerOpen)}
-                className="w-full h-12 flex items-center justify-center cursor-pointer hover:bg-white/5 transition-colors shrink-0 border-b border-white/5"
+                drag="y"
+                dragConstraints={{ top: 0, bottom: 0 }}
+                dragElastic={0.2}
+                onDragEnd={handleDragEnd}
+                className="w-full h-12 flex items-center justify-center cursor-pointer hover:bg-white/5 transition-colors shrink-0 border-b border-white/5 touch-none"
               >
                 <div className="w-12 h-1 bg-white/20 rounded-full mb-1" />
                 {/* Optional: Icon indicator */}
                 {/* {isDrawerOpen ? <ChevronDown size={16} className="text-white/40 ml-2" /> : <ChevronUp size={16} className="text-white/40 ml-2" />} */}
-              </div>
+              </motion.div>
 
               {/* Controls Content */}
               <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-32 sm:pb-6">
