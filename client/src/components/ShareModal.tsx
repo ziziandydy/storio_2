@@ -43,37 +43,37 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
   const [isDownloaded, setIsDownloaded] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
 
-  // Pre-fetch Desk Background & Logo as Blob URLs for Safari Canvas safety
-  const [blobLogo, setBlobLogo] = useState<string | null>(null);
-  const [blobDeskBg, setBlobDeskBg] = useState<string | null>(null);
+  // Pre-fetch Desk Background & Logo as Base64 for Safari Canvas safety
+  const [base64Logo, setBase64Logo] = useState<string | null>(null);
+  const [base64DeskBg, setBase64DeskBg] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
-    const convertToBlob = async (path: string, setter: (url: string) => void, label: string) => {
+    const convertToBase64 = async (path: string, setter: (url: string) => void, label: string) => {
       try {
-        console.log(`[ShareDebug] Converting ${label} to Blob...`);
+        console.log(`[ShareDebug] Converting ${label} to Base64...`);
         const response = await fetch(path);
         const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        if (isMounted) {
-          console.log(`[ShareDebug] ${label} Blob created:`, blobUrl);
-          setter(blobUrl);
-        }
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            if (isMounted && typeof reader.result === 'string') {
+                console.log(`[ShareDebug] ${label} Base64 created (len: ${reader.result.length})`);
+                setter(reader.result);
+            }
+        };
+        reader.readAsDataURL(blob);
       } catch (e) {
-        console.error(`[ShareDebug] ${label} Blob conversion failed:`, e);
+        console.error(`[ShareDebug] ${label} Base64 conversion failed:`, e);
       }
     };
 
-    convertToBlob('/image/logo/logo.png', setBlobLogo, 'Logo');
+    convertToBase64('/image/logo/logo.png', setBase64Logo, 'Logo');
     if (selectedTemplate === 'desk') {
-      convertToBlob('/image/share/desk_bg.jpg', setBlobDeskBg, 'Desk BG');
+      convertToBase64('/image/share/desk_bg.jpg', setBase64DeskBg, 'Desk BG');
     }
 
     return () => {
       isMounted = false;
-      // Cleanup Blob URLs to prevent memory leaks
-      if (blobLogo) URL.revokeObjectURL(blobLogo);
-      if (blobDeskBg) URL.revokeObjectURL(blobDeskBg);
     };
   }, [selectedTemplate]);
 
@@ -103,10 +103,10 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
     return {
       ...item,
       posterPath: proxiedPoster || item.posterPath,
-      customLogoPath: blobLogo, // Pass blob logo
-      customDeskBg: blobDeskBg  // Pass blob desk BG
+      customLogoPath: base64Logo, // Pass base64 logo
+      customDeskBg: base64DeskBg  // Pass base64 desk BG
     };
-  }, [item, proxiedPoster, blobLogo, blobDeskBg]);
+  }, [item, proxiedPoster, base64Logo, base64DeskBg]);
 
   // Template visibility logic
   const TEMPLATES: { id: TemplateType; icon: any; label: string; hidden?: boolean }[] = [

@@ -38,28 +38,30 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
     const [isDownloaded, setIsDownloaded] = useState(false);
     const [isDrawerOpen, setIsDrawerOpen] = useState(true);
 
-    // Safari Canvas Fix: Prefetch Logo as Blob
-    const [blobLogo, setBlobLogo] = useState<string | null>(null);
+    // Safari Canvas Fix: Prefetch Logo as Base64
+    const [base64Logo, setBase64Logo] = useState<string | null>(null);
     useEffect(() => {
         let isMounted = true;
         const loadLogo = async () => {
             try {
-                console.log('[ShareDebug] Monthly: Converting Logo to Blob...');
+                console.log('[ShareDebug] Monthly: Converting Logo to Base64...');
                 const res = await fetch('/image/logo/logo.png');
                 const blob = await res.blob();
-                const url = URL.createObjectURL(blob);
-                if (isMounted) {
-                    console.log('[ShareDebug] Monthly: Logo Blob created:', url);
-                    setBlobLogo(url);
-                }
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    if (isMounted && typeof reader.result === 'string') {
+                        console.log(`[ShareDebug] Monthly: Logo Base64 created (len: ${reader.result.length})`);
+                        setBase64Logo(reader.result);
+                    }
+                };
+                reader.readAsDataURL(blob);
             } catch (e) {
-                console.error('[ShareDebug] Monthly: Logo Blob failed:', e);
+                console.error('[ShareDebug] Monthly: Logo Base64 failed:', e);
             }
         };
         loadLogo();
         return () => {
             isMounted = false;
-            if (blobLogo) URL.revokeObjectURL(blobLogo);
         };
     }, []);
 
@@ -279,7 +281,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                                                     statsData={statsData}
                                                     aspectRatio={aspectRatio}
                                                     selectedTemplate={selectedTemplate}
-                                                    customLogoPath={blobLogo}
+                                                    customLogoPath={base64Logo}
                                                 />
                                             </div>
                                         </div>
@@ -294,7 +296,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                                                 statsData={statsData}
                                                 aspectRatio={aspectRatio}
                                                 selectedTemplate={selectedTemplate}
-                                                customLogoPath={blobLogo}
+                                                customLogoPath={base64Logo}
                                             />
                                         </div>
                                     </div>
