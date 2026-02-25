@@ -378,10 +378,10 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
                 <div className="flex flex-col sm:flex-row gap-3 pt-4">
                   <button
                     onClick={handleShare}
-                    disabled={isGenerating || isImageLoading}
+                    disabled={isGenerating || (!proxiedPoster && isSingleItem)}
                     className="flex-1 py-4 bg-accent-gold text-folio-black rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-white transition-all shadow-xl active:scale-[0.98] disabled:opacity-50"
                   >
-                    {isGenerating || isImageLoading ? (
+                    {isGenerating ? (
                       <Loader2 className="animate-spin" size={18} />
                     ) : (
                       <><Share2 size={18} /> {t.details.share}</>
@@ -389,7 +389,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
                   </button>
                   <button
                     onClick={handleDownload}
-                    disabled={isGenerating || isImageLoading}
+                    disabled={isGenerating || (!proxiedPoster && isSingleItem)}
                     className="flex-1 py-4 bg-white/5 text-white hover:bg-white/10 rounded-2xl font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all border border-white/10 disabled:opacity-50"
                   >
                     {isDownloaded ? <><Check size={14} /> {t.shareModal.saved}</> : <><Download size={14} /> {t.shareModal.download}</>}
