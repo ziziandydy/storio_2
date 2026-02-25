@@ -46,8 +46,8 @@ export default function MonthlyRecapTemplate({
         };
     };
 
-    // Use standard path or custom path (blob). CrossOrigin handled by getImageProps.
-    const LOGO_PATH = customLogoPath || "/image/logo/logo.png";
+    // Use standard path with cache buster. CrossOrigin handled by getImageProps.
+    const LOGO_PATH = `/image/logo/logo.png?t=${new Date().getTime()}`;
 
     const { items, summary } = statsData;
 

@@ -38,33 +38,6 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
     const [isDownloaded, setIsDownloaded] = useState(false);
     const [isDrawerOpen, setIsDrawerOpen] = useState(true);
 
-    // Safari Canvas Fix: Prefetch Logo as Base64
-    const [base64Logo, setBase64Logo] = useState<string | null>(null);
-    useEffect(() => {
-        let isMounted = true;
-        const loadLogo = async () => {
-            try {
-                console.log('[ShareDebug] Monthly: Converting Logo to Base64...');
-                const res = await fetch('/image/logo/logo.png');
-                const blob = await res.blob();
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    if (isMounted && typeof reader.result === 'string') {
-                        console.log(`[ShareDebug] Monthly: Logo Base64 created (len: ${reader.result.length})`);
-                        setBase64Logo(reader.result);
-                    }
-                };
-                reader.readAsDataURL(blob);
-            } catch (e) {
-                console.error('[ShareDebug] Monthly: Logo Base64 failed:', e);
-            }
-        };
-        loadLogo();
-        return () => {
-            isMounted = false;
-        };
-    }, []);
-
     // Data State
     const [loading, setLoading] = useState(false);
     const [statsData, setStatsData] = useState<MonthlyStatsResponse | null>(null);
@@ -275,30 +248,26 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                                             }}
                                         >
                                             <div className="bg-folio-black overflow-hidden rounded-xl border border-white/10 flex-shrink-0">
-                                                <MonthlyRecapTemplate
-                                                    monthName={monthName}
-                                                    monthValue={monthValue}
-                                                    statsData={statsData}
-                                                    aspectRatio={aspectRatio}
-                                                    selectedTemplate={selectedTemplate}
-                                                    customLogoPath={base64Logo}
-                                                />
-                                            </div>
+                                                                                                <MonthlyRecapTemplate
+                                                                                                    monthName={monthName}
+                                                                                                    monthValue={monthValue}
+                                                                                                    statsData={statsData}
+                                                                                                    aspectRatio={aspectRatio}
+                                                                                                    selectedTemplate={selectedTemplate}
+                                                                                                />                                            </div>
                                         </div>
                                     </div>
 
                                     {/* Hidden Capture Container */}
                                     <div className="absolute top-0 left-0 opacity-0 pointer-events-none -z-50 flex items-center justify-center">
                                         <div ref={templateRef} className="bg-folio-black overflow-hidden flex-shrink-0">
-                                            <MonthlyRecapTemplate
-                                                monthName={monthName}
-                                                monthValue={monthValue}
-                                                statsData={statsData}
-                                                aspectRatio={aspectRatio}
-                                                selectedTemplate={selectedTemplate}
-                                                customLogoPath={base64Logo}
-                                            />
-                                        </div>
+                                                                                            <MonthlyRecapTemplate
+                                                                                                monthName={monthName}
+                                                                                                monthValue={monthValue}
+                                                                                                statsData={statsData}
+                                                                                                aspectRatio={aspectRatio}
+                                                                                                selectedTemplate={selectedTemplate}
+                                                                                            />                                        </div>
                                     </div>
                                 </>
                             )}

@@ -54,14 +54,14 @@ export default function MemoryCardTemplate({
             src,
             // Only use crossOrigin for external absolute URLs (proxied)
             // Data URLs and Blob URLs don't need it. 
-            // Local assets SHOULD NOT have it in Safari.
+            // Local assets (starting with /) SHOULD NOT have it in Safari unless server sends headers.
             ...((isDataUrl || isLocalAsset || isBlobUrl) ? {} : { crossOrigin: 'anonymous' as const })
         };
     };
 
-    // Use Blob URL if available, otherwise fallback to standard path
-    const LOGO_PATH = customLogoPath || "/image/logo/logo.png";
-    const DESK_BG_PATH = customDeskBg || "/image/share/desk_bg.jpg";
+    // Use standard path with cache buster for Safari
+    const LOGO_PATH = `/image/logo/logo.png?t=${new Date().getTime()}`;
+    const DESK_BG_PATH = `/image/share/desk_bg.jpg?t=${new Date().getTime()}`;
 
     // --- Helper: Stamp Component ---
     const StampRating = () => (

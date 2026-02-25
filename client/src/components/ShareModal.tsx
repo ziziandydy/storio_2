@@ -43,40 +43,6 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
   const [isDownloaded, setIsDownloaded] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
 
-  // Pre-fetch Desk Background & Logo as Base64 for Safari Canvas safety
-  const [base64Logo, setBase64Logo] = useState<string | null>(null);
-  const [base64DeskBg, setBase64DeskBg] = useState<string | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-    const convertToBase64 = async (path: string, setter: (url: string) => void, label: string) => {
-      try {
-        console.log(`[ShareDebug] Converting ${label} to Base64...`);
-        const response = await fetch(path);
-        const blob = await response.blob();
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            if (isMounted && typeof reader.result === 'string') {
-                console.log(`[ShareDebug] ${label} Base64 created (len: ${reader.result.length})`);
-                setter(reader.result);
-            }
-        };
-        reader.readAsDataURL(blob);
-      } catch (e) {
-        console.error(`[ShareDebug] ${label} Base64 conversion failed:`, e);
-      }
-    };
-
-    convertToBase64('/image/logo/logo.png', setBase64Logo, 'Logo');
-    if (selectedTemplate === 'desk') {
-      convertToBase64('/image/share/desk_bg.jpg', setBase64DeskBg, 'Desk BG');
-    }
-
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedTemplate]);
-
   // Pre-fetch image as Base64 to guarantee capture success (Simplified to direct proxy with cache buster)
   const [proxiedPoster, setProxiedPoster] = useState<string | null>(null);
 
@@ -103,10 +69,8 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
     return {
       ...item,
       posterPath: proxiedPoster || item.posterPath,
-      customLogoPath: base64Logo, // Pass base64 logo
-      customDeskBg: base64DeskBg  // Pass base64 desk BG
     };
-  }, [item, proxiedPoster, base64Logo, base64DeskBg]);
+  }, [item, proxiedPoster]);
 
   // Template visibility logic
   const TEMPLATES: { id: TemplateType; icon: any; label: string; hidden?: boolean }[] = [
