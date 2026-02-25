@@ -41,7 +41,7 @@ export default function TermsPage() {
                 <section className="space-y-3">
                     <h2 className="text-lg font-bold text-white tracking-wide">4. Data Utilization for Service Improvement</h2>
                     <p className="text-white/70">
-                        We continuously strive to enhance Storio's user experience. As part of our service, we may use anonymized or aggregated data (such as rating distributions or curation trends) to train generalized machine learning models, personalize content recommendations, or optimize app performance. Your private reflections will not be publicly exposed.
+                        We continuously strive to enhance Storio&apos;s user experience. As part of our service, we may use anonymized or aggregated data (such as rating distributions or curation trends) to train generalized machine learning models, personalize content recommendations, or optimize app performance. Your private reflections will not be publicly exposed.
                     </p>
                 </section>
 
@@ -55,7 +55,7 @@ export default function TermsPage() {
                 <section className="space-y-3">
                     <h2 className="text-lg font-bold text-white tracking-wide">6. Limitation of Liability</h2>
                     <p className="text-white/70">
-                        Storio is provided "as is" without warranties of any kind, whether express or implied. We do not guarantee that the service will be uninterrupted or error-free. In no event shall we be liable for any indirect, incidental, special, or consequential damages arising out of your use of the service.
+                        Storio is provided &quot;as is&quot; without warranties of any kind, whether express or implied. We do not guarantee that the service will be uninterrupted or error-free. In no event shall we be liable for any indirect, incidental, special, or consequential damages arising out of your use of the service.
                     </p>
                 </section>
 

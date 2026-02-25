@@ -42,7 +42,7 @@ export default function PrivacyPage() {
                         <br /><br />
                         • <strong>Tracking and Analytics:</strong> Integration of third-party tracking scripts or cookies to monitor app performance and user interactions.<br />
                         • <strong>Personalized Advertising:</strong> Delivering targeted advertisements or promotional content based on your interaction history.<br />
-                        • <strong>Machine Learning & Data Training:</strong> Utilizing anonymized dataset aggregations to train AI models that power features such as "Storio Recommendations" or automated insights.<br /><br />
+                        • <strong>Machine Learning & Data Training:</strong> Utilizing anonymized dataset aggregations to train AI models that power features such as &quot;Storio Recommendations&quot; or automated insights.<br /><br />
                         We prioritize stripping Personally Identifiable Information (PII) before using your data for broad statistical or training purposes.
                     </p>
                 </section>
