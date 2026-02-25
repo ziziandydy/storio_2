@@ -82,22 +82,42 @@
 經過多輪測試與回溯歷史 Commit (`05d8ee1e`, `c263b273`)，我們發現對於 iOS Safari 的 `html-to-image` 匯出，**「越單純的邏輯越穩定」**。
 
 ### 8.1 核心策略 (The Winning Strategy)
-1.  **Next.js Image Proxy + Cache Buster ( Payload 瘦身法)**:
-    -   ❌ **Don't**: 直接載入未壓縮原圖，這必定導致 Safari 記憶體超載而「白色破圖」。
-    -   ✅ **Do**: 利用 `/_next/image?url=...&w=640&q=75&t=123...` 強制壓縮圖片。**並且絕對不可省略 Cache Buster `&t=...`**，否則當 `html-to-image` 執行內部 `fetch` 時，會拿到 Safari 先前存放的「缺少 CORS 的 Disk Cache 圖片」，引發後續的繪製失敗與紋理貼圖錯亂。
+## 最終解法總結 (Final Solution)
 
-2.  **跨域屬性禁忌 (Strict Conditional CrossOrigin)**:
-    -   ❌ **Don't**: 以為「同源的 `/_next/image` 或(`/proxy/tmdb`)」不須加 `crossOrigin`。如果漏加，DOM 上的圖片會變成 Opaque Cache，這會使得接下來 `html-to-image` 的 Canvas 撈取過程因無法獲取讀取權限而直接報廢（渲染出空白圖），而 Safari SVG 引擎就會因為渲染報廢，瞎抓上一張渲染成功的材質（Google Books 圖）填坑，這就是「所有圖片亂碼重疊 / 圖一變圖二」的真兇！
-    -   ✅ **Do**: 僅對**真正的本地純靜態檔案 (`/image/logo.png`)** 等**不加** `crossOrigin`。**全部的 Proxy （包含 `_next` 與 `http`）強制加上 `crossOrigin="anonymous"`**。
+經過深入追蹤 `html-to-image` 原始碼，我們發現了真正的元凶：**`html-to-image` 內部的快取機制缺陷**。
 
-3.  **伺服器端輔助 (next.config.js headers)**:
-    -   ✅ **Do**: 為了確保 `crossOrigin="anonymous"` 不會被瀏覽器以 Strict CORS Policy 直接打臉，請進入 `next.config.js` 手動給 `/_next/image(.*)` 與 `/proxy/:path*` 寫入 `Access-Control-Allow-Origin: *` 的 Headers 增強穩定度。
+### 根本原因 (Root Cause: Cache Key Truncation)
+當 `html-to-image` 嘗試將圖片網址轉換為 Base64 時，為了避免重複發送請求，它維護了一個全域快取字典。
+在其內部函數 `getCacheKey()` 中：
+```javascript
+export function getCacheKey(url, contentType, includeQueryParams) {
+    let key = url.replace(/\?.*/, ''); // 預設會把 query parameters 全部截斷！
+    if (includeQueryParams) {
+        key = url;
+    }
+    // ...
+}
+```
+由於我們使用了 Next.js Image Proxy 來解決 CORS 問題，所有的圖片網址都長得像這樣：
+`/_next/image?url=https%3A%2F%2Fposter1.jpg&w=256&q=75`
 
-4.  **Logo 處理**:
-    -   ❌ **Don't**: 硬編碼巨大的 Base64 字串。
-    -   ✅ **Do**: 使用標準的路徑 `/image/logo/logo.png` 並遵循上述 Local Assets 的規則（不加 crossOrigin）。
+當 `includeQueryParams` 預設為 `false` 時，所有圖片網址經過 `replace(/\?.*/, '')` 處理後，**Cache Key 全都被截斷成了 `/_next/image`**！
+這導致當第一張圖片（通常是體積最小、載入最快的書本封面）轉換完成並存入 `cache['/_next/image']` 後，後續所有圖片在轉換時，都會「命中」同一個 Cache Key，進而被全部替換成第一張圖片的 Base64 資料。這完美解釋了為何九宮格最終會出現 8 張一模一樣的圖片。
 
-### 8.3 進階問題：第一次截圖失敗 (Safari Lazy Decoding & Paint Cycle)
+### 修復方案 (The Fix)
+解法非常簡單直接，完全不需要去 hack Safari 或牽涉複雜的非同步處理。
+我們只需要在呼叫 `toPng` 時，傳入 `includeQueryParams: true` 選項，強迫 `html-to-image` 在建立 Cache Key 時完整保留 `?url=...` 參數即可：
+
+```tsx
+await toPng(templateRef.current, {
+    // ... other options
+    includeQueryParams: true, // 核心修復：阻止 Cache Key 碰撞
+});
+```
+
+為確保最穩定的體驗，我們同時保留了以下兩項防護：
+1. **圖片瘦身 (`w=384`)**：降低 Base64 字串體積，減輕行動裝置 GPU 負擔。
+2. **強制宣告 CORS**：在 `getImageProps` 補上 `crossOrigin="anonymous"`，避免 Canvas Tainted 錯誤。Lazy Decoding & Paint Cycle)
 *   **現象**: 點擊分享第一次圖片空白或缺圖，關閉後第二次點擊則正常。
 *   **原因 1 (解碼延遲)**: Safari 採行「惰性解碼」。即使 `img.complete` 為 `true`，數據仍可能未解碼。
 *   **原因 2 (渲染週期)**: 即使調用 `img.decode()`，瀏覽器主執行緒可能還來不及將像素「繪製 (Paint)」到 DOM 樹上，`html-to-image` 抓取的仍是舊的渲染狀態。
