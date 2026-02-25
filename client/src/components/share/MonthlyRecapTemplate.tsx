@@ -143,12 +143,12 @@ export default function MonthlyRecapTemplate({
                                 {count > 0 && (
                                     <div className="absolute inset-0 z-10 p-0.5 pt-3">
                                         {count === 1 ? (
-                                            <img {...getImageProps(cell.dayItems[0].poster_url)} id={`img-cal-${cell.dayNumber}`} decoding="sync" loading="eager" className="w-full h-full object-cover rounded-[2px] border border-white/10" />
+                                            <img {...getImageProps(cell.dayItems[0].poster_url)} id={`img-cal-${cell.dayNumber}`} className="w-full h-full object-cover rounded-[2px] border border-white/10" />
                                         ) : count === 2 ? (
                                             <div className="w-full h-full grid grid-cols-2 grid-rows-1 gap-[1px] rounded-[2px] overflow-hidden border border-white/10">
                                                 {cell.dayItems.map((story, idx) => (
                                                     <div key={idx} className="relative w-full h-full bg-folio-black">
-                                                        <img {...getImageProps(story.poster_url)} id={`img-cal-${cell.dayNumber}-${idx}`} decoding="sync" loading="eager" className="w-full h-full object-cover" />
+                                                        <img {...getImageProps(story.poster_url)} id={`img-cal-${cell.dayNumber}-${idx}`} className="w-full h-full object-cover" />
                                                     </div>
                                                 ))}
                                             </div>
@@ -266,19 +266,19 @@ export default function MonthlyRecapTemplate({
                 <div className="absolute inset-0 grid grid-cols-[4fr_5fr_4fr] gap-3 z-10 -mx-6">
                     <div className="flex flex-col gap-3 transform -translate-y-6">
                         {displayItems.slice(0, 3).map((item, i) => (
-                            <img key={`0-${i}`} {...getImageProps(item.poster_url)} id={`img-wf-0-${i}`} decoding="sync" loading="eager" className="w-full h-auto object-cover rounded-xl opacity-80" />
+                            <img key={i} {...getImageProps(item.poster_url)} id={`img-wf-0-${i}`} className="w-full h-auto object-cover rounded-xl opacity-80" />
                         ))}
                     </div>
 
                     <div className="flex flex-col gap-4 transform translate-y-6 shadow-2xl">
                         {displayItems.slice(3, 6).map((item, i) => (
-                            <img key={`1-${i}`} {...getImageProps(item.poster_url)} id={`img-wf-1-${i}`} decoding="sync" loading="eager" className="w-full h-auto object-cover rounded-xl border-2 border-white/20" />
+                            <img key={i} {...getImageProps(item.poster_url)} id={`img-wf-1-${i}`} className="w-full h-auto object-cover rounded-xl border-2 border-white/20" />
                         ))}
                     </div>
 
                     <div className="flex flex-col gap-3 transform -translate-y-12">
                         {displayItems.slice(6, 9).map((item, i) => (
-                            <img key={`2-${i}`} {...getImageProps(item.poster_url)} id={`img-wf-2-${i}`} decoding="sync" loading="eager" className="w-full h-auto object-cover rounded-xl opacity-80" />
+                            <img key={i} {...getImageProps(item.poster_url)} id={`img-wf-2-${i}`} className="w-full h-auto object-cover rounded-xl opacity-80" />
                         ))}
                     </div>
                 </div>
@@ -289,7 +289,7 @@ export default function MonthlyRecapTemplate({
                 </div>
 
                 <div className="absolute top-6 right-6 z-20 flex items-center gap-1.5 opacity-90 drop-shadow-md bg-black/40 backdrop-blur p-2 rounded-lg">
-                    <img {...getImageProps(LOGO_PATH)} decoding="sync" loading="eager" className="w-4 h-4" />
+                    <img {...getImageProps(LOGO_PATH)} className="w-4 h-4" />
                     <span className="text-[10px] font-black tracking-[0.3em] uppercase text-accent-gold">Storio</span>
                 </div>
             </div>
@@ -359,7 +359,7 @@ export default function MonthlyRecapTemplate({
                                         {isBook ? (
                                             <div className="w-full h-full flex items-center justify-center px-6 relative overflow-hidden group">
                                                 {/* Map cover image to spine backdrop with overlay blend mode so it preserves dominant color */}
-                                                <img {...getImageProps(item.poster_url)} id={`img-shelf-book-${idx}`} decoding="sync" loading="eager" className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-60 z-0 blur-[1px]" />
+                                                <img {...getImageProps(item.poster_url)} id={`img-shelf-book-${idx}`} className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-60 z-0 blur-[1px]" />
                                                 <div className="absolute top-1 bottom-1 left-2 w-[2px] border-l border-white/20 border-r border-black/40 z-10" />
                                                 <div className="absolute top-1 bottom-1 right-2 w-[2px] border-l border-white/20 border-r border-black/40 z-10" />
                                                 <div className="absolute top-0 w-full h-[2px] bg-white/30 left-0 z-10" />
@@ -376,7 +376,7 @@ export default function MonthlyRecapTemplate({
                                                     <div className="w-2 h-6 bg-white/40 rounded-full shadow-inner" />
                                                 </div>
                                                 <div className="flex-1 h-full bg-[#1a1a1a] relative flex items-center px-4">
-                                                    <img {...getImageProps(item.poster_url)} id={`img-shelf-media-${idx}`} decoding="sync" loading="eager" className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-luminosity" />
+                                                    <img {...getImageProps(item.poster_url)} id={`img-shelf-media-${idx}`} className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-luminosity" />
                                                     <span className="relative z-10 text-[12px] font-bold text-white truncate w-full text-center drop-shadow-[1px_1px_3px_black]">
                                                         {item.title}
                                                     </span>
@@ -394,7 +394,7 @@ export default function MonthlyRecapTemplate({
                 </div>
 
                 <div className="absolute bottom-8 flex items-center gap-2 opacity-80 z-20">
-                    <img {...getImageProps(LOGO_PATH)} decoding="sync" loading="eager" className="w-6 h-6" />
+                    <img {...getImageProps(LOGO_PATH)} className="w-6 h-6" />
                     <span className="text-[14px] font-black tracking-[0.4em] uppercase text-white drop-shadow-md">Storio</span>
                 </div>
             </div>

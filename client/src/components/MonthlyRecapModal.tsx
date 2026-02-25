@@ -144,11 +144,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                     pixelRatio: 1,
                     backgroundColor: '#0d0d0d',
                     skipAutoScale: true,
-                    fetchRequestInit: {
-                        headers: {
-                            'Accept': 'image/jpeg, image/png, image/*;q=0.8'
-                        }
-                    }
+                    includeQueryParams: true,
                 });
                 console.log(`[ShareDebug] Monthly Warm-up Capture finished in ${Math.round(performance.now() - warmUpStart)}ms`);
             } catch (e) {
@@ -167,11 +163,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                 pixelRatio: ratio,
                 backgroundColor: '#0d0d0d',
                 skipAutoScale: true,
-                fetchRequestInit: {
-                    headers: {
-                        'Accept': 'image/jpeg, image/png, image/*;q=0.8'
-                    }
-                },
+                includeQueryParams: true,
                 style: {
                     transform: 'scale(1)', // Force reset scale during capture
                     transformOrigin: 'top left'
