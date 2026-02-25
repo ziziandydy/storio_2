@@ -192,8 +192,8 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
 
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({
-                    title: monthName,
-                    text: `${t.details.shareMessage} ${window.location.origin}`,
+                    // title: `${year} ${monthName.toUpperCase()} Storio Recap`,
+                    // text: `${t.details.shareMessage} ${window.location.origin}`,
                     files: [file],
                 });
             } else {
