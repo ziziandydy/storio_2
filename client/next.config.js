@@ -46,6 +46,22 @@ const nextConfig = {
             },
         ];
     },
+    async headers() {
+        return [
+            {
+                source: '/_next/image',
+                headers: [
+                    { key: 'Access-Control-Allow-Origin', value: '*' },
+                ],
+            },
+            {
+                source: '/proxy/:path*',
+                headers: [
+                    { key: 'Access-Control-Allow-Origin', value: '*' },
+                ],
+            }
+        ];
+    },
 };
 
 module.exports = nextConfig;

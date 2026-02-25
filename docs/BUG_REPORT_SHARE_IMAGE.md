@@ -82,14 +82,16 @@
 經過多輪測試與回溯歷史 Commit (`05d8ee1e`, `c263b273`)，我們發現對於 iOS Safari 的 `html-to-image` 匯出，**「越單純的邏輯越穩定」**。
 
 ### 8.1 核心策略 (The Winning Strategy)
-1.  **Next.js Image Proxy ( Payload 瘦身法)**:
-    -   ❌ **Don't**: 直接在 Canvas 載入巨大的原始海報圖。若未經壓縮，Safari 在轉存圖片時極易因為記憶體爆發而導致「白色破圖」或「紋理錯亂/重複貼圖」。
-    -   ✅ **Do**: 利用 `/_next/image?url=...&w=640&q=75` 強制壓縮圖片。這不但能擔任同源 Proxy，還完美解決了記憶體問題。
+1.  **Next.js Image Proxy + Cache Buster ( Payload 瘦身法)**:
+    -   ❌ **Don't**: 直接載入未壓縮原圖，這必定導致 Safari 記憶體超載而「白色破圖」。
+    -   ✅ **Do**: 利用 `/_next/image?url=...&w=640&q=75&t=123...` 強制壓縮圖片。**並且絕對不可省略 Cache Buster `&t=...`**，否則當 `html-to-image` 執行內部 `fetch` 時，會拿到 Safari 先前存放的「缺少 CORS 的 Disk Cache 圖片」，引發後續的繪製失敗與紋理貼圖錯亂。
 
-2.  **跨域屬性禁忌 (Conditional CrossOrigin)**:
-    -   ❌ **Don't**: 盲目對所有圖片加上 `crossOrigin="anonymous"`。如果是透過同源 (`/`) 代理的路線（例如 `/_next/image` 或本地 `/image/logo.png`），加上此屬性會強制瀏覽器送出 `Origin` header，只要 Server 沒回傳 CORS header，Safari 會直接中斷加載。
-    -   ✅ **Do**: 僅對**真正的外部絕對路徑 (`http://...`)** 加上 `crossOrigin`。
-    -   ✅ **Data URLs**: 不需要 `crossOrigin`。
+2.  **跨域屬性禁忌 (Strict Conditional CrossOrigin)**:
+    -   ❌ **Don't**: 以為「同源的 `/_next/image` 或(`/proxy/tmdb`)」不須加 `crossOrigin`。如果漏加，DOM 上的圖片會變成 Opaque Cache，這會使得接下來 `html-to-image` 的 Canvas 撈取過程因無法獲取讀取權限而直接報廢（渲染出空白圖），而 Safari SVG 引擎就會因為渲染報廢，瞎抓上一張渲染成功的材質（Google Books 圖）填坑，這就是「所有圖片亂碼重疊 / 圖一變圖二」的真兇！
+    -   ✅ **Do**: 僅對**真正的本地純靜態檔案 (`/image/logo.png`)** 等**不加** `crossOrigin`。**全部的 Proxy （包含 `_next` 與 `http`）強制加上 `crossOrigin="anonymous"`**。
+
+3.  **伺服器端輔助 (next.config.js headers)**:
+    -   ✅ **Do**: 為了確保 `crossOrigin="anonymous"` 不會被瀏覽器以 Strict CORS Policy 直接打臉，請進入 `next.config.js` 手動給 `/_next/image(.*)` 與 `/proxy/:path*` 寫入 `Access-Control-Allow-Origin: *` 的 Headers 增強穩定度。
 
 4.  **Logo 處理**:
     -   ❌ **Don't**: 硬編碼巨大的 Base64 字串。

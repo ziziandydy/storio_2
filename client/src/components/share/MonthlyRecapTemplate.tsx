@@ -33,21 +33,26 @@ export default function MonthlyRecapTemplate({
 
     const currentDim = dimensions[aspectRatio];
 
-    // Core Safari Logic: Never append crossOrigin="anonymous" to same-origin paths (like /_next/image).
-    // Doing so forces the browser to send an Origin header. If the same-origin server doesn't
-    // explicitly respond with Access-Control-Allow-Origin, Safari hard blocks it.
+    // Core Safari Logic: Never append crossOrigin="anonymous" to pure local static assets.
+    // However, for ANY proxy (including /_next/image or /proxy/tmdb), we MUST append crossOrigin
+    // to allow html-to-image to bypass Safari's opaque cache and fetch the data securely.
     const getImageProps = (src: string) => {
         if (!src) return { src: '/image/defaultMoviePoster.svg' };
 
-        // Only absolutely external HTTP URLs require crossOrigin
-        const isExternal = src.startsWith('http://') || src.startsWith('https://');
+        // Define items that DO NOT need crossOrigin
+        const isDataUrl = src.startsWith('data:');
+        const isBlobUrl = src.startsWith('blob:');
+        const isLocalStatic = src.startsWith('/image/');
+
+        // Next.js Image Optimization API and custom Rewrites require crossOrigin to prevent Tainted Canvas
+        const needsCors = !(isDataUrl || isBlobUrl || isLocalStatic);
 
         const props = {
             src,
-            ...(isExternal ? { crossOrigin: 'anonymous' as const } : {})
+            ...(needsCors ? { crossOrigin: 'anonymous' as const } : {})
         };
 
-        console.log(`[ShareDebug] Monthly Image Props for ${src.substring(0, 30)}... -> isExternal: ${isExternal}, crossOrigin: ${props.crossOrigin || 'none'}`);
+        console.log(`[ShareDebug] Monthly Image Props for ${src.substring(0, 30)}... -> needsCors: ${needsCors}, crossOrigin: ${props.crossOrigin || 'none'}`);
         return props;
     };
 

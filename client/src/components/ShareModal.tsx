@@ -52,9 +52,9 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
     let url = item.posterPath;
 
     // Fix Safari Memory Limit: Shrink image payload using Next.js optimization API.
-    // Omit cache buster if using _next/image to leverage Next.js cache headers.
+    // Add cache buster to bypass Safari disk cache and force fresh fetch with CORS headers
     if (url.startsWith('http')) {
-      url = `/_next/image?url=${encodeURIComponent(url)}&w=640&q=75`;
+      url = `/_next/image?url=${encodeURIComponent(url)}&w=640&q=75&t=${new Date().getTime()}`;
     }
 
     setProxiedPoster(url);

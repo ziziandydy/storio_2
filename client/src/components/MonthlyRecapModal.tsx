@@ -62,7 +62,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
 
                             // Fix Safari Memory Limit: Shrink image payload using Next.js optimization API.
                             if (url.startsWith('http')) {
-                                url = `/_next/image?url=${encodeURIComponent(url)}&w=640&q=75`;
+                                url = `/_next/image?url=${encodeURIComponent(url)}&w=640&q=75&t=${new Date().getTime()}-${index}`;
                             }
 
                             return { ...item, poster_url: url };
