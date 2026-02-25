@@ -163,7 +163,7 @@ export default function ProfilePage() {
         .getPublicUrl(filePath);
 
       setAvatarUrl(publicUrl);
-      
+
       // 自動儲存頭像變更，避免重整後遺失
       if (!isEditing) {
         await updateProfile({ avatar_url: publicUrl });
@@ -225,8 +225,7 @@ export default function ProfilePage() {
       try {
         await navigator.share({
           title: 'Storio',
-          text: 'Collect stories in your folio.',
-          url: window.location.origin,
+          text: `${t.profile.shareMessage} ${window.location.origin}`,
         });
       } catch (err) {
         console.error('Share failed:', err);
@@ -338,16 +337,16 @@ export default function ProfilePage() {
               {/* Top Left: Cancel (Only in edit mode) */}
               {isEditing && (
                 <div className="absolute top-6 left-6 z-20 animate-in fade-in slide-in-from-left-2 duration-300">
-                  <button 
+                  <button
                     onClick={() => {
-                        setIsEditing(false);
-                        // Reset to original values
-                        if (user) {
-                            setDisplayName(user.user_metadata?.display_name || user.email?.split('@')[0] || t.profile.guest);
-                            setGender(user.user_metadata?.gender || '');
-                            setBirthday(user.user_metadata?.birthday || '');
-                            setAvatarUrl(user.user_metadata?.avatar_url || '');
-                        }
+                      setIsEditing(false);
+                      // Reset to original values
+                      if (user) {
+                        setDisplayName(user.user_metadata?.display_name || user.email?.split('@')[0] || t.profile.guest);
+                        setGender(user.user_metadata?.gender || '');
+                        setBirthday(user.user_metadata?.birthday || '');
+                        setAvatarUrl(user.user_metadata?.avatar_url || '');
+                      }
                     }}
                     className="p-2 rounded-full bg-white/5 text-white/40 hover:text-white transition-colors"
                   >
@@ -359,7 +358,7 @@ export default function ProfilePage() {
               {/* Top Right: Edit / Save */}
               <div className="absolute top-6 right-6 z-20 animate-in fade-in zoom-in duration-300">
                 {isEditing ? (
-                  <button 
+                  <button
                     onClick={handleSaveProfile}
                     disabled={savingProfile}
                     className="p-2 rounded-full bg-accent-gold text-folio-black shadow-lg shadow-accent-gold/20 hover:scale-110 active:scale-95 transition-all"
@@ -367,7 +366,7 @@ export default function ProfilePage() {
                     {savingProfile ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                   </button>
                 ) : (
-                  <button 
+                  <button
                     onClick={() => setIsEditing(true)}
                     className="p-2 rounded-full bg-white/5 text-accent-gold hover:bg-accent-gold hover:text-folio-black transition-all hover:scale-110 active:scale-95 shadow-xl"
                   >
@@ -521,14 +520,14 @@ export default function ProfilePage() {
         <ProfileSection title={t.profile.sections.community}>
           <ProfileItem icon={<Share2 size={18} />} label={t.profile.items.share} onClick={handleShare} />
           <ProfileItem icon={<Star size={18} />} label={t.profile.items.rateApp} />
-          <ProfileItem icon={<Mail size={18} />} label={t.profile.items.contact} value="feedback@storio.io" />
+          <ProfileItem icon={<Mail size={18} />} label={t.profile.items.contact} value="andismtu@gmail.com" onClick={() => window.location.href = 'mailto:andismtu@gmail.com'} />
           <ProfileItem icon={<MessageSquare size={18} />} label={t.profile.items.suggest} />
           <ProfileItem icon={<AlertCircle size={18} />} label={t.profile.items.bug} />
         </ProfileSection>
 
         <ProfileSection title={t.profile.sections.about}>
-          <ProfileItem icon={<Info size={18} />} label={t.profile.items.terms} />
-          <ProfileItem icon={<Shield size={18} />} label={t.profile.items.privacy} />
+          <ProfileItem icon={<Info size={18} />} label={t.profile.items.terms} onClick={() => router.push('/terms')} />
+          <ProfileItem icon={<Shield size={18} />} label={t.profile.items.privacy} onClick={() => router.push('/privacy')} />
           <div className="p-4 text-center">
             <span className="text-[10px] text-text-desc font-bold tracking-[0.3em] uppercase opacity-40">
               Version 2.1.0 (Build 20260221)

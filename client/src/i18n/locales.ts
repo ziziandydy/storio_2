@@ -167,6 +167,7 @@ export const translations = {
         terms: 'Terms of Use',
         privacy: 'Privacy Policy',
       },
+      shareMessage: 'Welcome to Storio, collect the stories that moves you:',
       statsTitle: 'Statistics',
       langTitle: 'Language',
       widgets: {
@@ -285,7 +286,7 @@ export const translations = {
       title: 'My Storio',
       counter: 'Stories',
       emptyTitle: '你的 Storio 是空的',
-      emptyDesc: '開始收藏電影與文學的記憶，展開你的旅程。',
+      emptyDesc: '收藏電影與文學的記憶，展開你的旅程。',
       toast: {
         grid: '已切換至網格視圖',
         calendar: '已切換至行事曆視圖',
@@ -326,7 +327,7 @@ export const translations = {
       pages: '頁數',
       subtitle: '副標題',
       score: '評分',
-      shareMessage: '來看看我在 Storio 上的收藏！你也可以在這裡開始你的旅程：',
+      shareMessage: '來看看我在 Storio 上的收藏！你也可以在 Storio 上開始你的收藏旅程：',
     },
     search: {
       placeholder: '探索電影、書籍、影集...',
@@ -377,6 +378,7 @@ export const translations = {
         terms: '使用條款',
         privacy: '隱私權政策',
       },
+      shareMessage: '歡迎來到 Storio，收藏打動你的故事：',
       statsTitle: '統計設定',
       langTitle: '語言設定',
       widgets: {

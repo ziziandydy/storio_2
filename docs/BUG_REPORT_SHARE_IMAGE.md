@@ -32,12 +32,12 @@
 
 ### 3.2 修正 `MemoryCardTemplate.tsx` 與 `MonthlyRecapTemplate.tsx` 的圖片標籤
 *   **Logo 處理**: 
-    *         **[Critical Bug]**: 發現 Safari SVG (`foreignObject`) 引擎不支援在匯出圖片時帶有 `filter: grayscale()`。加上此 CSS class 會導致整張 Logo 被 Safari 判定成隱形 (Blank)。已移除所有 `grayscale` 濾鏡。
-    *   已將 Logo 轉為 Base64 字串 (`LOGO_BASE64`) 直接嵌入 Component，徹底解決 Safari (尤其是 iOS) 掛載本地圖片時產生的 Tainted Canvas 錯誤。 
+    *   **UI 濾鏡渲染**: 在某些情況下，DOM 上的 CSS Filter (如 `filter: grayscale()`) 在轉入 Canvas 渲染時會導致大量額外記憶體消耗或計算失敗，因此簡化了分享模板中的濾鏡依賴。
+    *   已將 Logo 轉為 Base64 字串 (`LOGO_BASE64`) 直接嵌入 Component，徹底解決本地圖片可能未帶有跨域標記而間接引發的存取風險。
 *   **Poster 處理**:
-    *   **[Critical Bug]**: Safari WebKit 在處理 SVG `foreignObject` 中過大的圖片（如直接載入 TMDB 原圖）時，極易觸發記憶體限制，導致紋理渲染失敗（留白）或重複繪製上一張成功讀取的圖片（圖一變圖二的元凶）。
-    *   **目前策略**: 重新啟用 Next.js 內建最佳化 API (`/_next/image?url=...&w=640&q=75`) 來大幅壓縮圖片 Payload，確保 Safari 的記憶體不會崩潰。
-    *   **[CORS 修正]**: 之前 `_next/image` 失敗的原因，是因為我們錯誤地對同源的 `/_next/...` 請求加上了 `crossOrigin="anonymous"`，導致 Safari 強制加上 Origin Header 但 Next.js 伺服器並未回傳對應的 CORS Header 而從嚴格模式阻擋。現已於 `getImageProps` 函數完整修正，**只對絕對路徑的外部 HTTP URL 加上 `crossOrigin`**。
+    *   **iOS 記憶體限制 (OOM)**: Safari WebKit 在單一進程處理包含超巨大 Base64 圖檔的 SVG `foreignObject` 時，極易觸發其嚴格的記憶體上限 (Jetsam Limit)，導致進程中斷或 Canvas 遭清空白板。
+    *   **目前策略**: 啟用 Next.js Proxy (`/_next/image?...w=384`) 大幅壓縮圖片 Payload 以減輕行動裝置 GPU 負擔。
+    *   **[CORS 修正]**: 針對所有 Proxy 圖片附加 `crossOrigin="anonymous"`，確保寫入 Disk Cache 的圖檔帶有明確的跨域標記，防止後續 Canvas 讀取到無標記的快取 (Opaque Cache) 而觸發 Tainted 錯誤。
 
 ### 3.3 行事曆 (Calendar) 日期與版面偏移修復
 *   **日期時區校正**: 統一改用 `date-fns` 的 `parseISO` 確保 `created_at` 解析後得到的 `getDate()` 必定與本地時區一致（比照 `CalendarView.tsx` 邏輯）。
@@ -64,18 +64,16 @@
 *   **根本原因**: 過去的截圖代碼只依賴 `setTimeout(..., 500)` 死等待。當網路環境較差，圖片尚未觸發 `onload` 事件或解碼尚未完成時，Canvas 就已經強制擷取畫面。
 *   **最終解法**: 實作了強制的 `Promise.all` 等待函數 (`waitForAllImages`)，擷取所有的 `<img />`，必須等待 `img.complete` 或觸發 `onload`/`onerror` 後，才放行 `html-to-image` 的渲染管道。
 
-### 5.2 模擬「高斯模糊」或 SVG 濾鏡崩潰 (CSS Rendering)
-*   **現象**: 背景毛玻璃消失，或是 SVG 圖片、Logo 直接不見。
-*   **重現方式**:
-    1.  使用 Mac 版本的 Safari 檢查渲染結果 (因為 Chrome 的 Blink 引擎對 `foreignObject` 支援度極高且不挑剔)。
-    2.  如果仍難以重現，直接將 iPhone 接上 Mac，透過 **「網頁偵測器」 (Web Inspector)** 查看手機實機 Console。
-*   **根本原因**: iOS WebKit 引擎的記憶體回收機制極度暴躁。若發現某個 DOM 樹分支中夾帶了 `backdrop-filter: blur` 或是單純標籤有 `filter: grayscale()` 濾鏡，常在從 DOM 轉匯出 Canvas 的當下直接崩潰捨棄渲染 (Render fail)。
-*   **最終解法**: 徹底移除所有非必要的 `filter: grayscale` 樣式。將「截圖隱藏區塊」改為 `absolute top-0 left-0 opacity-0 -z-50`，而非挪用至可視範圍外 (`left-[-2000px]`) 觸發系統捨棄繪製。
+### 5.2 大量圖片 + 特效引發 OOM (Out Of Memory)
+*   **現象**: 背景毛玻璃消失，或是 SVG 圖片、Logo 直接不見，嚴重時截圖全部變白。
+*   **重現方式**: 在 iOS 實機上生成九宮格分享圖。
+*   **根本原因**: 為了美觀所使用的 CSS 濾鏡 (如 `backdrop-filter` 或是 `filter: grayscale()`)，在與超大 Base64 字串同時擠入一個極度複雜的 Canvas 節點時，會大幅增加記憶體峰值消耗。這極易觸發 iOS 嚴格的記憶體使用上限 (Jetsam Limit)，從而導致系統強制終結渲染任務，甚至引發閃退。
+*   **最終解法**: 除了極限壓縮圖片體積外，徹底移除會強制建立額外繪圖合成層的 `filter: grayscale()`。並將「截圖隱藏區塊」放在固定位置並設定 `opacity-0 -z-50`。
 
-### 5.3 模擬「圖片 Caching / Proxy 阻擋」
-*   **現象**: 圖片因為 CDN 緩存，或是重定向代理規則造成 `Tainted Canvas`。
-*   **根本原因**: 早期使用的手寫 Vercel Edge Server Rewrite (`/proxy/tmdb`) 所配發的 CORS 標頭極不穩定，在不同網路節點下常常導致 iOS Webkit 拒絕繪製。
-*   **最終解法**: 重新採用 Next.js 最強大的基礎設施，所有外部 URL 通過 `/_next/image?url=...&w=640&q=75` 正規代理服務轉化為同源 (Same-origin) 並預先壓縮，保證瀏覽器不會因圖片過載而發生「紋理重複 / 白畫面」。同時修正 `getImageProps`，**嚴禁**對同源路徑加上 `crossOrigin`。
+### 5.3 防止不透明快取污染 Canvas (Opaque Cache 防禦)
+*   **現象**: 大量圖片雖然成功顯示在 DOM 上，但在 `html-to-image` 導出階段產生 `Tainted Canvas` 而無法生成圖片。
+*   **根本原因**: 即便 `/_next/image` 屬於同源路徑，普通的 `<img src="...">` 標籤在獲取請求後，會在瀏覽器留下**無 CORS 標記**的實體磁碟快取。當 Canvas (`fetch` 或以安全模式建構的新 `Image`) 稍後嘗試拉取同一張圖片時，基於安全考量，瀏覽器會直接餵回這份被標記為不透明 (Opaque) 的快取並觸發跨域阻擋。
+*   **最終解法**: 對所有 Proxy 路徑強加 `crossOrigin="anonymous"`，確保即使是第一次載入進 DOM 時，圖片在快取層級都是以附帶乾淨 CORS 放行標記的狀態被存下，徹底剷除接下來 Canvas 被 Tainted 的可能性。
 
 ## 8. 最終解決方案與最佳實踐 (Best Practices for iOS Safari Export)
 
@@ -115,28 +113,29 @@ await toPng(templateRef.current, {
 });
 ```
 
-為確保最穩定的體驗，我們同時保留了以下兩項防護：
-1. **圖片瘦身 (`w=384`)**：降低 Base64 字串體積，減輕行動裝置 GPU 負擔。
-2. **強制宣告 CORS**：在 `getImageProps` 補上 `crossOrigin="anonymous"`，避免 Canvas Tainted 錯誤。Lazy Decoding & Paint Cycle)
-*   **現象**: 點擊分享第一次圖片空白或缺圖，關閉後第二次點擊則正常。
-*   **原因 1 (解碼延遲)**: Safari 採行「惰性解碼」。即使 `img.complete` 為 `true`，數據仍可能未解碼。
-*   **原因 2 (渲染週期)**: 即使調用 `img.decode()`，瀏覽器主執行緒可能還來不及將像素「繪製 (Paint)」到 DOM 樹上，`html-to-image` 抓取的仍是舊的渲染狀態。
-*   **終極解法 - 雙重截圖策略 (Double Capture Strategy)**: 
-    1.  **Force Decode**: 截圖前對所有 `<img>` 執行 `await img.decode()`。
-    2.  **Warm-up Capture**: 在正式截圖前，先執行一次「低畫質/棄置用」的 `toPng` 呼叫。這會強制喚醒 Safari 的繪圖管線 (Graphics Pipeline) 並完成緩衝區配置。
-    3.  **Short Delay**: 等待約 50ms。
-    4.  **Final Capture**: 執行第二次正式截圖。此時因為管線已「熱身」，產出的圖片 100% 包含完整素材。
+為確保最穩定的體驗，我們同時保留了以下幾項防禦性實作：
 
+### 防護 1: 圖片極致瘦身 (Payload Reduction)
+強制透過 `/_next/image?w=384` 壓縮參數，使圖片被 `html-to-image` 轉成 Base64 塞入 Canvas SVG 時盡可能小巧，規避 iOS 的嚴格系統記憶體天花板 (OOM)。
+
+### 防護 2: 防止 Opaque Cache
+在 `getImageProps` 統一對所有 Proxy 圖片補上 `crossOrigin="anonymous"`。此舉與同源政策(Same-Origin)無關，而是為避免瀏覽器存下缺乏安全聲明的「不透明快取」，進而在之後引發 Canvas 被 Tainted 拒絕存取。
+
+### 防護 3: 緩解繪圖管線週期延遲 (Double Capture Heuristics)
+針對偶發的「第一次點分享會缺圖」現象，這通常是因為主執行緒重繪週期跟不上指令，或者圖片即使下載完畢但尚未送入合成層 (Compositing)。
+*   **Warm-up Capture**: 我們會在正式截圖前執行一次廢棄用的 `toPng` 呼叫。主要目的是利用這個強制擷取過程「熱身管線」，強迫推進 Layout/Paint 週期的進行。
+*   **延遲與擷取 (Short Delay)**: 等待一段時間 (`setTimeout 800ms`) 讓 GPU 有時間去緩衝及消化圖形資源後，才執行第二次正式截圖。這是一種**機率性 (Heuristic)** 的防護手段，它能極大幅度地逼近 100% 的成功率。
 ### 8.4 總結：Safari 穩定匯出的黃金清單 (The Safari Checklist)
 為確保在 iOS Safari 上 100% 成功產生分享圖片，開發時必須遵循以下開發規範：
 
 1.  **路由重寫 (URL Rewrite)**: 外部圖片必須通過前端 Proxy (如 `/proxy/tmdb/`) 轉為同源請求。
-2.  **快取破壞 (Cache Buster)**: URL 尾端強制加上 `?t=${new Date().getTime()}`，避免 Safari 使用遺失 CORS Header 的磁碟快取。
-3.  **跨域屬性 (Conditional CrossOrigin)**:
-    *   **外部代理圖片**: 必須加 `crossOrigin="anonymous"`。
-    *   **本地靜態資源**: 嚴禁加 `crossOrigin`（否則會因 Server 未回傳 Header 被 Safari 阻擋）。
+2.  **防範快取污染 (Opaque Cache)**:
+    *   **外部網域或 Proxy 圖片** (如 `/_next/image`): 即使是同源代理，都必須加上 `crossOrigin="anonymous"`，確保底層磁碟快取附帶 CORS 標記，避免 Tainted Canvas 報錯。
+    *   **本地靜態資源**: 若為直接從 `/public` 拉取的靜態檔案則不需加。
+3.  **參數快取碰撞 (Cache Key Collision)**:
+    *   **必須將 `includeQueryParams: true` 傳入 `html-to-image` 的選項內**，防止代理網址在產生快取鍵值 (Cache Key) 時被截斷，導致所有分享縮圖變成無腦複製的第一張圖。
 4.  **管線預熱 (Double Capture Strategy)**:
-    *   使用 `await img.decode()` 確保數據就緒。
-    *   **連續執行兩次截圖**，取第二次結果，確保繪圖管線已完全喚醒並完成 Paint。
-5.  **樣式禁忌 (Style Taboos)**: 匯出節點內**嚴禁使用** `filter: grayscale()` 等 CSS 濾鏡，這會導致 Safari 渲染結果變為透明。
+    *   可搭配使用 `await img.decode()` 加速素材備便。
+    *   透過「熱身擷取再真正擷取」的暖身週期與微幅 Delay，大幅強化圖片準時上到畫布的成功機率。
+5.  **降低 OOM 閃退風險**: 匯出節點內**避免疊加不必要的高耗能效果**，例如移除部分會強制觸發 Off-screen Buffer 的 `filter` 及 `backdrop-filter`，保持單純的排版結構。
 
