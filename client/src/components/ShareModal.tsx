@@ -180,8 +180,8 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
 
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
-          // title: title,
-          // text: `${t.details.shareMessage} ${window.location.origin}`,
+          title: title,
+          text: `${t.details.shareMessage} ${window.location.origin}`,
           files: [file],
         });
       } else {
