@@ -47,9 +47,39 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
   const [base64Poster, setBase64Poster] = useState<string | null>(null);
   const [isImageLoading, setIsImageLoading] = useState(false);
 
+  // Pre-fetch Desk Background as Base64 (Similar logic)
+  const [base64DeskBg, setBase64DeskBg] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (selectedTemplate !== 'desk') return;
+
+    let isMounted = true;
+    const loadDeskBg = async () => {
+        console.log('[ShareDebug] Starting Desk BG Base64 load...');
+        try {
+            const response = await fetch('/image/share/desk_bg.jpg');
+            const blob = await response.blob();
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                if (isMounted && typeof reader.result === 'string') {
+                    console.log('[ShareDebug] Desk BG Base64 success.');
+                    setBase64DeskBg(reader.result);
+                }
+            };
+            reader.readAsDataURL(blob);
+        } catch (e) {
+            console.error('[ShareDebug] Desk BG load failed:', e);
+        }
+    };
+    loadDeskBg();
+    return () => { isMounted = false; };
+  }, [selectedTemplate]);
+
   // Pre-fetch image as Base64 to guarantee capture success
   React.useEffect(() => {
     if (!item?.posterPath) return;
+    // Skip if already loaded (check length to ensure valid base64)
+    if (base64Poster && base64Poster.length > 100) return;
 
     let isMounted = true;
     const loadBase64 = async () => {
@@ -104,8 +134,10 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
     
     let poster = item.posterPath;
     
-    if (base64Poster) {
+    // STRICTLY prefer Base64 if available and valid
+    if (base64Poster && typeof base64Poster === 'string' && base64Poster.length > 100) {
       poster = base64Poster;
+      console.log('[ShareDebug] Using Base64 Poster for render.');
     } else if (poster && poster.startsWith('http')) {
       // Fallback: If Base64 failed or is loading, force use of internal proxy
       // to ensure Same-Origin request and avoid Mixed Content / Insecure warnings in Safari
@@ -115,9 +147,10 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
 
     return {
       ...item,
-      posterPath: poster
+      posterPath: poster,
+      deskBg: base64DeskBg // Pass desk BG if available
     };
-  }, [item, base64Poster]);
+  }, [item, base64Poster, base64DeskBg]);
 
   // Template visibility logic
   const TEMPLATES: { id: TemplateType; icon: any; label: string; hidden?: boolean }[] = [
