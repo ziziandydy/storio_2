@@ -75,6 +75,10 @@
 - [x] **典藏容量限制 (Guest Limit Upsell)**: 完成訪客 10 筆上限與引導註冊流程。
 - [x] **原生分享 (Native Sharing)**: 整合 Web Share API。
 
+### 🐛 Known Issues (Bugs to Fix)
+- [x] **iOS Safari Share Image Blank/Duplicate**: `html-to-image` exports fail or produce identical images on Safari due to internal Cache Key truncation of Proxy URLs (`/_next/image`).
+  - *Fix*: Added `includeQueryParams: true` to prevent Base64 cache collisions, explicitly set CORS (`crossOrigin="anonymous"`), and apply image `w` compression payload thinning.
+
 ## 📅 SPRINT 6: 月度回顧與擴充功能 (Recap & Expansions)
 - [ ] **月度回顧**: 實作行事曆視圖的總結分享 (Instagram 貼文格式)。
 - [ ] **分享格式擴充**: 實作不同比例的圖片分享 (Portrait 4:5, Square 1:1)。

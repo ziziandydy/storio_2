@@ -127,6 +127,8 @@
 ### 4.1 Frontend (Client)
 *   **State Management**: Zustand (`userStore` 處理全域用戶狀態同步, `viewStore`, `settingsStore`)。
 *   **Localization (i18n)**: 內建靜態字典檔 (`locales.ts`) 與 `useTranslation` hook，支援 `en-US` 與 `zh-TW`。所有新增的 UI 文本（包含 Web Share API 所需字串）均需加入翻譯字典。
+*   **Image Proxying (`/_next/image`) for CORS**: Direct fetches of TMDB URLs for `<canvas>` manipulation (via `html-to-image`) result in Tainted Canvas errors in Safari/iOS. All exterior image rendering (posters) must be routed through Next.js proxy, with explicit `crossOrigin="anonymous"` applied to bypass strict WebKit CORS checks, reducing payload size `w=384`.
+*   **html-to-image Cache Preservation**: To prevent `html-to-image` from generating a single identical Cache Key for all proxy strings (e.g., `/_next/image?url=...`), all `toPng()` calls must explicitly enable `includeQueryParams: true`. Otherwise, a Javascript Variable Collision will replicate the first resolved Base64 texture across all child renders.
 *   **Utility**: `getURL` 工具函式確保絕對 URL 重導向的健壯性。
 *   **Libraries**: `html-to-image`, `downloadjs`。
 
