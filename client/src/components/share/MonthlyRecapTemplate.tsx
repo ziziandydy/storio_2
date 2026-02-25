@@ -34,15 +34,16 @@ export default function MonthlyRecapTemplate({
     const currentDim = dimensions[aspectRatio];
 
     const getImageProps = (src: string) => {
+        if (!src) return { src: '/image/defaultMoviePoster.svg' };
         const isDataUrl = src.startsWith('data:');
-        const isLocalAsset = src.startsWith('/');
+        const isStaticLocalAsset = src.startsWith('/image/');
         const isBlobUrl = src.startsWith('blob:');
         return {
-            src: src || '/image/defaultMoviePoster.svg',
-            // Only use crossOrigin for external absolute URLs (proxied)
-            // Data URLs and Blob URLs don't need it. 
-            // Local assets SHOULD NOT have it in Safari.
-            ...((isDataUrl || isLocalAsset || isBlobUrl) ? {} : { crossOrigin: 'anonymous' as const })
+            src,
+            // Only use crossOrigin for external proxy URLs.
+            // Data URLs, Blob URLs don't need it. 
+            // Local static assets SHOULD NOT have it in Safari.
+            ...((isDataUrl || isStaticLocalAsset || isBlobUrl) ? {} : { crossOrigin: 'anonymous' as const })
         };
     };
 

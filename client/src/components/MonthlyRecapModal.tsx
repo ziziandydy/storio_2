@@ -72,7 +72,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
 
                             return { ...item, poster_url: url };
                         });
-                        
+
                         setStatsData({
                             summary: data.summary,
                             items: itemsWithProxiedImages
@@ -130,7 +130,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
         setIsGenerating(true);
         try {
             await waitForAllImages(templateRef.current);
-            
+
             // Wait for 2 frames to ensure Safari paints the decoded images
             await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
             await new Promise(resolve => setTimeout(resolve, 200));
@@ -151,7 +151,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
             } catch (e) {
                 console.warn('[ShareDebug] Monthly Warm-up failed', e);
             }
-            
+
             // Let the GPU catch up
             await new Promise(resolve => setTimeout(resolve, 200));
             await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -292,26 +292,26 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                                             }}
                                         >
                                             <div className="bg-folio-black overflow-hidden rounded-xl border border-white/10 flex-shrink-0">
-                                                                                                <MonthlyRecapTemplate
-                                                                                                    monthName={monthName}
-                                                                                                    monthValue={monthValue}
-                                                                                                    statsData={statsData}
-                                                                                                    aspectRatio={aspectRatio}
-                                                                                                    selectedTemplate={selectedTemplate}
-                                                                                                />                                            </div>
+                                                <MonthlyRecapTemplate
+                                                    monthName={monthName}
+                                                    monthValue={monthValue}
+                                                    statsData={statsData}
+                                                    aspectRatio={aspectRatio}
+                                                    selectedTemplate={selectedTemplate}
+                                                />                                            </div>
                                         </div>
                                     </div>
 
                                     {/* Hidden Capture Container */}
                                     <div className="absolute top-0 left-0 opacity-0 pointer-events-none -z-50 flex items-center justify-center">
                                         <div ref={templateRef} className="bg-folio-black overflow-hidden flex-shrink-0">
-                                                                                            <MonthlyRecapTemplate
-                                                                                                monthName={monthName}
-                                                                                                monthValue={monthValue}
-                                                                                                statsData={statsData}
-                                                                                                aspectRatio={aspectRatio}
-                                                                                                selectedTemplate={selectedTemplate}
-                                                                                            />                                        </div>
+                                            <MonthlyRecapTemplate
+                                                monthName={monthName}
+                                                monthValue={monthValue}
+                                                statsData={statsData}
+                                                aspectRatio={aspectRatio}
+                                                selectedTemplate={selectedTemplate}
+                                            />                                        </div>
                                     </div>
                                 </>
                             )}

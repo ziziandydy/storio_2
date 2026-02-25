@@ -47,15 +47,16 @@ export default function MemoryCardTemplate({
     const currentDim = dimensions[aspectRatio];
 
     const getImageProps = (src: string) => {
+        if (!src) return { src: '/image/defaultMoviePoster.svg' };
         const isDataUrl = src.startsWith('data:');
-        const isLocalAsset = src.startsWith('/');
+        const isStaticLocalAsset = src.startsWith('/image/');
         const isBlobUrl = src.startsWith('blob:');
         return {
             src,
-            // Only use crossOrigin for external absolute URLs (proxied)
-            // Data URLs and Blob URLs don't need it. 
-            // Local assets (starting with /) SHOULD NOT have it in Safari unless server sends headers.
-            ...((isDataUrl || isLocalAsset || isBlobUrl) ? {} : { crossOrigin: 'anonymous' as const })
+            // Only use crossOrigin for external proxy URLs.
+            // Data URLs, Blob URLs don't need it. 
+            // Local static assets SHOULD NOT have it in Safari.
+            ...((isDataUrl || isStaticLocalAsset || isBlobUrl) ? {} : { crossOrigin: 'anonymous' as const })
         };
     };
 
@@ -498,9 +499,9 @@ export default function MemoryCardTemplate({
                 <div className="absolute inset-0 bg-[#d3d3d3] overflow-hidden">
                     {/* User's uploaded desk background image */}
                     <div className="absolute inset-0">
-                        <img 
+                        <img
                             {...getImageProps(DESK_BG_PATH)}
-                            alt="Desk Background" 
+                            alt="Desk Background"
                             className="w-full h-full object-cover"
                         />
                     </div>

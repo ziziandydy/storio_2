@@ -35,9 +35,9 @@
     *         **[Critical Bug]**: 發現 Safari SVG (`foreignObject`) 引擎不支援在匯出圖片時帶有 `filter: grayscale()`。加上此 CSS class 會導致整張 Logo 被 Safari 判定成隱形 (Blank)。已移除所有 `grayscale` 濾鏡。
     *   已將 Logo 轉為 Base64 字串 (`LOGO_BASE64`) 直接嵌入 Component，徹底解決 Safari (尤其是 iOS) 掛載本地圖片時產生的 Tainted Canvas 錯誤。 
 *   **Poster 處理**:
-    *   **[Critical Bug]**: Vercel Edge Cache + TMDB Custom Rewrite Proxy (`/proxy/tmdb/`) 在部分環境會回傳不穩定的 Headers 導致 Safari `fetch` 阻擋，或丟失 CORS preflight。
-    *   外部圖檔 (`http` 開頭) 現已全面改由 **Next.js 內建最佳化 API (`/_next/image?url=...&w=640&q=75`)** 作為同源代理伺服器 (Same-Origin Proxy)，大幅提升在 Production 環境抓取跨站圖片生出 Blob 的穩定度。
-    *   已於 `getImageProps` 函數更新條件判斷。
+    *   **[Critical Bug]**: Vercel Edge Cache + TMDB Custom Rewrite Proxy (`/proxy/tmdb/`) 在部分環境會回傳不穩定的 Headers 導致 Safari `fetch` 阻擋，或丟失 CORS preflight。（舊有狀況）
+    *   **目前策略**: 我們放棄了實驗性的 `_next/image` 代理，回歸單純的 Front-end rewrite (`/proxy/tmdb/...` 與 `/proxy/googlebooks/...`)，但加入強制的 **Cache Buster (`?t=...`)** 來避免 Safari 從 Disk Cache 讀取遺失 CORS Headers 的圖片。
+    *   已於 `MemoryCardTemplate` 與 `MonthlyRecapTemplate` 的 `getImageProps` 函數更新條件判斷。嚴格規定只有 `/image/` 開頭的本地靜態資源才**不加** `crossOrigin` 屬性。其餘 `/proxy/` 請求必須強制附帶 `crossOrigin="anonymous"`，徹底解決畫布污染與 Safari 貼圖重複 (Texture Repeating) 導致的「圖一變圖二」現象。
 
 ### 3.3 行事曆 (Calendar) 日期與版面偏移修復
 *   **日期時區校正**: 統一改用 `date-fns` 的 `parseISO` 確保 `created_at` 解析後得到的 `getDate()` 必定與本地時區一致（比照 `CalendarView.tsx` 邏輯）。
@@ -75,7 +75,7 @@
 ### 5.3 模擬「圖片 Caching / Proxy 阻擋」
 *   **現象**: 圖片因為 CDN 緩存，或是重定向代理規則造成 `Tainted Canvas`。
 *   **根本原因**: 早期使用的手寫 Vercel Edge Server Rewrite (`/proxy/tmdb`) 所配發的 CORS 標頭極不穩定，在不同網路節點下常常導致 iOS Webkit 拒絕繪製。
-*   **最終解法**: 正面採用 Next.js 最強大的基礎設施，所有外部 URL 通過 `/_next/image?url=...` 正規代理服務轉化為同源 (Same-origin) 並預先壓縮，保證瀏覽器暢通無阻放行 Blob。
+*   **最終解法**: 放棄了實驗性的 `_next/image` 代理，全面回歸單純的 Front-end rewrite (`/proxy/tmdb/...`)，但強制加上 Timestamp 進行 Cache Busting，並嚴格管控在 `getImageProps` 中的 `crossOrigin` 判斷邏輯。
 
 ## 8. 最終解決方案與最佳實踐 (Best Practices for iOS Safari Export)
 
@@ -83,8 +83,8 @@
 
 ### 8.1 核心策略 (The Winning Strategy)
 1.  **Frontend Proxy Rewrite (取代後端 Image Optimization)**:
-    -   ❌ **Don't**: 依賴 Vercel `_next/image` 或複雜的 Base64 預先轉換邏輯。Safari 對於 Base64 的處理在大量圖片或特定 Canvas 操作下極不穩定。
-    -   ✅ **Do**: 直接在前端將圖片 URL 替換為 Proxy 路徑 (如 `/proxy/tmdb/...`)。
+    -   ❌ **Don't**: 依賴 Vercel `_next/image` 或複雜的 Base64 預先轉換邏輯。Safari 對於 Base64 的處理在大量圖片或特定 Canvas 操作下極不穩定。經測試 `_next/image` 作為代理在某些情境下也會引發非預期的 CORS 錯誤被 Safari 擋下。
+    -   ✅ **Do**: 直接在前端將圖片 URL 替換為 Next.js `rewrites` 中設定的 Proxy 路徑 (如 `/proxy/tmdb/...` 與 `/proxy/googlebooks/...`)。
 
 2.  **Cache Buster (關鍵中的關鍵)**:
     -   ❌ **Don't**: 信任瀏覽器的快取。Safari 如果從 Disk Cache 讀取圖片，常常會遺失 CORS Header，導致 Canvas Tainted。

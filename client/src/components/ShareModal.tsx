@@ -53,9 +53,9 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
 
     // Use proxy for TMDB/Google Books directly
     if (url.includes('image.tmdb.org')) {
-        url = url.replace('https://image.tmdb.org/t/p/', '/proxy/tmdb/');
+      url = url.replace('https://image.tmdb.org/t/p/', '/proxy/tmdb/');
     } else if (url.includes('books.google.com')) {
-        url = url.replace(/^https?:\/\/books\.google\.com\//, '/proxy/googlebooks/');
+      url = url.replace(/^https?:\/\/books\.google\.com\//, '/proxy/googlebooks/');
     }
 
     // Add cache buster to force fresh fetch and avoid Tainted Canvas
@@ -96,19 +96,19 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
     await Promise.all(images.map(async (img, i) => {
       // Basic load check
       if (!img.complete) {
-          await new Promise((resolve) => {
-              img.onload = resolve;
-              img.onerror = resolve;
-          });
+        await new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve;
+        });
       }
       // Critical for Safari: Force decode
       try {
-          if (img.decode) {
-              await img.decode();
-              console.log(`[ShareDebug] Image ${i} decoded successfully.`);
-          }
+        if (img.decode) {
+          await img.decode();
+          console.log(`[ShareDebug] Image ${i} decoded successfully.`);
+        }
       } catch (e) {
-          console.warn(`[ShareDebug] Image ${i} decode failed (might be non-image or empty):`, e);
+        console.warn(`[ShareDebug] Image ${i} decode failed (might be non-image or empty):`, e);
       }
     }));
   };
@@ -119,7 +119,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
     setIsGenerating(true);
     try {
       await waitForAllImages(templateRef.current);
-      
+
       // Wait for 2 frames to ensure Safari paints the decoded images
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       await new Promise(resolve => setTimeout(resolve, 200));
@@ -132,10 +132,10 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
       console.log('[ShareDebug] Running Warm-up Capture...');
       try {
         await toPng(templateRef.current, {
-            cacheBust: false,
-            pixelRatio: 1, 
-            backgroundColor: '#0d0d0d',
-            skipAutoScale: true,
+          cacheBust: false,
+          pixelRatio: 1,
+          backgroundColor: '#0d0d0d',
+          skipAutoScale: true,
         });
       } catch (e) {
         console.warn('[ShareDebug] Warm-up capture failed (expected)', e);
@@ -207,11 +207,11 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
 
     // Drag up (negative) -> Open
     if (offset < -50 || velocity < -500) {
-        setIsDrawerOpen(true);
+      setIsDrawerOpen(true);
     }
     // Drag down (positive) -> Close
     else if (offset > 50 || velocity > 500) {
-        setIsDrawerOpen(false);
+      setIsDrawerOpen(false);
     }
   };
 
