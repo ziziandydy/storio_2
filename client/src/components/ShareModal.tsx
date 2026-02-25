@@ -118,7 +118,11 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
     setIsGenerating(true);
     try {
       await waitForAllImages(templateRef.current);
-      await new Promise(resolve => setTimeout(resolve, 500)); // Ensure paint is fully settled
+      
+      // Wait for 2 frames to ensure Safari paints the decoded images
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      // Additional safety buffer
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // Limit pixel ratio for mobile Safari to prevent memory crash
       const ratio = window.devicePixelRatio > 2 ? 2 : window.devicePixelRatio;

@@ -131,8 +131,12 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
         setIsGenerating(true);
         try {
             await waitForAllImages(templateRef.current);
-            // Wait slightly longer to ensure DOM and fonts fully painted and layout settled
+            
+            // Wait for 2 frames to ensure Safari paints the decoded images
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            // Additional safety buffer
             await new Promise(resolve => setTimeout(resolve, 500));
+
             // Limit pixel ratio for mobile Safari to prevent memory crash
             const ratio = window.devicePixelRatio > 2 ? 2 : window.devicePixelRatio;
             console.log('[ShareDebug] Monthly Pixel Ratio:', ratio);
