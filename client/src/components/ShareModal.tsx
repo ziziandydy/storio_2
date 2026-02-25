@@ -127,6 +127,23 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
       // Limit pixel ratio for mobile Safari to prevent memory crash
       const ratio = window.devicePixelRatio > 2 ? 2 : window.devicePixelRatio;
 
+      // Double Capture Strategy for Safari
+      // 1. Warm-up capture (forces layout/paint/decode)
+      try {
+        await toPng(templateRef.current, {
+            cacheBust: true,
+            pixelRatio: 1, // Low quality for warm-up
+            backgroundColor: '#0d0d0d',
+            skipAutoScale: true,
+        });
+      } catch (e) {
+        console.warn('Warm-up capture failed (expected)', e);
+      }
+
+      // 2. Small delay to let the GPU catch up
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      // 3. Final Capture
       const dataUrl = await toPng(templateRef.current, {
         cacheBust: true,
         pixelRatio: ratio,
