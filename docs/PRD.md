@@ -66,10 +66,11 @@
 ### 3.2 首頁 (Home)
 *   **Hero Section**: 標題 "Your Digital Pensieve"。
 *   **Stats Dashboard**: 顯示收藏總數。
-*   **稱號系統 (Title System)**: 依據收藏數給予成就稱號：
-    *   `> 99`: Pharaoh
-    *   `>= 50`: Architect
-    *   `>= 10`: Scribe
+*   **稱號系統 (Title System)**: 依據收藏數與登入狀態給予成就稱號：
+    *   **未登入訪客 (Guest)**: Passerby
+    *   `> 99`: Grand Master
+    *   `>= 50`: Master
+    *   `>= 10`: Keeper
     *   `< 10`: Apprentice
 *   **Section Sliders**: 包含 Trending Movies, Series, Books。
 

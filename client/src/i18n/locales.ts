@@ -141,8 +141,13 @@ export const translations = {
     profile: {
       title: 'Profile',
       guest: 'Guest Curator',
-      guestRole: 'Apprentice',
-      master: 'Master Curator',
+      titles: {
+        passerby: 'Passerby',
+        apprentice: 'Apprentice',
+        keeper: 'Keeper',
+        master: 'Master',
+        grandMaster: 'Grand Master',
+      },
       loginToSync: 'Login to Sync',
       sections: {
         account: 'Account & Sync',
@@ -352,8 +357,13 @@ export const translations = {
     profile: {
       title: '個人檔案',
       guest: '訪客',
-      guestRole: '學徒',
-      master: '典藏大師',
+      titles: {
+        passerby: '路人甲',
+        apprentice: '學徒',
+        keeper: '守護者',
+        master: '大師',
+        grandMaster: '典藏宗師',
+      },
       loginToSync: '登入以同步',
       sections: {
         account: '帳號與同步',

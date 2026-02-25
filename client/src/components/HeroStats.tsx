@@ -6,12 +6,13 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { getApiUrl } from '@/lib/api';
 import { useTranslation } from '@/hooks/useTranslation';
+import { getTitleKeyByCount, TitleTranslationKey } from '@/utils/leveling';
 
 export default function HeroStats() {
-  const { token, loading: authLoading } = useAuth();
+  const { token, loading: authLoading, user } = useAuth();
   const { t } = useTranslation();
   const [count, setCount] = useState(0);
-  const [level, setLevel] = useState('Apprentice');
+  const [levelKey, setLevelKey] = useState<TitleTranslationKey>('apprentice');
 
   useEffect(() => {
     if (token) {
@@ -24,20 +25,19 @@ export default function HeroStats() {
         .then(data => {
           const c = Array.isArray(data) ? data.length : 0;
           setCount(c);
-          if (c > 99) setLevel('Pharaoh');
-          else if (c >= 50) setLevel('Architect');
-          else if (c >= 10) setLevel('Scribe');
-          else setLevel('Apprentice');
+
+          const isAnonymous = user?.is_anonymous !== false;
+          setLevelKey(getTitleKeyByCount(c, isAnonymous));
         })
         .catch(err => console.error("Failed to fetch stats", err));
     }
-  }, [token]);
+  }, [token, user]);
 
   return (
     <div className="flex flex-col items-center justify-center text-center py-10 px-4 relative z-10">
       <div className="mb-2 flex items-center gap-2 text-accent-gold/80 uppercase tracking-[0.3em] text-[10px] font-bold">
         <Layers size={12} />
-        <span>{level}</span>
+        <span>{t.profile.titles[levelKey]}</span>
       </div>
 
       <h1 className="text-5xl md:text-7xl font-black text-text-primary mb-2 font-serif tracking-tight">

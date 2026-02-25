@@ -14,6 +14,8 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import OnboardingModal from '@/components/OnboardingModal';
 import { supabase, getURL } from '@/lib/supabase';
+import { getApiUrl } from '@/lib/api';
+import { getTitleKeyByCount, TitleTranslationKey } from '@/utils/leveling';
 
 interface ProfileSectionProps {
   title: string;
@@ -69,7 +71,7 @@ const ProfileItem = ({ icon, label, value, onClick, danger = false, toggle = fal
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, loading, signOut, updateProfile } = useAuth();
+  const { user, loading, signOut, updateProfile, token } = useAuth();
   const { language, notificationsEnabled, setLanguage, toggleNotifications } = useSettingsStore();
   const { t } = useTranslation();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -91,6 +93,9 @@ export default function ProfilePage() {
   // Statistics Widget State
   const [widgets, setWidgets] = useState<string[]>(['7d', '30d', 'year', 'trend7', 'trend30']);
 
+  // Leveling State
+  const [collectionCount, setCollectionCount] = useState(0);
+
   useEffect(() => {
     if (user && !isEditing) {
       setDisplayName(user.user_metadata?.display_name || user.email?.split('@')[0] || t.profile.guest);
@@ -108,6 +113,22 @@ export default function ProfilePage() {
       } catch (e) { }
     }
   }, []);
+
+  useEffect(() => {
+    if (token) {
+      fetch(getApiUrl('/api/v1/collection/'), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+        .then(res => res.json())
+        .then(data => {
+          const c = Array.isArray(data) ? data.length : 0;
+          setCollectionCount(c);
+        })
+        .catch(err => console.error("Failed to fetch collection for level", err));
+    }
+  }, [token]);
 
   const toggleWidget = (id: string) => {
     const next = widgets.includes(id)
@@ -315,6 +336,7 @@ export default function ProfilePage() {
   }
 
   const isAnonymous = user?.is_anonymous !== false; // Treat null as anonymous too for safety
+  const levelKey = getTitleKeyByCount(collectionCount, isAnonymous);
 
   return (
     <div className="min-h-screen bg-folio-black text-text-primary pb-20">
@@ -426,7 +448,7 @@ export default function ProfilePage() {
                     {displayName}
                   </h2>
                   <p className="text-xs text-text-desc tracking-widest uppercase font-bold opacity-60">
-                    {isAnonymous ? t.profile.guestRole : t.profile.master}
+                    {t.profile.titles[levelKey]}
                   </p>
                 </>
               )}
