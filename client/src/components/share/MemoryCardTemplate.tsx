@@ -112,7 +112,7 @@ export default function MemoryCardTemplate({
 
                     {/* Branding */}
                     <div className="pt-4 border-t border-white/10 flex items-center gap-2 opacity-80">
-                        <img src={LOGO_BASE64} width={14} height={14} alt="Storio" className="grayscale opacity-80" />
+                        <img src={LOGO_BASE64} width={14} height={14} alt="Storio" className="opacity-80" />
                         <span className="text-[10px] font-black tracking-[0.3em] text-white uppercase">Storio</span>
                     </div>
                 </div>
@@ -184,7 +184,7 @@ export default function MemoryCardTemplate({
 
                 {/* Footer Logo */}
                 <div className="absolute bottom-6 flex items-center gap-2 opacity-40">
-                    <img src={LOGO_BASE64} width={14} height={14} alt="Storio" className="grayscale opacity-80" />
+                    <img src={LOGO_BASE64} width={14} height={14} alt="Storio" className="opacity-80" />
                     <span className="text-[10px] font-black tracking-[0.3em] text-white uppercase">Storio</span>
                 </div>
             </div>
@@ -241,7 +241,7 @@ export default function MemoryCardTemplate({
                     {/* Ticket Footer / Stub */}
                     <div className="p-6 border-t-2 border-dashed border-folio-black/20 bg-black/5 flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                            <img src={LOGO_BASE64} width={14} height={14} alt="Storio" className="grayscale opacity-80" />
+                            <img src={LOGO_BASE64} width={14} height={14} alt="Storio" className="opacity-80" />
                             <span className="text-[10px] font-black tracking-tighter">STORIO</span>
                         </div>
                     </div>
@@ -470,7 +470,7 @@ export default function MemoryCardTemplate({
 
                 {/* Branding Plate */}
                 <div className="absolute top-6 right-6 flex items-center gap-2 opacity-30 mix-blend-screen">
-                    <img src={LOGO_BASE64} width={12} height={12} className="grayscale opacity-80" />
+                    <img src={LOGO_BASE64} width={12} height={12} className="opacity-80" />
                     <span className="text-[8px] font-black tracking-[0.3em] text-[#c5a059] uppercase">Storio</span>
                 </div>
             </div>
@@ -488,14 +488,13 @@ export default function MemoryCardTemplate({
                 {/* Environment / Background */}
                 <div className="absolute inset-0 bg-[#d3d3d3] overflow-hidden">
                     {/* User's uploaded desk background image */}
-                    <div
-                        className="absolute inset-0"
-                        style={{
-                            backgroundImage: `url('/image/share/desk_bg.jpg')`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                        }}
-                    />
+                    <div className="absolute inset-0">
+                        <img 
+                            src="/image/share/desk_bg.jpg" 
+                            alt="Desk Background" 
+                            className="w-full h-full object-cover"
+                        />
+                    </div>
                     {/* Subtle overlay to ensure the book blends well */}
                     <div className="absolute inset-0 bg-black/5" />
                 </div>
@@ -588,7 +587,7 @@ export default function MemoryCardTemplate({
 
                 {/* Branding Plate - Very subtle for flat lay */}
                 <div className="absolute bottom-6 left-8 flex items-center gap-2 opacity-50 z-40 mix-blend-multiply pointer-events-none">
-                    <img src={LOGO_BASE64} width={12} height={12} className="grayscale opacity-80" />
+                    <img src={LOGO_BASE64} width={12} height={12} className="opacity-80" />
                     <span className="text-[8px] font-black tracking-[0.3em] text-black uppercase">Storio</span>
                 </div>
             </div>
@@ -657,7 +656,7 @@ export default function MemoryCardTemplate({
                 )}
 
                 <div className="pt-4 flex items-center gap-2 opacity-70">
-                    <img src={LOGO_BASE64} width={14} height={14} alt="" className="grayscale opacity-80" />
+                    <img src={LOGO_BASE64} width={14} height={14} alt="" className="opacity-80" />
                     <span className="text-[10px] font-black tracking-[0.4em] uppercase text-white">Storio</span>
                 </div>
             </div>
