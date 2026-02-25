@@ -55,10 +55,13 @@ export default function MemoryCardTemplate({
         // Only absolutely external HTTP URLs require crossOrigin
         const isExternal = src.startsWith('http://') || src.startsWith('https://');
 
-        return {
+        const props = {
             src,
             ...(isExternal ? { crossOrigin: 'anonymous' as const } : {})
         };
+
+        console.log(`[ShareDebug] Image Props for ${src.substring(0, 30)}... -> isExternal: ${isExternal}, crossOrigin: ${props.crossOrigin || 'none'}`);
+        return props;
     };
 
     // Use standard path with cache buster for Safari

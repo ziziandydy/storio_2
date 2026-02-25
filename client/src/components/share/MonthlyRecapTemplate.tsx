@@ -42,10 +42,13 @@ export default function MonthlyRecapTemplate({
         // Only absolutely external HTTP URLs require crossOrigin
         const isExternal = src.startsWith('http://') || src.startsWith('https://');
 
-        return {
+        const props = {
             src,
             ...(isExternal ? { crossOrigin: 'anonymous' as const } : {})
         };
+
+        console.log(`[ShareDebug] Monthly Image Props for ${src.substring(0, 30)}... -> isExternal: ${isExternal}, crossOrigin: ${props.crossOrigin || 'none'}`);
+        return props;
     };
 
     // Stable logo path for the lifetime of this component instance
