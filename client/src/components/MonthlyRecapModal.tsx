@@ -56,7 +56,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                     const data = await res.json();
                     if (isMounted) {
                         // Also preload images for the items to prevent CORS issues on capture
-                        const itemsWithProxiedImages = data.items.map((item: any) => {
+                        const itemsWithProxiedImages = data.items.map((item: any, index: number) => {
                             let url = item.poster_url;
                             if (!url) return item;
 
@@ -67,9 +67,8 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                                 url = url.replace(/^https?:\/\/books\.google\.com\//, '/proxy/googlebooks/');
                             }
 
-                            // Add cache buster to force fresh fetch and avoid Tainted Canvas
-                            // Check if url already has params
-                            url += `${url.includes('?') ? '&' : '?'}t=${new Date().getTime()}`;
+                            // Add cache buster with UNIQUE index to force fresh fetch per item
+                            url += `${url.includes('?') ? '&' : '?'}t=${new Date().getTime()}-${index}`;
 
                             return { ...item, poster_url: url };
                         });
@@ -145,7 +144,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
             console.log('[ShareDebug] Running Warm-up Capture...');
             try {
                 await toPng(templateRef.current, {
-                    cacheBust: true,
+                    cacheBust: false,
                     pixelRatio: 1,
                     backgroundColor: '#0d0d0d',
                     skipAutoScale: true,
@@ -158,7 +157,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
 
             console.log('[ShareDebug] Running Final Capture...');
             const dataUrl = await toPng(templateRef.current, {
-                cacheBust: true,
+                cacheBust: false,
                 pixelRatio: ratio,
                 backgroundColor: '#0d0d0d',
                 skipAutoScale: true,
