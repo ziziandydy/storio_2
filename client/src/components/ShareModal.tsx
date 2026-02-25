@@ -43,11 +43,28 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
   const [isDownloaded, setIsDownloaded] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
 
-  // Create a proxied version of the item for CORS-safe capturing
-  const [base64Poster, setBase64Poster] = useState<string | null>(null);
-  const [isImageLoading, setIsImageLoading] = useState(false);
+  // Pre-fetch image as Base64 to guarantee capture success (Simplified to direct proxy with cache buster)
+  const [proxiedPoster, setProxiedPoster] = useState<string | null>(null);
 
-  // Pre-fetch Desk Background as Base64 (Similar logic)
+  React.useEffect(() => {
+    if (!item?.posterPath) return;
+
+    let url = item.posterPath;
+
+    // Use proxy for TMDB/Google Books directly
+    if (url.includes('image.tmdb.org')) {
+        url = url.replace('https://image.tmdb.org/t/p/', '/proxy/tmdb/');
+    } else if (url.includes('books.google.com')) {
+        url = url.replace(/^https?:\/\/books\.google\.com\//, '/proxy/googlebooks/');
+    }
+
+    // Add cache buster to force fresh fetch and avoid Tainted Canvas
+    url += `${url.includes('?') ? '&' : '?'}t=${new Date().getTime()}`;
+
+    setProxiedPoster(url);
+  }, [item?.posterPath]);
+
+  // Pre-fetch Desk Background as Base64 (Keep this as it was fixing the desk bg issue)
   const [base64DeskBg, setBase64DeskBg] = useState<string | null>(null);
 
   React.useEffect(() => {
@@ -55,102 +72,32 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
 
     let isMounted = true;
     const loadDeskBg = async () => {
-        console.log('[ShareDebug] Starting Desk BG Base64 load...');
         try {
             const response = await fetch('/image/share/desk_bg.jpg');
             const blob = await response.blob();
             const reader = new FileReader();
             reader.onloadend = () => {
                 if (isMounted && typeof reader.result === 'string') {
-                    console.log('[ShareDebug] Desk BG Base64 success.');
                     setBase64DeskBg(reader.result);
                 }
             };
             reader.readAsDataURL(blob);
         } catch (e) {
-            console.error('[ShareDebug] Desk BG load failed:', e);
+            console.error('Desk BG load failed:', e);
         }
     };
     loadDeskBg();
     return () => { isMounted = false; };
   }, [selectedTemplate]);
 
-  // Pre-fetch image as Base64 to guarantee capture success
-  React.useEffect(() => {
-    if (!item?.posterPath) return;
-    // Skip if already loaded (check length to ensure valid base64)
-    if (base64Poster && base64Poster.length > 100) return;
-
-    let isMounted = true;
-    const loadBase64 = async () => {
-      console.log('[ShareDebug] Starting Base64 load for:', item.posterPath);
-      try {
-        let url = item.posterPath;
-
-        // Automatically use Next.js built-in Image Optimization as a universal proxy
-        let optimizedUrl = url;
-        if (url.startsWith('http')) {
-          optimizedUrl = `/_next/image?url=${encodeURIComponent(url)}&w=640&q=75`;
-        }
-
-        let absoluteUrl = optimizedUrl;
-        if (absoluteUrl.startsWith('/')) {
-          absoluteUrl = window.location.origin + absoluteUrl;
-        }
-
-        console.log('[ShareDebug] Fetching URL:', absoluteUrl);
-        const response = await fetch(absoluteUrl);
-        console.log('[ShareDebug] Fetch status:', response.status);
-        
-        if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
-
-        const blob = await response.blob();
-        console.log('[ShareDebug] Blob size:', blob.size, blob.type);
-        
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          if (isMounted && typeof reader.result === 'string') {
-            console.log('[ShareDebug] Base64 conversion success. Length:', reader.result.length);
-            setBase64Poster(reader.result);
-          }
-        };
-        reader.readAsDataURL(blob);
-      } catch (e) {
-        console.error("[ShareDebug] Failed to preload image:", e);
-        // Fallback to original URL if fetch fails (though it might still fail in canvas)
-        if (isMounted) setBase64Poster(null);
-      } finally {
-        if (isMounted) setIsImageLoading(false);
-      }
-    };
-
-    setIsImageLoading(true);
-    loadBase64();
-    return () => { isMounted = false; };
-  }, [item?.posterPath]);
-
   const proxiedItem = useMemo(() => {
     if (!item) return undefined;
-    
-    let poster = item.posterPath;
-    
-    // STRICTLY prefer Base64 if available and valid
-    if (base64Poster && typeof base64Poster === 'string' && base64Poster.length > 100) {
-      poster = base64Poster;
-      console.log('[ShareDebug] Using Base64 Poster for render.');
-    } else if (poster && poster.startsWith('http')) {
-      // Fallback: If Base64 failed or is loading, force use of internal proxy
-      // to ensure Same-Origin request and avoid Mixed Content / Insecure warnings in Safari
-      poster = `/_next/image?url=${encodeURIComponent(poster)}&w=640&q=75`;
-      console.log('[ShareDebug] Using Proxy Fallback for Poster:', poster);
-    }
-
     return {
       ...item,
-      posterPath: poster,
-      deskBg: base64DeskBg // Pass desk BG if available
+      posterPath: proxiedPoster || item.posterPath,
+      deskBg: base64DeskBg
     };
-  }, [item, base64Poster, base64DeskBg]);
+  }, [item, proxiedPoster, base64DeskBg]);
 
   // Template visibility logic
   const TEMPLATES: { id: TemplateType; icon: any; label: string; hidden?: boolean }[] = [
@@ -184,20 +131,14 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
   };
 
   const handleCapture = async () => {
-    console.log('[ShareDebug] Starting Capture Process...');
-    if (!templateRef.current) {
-        console.error('[ShareDebug] No template ref found!');
-        return null;
-    }
+    if (!templateRef.current) return null;
     setIsGenerating(true);
     try {
       await waitForAllImages(templateRef.current);
-      console.log('[ShareDebug] All images loaded/settled.');
       await new Promise(resolve => setTimeout(resolve, 500)); // Ensure paint is fully settled
 
       // Limit pixel ratio for mobile Safari to prevent memory crash
       const ratio = window.devicePixelRatio > 2 ? 2 : window.devicePixelRatio;
-      console.log('[ShareDebug] Using Pixel Ratio:', ratio);
 
       const dataUrl = await toPng(templateRef.current, {
         cacheBust: true,
@@ -209,10 +150,9 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
           transformOrigin: 'top left'
         }
       });
-      console.log('[ShareDebug] Capture successful. Data URL length:', dataUrl.length);
       return dataUrl;
     } catch (error) {
-      console.error('[ShareDebug] Failed to generate image:', error);
+      console.error('Failed to generate image:', error);
       return null;
     } finally {
       setIsGenerating(false);

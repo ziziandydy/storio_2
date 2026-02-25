@@ -77,7 +77,30 @@
 *   **根本原因**: 早期使用的手寫 Vercel Edge Server Rewrite (`/proxy/tmdb`) 所配發的 CORS 標頭極不穩定，在不同網路節點下常常導致 iOS Webkit 拒絕繪製。
 *   **最終解法**: 正面採用 Next.js 最強大的基礎設施，所有外部 URL 通過 `/_next/image?url=...` 正規代理服務轉化為同源 (Same-origin) 並預先壓縮，保證瀏覽器暢通無阻放行 Blob。
 
-## 6. 最新修復進度與保障 (v2)
-✅ **[Critical Fix] CSS WebKit Crash**: 已移除 Logo 的 `grayscale` 等高危險 CSS 濾鏡，並修復隱藏畫布定位導致的 Paint Drop。
-✅ **[Critical Fix] Same-Origin Proxy**: 關閉自建 rewrite，統一透過 `_next/image` 作為圖片優化及 CORS 同源轉換器。
-✅ **[Root Cause Resolved] Async DOM Paint**: 完整導入 `waitForAllImages` Promise Hook，保證 100% 圖片與 Base64 解析完畢後再進行 `html-to-image` 截圖。
+## 8. 最終解決方案與最佳實踐 (Best Practices for iOS Safari Export)
+
+經過多輪測試與回溯歷史 Commit (`05d8ee1e`, `c263b273`)，我們發現對於 iOS Safari 的 `html-to-image` 匯出，**「越單純的邏輯越穩定」**。
+
+### 8.1 核心策略 (The Winning Strategy)
+1.  **Frontend Proxy Rewrite (取代後端 Image Optimization)**:
+    -   ❌ **Don't**: 依賴 Vercel `_next/image` 或複雜的 Base64 預先轉換邏輯。Safari 對於 Base64 的處理在大量圖片或特定 Canvas 操作下極不穩定。
+    -   ✅ **Do**: 直接在前端將圖片 URL 替換為 Proxy 路徑 (如 `/proxy/tmdb/...`)。
+
+2.  **Cache Buster (關鍵中的關鍵)**:
+    -   ❌ **Don't**: 信任瀏覽器的快取。Safari 如果從 Disk Cache 讀取圖片，常常會遺失 CORS Header，導致 Canvas Tainted。
+    -   ✅ **Do**: 強制加上時間戳記參數 `?t=${new Date().getTime()}`。這迫使瀏覽器發起新的網路請求，確保 Response Header 帶有正確的 `Access-Control-Allow-Origin: *`。
+
+3.  **Cross-Origin Attribute**:
+    -   ✅ **Do**: 所有的 `<img>` 標籤（包含 Logo）都必須明確加上 `crossOrigin="anonymous"`。即使是同源的圖片，為了保險起見，若要畫入 Canvas，加上此屬性是最佳實踐。
+
+4.  **Logo 處理**:
+    -   ❌ **Don't**: 硬編碼巨大的 Base64 字串。
+    -   ✅ **Do**: 使用標準的路徑 `/image/logo/logo.png` 並配合上述的 `crossOrigin` 設定。
+
+### 8.2 技術總結 (Technical Summary)
+*   **ShareModal.tsx**: 負責將原始 `posterPath` 轉換為帶有 Cache Buster 的 `proxiedPoster` URL。
+*   **MemoryCardTemplate.tsx**: 負責渲染，並透過 `getImageProps` helper 確保所有圖片標籤都具備 `crossOrigin="anonymous"`。
+*   **CSS Filters**: 嚴禁在 Safari 匯出的節點中使用 `filter: grayscale()` 等濾鏡，這會直接導致元素渲染空白。
+
+此方案已在歷史 Commit 中被驗證為最穩定，能同時解決 Logo 消失、海報黑屏與背景遺失的問題。
+
