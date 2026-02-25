@@ -33,17 +33,18 @@ export default function MonthlyRecapTemplate({
 
     const currentDim = dimensions[aspectRatio];
 
+    // Core Safari Logic: Never append crossOrigin="anonymous" to same-origin paths (like /_next/image).
+    // Doing so forces the browser to send an Origin header. If the same-origin server doesn't
+    // explicitly respond with Access-Control-Allow-Origin, Safari hard blocks it.
     const getImageProps = (src: string) => {
         if (!src) return { src: '/image/defaultMoviePoster.svg' };
-        const isDataUrl = src.startsWith('data:');
-        const isStaticLocalAsset = src.startsWith('/image/');
-        const isBlobUrl = src.startsWith('blob:');
+
+        // Only absolutely external HTTP URLs require crossOrigin
+        const isExternal = src.startsWith('http://') || src.startsWith('https://');
+
         return {
             src,
-            // Only use crossOrigin for external proxy URLs.
-            // Data URLs, Blob URLs don't need it. 
-            // Local static assets SHOULD NOT have it in Safari.
-            ...((isDataUrl || isStaticLocalAsset || isBlobUrl) ? {} : { crossOrigin: 'anonymous' as const })
+            ...(isExternal ? { crossOrigin: 'anonymous' as const } : {})
         };
     };
 

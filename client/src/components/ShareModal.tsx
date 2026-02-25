@@ -51,15 +51,11 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
 
     let url = item.posterPath;
 
-    // Use proxy for TMDB/Google Books directly
-    if (url.includes('image.tmdb.org')) {
-      url = url.replace('https://image.tmdb.org/t/p/', '/proxy/tmdb/');
-    } else if (url.includes('books.google.com')) {
-      url = url.replace(/^https?:\/\/books\.google\.com\//, '/proxy/googlebooks/');
+    // Fix Safari Memory Limit: Shrink image payload using Next.js optimization API.
+    // Omit cache buster if using _next/image to leverage Next.js cache headers.
+    if (url.startsWith('http')) {
+      url = `/_next/image?url=${encodeURIComponent(url)}&w=640&q=75`;
     }
-
-    // Add cache buster to force fresh fetch and avoid Tainted Canvas
-    url += `${url.includes('?') ? '&' : '?'}t=${new Date().getTime()}`;
 
     setProxiedPoster(url);
   }, [item?.posterPath]);

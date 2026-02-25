@@ -60,15 +60,10 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                             let url = item.poster_url;
                             if (!url) return item;
 
-                            // Use proxy for TMDB/Google Books directly
-                            if (url.includes('image.tmdb.org')) {
-                                url = url.replace('https://image.tmdb.org/t/p/', '/proxy/tmdb/');
-                            } else if (url.includes('books.google.com')) {
-                                url = url.replace(/^https?:\/\/books\.google\.com\//, '/proxy/googlebooks/');
+                            // Fix Safari Memory Limit: Shrink image payload using Next.js optimization API.
+                            if (url.startsWith('http')) {
+                                url = `/_next/image?url=${encodeURIComponent(url)}&w=640&q=75`;
                             }
-
-                            // Add cache buster with UNIQUE index to force fresh fetch per item
-                            url += `${url.includes('?') ? '&' : '?'}t=${new Date().getTime()}-${index}`;
 
                             return { ...item, poster_url: url };
                         });
