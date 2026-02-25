@@ -99,15 +99,26 @@
     -   ❌ **Don't**: 硬編碼巨大的 Base64 字串。
     -   ✅ **Do**: 使用標準的路徑 `/image/logo/logo.png` 並遵循上述 Local Assets 的規則（不加 crossOrigin）。
 
-### 8.3 進階問題：第一次截圖失敗 (Safari Lazy Decoding)
+### 8.3 進階問題：第一次截圖失敗 (Safari Lazy Decoding & Paint Cycle)
 *   **現象**: 點擊分享第一次圖片空白或缺圖，關閉後第二次點擊則正常。
-*   **原因**: Safari 為了效能採行「惰性解碼 (Lazy Decoding)」。即使 `img.complete` 為 `true`，圖片數據可能仍處於壓縮狀態，尚未解碼為 RGB 像素。當 `html-to-image` 嘗試繪製 Canvas 時，若解碼尚未完成，會導致繪製空白。
-*   **解法**: 在截圖前，對所有 `<img>` 元素強制呼叫 `await img.decode()`。這是一個 Native Promise，保證圖片數據已完全就緒可供繪製。
+*   **原因 1 (解碼延遲)**: Safari 採行「惰性解碼」。即使 `img.complete` 為 `true`，數據仍可能未解碼。
+*   **原因 2 (渲染週期)**: 即使調用 `img.decode()`，瀏覽器主執行緒可能還來不及將像素「繪製 (Paint)」到 DOM 樹上，`html-to-image` 抓取的仍是舊的渲染狀態。
+*   **終極解法 - 雙重截圖策略 (Double Capture Strategy)**: 
+    1.  **Force Decode**: 截圖前對所有 `<img>` 執行 `await img.decode()`。
+    2.  **Warm-up Capture**: 在正式截圖前，先執行一次「低畫質/棄置用」的 `toPng` 呼叫。這會強制喚醒 Safari 的繪圖管線 (Graphics Pipeline) 並完成緩衝區配置。
+    3.  **Short Delay**: 等待約 50ms。
+    4.  **Final Capture**: 執行第二次正式截圖。此時因為管線已「熱身」，產出的圖片 100% 包含完整素材。
 
-### 8.4 總結 (Summary)
-解決 Safari 匯出圖片問題的黃金組合：
-1.  **Frontend Proxy**: `src` 指向 `/proxy/tmdb/...`。
-2.  **Cache Buster**: URL 加上 `?t=timestamp`。
-3.  **No CrossOrigin for Local**: 本地圖片 (`/image/...`) 不加 `crossOrigin` 屬性。
-4.  **Force Decode**: 使用 `await img.decode()` 等待圖片完全解碼。
+### 8.4 總結：Safari 穩定匯出的黃金清單 (The Safari Checklist)
+為確保在 iOS Safari 上 100% 成功產生分享圖片，開發時必須遵循以下開發規範：
+
+1.  **路由重寫 (URL Rewrite)**: 外部圖片必須通過前端 Proxy (如 `/proxy/tmdb/`) 轉為同源請求。
+2.  **快取破壞 (Cache Buster)**: URL 尾端強制加上 `?t=${new Date().getTime()}`，避免 Safari 使用遺失 CORS Header 的磁碟快取。
+3.  **跨域屬性 (Conditional CrossOrigin)**:
+    *   **外部代理圖片**: 必須加 `crossOrigin="anonymous"`。
+    *   **本地靜態資源**: 嚴禁加 `crossOrigin`（否則會因 Server 未回傳 Header 被 Safari 阻擋）。
+4.  **管線預熱 (Double Capture Strategy)**:
+    *   使用 `await img.decode()` 確保數據就緒。
+    *   **連續執行兩次截圖**，取第二次結果，確保繪圖管線已完全喚醒並完成 Paint。
+5.  **樣式禁忌 (Style Taboos)**: 匯出節點內**嚴禁使用** `filter: grayscale()` 等 CSS 濾鏡，這會導致 Safari 渲染結果變為透明。
 
