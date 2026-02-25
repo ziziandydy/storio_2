@@ -92,9 +92,20 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
 
   const proxiedItem = useMemo(() => {
     if (!item) return undefined;
+    
+    let poster = item.posterPath;
+    
+    if (base64Poster) {
+      poster = base64Poster;
+    } else if (poster && poster.startsWith('http')) {
+      // Fallback: If Base64 failed or is loading, force use of internal proxy
+      // to ensure Same-Origin request and avoid Mixed Content / Insecure warnings in Safari
+      poster = `/_next/image?url=${encodeURIComponent(poster)}&w=640&q=75`;
+    }
+
     return {
       ...item,
-      posterPath: base64Poster || item.posterPath // Use Base64 if available
+      posterPath: poster
     };
   }, [item, base64Poster]);
 
