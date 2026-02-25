@@ -131,7 +131,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
       // 1. Warm-up capture (forces layout/paint/decode)
       try {
         await toPng(templateRef.current, {
-            cacheBust: true,
+            cacheBust: false,
             pixelRatio: 1, // Low quality for warm-up
             backgroundColor: '#0d0d0d',
             skipAutoScale: true,
@@ -145,7 +145,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
 
       // 3. Final Capture
       const dataUrl = await toPng(templateRef.current, {
-        cacheBust: true,
+        cacheBust: false,
         pixelRatio: ratio,
         backgroundColor: '#0d0d0d',
         skipAutoScale: true, // Prevent random scaling issues
