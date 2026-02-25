@@ -32,14 +32,20 @@ export default function MonthlyRecapTemplate({
     const currentDim = dimensions[aspectRatio];
 
     const getImageProps = (src: string) => {
+        const isDataUrl = src.startsWith('data:');
+        const isLocalAsset = src.startsWith('/');
         return {
             src: src || '/image/defaultMoviePoster.svg',
-            ...(src && (src.startsWith('http') || src.startsWith('/proxy')) ? { crossOrigin: 'anonymous' as const } : {})
+            // Only use crossOrigin for external absolute URLs (proxied)
+            // Data URLs don't need it. 
+            // Local assets (starting with /) SHOULD NOT have it in Safari unless server sends headers, 
+            // which Vercel static files usually don't for same-origin.
+            ...((isDataUrl || isLocalAsset) ? {} : { crossOrigin: 'anonymous' as const })
         };
     };
 
-    // Base64 Logo to guarantee rendering in Canvas (Bypass CORS/Loading issues)
-    const LOGO_BASE64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAACi0lEQVR4nO2Zy0tVQRzHf+e+Wy+tF62MpChIqI2o2YVoE1SLaBFE0C+I/oO2bdtW0T9Q0CIEbdq0qaCfEBVEhSRFZGZmpfe+z2nMOTPp3vE1c+Xcw4EfnLnMnN/5zG/mnO8MBSGEEEIIIYQQQggh5D8R0Q4MAiPAIGv8B94CT4FnoK2SgSKiAfgIvAQeZFy2A5+Bl0BjJQNFRAPwEngC3Eu59AA8A54DjZUMFBENwGvgEXA35dJd4CnwFGiuZKCIqAM+Ag+B2ymXbgMPgMdASyUDRUQd8A54ANxKuXQLeAA8ApoqGSgi6oB3wH3gVsqlm8A94BHQXMlAEVEHvAHuAjdTLt0A7gKPgOZqBupE1AGvgLvAjZRL14G7wEOguZKBOhF1wEvgDnAz5dI14A7wEGiuZKCIqANeAHeAGymXrgJ3gIdAcyUDRUQd8Bx4ANxIuXQFuAM8ApqrGehE1AGvF4BvAzdSLl0BbgOPgOZqBupE1AGvF4DvAldTLl0BbgOPgeZqBjoRdcDrBeBbwNWUS5eB28BjoLmagToRdcDrBeAbwNWUS5eB28BjoLmagToRdcBr4A5wNeXSZeA28BhorgagTkQd8Bq4A1xNuXQZuA08ApqrGehE1AGvF4BvAJdTLl0CbgOPgeZqBjoRdcDrBeAbwOWUS5eA28BjoLmagToRdcDrBeDrwNWUSxeB28BjoLmagToRdcDrBeDrwKWUSxeB28AjoLmagToRdcDrBeDrwKWUSxeBW8BjoLmagToRdcDrBeBrwKWUSxeBW8AjoLmagToRdcDrBeBrwMWUSxeBW8AjoLmagToRdcDrBeBrwMWUSxeBW8AjoLmagToRdcDrBeBrwMWUSxeAW8BjoLmagToR9S/5t/wFhBBCCCHk7/MC7XW0t5s8Z3MAAAAASUVORK5CYII=";
+    // Use standard path. CrossOrigin handled by getImageProps.
+    const LOGO_PATH = "/image/logo/logo.png";
 
     const { items, summary } = statsData;
 
@@ -160,7 +166,7 @@ export default function MonthlyRecapTemplate({
 
                 <div className="flex justify-between items-end border-t border-white/20 pt-4 px-2 relative z-20">
                     <div className="flex items-center gap-2 opacity-90">
-                        <img src={LOGO_BASE64} className="w-4 h-4" />
+                        <img src={LOGO_PATH} className="w-4 h-4" />
                         <span className="text-xs font-black tracking-widest uppercase text-accent-gold drop-shadow-md">Storio</span>
                     </div>
                     <div className="text-right flex items-center h-full">
@@ -194,7 +200,7 @@ export default function MonthlyRecapTemplate({
 
                 <div className="mb-6 mt-4 relative z-20 flex flex-col items-center gap-2 text-center w-full">
                     <div className="flex items-center gap-1.5 opacity-90 mb-1">
-                        <img src={LOGO_BASE64} className="w-6 h-6" />
+                        <img src={LOGO_PATH} className="w-6 h-6" />
                         <span className="text-[12px] font-black tracking-[0.2em] uppercase text-accent-gold drop-shadow-md pt-0.5">Storio</span>
                     </div>
                     <h1 className="text-5xl font-black tracking-tight text-accent-gold leading-none uppercase drop-shadow-md w-full">{monthShort}</h1>
@@ -271,7 +277,7 @@ export default function MonthlyRecapTemplate({
                 </div>
 
                 <div className="absolute top-6 right-6 z-20 flex items-center gap-1.5 opacity-90 drop-shadow-md bg-black/40 backdrop-blur p-2 rounded-lg">
-                    <img src={LOGO_BASE64} className="w-4 h-4" />
+                    <img src={LOGO_PATH} className="w-4 h-4" />
                     <span className="text-[10px] font-black tracking-[0.3em] uppercase text-accent-gold">Storio</span>
                 </div>
             </div>
@@ -376,7 +382,7 @@ export default function MonthlyRecapTemplate({
                 </div>
 
                 <div className="absolute bottom-8 flex items-center gap-2 opacity-80 z-20">
-                    <img src={LOGO_BASE64} className="w-6 h-6" />
+                    <img src={LOGO_PATH} className="w-6 h-6" />
                     <span className="text-[14px] font-black tracking-[0.4em] uppercase text-white drop-shadow-md">Storio</span>
                 </div>
             </div>

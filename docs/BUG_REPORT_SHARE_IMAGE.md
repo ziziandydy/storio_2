@@ -90,17 +90,19 @@
     -   ❌ **Don't**: 信任瀏覽器的快取。Safari 如果從 Disk Cache 讀取圖片，常常會遺失 CORS Header，導致 Canvas Tainted。
     -   ✅ **Do**: 強制加上時間戳記參數 `?t=${new Date().getTime()}`。這迫使瀏覽器發起新的網路請求，確保 Response Header 帶有正確的 `Access-Control-Allow-Origin: *`。
 
-3.  **Cross-Origin Attribute**:
-    -   ✅ **Do**: 所有的 `<img>` 標籤（包含 Logo）都必須明確加上 `crossOrigin="anonymous"`。即使是同源的圖片，為了保險起見，若要畫入 Canvas，加上此屬性是最佳實踐。
+3.  **Cross-Origin Attribute (細緻化處理)**:
+    -   ✅ **External Assets (Proxy)**: 必須加上 `crossOrigin="anonymous"`。
+    -   ✅ **Local Assets (同源)**: 針對 `/image/` 開頭的本地圖片，**不要**加 `crossOrigin` 屬性。在 Safari 上，若對同源圖片請求跨域權限但 Server (Vercel Static) 未回傳對應 Header，會導致圖片被阻擋。
+    -   ✅ **Data URLs**: 不需要 `crossOrigin`。
 
 4.  **Logo 處理**:
     -   ❌ **Don't**: 硬編碼巨大的 Base64 字串。
-    -   ✅ **Do**: 使用標準的路徑 `/image/logo/logo.png` 並配合上述的 `crossOrigin` 設定。
+    -   ✅ **Do**: 使用標準的路徑 `/image/logo/logo.png` 並遵循上述 Local Assets 的規則（不加 crossOrigin）。
 
 ### 8.2 技術總結 (Technical Summary)
 *   **ShareModal.tsx**: 負責將原始 `posterPath` 轉換為帶有 Cache Buster 的 `proxiedPoster` URL。
-*   **MemoryCardTemplate.tsx**: 負責渲染，並透過 `getImageProps` helper 確保所有圖片標籤都具備 `crossOrigin="anonymous"`。
+*   **MemoryCardTemplate.tsx / MonthlyRecapTemplate.tsx**: 負責渲染，並透過 `getImageProps` helper 智慧判斷是否添加 `crossOrigin` 屬性。
 *   **CSS Filters**: 嚴禁在 Safari 匯出的節點中使用 `filter: grayscale()` 等濾鏡，這會直接導致元素渲染空白。
 
-此方案已在歷史 Commit 中被驗證為最穩定，能同時解決 Logo 消失、海報黑屏與背景遺失的問題。
+此方案已驗證能同時解決 Logo 消失、海報黑屏與背景遺失的問題，且適用於單一 Story 與 Monthly Recap。
 
