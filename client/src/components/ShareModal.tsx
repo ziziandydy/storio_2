@@ -114,6 +114,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
   };
 
   const handleCapture = async () => {
+    console.log('[ShareDebug] Starting Capture Process...');
     if (!templateRef.current) return null;
     setIsGenerating(true);
     try {
@@ -121,42 +122,44 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
       
       // Wait for 2 frames to ensure Safari paints the decoded images
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      // Additional safety buffer
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       // Limit pixel ratio for mobile Safari to prevent memory crash
       const ratio = window.devicePixelRatio > 2 ? 2 : window.devicePixelRatio;
+      console.log('[ShareDebug] Pixel Ratio:', ratio);
 
       // Double Capture Strategy for Safari
-      // 1. Warm-up capture (forces layout/paint/decode)
+      console.log('[ShareDebug] Running Warm-up Capture...');
       try {
         await toPng(templateRef.current, {
             cacheBust: false,
-            pixelRatio: 1, // Low quality for warm-up
+            pixelRatio: 1, 
             backgroundColor: '#0d0d0d',
             skipAutoScale: true,
         });
       } catch (e) {
-        console.warn('Warm-up capture failed (expected)', e);
+        console.warn('[ShareDebug] Warm-up capture failed (expected)', e);
       }
 
-      // 2. Small delay to let the GPU catch up
-      await new Promise(resolve => setTimeout(resolve, 50));
+      // Let the GPU catch up
+      await new Promise(resolve => setTimeout(resolve, 300)); // Increased to 300ms
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
-      // 3. Final Capture
+      console.log('[ShareDebug] Running Final Capture...');
       const dataUrl = await toPng(templateRef.current, {
         cacheBust: false,
         pixelRatio: ratio,
         backgroundColor: '#0d0d0d',
-        skipAutoScale: true, // Prevent random scaling issues
+        skipAutoScale: true,
         style: {
-          transform: 'scale(1)', // Force reset scale during capture
+          transform: 'scale(1)',
           transformOrigin: 'top left'
         }
       });
+      console.log('[ShareDebug] Capture success. Data URL length:', dataUrl.length);
       return dataUrl;
     } catch (error) {
-      console.error('Failed to generate image:', error);
+      console.error('[ShareDebug] Capture failed:', error);
       return null;
     } finally {
       setIsGenerating(false);

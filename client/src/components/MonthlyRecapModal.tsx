@@ -133,15 +133,14 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
             
             // Wait for 2 frames to ensure Safari paints the decoded images
             await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-            // Additional safety buffer
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 200));
 
             // Limit pixel ratio for mobile Safari to prevent memory crash
             const ratio = window.devicePixelRatio > 2 ? 2 : window.devicePixelRatio;
             console.log('[ShareDebug] Monthly Pixel Ratio:', ratio);
 
             // Double Capture Strategy for Safari
-            console.log('[ShareDebug] Running Warm-up Capture...');
+            console.log('[ShareDebug] Running Monthly Warm-up Capture...');
             try {
                 await toPng(templateRef.current, {
                     cacheBust: false,
@@ -150,12 +149,14 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                     skipAutoScale: true,
                 });
             } catch (e) {
-                console.warn('[ShareDebug] Warm-up failed', e);
+                console.warn('[ShareDebug] Monthly Warm-up failed', e);
             }
             
-            await new Promise(resolve => setTimeout(resolve, 50));
+            // Let the GPU catch up
+            await new Promise(resolve => setTimeout(resolve, 200));
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
-            console.log('[ShareDebug] Running Final Capture...');
+            console.log('[ShareDebug] Running Monthly Final Capture...');
             const dataUrl = await toPng(templateRef.current, {
                 cacheBust: false,
                 pixelRatio: ratio,
