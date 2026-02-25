@@ -134,6 +134,11 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
           pixelRatio: 1,
           backgroundColor: '#0d0d0d',
           skipAutoScale: true,
+          fetchRequestInit: {
+            headers: {
+              'Accept': 'image/jpeg, image/png, image/*;q=0.8'
+            }
+          }
         });
         console.log(`[ShareDebug] Warm-up finished in ${Math.round(performance.now() - warmUpStart)}ms`);
       } catch (e) {
@@ -152,6 +157,11 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
         pixelRatio: ratio,
         backgroundColor: '#0d0d0d',
         skipAutoScale: true,
+        fetchRequestInit: {
+          headers: {
+            'Accept': 'image/jpeg, image/png, image/*;q=0.8'
+          }
+        },
         style: {
           transform: 'scale(1)',
           transformOrigin: 'top left'
