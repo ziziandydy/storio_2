@@ -99,10 +99,15 @@
     -   ❌ **Don't**: 硬編碼巨大的 Base64 字串。
     -   ✅ **Do**: 使用標準的路徑 `/image/logo/logo.png` 並遵循上述 Local Assets 的規則（不加 crossOrigin）。
 
-### 8.2 技術總結 (Technical Summary)
-*   **ShareModal.tsx**: 負責將原始 `posterPath` 轉換為帶有 Cache Buster 的 `proxiedPoster` URL。
-*   **MemoryCardTemplate.tsx / MonthlyRecapTemplate.tsx**: 負責渲染，並透過 `getImageProps` helper 智慧判斷是否添加 `crossOrigin` 屬性。
-*   **CSS Filters**: 嚴禁在 Safari 匯出的節點中使用 `filter: grayscale()` 等濾鏡，這會直接導致元素渲染空白。
+### 8.3 進階問題：第一次截圖失敗 (Safari Lazy Decoding)
+*   **現象**: 點擊分享第一次圖片空白或缺圖，關閉後第二次點擊則正常。
+*   **原因**: Safari 為了效能採行「惰性解碼 (Lazy Decoding)」。即使 `img.complete` 為 `true`，圖片數據可能仍處於壓縮狀態，尚未解碼為 RGB 像素。當 `html-to-image` 嘗試繪製 Canvas 時，若解碼尚未完成，會導致繪製空白。
+*   **解法**: 在截圖前，對所有 `<img>` 元素強制呼叫 `await img.decode()`。這是一個 Native Promise，保證圖片數據已完全就緒可供繪製。
 
-此方案已驗證能同時解決 Logo 消失、海報黑屏與背景遺失的問題，且適用於單一 Story 與 Monthly Recap。
+### 8.4 總結 (Summary)
+解決 Safari 匯出圖片問題的黃金組合：
+1.  **Frontend Proxy**: `src` 指向 `/proxy/tmdb/...`。
+2.  **Cache Buster**: URL 加上 `?t=timestamp`。
+3.  **No CrossOrigin for Local**: 本地圖片 (`/image/...`) 不加 `crossOrigin` 屬性。
+4.  **Force Decode**: 使用 `await img.decode()` 等待圖片完全解碼。
 
