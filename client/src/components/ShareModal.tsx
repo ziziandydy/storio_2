@@ -52,9 +52,10 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
     let url = item.posterPath;
 
     // Fix Safari Memory Limit: Shrink image payload using Next.js optimization API.
+    // Downscale from w=640 to w=384 to drastically reduce Base64 footprint in Canvas
     // Add cache buster to bypass Safari disk cache and force fresh fetch with CORS headers
     if (url.startsWith('http')) {
-      url = `/_next/image?url=${encodeURIComponent(url)}&w=640&q=75&t=${new Date().getTime()}`;
+      url = `/_next/image?url=${encodeURIComponent(url)}&w=384&q=75&t=${new Date().getTime()}`;
     }
 
     setProxiedPoster(url);
@@ -125,6 +126,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
       console.log('[ShareDebug] Pixel Ratio:', ratio);
 
       // Double Capture Strategy for Safari
+      const warmUpStart = performance.now();
       console.log('[ShareDebug] Running Warm-up Capture...');
       try {
         await toPng(templateRef.current, {
@@ -133,14 +135,17 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
           backgroundColor: '#0d0d0d',
           skipAutoScale: true,
         });
+        console.log(`[ShareDebug] Warm-up finished in ${Math.round(performance.now() - warmUpStart)}ms`);
       } catch (e) {
         console.warn('[ShareDebug] Warm-up capture failed (expected)', e);
       }
 
       // Let the GPU catch up
-      await new Promise(resolve => setTimeout(resolve, 300)); // Increased to 300ms
+      console.log('[ShareDebug] Waiting for Safari async Base64 decoding (800ms)...');
+      await new Promise(resolve => setTimeout(resolve, 800)); // Increased to let Base64 decode
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
+      const finalStart = performance.now();
       console.log('[ShareDebug] Running Final Capture...');
       const dataUrl = await toPng(templateRef.current, {
         cacheBust: false,
@@ -152,6 +157,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
           transformOrigin: 'top left'
         }
       });
+      console.log(`[ShareDebug] Final Capture finished in ${Math.round(performance.now() - finalStart)}ms`);
       console.log('[ShareDebug] Capture success. Data URL length:', dataUrl.length);
       return dataUrl;
     } catch (error) {
