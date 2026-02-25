@@ -105,13 +105,23 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
     const waitForAllImages = async (element: HTMLElement) => {
         const images = Array.from(element.querySelectorAll('img'));
         console.log(`[ShareDebug] Monthly Recap: Found ${images.length} images in capture area.`);
-        await Promise.all(images.map((img, i) => {
-            console.log(`[ShareDebug] Monthly Image ${i} src:`, img.src.substring(0, 50) + '...', 'Complete:', img.complete);
-            if (img.complete) return Promise.resolve();
-            return new Promise((resolve) => {
-                img.onload = () => { console.log(`[ShareDebug] Monthly Image ${i} loaded`); resolve(undefined); };
-                img.onerror = () => { console.error(`[ShareDebug] Monthly Image ${i} failed:`, img.src); resolve(undefined); }; // resolve on error to prevent hanging
-            });
+        await Promise.all(images.map(async (img, i) => {
+            // Basic load check
+            if (!img.complete) {
+                await new Promise((resolve) => {
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                });
+            }
+            // Critical for Safari: Force decode
+            try {
+                if (img.decode) {
+                    await img.decode();
+                    console.log(`[ShareDebug] Monthly Image ${i} decoded successfully.`);
+                }
+            } catch (e) {
+                console.warn(`[ShareDebug] Monthly Image ${i} decode failed:`, e);
+            }
         }));
     };
 

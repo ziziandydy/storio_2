@@ -93,13 +93,23 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
   const waitForAllImages = async (element: HTMLElement) => {
     const images = Array.from(element.querySelectorAll('img'));
     console.log(`[ShareDebug] Found ${images.length} images in capture area.`);
-    await Promise.all(images.map((img, i) => {
-      console.log(`[ShareDebug] Image ${i} src:`, img.src.substring(0, 50) + '...', 'Complete:', img.complete);
-      if (img.complete) return Promise.resolve();
-      return new Promise((resolve) => {
-        img.onload = () => { console.log(`[ShareDebug] Image ${i} loaded`); resolve(undefined); };
-        img.onerror = () => { console.error(`[ShareDebug] Image ${i} failed to load:`, img.src); resolve(undefined); }; // resolve on error to prevent hanging
-      });
+    await Promise.all(images.map(async (img, i) => {
+      // Basic load check
+      if (!img.complete) {
+          await new Promise((resolve) => {
+              img.onload = resolve;
+              img.onerror = resolve;
+          });
+      }
+      // Critical for Safari: Force decode
+      try {
+          if (img.decode) {
+              await img.decode();
+              console.log(`[ShareDebug] Image ${i} decoded successfully.`);
+          }
+      } catch (e) {
+          console.warn(`[ShareDebug] Image ${i} decode failed (might be non-image or empty):`, e);
+      }
     }));
   };
 
