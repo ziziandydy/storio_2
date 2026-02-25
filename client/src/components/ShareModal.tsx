@@ -53,6 +53,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
 
     let isMounted = true;
     const loadBase64 = async () => {
+      console.log('[ShareDebug] Starting Base64 load for:', item.posterPath);
       try {
         let url = item.posterPath;
 
@@ -67,17 +68,25 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
           absoluteUrl = window.location.origin + absoluteUrl;
         }
 
+        console.log('[ShareDebug] Fetching URL:', absoluteUrl);
         const response = await fetch(absoluteUrl);
+        console.log('[ShareDebug] Fetch status:', response.status);
+        
+        if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
+
         const blob = await response.blob();
+        console.log('[ShareDebug] Blob size:', blob.size, blob.type);
+        
         const reader = new FileReader();
         reader.onloadend = () => {
           if (isMounted && typeof reader.result === 'string') {
+            console.log('[ShareDebug] Base64 conversion success. Length:', reader.result.length);
             setBase64Poster(reader.result);
           }
         };
         reader.readAsDataURL(blob);
       } catch (e) {
-        console.error("Failed to preload image:", e);
+        console.error("[ShareDebug] Failed to preload image:", e);
         // Fallback to original URL if fetch fails (though it might still fail in canvas)
         if (isMounted) setBase64Poster(null);
       } finally {
@@ -101,6 +110,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
       // Fallback: If Base64 failed or is loading, force use of internal proxy
       // to ensure Same-Origin request and avoid Mixed Content / Insecure warnings in Safari
       poster = `/_next/image?url=${encodeURIComponent(poster)}&w=640&q=75`;
+      console.log('[ShareDebug] Using Proxy Fallback for Poster:', poster);
     }
 
     return {
@@ -129,24 +139,32 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
 
   const waitForAllImages = async (element: HTMLElement) => {
     const images = Array.from(element.querySelectorAll('img'));
-    await Promise.all(images.map((img) => {
+    console.log(`[ShareDebug] Found ${images.length} images in capture area.`);
+    await Promise.all(images.map((img, i) => {
+      console.log(`[ShareDebug] Image ${i} src:`, img.src.substring(0, 50) + '...', 'Complete:', img.complete);
       if (img.complete) return Promise.resolve();
       return new Promise((resolve) => {
-        img.onload = resolve;
-        img.onerror = resolve; // resolve on error to prevent hanging
+        img.onload = () => { console.log(`[ShareDebug] Image ${i} loaded`); resolve(undefined); };
+        img.onerror = () => { console.error(`[ShareDebug] Image ${i} failed to load:`, img.src); resolve(undefined); }; // resolve on error to prevent hanging
       });
     }));
   };
 
   const handleCapture = async () => {
-    if (!templateRef.current) return null;
+    console.log('[ShareDebug] Starting Capture Process...');
+    if (!templateRef.current) {
+        console.error('[ShareDebug] No template ref found!');
+        return null;
+    }
     setIsGenerating(true);
     try {
       await waitForAllImages(templateRef.current);
+      console.log('[ShareDebug] All images loaded/settled.');
       await new Promise(resolve => setTimeout(resolve, 500)); // Ensure paint is fully settled
 
       // Limit pixel ratio for mobile Safari to prevent memory crash
       const ratio = window.devicePixelRatio > 2 ? 2 : window.devicePixelRatio;
+      console.log('[ShareDebug] Using Pixel Ratio:', ratio);
 
       const dataUrl = await toPng(templateRef.current, {
         cacheBust: true,
@@ -158,9 +176,10 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
           transformOrigin: 'top left'
         }
       });
+      console.log('[ShareDebug] Capture successful. Data URL length:', dataUrl.length);
       return dataUrl;
     } catch (error) {
-      console.error('Failed to generate image:', error);
+      console.error('[ShareDebug] Failed to generate image:', error);
       return null;
     } finally {
       setIsGenerating(false);
