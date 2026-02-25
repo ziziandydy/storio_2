@@ -43,6 +43,40 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
   const [isDownloaded, setIsDownloaded] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
 
+  // Pre-fetch Desk Background & Logo as Blob URLs for Safari Canvas safety
+  const [blobLogo, setBlobLogo] = useState<string | null>(null);
+  const [blobDeskBg, setBlobDeskBg] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const convertToBlob = async (path: string, setter: (url: string) => void, label: string) => {
+      try {
+        console.log(`[ShareDebug] Converting ${label} to Blob...`);
+        const response = await fetch(path);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        if (isMounted) {
+          console.log(`[ShareDebug] ${label} Blob created:`, blobUrl);
+          setter(blobUrl);
+        }
+      } catch (e) {
+        console.error(`[ShareDebug] ${label} Blob conversion failed:`, e);
+      }
+    };
+
+    convertToBlob('/image/logo/logo.png', setBlobLogo, 'Logo');
+    if (selectedTemplate === 'desk') {
+      convertToBlob('/image/share/desk_bg.jpg', setBlobDeskBg, 'Desk BG');
+    }
+
+    return () => {
+      isMounted = false;
+      // Cleanup Blob URLs to prevent memory leaks
+      if (blobLogo) URL.revokeObjectURL(blobLogo);
+      if (blobDeskBg) URL.revokeObjectURL(blobDeskBg);
+    };
+  }, [selectedTemplate]);
+
   // Pre-fetch image as Base64 to guarantee capture success (Simplified to direct proxy with cache buster)
   const [proxiedPoster, setProxiedPoster] = useState<string | null>(null);
 
@@ -64,40 +98,15 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
     setProxiedPoster(url);
   }, [item?.posterPath]);
 
-  // Pre-fetch Desk Background as Base64 (Keep this as it was fixing the desk bg issue)
-  const [base64DeskBg, setBase64DeskBg] = useState<string | null>(null);
-
-  React.useEffect(() => {
-    if (selectedTemplate !== 'desk') return;
-
-    let isMounted = true;
-    const loadDeskBg = async () => {
-        try {
-            const response = await fetch('/image/share/desk_bg.jpg');
-            const blob = await response.blob();
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                if (isMounted && typeof reader.result === 'string') {
-                    setBase64DeskBg(reader.result);
-                }
-            };
-            reader.readAsDataURL(blob);
-        } catch (e) {
-            console.error('Desk BG load failed:', e);
-        }
-    };
-    loadDeskBg();
-    return () => { isMounted = false; };
-  }, [selectedTemplate]);
-
   const proxiedItem = useMemo(() => {
     if (!item) return undefined;
     return {
       ...item,
       posterPath: proxiedPoster || item.posterPath,
-      deskBg: base64DeskBg
+      customLogoPath: blobLogo, // Pass blob logo
+      customDeskBg: blobDeskBg  // Pass blob desk BG
     };
-  }, [item, proxiedPoster, base64DeskBg]);
+  }, [item, proxiedPoster, blobLogo, blobDeskBg]);
 
   // Template visibility logic
   const TEMPLATES: { id: TemplateType; icon: any; label: string; hidden?: boolean }[] = [

@@ -16,6 +16,8 @@ interface MemoryCardTemplateProps {
     showTitle?: boolean;
     showRating?: boolean;
     showReflection?: boolean;
+    customLogoPath?: string | null;
+    customDeskBg?: string | null;
 }
 
 export default function MemoryCardTemplate({
@@ -30,7 +32,9 @@ export default function MemoryCardTemplate({
     selectedTemplate = 'default',
     showTitle = true,
     showRating = true,
-    showReflection = true
+    showReflection = true,
+    customLogoPath,
+    customDeskBg
 }: MemoryCardTemplateProps) {
 
     // Dimensions based on ratio
@@ -44,16 +48,20 @@ export default function MemoryCardTemplate({
 
     const getImageProps = (src: string) => {
         const isDataUrl = src.startsWith('data:');
+        const isLocalAsset = src.startsWith('/');
+        const isBlobUrl = src.startsWith('blob:');
         return {
             src,
-            // Only use crossOrigin for external URLs or local assets when capturing canvas
-            // Data URLs don't need it. Local assets need it for html-to-image to work in Safari.
-            ...(isDataUrl ? {} : { crossOrigin: 'anonymous' as const })
+            // Only use crossOrigin for external absolute URLs (proxied)
+            // Data URLs and Blob URLs don't need it. 
+            // Local assets SHOULD NOT have it in Safari.
+            ...((isDataUrl || isLocalAsset || isBlobUrl) ? {} : { crossOrigin: 'anonymous' as const })
         };
     };
 
-    // Base64 Logo removed. Using standard path with crossOrigin.
-    const LOGO_PATH = "/image/logo/logo.png";
+    // Use Blob URL if available, otherwise fallback to standard path
+    const LOGO_PATH = customLogoPath || "/image/logo/logo.png";
+    const DESK_BG_PATH = customDeskBg || "/image/share/desk_bg.jpg";
 
     // --- Helper: Stamp Component ---
     const StampRating = () => (
@@ -491,7 +499,7 @@ export default function MemoryCardTemplate({
                     {/* User's uploaded desk background image */}
                     <div className="absolute inset-0">
                         <img 
-                            src="/image/share/desk_bg.jpg" 
+                            {...getImageProps(DESK_BG_PATH)}
                             alt="Desk Background" 
                             className="w-full h-full object-cover"
                         />
