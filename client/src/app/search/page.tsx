@@ -347,15 +347,15 @@ function SearchContent() {
           >
             <div
               className="flex transition-transform duration-300 ease-out"
-              style={{ transform: `translateX(-${searchMode * 88}%)` }}
+              style={{ transform: `translateX(-${searchMode * 92}%)` }}
             >
 
               {/* Slide 0: Auto */}
               <div
-                className={`w-[88%] shrink-0 pr-2 transition-all duration-300 ${searchMode === 0 ? 'opacity-100' : searchMode === 1 ? 'opacity-60 cursor-pointer' : 'opacity-30 cursor-pointer'}`}
+                className={`w-[92%] shrink-0 pr-2 transition-all duration-300 ${searchMode === 0 ? 'opacity-100' : 'opacity-70 cursor-pointer'}`}
                 onClick={() => searchMode !== 0 && setSearchMode(0)}
               >
-                <div className={`relative flex items-center bg-[#121212] rounded-full px-3 py-3 w-full transition-transform duration-300 ${searchMode === 0 ? 'scale-100 translate-y-0 border-auto-breathe' : searchMode === 1 ? 'scale-[0.95] translate-y-[2px] border border-zinc-800' : 'scale-[0.9] translate-y-[4px] border border-zinc-800'}`}>
+                <div className={`relative flex items-center bg-[#121212] rounded-full px-3 py-3 w-full transition-transform duration-300 ${searchMode === 0 ? 'scale-100 translate-y-0 border-auto-breathe' : 'scale-[0.95] translate-y-[2px] border border-accent-gold/30'}`}>
                   <span className="absolute -top-[7px] left-6 bg-[#121212] px-2 text-[10px] text-accent-gold uppercase tracking-wider font-semibold z-10 leading-none">Auto</span>
 
                   {/* Future Image Search Placeholder 
@@ -367,7 +367,7 @@ function SearchContent() {
                   <input
                     ref={searchMode === 0 ? inputRef : null}
                     type="text"
-                    placeholder="Recall a story..."
+                    placeholder={searchMode === 0 ? "Recall a story..." : "Auto Mode"}
                     disabled={searchMode !== 0}
                     defaultValue={searchMode === 0 ? initialQuery : ''}
                     onChange={(e) => setQuery(e.target.value)}
@@ -391,7 +391,7 @@ function SearchContent() {
                     </div>
                   )}
                   {searchMode !== 0 && (
-                    <button disabled className="flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-accent-gold text-folio-black opacity-50 absolute right-2">
+                    <button disabled className="flex items-center justify-center w-10 h-10 shrink-0 rounded-full cursor-pointer bg-white/5 text-accent-gold/50 absolute right-2">
                       <ArrowUp size={20} strokeWidth={3} />
                     </button>
                   )}
@@ -400,19 +400,19 @@ function SearchContent() {
 
               {/* Slide 1: AI Search */}
               <div
-                className={`w-[88%] shrink-0 pr-2 transition-all duration-300 ${searchMode === 1 ? 'opacity-100' : searchMode === 0 ? 'opacity-60 cursor-pointer' : searchMode === 2 ? 'opacity-60 cursor-pointer' : 'opacity-30 cursor-pointer'}`}
+                className={`w-[92%] shrink-0 pr-2 transition-all duration-300 ${searchMode === 1 ? 'opacity-100' : 'opacity-70 cursor-pointer'}`}
                 onClick={() => searchMode !== 1 && setSearchMode(1)}
               >
-                <div className={`relative w-full transition-transform duration-300 ${searchMode === 1 ? 'ai-gradient-border scale-100 translate-y-0' : searchMode === 0 ? 'scale-[0.95] translate-y-[2px] border border-zinc-800 rounded-full' : 'scale-[0.95] translate-y-[2px] border border-zinc-800 rounded-full'}`}>
+                <div className={`relative w-full transition-transform duration-300 ${searchMode === 1 ? 'ai-gradient-border scale-100 translate-y-0' : 'scale-[0.95] translate-y-[2px] border border-[#9b72cb]/40 rounded-full'}`}>
                   <div className="absolute -top-[7px] left-6 bg-[#121212] px-2 z-10 leading-none flex items-center rounded-full">
                     <span className="text-[10px] bg-gradient-to-r from-[#4285f4] to-[#9b72cb] text-transparent bg-clip-text uppercase tracking-wider font-semibold">✨ AI Search</span>
                   </div>
-                  <div className="relative flex items-center bg-[#121212] rounded-full px-3 py-[11px] w-full">
+                  <div className={`relative flex items-center bg-[#121212] rounded-full px-3 py-[11px] w-full ${searchMode !== 1 ? 'bg-gradient-to-r from-[#4285f4]/5 to-[#9b72cb]/5' : ''}`}>
 
                     <input
                       ref={searchMode === 1 ? inputRef : null}
                       type="text"
-                      placeholder="Describe the vibe or plot..."
+                      placeholder={searchMode === 1 ? "Describe the vibe or plot..." : "AI Search Mode"}
                       disabled={searchMode !== 1}
                       defaultValue={searchMode === 1 ? initialQuery : ''}
                       onChange={(e) => setQuery(e.target.value)}
@@ -435,7 +435,7 @@ function SearchContent() {
                       </div>
                     )}
                     {searchMode !== 1 && (
-                      <button disabled className="flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-gradient-to-tr from-[#9b72cb] to-[#4285f4] text-white opacity-50 absolute right-2">
+                      <button disabled className="flex items-center justify-center w-10 h-10 shrink-0 rounded-full cursor-pointer bg-gradient-to-tr from-[#9b72cb]/20 to-[#4285f4]/20 text-[#9b72cb]/80 absolute right-2">
                         <ArrowUp size={20} strokeWidth={3} />
                       </button>
                     )}
@@ -445,16 +445,16 @@ function SearchContent() {
 
               {/* Slide 2: Keyword Match */}
               <div
-                className={`w-[88%] shrink-0 pr-2 transition-all duration-300 ${searchMode === 2 ? 'opacity-100' : 'opacity-30 cursor-pointer'}`}
+                className={`w-[92%] shrink-0 pr-2 transition-all duration-300 ${searchMode === 2 ? 'opacity-100' : 'opacity-70 cursor-pointer'}`}
                 onClick={() => searchMode !== 2 && setSearchMode(2)}
               >
-                <div className={`relative flex items-center bg-[#121212] rounded-full px-3 py-3 border border-zinc-700 w-full transition-transform duration-300 ${searchMode === 2 ? 'scale-100 translate-y-0' : 'scale-[0.9] translate-y-[4px]'}`}>
-                  <span className="absolute -top-[7px] left-6 bg-[#121212] px-2 text-[10px] text-zinc-500 uppercase tracking-wider font-semibold z-10 leading-none">Keyword Match</span>
+                <div className={`relative flex items-center bg-[#121212] rounded-full px-3 py-3 border transition-transform duration-300 ${searchMode === 2 ? 'border-zinc-500 scale-100 translate-y-0' : 'border-zinc-700 scale-[0.95] translate-y-[2px]'} w-full`}>
+                  <span className={`absolute -top-[7px] left-6 bg-[#121212] px-2 text-[10px] uppercase tracking-wider font-semibold z-10 leading-none ${searchMode === 2 ? 'text-zinc-400' : 'text-zinc-600'}`}>Keyword Match</span>
 
                   <input
                     ref={searchMode === 2 ? inputRef : null}
                     type="text"
-                    placeholder="Name, Author, or Director..."
+                    placeholder={searchMode === 2 ? "Name, Author, or Director..." : "Keyword Mode"}
                     disabled={searchMode !== 2}
                     defaultValue={searchMode === 2 ? initialQuery : ''}
                     onChange={(e) => setQuery(e.target.value)}
@@ -477,7 +477,7 @@ function SearchContent() {
                     </div>
                   )}
                   {searchMode !== 2 && (
-                    <button disabled className="flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-accent-gold text-folio-black opacity-50 absolute right-2">
+                    <button disabled className="flex items-center justify-center w-10 h-10 shrink-0 rounded-full cursor-pointer bg-white/5 text-zinc-600 absolute right-2">
                       <ArrowUp size={20} strokeWidth={3} />
                     </button>
                   )}
