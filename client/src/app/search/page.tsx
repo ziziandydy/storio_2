@@ -41,7 +41,8 @@ function SearchContent() {
   const [filter, setFilter] = useState<'movie' | 'book' | 'tv'>(initialFilter);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const [searchMode, setSearchMode] = useState<0 | 1 | 2>(0); // 0: Auto, 1: AI, 2: Keyword
+  const [searchModeIndex, setSearchModeIndex] = useState<number>(3); // Start at middle block: 0, 1, 2, [3, 4, 5], 6, 7, 8
+  const searchMode = searchModeIndex % 3 as 0 | 1 | 2; // Actual mode for logic (0: Auto, 1: AI, 2: Keyword)
   const touchStartX = useRef<number>(0);
 
   // Semantic Intent Detection (Auto Mode)
@@ -338,151 +339,161 @@ function SearchContent() {
             onTouchEnd={(e) => {
               const touchEndX = e.changedTouches[0].screenX;
               if (touchEndX < touchStartX.current - 40) { // Swipe Left (Next)
-                setSearchMode(prev => ((prev + 1) % 3) as 0 | 1 | 2);
+                setSearchModeIndex(prev => {
+                  const next = prev + 1;
+                  if (next >= 8) {
+                    setTimeout(() => setSearchModeIndex(4), 300); // 4 is AI in the middle set
+                  }
+                  return next;
+                });
               }
               if (touchEndX > touchStartX.current + 40) { // Swipe Right (Prev)
-                setSearchMode(prev => ((prev + 2) % 3) as 0 | 1 | 2);
+                setSearchModeIndex(prev => {
+                  const next = prev - 1;
+                  if (next <= 0) {
+                    setTimeout(() => setSearchModeIndex(4), 300); // Back to middle
+                  }
+                  return next;
+                });
               }
             }}
           >
             <div
               className="flex transition-transform duration-300 ease-out"
-              style={{ transform: `translateX(-${searchMode * 92}%)` }}
+              style={{ transform: `translateX(calc(3% - ${searchModeIndex * 88}%))` }}
             >
 
-              {/* Slide 0: Auto */}
-              <div
-                className={`w-[92%] shrink-0 pr-2 transition-all duration-300 ${searchMode === 0 ? 'opacity-100' : 'opacity-70 cursor-pointer'}`}
-                onClick={() => searchMode !== 0 && setSearchMode(0)}
-              >
-                <div className={`relative flex items-center bg-[#121212] rounded-full px-3 py-3 w-full transition-transform duration-300 ${searchMode === 0 ? 'scale-100 translate-y-0 border-auto-breathe' : 'scale-[0.95] translate-y-[2px] border border-accent-gold/30'}`}>
-                  <span className="absolute -top-[7px] left-6 bg-[#121212] px-2 text-[10px] text-accent-gold uppercase tracking-wider font-semibold z-10 leading-none">Auto</span>
+              {/* Generate 3 sets of the 3 slides for infinite looping effect */}
+              {[0, 1, 2].map((setIndex) => (
+                <React.Fragment key={`set-${setIndex}`}>
+                  {/* Slide 0: Auto (Index: setIndex * 3 + 0) */}
+                  <div
+                    className={`w-[88%] shrink-0 pr-2 transition-all duration-300 ${searchModeIndex === setIndex * 3 + 0 ? 'opacity-100' : 'opacity-90 cursor-pointer'}`}
+                    onClick={() => searchModeIndex !== setIndex * 3 + 0 && setSearchModeIndex(setIndex * 3 + 0)}
+                  >
+                    <div className={`relative flex items-center bg-[#121212] rounded-full px-3 py-3 w-full transition-transform duration-300 border-auto-breathe ${searchModeIndex === setIndex * 3 + 0 ? 'scale-100 translate-y-0' : 'scale-[0.95] translate-y-[2px]'}`}>
+                      <span className="absolute -top-[7px] left-6 bg-[#121212] px-2 text-[10px] text-accent-gold uppercase tracking-wider font-semibold z-10 leading-none">Auto</span>
 
-                  {/* Future Image Search Placeholder 
-                  <button className="flex items-center justify-center w-8 h-8 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors shrink-0 mr-2" disabled={searchMode !== 0}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-                  </button>
-                  */}
+                      <input
+                        ref={searchModeIndex === setIndex * 3 + 0 ? inputRef : null}
+                        type="text"
+                        placeholder={searchModeIndex === setIndex * 3 + 0 ? "Recall a story..." : "Auto Mode"}
+                        disabled={searchModeIndex !== setIndex * 3 + 0}
+                        defaultValue={searchModeIndex === setIndex * 3 + 0 ? initialQuery : ''}
+                        onChange={(e) => setQuery(e.target.value)}
+                        onKeyDown={handleSubmit}
+                        className="bg-transparent border-none outline-none w-full text-zinc-200 placeholder-zinc-600 text-base pl-1"
+                      />
 
-                  <input
-                    ref={searchMode === 0 ? inputRef : null}
-                    type="text"
-                    placeholder={searchMode === 0 ? "Recall a story..." : "Auto Mode"}
-                    disabled={searchMode !== 0}
-                    defaultValue={searchMode === 0 ? initialQuery : ''}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={handleSubmit}
-                    className="bg-transparent border-none outline-none w-full text-zinc-200 placeholder-zinc-600 text-base pl-1"
-                  />
-
-                  {/* Submit logic handles clearing/loading state on the active input */}
-                  {searchMode === 0 && (
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10">
-                      {query && !loading && (
-                        <button onClick={handleClear} className="text-text-desc hover:text-white bg-white/5 rounded-full p-2 hover:bg-white/10 transition-all"><X size={16} /></button>
+                      {searchModeIndex === setIndex * 3 + 0 && (
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10">
+                          {query && !loading && (
+                            <button onClick={handleClear} className="text-text-desc hover:text-white bg-white/5 rounded-full p-2 hover:bg-white/10 transition-all"><X size={16} /></button>
+                          )}
+                          {loading && <div className="p-2"><Loader2 className="text-accent-gold animate-spin" size={20} /></div>}
+                          <button
+                            onClick={handleSubmit}
+                            className={`flex items-center justify-center w-10 h-10 shrink-0 rounded-full transition-all ${loading ? 'bg-white/5 text-text-desc' : 'bg-accent-gold text-folio-black hover:bg-white hover:scale-105 active:scale-95 shadow-lg'}`}
+                          >
+                            <ArrowUp size={20} strokeWidth={3} />
+                          </button>
+                        </div>
                       )}
-                      {loading && <div className="p-2"><Loader2 className="text-accent-gold animate-spin" size={20} /></div>}
-                      <button
-                        onClick={handleSubmit}
-                        className={`flex items-center justify-center w-10 h-10 shrink-0 rounded-full transition-all ${loading ? 'bg-white/5 text-text-desc' : 'bg-accent-gold text-folio-black hover:bg-white hover:scale-105 active:scale-95 shadow-lg'}`}
-                      >
-                        <ArrowUp size={20} strokeWidth={3} />
-                      </button>
-                    </div>
-                  )}
-                  {searchMode !== 0 && (
-                    <button disabled className="flex items-center justify-center w-10 h-10 shrink-0 rounded-full cursor-pointer bg-white/5 text-accent-gold/50 absolute right-2">
-                      <ArrowUp size={20} strokeWidth={3} />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Slide 1: AI Search */}
-              <div
-                className={`w-[92%] shrink-0 pr-2 transition-all duration-300 ${searchMode === 1 ? 'opacity-100' : 'opacity-70 cursor-pointer'}`}
-                onClick={() => searchMode !== 1 && setSearchMode(1)}
-              >
-                <div className={`relative w-full transition-transform duration-300 ${searchMode === 1 ? 'ai-gradient-border scale-100 translate-y-0' : 'scale-[0.95] translate-y-[2px] border border-[#9b72cb]/40 rounded-full'}`}>
-                  <div className="absolute -top-[7px] left-6 bg-[#121212] px-2 z-10 leading-none flex items-center rounded-full">
-                    <span className="text-[10px] bg-gradient-to-r from-[#4285f4] to-[#9b72cb] text-transparent bg-clip-text uppercase tracking-wider font-semibold">✨ AI Search</span>
-                  </div>
-                  <div className={`relative flex items-center bg-[#121212] rounded-full px-3 py-[11px] w-full ${searchMode !== 1 ? 'bg-gradient-to-r from-[#4285f4]/5 to-[#9b72cb]/5' : ''}`}>
-
-                    <input
-                      ref={searchMode === 1 ? inputRef : null}
-                      type="text"
-                      placeholder={searchMode === 1 ? "Describe the vibe or plot..." : "AI Search Mode"}
-                      disabled={searchMode !== 1}
-                      defaultValue={searchMode === 1 ? initialQuery : ''}
-                      onChange={(e) => setQuery(e.target.value)}
-                      onKeyDown={handleSubmit}
-                      className="bg-transparent border-none outline-none w-full text-zinc-200 placeholder-zinc-500 text-base pl-1"
-                    />
-
-                    {searchMode === 1 && (
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10">
-                        {query && !loading && (
-                          <button onClick={handleClear} className="text-text-desc hover:text-white bg-white/5 rounded-full p-2 hover:bg-white/10 transition-all"><X size={16} /></button>
-                        )}
-                        {loading && <div className="p-2"><Loader2 className="text-[#9b72cb] animate-spin" size={20} /></div>}
-                        <button
-                          onClick={handleSubmit}
-                          className={`flex items-center justify-center w-10 h-10 shrink-0 rounded-full transition-all ${loading ? 'bg-white/5 text-text-desc' : 'bg-gradient-to-tr from-[#9b72cb] to-[#4285f4] text-white hover:brightness-110 hover:scale-105 active:scale-95 shadow-lg'}`}
-                        >
+                      {searchModeIndex !== setIndex * 3 + 0 && (
+                        <button disabled className="flex items-center justify-center w-10 h-10 shrink-0 rounded-full cursor-pointer bg-white/5 text-accent-gold/50 absolute right-2">
                           <ArrowUp size={20} strokeWidth={3} />
                         </button>
-                      </div>
-                    )}
-                    {searchMode !== 1 && (
-                      <button disabled className="flex items-center justify-center w-10 h-10 shrink-0 rounded-full cursor-pointer bg-gradient-to-tr from-[#9b72cb]/20 to-[#4285f4]/20 text-[#9b72cb]/80 absolute right-2">
-                        <ArrowUp size={20} strokeWidth={3} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Slide 2: Keyword Match */}
-              <div
-                className={`w-[92%] shrink-0 pr-2 transition-all duration-300 ${searchMode === 2 ? 'opacity-100' : 'opacity-70 cursor-pointer'}`}
-                onClick={() => searchMode !== 2 && setSearchMode(2)}
-              >
-                <div className={`relative flex items-center bg-[#121212] rounded-full px-3 py-3 border transition-transform duration-300 ${searchMode === 2 ? 'border-zinc-500 scale-100 translate-y-0' : 'border-zinc-700 scale-[0.95] translate-y-[2px]'} w-full`}>
-                  <span className={`absolute -top-[7px] left-6 bg-[#121212] px-2 text-[10px] uppercase tracking-wider font-semibold z-10 leading-none ${searchMode === 2 ? 'text-zinc-400' : 'text-zinc-600'}`}>Keyword Match</span>
-
-                  <input
-                    ref={searchMode === 2 ? inputRef : null}
-                    type="text"
-                    placeholder={searchMode === 2 ? "Name, Author, or Director..." : "Keyword Mode"}
-                    disabled={searchMode !== 2}
-                    defaultValue={searchMode === 2 ? initialQuery : ''}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={handleSubmit}
-                    className="bg-transparent border-none outline-none w-full text-zinc-200 placeholder-zinc-600 text-base pl-1"
-                  />
-
-                  {searchMode === 2 && (
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10">
-                      {query && !loading && (
-                        <button onClick={handleClear} className="text-text-desc hover:text-white bg-white/5 rounded-full p-2 hover:bg-white/10 transition-all"><X size={16} /></button>
                       )}
-                      {loading && <div className="p-2"><Loader2 className="text-zinc-400 animate-spin" size={20} /></div>}
-                      <button
-                        onClick={handleSubmit}
-                        className={`flex items-center justify-center w-10 h-10 shrink-0 rounded-full transition-all ${loading ? 'bg-white/5 text-text-desc' : 'bg-accent-gold text-folio-black hover:bg-white hover:scale-105 active:scale-95 shadow-lg'}`}
-                      >
-                        <ArrowUp size={20} strokeWidth={3} />
-                      </button>
                     </div>
-                  )}
-                  {searchMode !== 2 && (
-                    <button disabled className="flex items-center justify-center w-10 h-10 shrink-0 rounded-full cursor-pointer bg-white/5 text-zinc-600 absolute right-2">
-                      <ArrowUp size={20} strokeWidth={3} />
-                    </button>
-                  )}
-                </div>
-              </div>
+                  </div>
+
+                  {/* Slide 1: AI Search (Index: setIndex * 3 + 1) */}
+                  <div
+                    className={`w-[88%] shrink-0 pr-2 transition-all duration-300 ${searchModeIndex === setIndex * 3 + 1 ? 'opacity-100' : 'opacity-90 cursor-pointer'}`}
+                    onClick={() => searchModeIndex !== setIndex * 3 + 1 && setSearchModeIndex(setIndex * 3 + 1)}
+                  >
+                    <div className={`relative w-full transition-transform duration-300 ai-gradient-border ${searchModeIndex === setIndex * 3 + 1 ? 'scale-100 translate-y-0' : 'scale-[0.95] translate-y-[2px]'}`}>
+                      <div className="absolute -top-[7px] left-6 bg-[#121212] px-2 z-10 leading-none flex items-center rounded-full">
+                        <span className="text-[10px] bg-gradient-to-r from-[#4285f4] to-[#9b72cb] text-transparent bg-clip-text uppercase tracking-wider font-semibold">✨ AI Search</span>
+                      </div>
+                      <div className={`relative flex items-center bg-[#121212] rounded-full px-3 py-[11px] w-full ${searchModeIndex !== setIndex * 3 + 1 ? 'bg-gradient-to-r from-[#4285f4]/5 to-[#9b72cb]/5' : ''}`}>
+
+                        <input
+                          ref={searchModeIndex === setIndex * 3 + 1 ? inputRef : null}
+                          type="text"
+                          placeholder={searchModeIndex === setIndex * 3 + 1 ? "Describe the vibe or plot..." : "AI Search Mode"}
+                          disabled={searchModeIndex !== setIndex * 3 + 1}
+                          defaultValue={searchModeIndex === setIndex * 3 + 1 ? initialQuery : ''}
+                          onChange={(e) => setQuery(e.target.value)}
+                          onKeyDown={handleSubmit}
+                          className="bg-transparent border-none outline-none w-full text-zinc-200 placeholder-zinc-500 text-base pl-1"
+                        />
+
+                        {searchModeIndex === setIndex * 3 + 1 && (
+                          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10">
+                            {query && !loading && (
+                              <button onClick={handleClear} className="text-text-desc hover:text-white bg-white/5 rounded-full p-2 hover:bg-white/10 transition-all"><X size={16} /></button>
+                            )}
+                            {loading && <div className="p-2"><Loader2 className="text-[#9b72cb] animate-spin" size={20} /></div>}
+                            <button
+                              onClick={handleSubmit}
+                              className={`flex items-center justify-center w-10 h-10 shrink-0 rounded-full transition-all ${loading ? 'bg-white/5 text-text-desc' : 'bg-gradient-to-tr from-[#9b72cb] to-[#4285f4] text-white hover:brightness-110 hover:scale-105 active:scale-95 shadow-lg'}`}
+                            >
+                              <ArrowUp size={20} strokeWidth={3} />
+                            </button>
+                          </div>
+                        )}
+                        {searchModeIndex !== setIndex * 3 + 1 && (
+                          <button disabled className="flex items-center justify-center w-10 h-10 shrink-0 rounded-full cursor-pointer bg-gradient-to-tr from-[#9b72cb]/20 to-[#4285f4]/20 text-[#9b72cb]/80 absolute right-2">
+                            <ArrowUp size={20} strokeWidth={3} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Slide 2: Keyword Match (Index: setIndex * 3 + 2) */}
+                  <div
+                    className={`w-[88%] shrink-0 pr-2 transition-all duration-300 ${searchModeIndex === setIndex * 3 + 2 ? 'opacity-100' : 'opacity-90 cursor-pointer'}`}
+                    onClick={() => searchModeIndex !== setIndex * 3 + 2 && setSearchModeIndex(setIndex * 3 + 2)}
+                  >
+                    <div className={`relative flex items-center bg-[#121212] rounded-full px-3 py-3 border border-zinc-500 w-full transition-transform duration-300 ${searchModeIndex === setIndex * 3 + 2 ? 'scale-100 translate-y-0' : 'scale-[0.95] translate-y-[2px]'}`}>
+                      <span className={`absolute -top-[7px] left-6 bg-[#121212] px-2 text-[10px] uppercase tracking-wider font-semibold z-10 leading-none ${searchModeIndex === setIndex * 3 + 2 ? 'text-zinc-400' : 'text-zinc-600'}`}>Keyword Match</span>
+
+                      <input
+                        ref={searchModeIndex === setIndex * 3 + 2 ? inputRef : null}
+                        type="text"
+                        placeholder={searchModeIndex === setIndex * 3 + 2 ? "Name, Author, or Director..." : "Keyword Mode"}
+                        disabled={searchModeIndex !== setIndex * 3 + 2}
+                        defaultValue={searchModeIndex === setIndex * 3 + 2 ? initialQuery : ''}
+                        onChange={(e) => setQuery(e.target.value)}
+                        onKeyDown={handleSubmit}
+                        className="bg-transparent border-none outline-none w-full text-zinc-200 placeholder-zinc-600 text-base pl-1"
+                      />
+
+                      {searchModeIndex === setIndex * 3 + 2 && (
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10">
+                          {query && !loading && (
+                            <button onClick={handleClear} className="text-text-desc hover:text-white bg-white/5 rounded-full p-2 hover:bg-white/10 transition-all"><X size={16} /></button>
+                          )}
+                          {loading && <div className="p-2"><Loader2 className="text-zinc-400 animate-spin" size={20} /></div>}
+                          <button
+                            onClick={handleSubmit}
+                            className={`flex items-center justify-center w-10 h-10 shrink-0 rounded-full transition-all ${loading ? 'bg-white/5 text-text-desc' : 'bg-accent-gold text-folio-black hover:bg-white hover:scale-105 active:scale-95 shadow-lg'}`}
+                          >
+                            <ArrowUp size={20} strokeWidth={3} />
+                          </button>
+                        </div>
+                      )}
+                      {searchModeIndex !== setIndex * 3 + 2 && (
+                        <button disabled className="flex items-center justify-center w-10 h-10 shrink-0 rounded-full cursor-pointer bg-white/5 text-zinc-600 absolute right-2">
+                          <ArrowUp size={20} strokeWidth={3} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </React.Fragment>
+              ))}
 
             </div>
           </div>
