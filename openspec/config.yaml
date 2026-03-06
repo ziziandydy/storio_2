@@ -1,0 +1,22 @@
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+context: |
+  Project: Storio 2
+  Metaphor: A quiet, sophisticated digital Pensieve or Folio for collecting movies, series, and books. Use terms like 'Folio', 'Stories', 'Memories'. AVOID terms like 'Desert', 'Sand', 'Dig'.
+  Tech Stack:
+    - Frontend: Next.js (React), Tailwind CSS. Mobile-first design focusing on iPhone 16 Pro.
+    - Backend: FastAPI (Python) on Vercel Serverless Functions.
+    - Database & Auth: Supabase (PostgreSQL), Supabase Auth.
+  Design System:
+    - Dark mode only. Colors: #0d0d0d (Folio Black), #121212 (Card Surface), #c5a059 (Storio Gold).
+    - UI: Bottom-heavy controls, glassmorphism, smooth animations.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+rules:
+  proposal:
+    - Propose features in Traditional Chinese (zh-TW).
+    - Focus on the highly polished, Apple-like user experience.

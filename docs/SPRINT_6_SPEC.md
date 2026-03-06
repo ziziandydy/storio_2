@@ -1,5 +1,6 @@
 # Storio 2 - Sprint 6: The Monthly Chronicle (月度分享)
 
+**狀態**: ✅ 已完成 (Completed)
 **Sprint 目標**: 專注於 **「輸出 (Output)」** 與 **「分享 (Sharing)」**。
 我們不開發複雜的內部回顧儀表板 (Dashboard)，而是直接打造一個能將當月收藏「實體化」為精美圖像的功能，讓策展人能將這份儀式感發佈至社群媒體 (Instagram Story)。
 
@@ -248,7 +249,9 @@ graph TD
 ---
 
 ## 5. 待辦事項 (Checklist)
-1.  [ ] **API**: 實作 `/stats/monthly` endpoint。
-2.  [ ] **UI**: 在 `CalendarView` 加入分享入口。
-3.  [ ] **Component**: 實作 `MonthlyRecapModal` (ShareModal 變體)。
-4.  [ ] **Templates**: 開發 Calendar (2x2 Grid, MMM), Collage (Separated, MMM), Waterfall (Central, N=9, MMM), Shelf (Tag, MMM) 四種視覺組件。
+1.  [x] **API**: 實作 `/stats/monthly` endpoint。
+2.  [x] **UI**: 在 `CalendarView` 加入分享入口。
+3.  [x] **Component**: 實作 `MonthlyRecapModal` (ShareModal 變體)。
+4.  [x] **Templates**: 開發 Calendar (2x2 Grid, MMM), Collage (Separated, MMM), Waterfall (Central, N=9, MMM), Shelf (Tag, MMM) 四種視覺組件。
+
+*(註：原訂於 Sprint 6 的其他擴充功能如 4:5/1:1 比例、推播通知等，已移至未來開發清單 (Future Roadmap) 中。)*

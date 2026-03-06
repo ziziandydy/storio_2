@@ -7,6 +7,7 @@ from app.schemas.item import StoryBase, ItemDetailResponse, Review, MediaAsset
 from app.core.config import settings
 from app.services.ai_recommendation_service import AIRecommendationService
 from app.services.trending_service import TrendingService
+from app.schemas.search import AISearchIntent
 
 class SearchService:
     BASE_URL_TMDB = "https://api.themoviedb.org/3"
@@ -545,3 +546,95 @@ class SearchService:
             gbooks_task = SearchService.search_google_books(client, query, language)
             results_tmdb, results_gbooks = await asyncio.gather(tmdb_task, gbooks_task)
             return results_tmdb + results_gbooks
+
+    @staticmethod
+    async def search_by_intent(client: httpx.AsyncClient, intent: AISearchIntent, language: str = "zh-TW") -> List[StoryBase]:
+        if not intent.is_semantic or not intent.tmdb_params and not intent.google_books_params:
+            # Fallback to standard multi-search
+            if intent.media_type == "movie":
+                return await SearchService.search_tmdb(client, intent.fallback_query, language)
+            elif intent.media_type == "book":
+                return await SearchService.search_google_books(client, intent.fallback_query, language)
+            elif intent.media_type == "tv":
+                # Current search_tmdb searches both movie and tv, but we can filter if needed. The search_tmdb already returns both.
+                # Actually, our search_tmdb does both, let's just use it and filter
+                results = await SearchService.search_tmdb(client, intent.fallback_query, language)
+                return [r for r in results if r.media_type == "tv"]
+            else:
+                return await SearchService.search_multi(intent.fallback_query, language)
+
+        results = []
+        if intent.media_type in ["movie", "tv"] and intent.tmdb_params:
+            endpoint = "movie" if intent.media_type == "movie" else "tv"
+            params = {"language": language, "region": "TW", "sort_by": intent.tmdb_params.sort_by or "popularity.desc"}
+            if intent.tmdb_params.with_genres:
+                params["with_genres"] = intent.tmdb_params.with_genres
+            if intent.tmdb_params.with_keywords:
+                params["with_keywords"] = intent.tmdb_params.with_keywords
+            if intent.tmdb_params.with_cast:
+                params["with_cast"] = intent.tmdb_params.with_cast
+            if intent.tmdb_params.with_crew:
+                params["with_crew"] = intent.tmdb_params.with_crew
+            if intent.tmdb_params.primary_release_year:
+                if intent.media_type == "movie":
+                    params["primary_release_year"] = intent.tmdb_params.primary_release_year
+                else:
+                    params["first_air_date_year"] = intent.tmdb_params.primary_release_year
+                    
+            headers = {}
+            if settings.TMDB_ACCESS_TOKEN: headers["Authorization"] = f"Bearer {settings.TMDB_ACCESS_TOKEN}"
+            elif settings.TMDB_API_KEY: params["api_key"] = settings.TMDB_API_KEY
+            else: return []
+
+            try:
+                response = await client.get(f"{SearchService.BASE_URL_TMDB}/discover/{endpoint}", params=params, headers=headers)
+                response.raise_for_status()
+                data = response.json()
+                for item in data.get("results", [])[:20]:
+                    poster = f"https://image.tmdb.org/t/p/w500{item['poster_path']}" if item.get('poster_path') else None
+                    if not poster: continue
+                    title = item.get("title") if intent.media_type == "movie" else item.get("name")
+                    date_field = "release_date" if intent.media_type == "movie" else "first_air_date"
+                    subtype = "movie" if intent.media_type == "movie" else "tv"
+                    results.append(StoryBase(
+                        title=title or "Unknown",
+                        media_type="tv" if intent.media_type == "tv" else "movie",
+                        subtype=subtype,
+                        year=SearchService._extract_year(item.get(date_field)),
+                        external_id=str(item.get("id")),
+                        poster_path=poster,
+                        source="tmdb"
+                    ))
+            except Exception as e:
+                print(f"TMDB Discover Error: {e}")
+
+        # Adding Google Books specific semantic parameters
+        if intent.media_type == "book" and intent.google_books_params:
+            q = intent.google_books_params.q or "v:*"
+            if intent.google_books_params.subject:
+                q += f"+subject:{intent.google_books_params.subject}"
+            if intent.google_books_params.inauthor:
+                q += f"+inauthor:{intent.google_books_params.inauthor}"
+
+            params = {"q": q, "maxResults": 20, "printType": "books", "langRestrict": language[:2]}
+            if settings.GOOGLE_BOOKS_API_KEY: params["key"] = settings.GOOGLE_BOOKS_API_KEY
+            try:
+                response = await client.get(SearchService.BASE_URL_GBOOKS, params=params)
+                response.raise_for_status()
+                data = response.json()
+                for item in data.get("items", []):
+                    info = item.get("volumeInfo", {})
+                    poster = SearchService._optimize_gb_cover(info.get("imageLinks", {}))
+                    if not poster: continue
+                    results.append(StoryBase(
+                        title=info.get("title", "Unknown"),
+                        media_type="book",
+                        year=SearchService._extract_year(info.get("publishedDate")),
+                        external_id=item.get("id"),
+                        poster_path=poster,
+                        source="google_books"
+                    ))
+            except Exception as e:
+                print(f"Google Books Discover Error: {e}")
+                
+        return results

@@ -45,4 +45,46 @@ h1, h2, h3, h4, h5, h6 {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* Auto Search Breathing Border */
+  .border-auto-breathe {
+    border: 1px solid rgba(197, 160, 89, 0.3);
+    animation: breathe 3s ease-in-out infinite;
+  }
+  
+  /* AI Search Gradient Border */
+  .ai-gradient-border {
+    position: relative;
+    border-radius: 9999px;
+  }
+  .ai-gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #4285f4, #9b72cb, #d96570, #4285f4);
+    background-size: 300% 100%;
+    animation: gradientShift 4s linear infinite;
+    z-index: -1;
+  }
+}
+
+@keyframes breathe {
+  0%, 100% {
+    box-shadow: 0 0 5px 0px rgba(197, 160, 89, 0.1);
+    border-color: rgba(197, 160, 89, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px 0px rgba(197, 160, 89, 0.4);
+    border-color: rgba(197, 160, 89, 0.7);
+  }
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
 }

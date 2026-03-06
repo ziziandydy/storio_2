@@ -79,13 +79,16 @@
 - [x] **iOS Safari Share Image Blank/Duplicate**: `html-to-image` exports fail or produce identical images on Safari due to internal Cache Key truncation of Proxy URLs (`/_next/image`).
   - *Fix*: Added `includeQueryParams: true` to prevent Base64 cache collisions, explicitly set CORS (`crossOrigin="anonymous"`), and apply image `w` compression payload thinning.
 
-## 📅 SPRINT 6: 月度回顧與擴充功能 (Recap & Expansions)
-- [ ] **月度回顧**: 實作行事曆視圖的總結分享 (Instagram 貼文格式)。
+## 📅 SPRINT 6: 月度回顧與擴充功能 (已完成核心分享機制)
+- [x] **月度回顧**: 實作行事曆視圖的總結分享 (Instagram 貼文格式)。
+
+## 🔮 未來開發事項 (Future Roadmap)
 - [ ] **分享格式擴充**: 實作不同比例的圖片分享 (Portrait 4:5, Square 1:1)。
 - [ ] **智慧提醒 (Notifications)**: 規劃與客製化推播通知功能，提醒用戶記錄。
 - [ ] **影像辨識 (Vision AI)**: 支援上傳票根或截圖，自動辨識並快速加入 Memory。
 - [ ] **新增類別 (Shows)**: 擴充系統以支援「展演 (Show)」類別（如表演、劇場、演唱會等），包含搜索與建立 Memory。
 - [ ] **Apple Sign-in**: 待註冊 Apple Developer 帳號後串接。
+- [ ] **智慧搜尋 (AI Search)**: 將現有搜尋升級為 AI 驅動的自然語言搜尋，允許使用者透過中英文、作者、書名、作品特色等描述快速尋找與發現作品。
 
 ## 🎨 UI/UX 優化 (UI/UX Polish)
 - [x] **多次觀看記錄 (Multi-View)**: 已確立設計方向，針對重複觀看同一作品，將建立**多張獨立的 Memory Card**。

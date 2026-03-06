@@ -2,7 +2,9 @@ from typing import List
 import httpx
 from fastapi import APIRouter, Query, HTTPException, Depends
 from app.schemas.item import SearchResponse, StoryBase, ItemDetailResponse
+from app.schemas.search import AISearchRequest
 from app.services.search_service import SearchService
+from app.services.semantic_search_service import SemanticSearchService
 from app.api.deps import get_language
 
 router = APIRouter()
@@ -54,7 +56,25 @@ async def search(
     language: str = Depends(get_language)
 ):
     """
-    Search for movies and books.
+    Search for movies and books (Standard).
     """
     results = await SearchService.search_multi(query=q, language=language)
     return SearchResponse(results=results, page=page, total_results=len(results))
+
+@router.post("/ai", response_model=SearchResponse)
+async def search_ai(
+    request: AISearchRequest,
+    page: int = 1,
+    language: str = Depends(get_language)
+):
+    """
+    Semantic Search using AI intent parsing.
+    """
+    # 1. Parse intent using the service
+    intent = await SemanticSearchService.parse_intent(request.query, request.media_type)
+    
+    # 2. Call TMDB/Google Books with parsed structured parameters
+    async with httpx.AsyncClient() as client:
+        results = await SearchService.search_by_intent(client, intent, language)
+        
+    return SearchResponse(results=results, page=1, total_results=len(results))

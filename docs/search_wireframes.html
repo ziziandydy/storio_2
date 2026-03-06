@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storio Semantic Search Wireframes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0d0d0d;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* 呼吸發光效果 (Auto Mode) */
+        @keyframes subtle-breathe {
+
+            0%,
+            100% {
+                border-color: rgba(197, 160, 89, 0.4);
+                box-shadow: 0 0 4px rgba(197, 160, 89, 0.1);
+            }
+
+            50% {
+                border-color: rgba(197, 160, 89, 0.8);
+                box-shadow: 0 0 10px rgba(197, 160, 89, 0.3);
+            }
+        }
+
+        .border-auto-breathe {
+            animation: subtle-breathe 2.5s ease-in-out infinite;
+        }
+
+        /* 漸層邊框效果 (AI Mode) */
+        .ai-gradient-border {
+            position: relative;
+            background: linear-gradient(90deg, #4285f4, #9b72cb, #d96570, #4285f4);
+            background-size: 200% 200%;
+            animation: gradient-shift 4s linear infinite;
+            padding: 1.5px;
+            border-radius: 9999px;
+            box-shadow: 0 0 12px rgba(155, 114, 203, 0.2);
+        }
+
+        @keyframes gradient-shift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            100% {
+                background-position: 200% 50%;
+            }
+        }
+
+        /* 跑馬燈/輪播隱藏捲軸 */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-8 flex flex-col gap-12 max-w-sm mx-auto md:max-w-md mt-10">
+
+    <!-- Header -->
+    <div class="text-center mb-4">
+        <h1 class="text-2xl font-bold text-[#c5a059] mb-2">Search UI Wireframes</h1>
+        <p class="text-sm text-zinc-400">互動式概念草稿：展示三種模式外框與不同互動設計。</p>
+    </div>
+
+    <!-- 狀態對照表 -->
+    <div class="bg-zinc-900/50 p-4 rounded-xl border border-zinc-800 text-sm mb-4">
+        <h3 class="font-semibold text-zinc-200 mb-3">Modes Styling Reference</h3>
+        <div class="flex flex-col gap-4">
+            <!-- Keyword -->
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-6 rounded-full border border-zinc-700 bg-[#121212]"></div>
+                <span class="text-zinc-400">Keyword Match (Original)</span>
+            </div>
+            <!-- Auto -->
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-6 rounded-full border-auto-breathe bg-[#121212]"></div>
+                <span class="text-[#c5a059]">Auto (Subtle Gold Breathe)</span>
+            </div>
+            <!-- AI -->
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-6 ai-gradient-border">
+                    <div class="w-full h-full bg-[#121212] rounded-full"></div>
+                </div>
+                <span class="bg-gradient-to-r from-[#4285f4] to-[#9b72cb] text-transparent bg-clip-text font-medium">AI
+                    Search (Gemini Gradient)</span>
+            </div>
+        </div>
+    </div>
+
+    <hr class="border-zinc-800">
+
+    <!-- Option 1: Inline Prefix -->
+    <div class="flex flex-col gap-2">
+        <h2 class="text-lg font-medium text-white">1. Inline Prefix (左側前綴標籤)</h2>
+        <p class="text-xs text-zinc-500 mb-2">點擊左側標籤展開選單，切換時整條 Input 外框改變。</p>
+
+        <!-- Auto 狀態 -->
+        <div class="relative flex items-center bg-[#121212] rounded-full px-4 py-3 border-auto-breathe">
+            <button
+                class="flex items-center gap-1 text-[#c5a059] text-sm pr-2 border-r border-zinc-800 mr-2 focus:outline-none">
+                <span class="font-medium">Auto</span>
+                <span class="text-[10px]">▼</span>
+            </button>
+            <input type="text" placeholder="Recall a story..."
+                class="bg-transparent border-none outline-none w-full text-zinc-200 placeholder-zinc-600 text-sm">
+            <button
+                class="flex items-center justify-center w-[38px] h-[38px] rounded-full bg-[#c5a059] text-[#0d0d0d] hover:bg-white hover:scale-105 active:scale-95 shadow-lg transition-all absolute right-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="19" x2="12" y2="5"></line>
+                    <polyline points="5 12 12 5 19 12"></polyline>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Option 3: Trailing Mini -->
+    <div class="flex flex-col gap-2 mt-4">
+        <h2 class="text-lg font-medium text-white">3. Trailing Mini-Toggle (右側微型開關)</h2>
+        <p class="text-xs text-zinc-500 mb-2">在輸入框末端放置一個微小按鈕，點擊循環切換模式。</p>
+
+        <!-- AI 狀態 -->
+        <div class="ai-gradient-border w-full">
+            <div class="relative flex items-center bg-[#121212] rounded-full px-4 py-[11px] w-full">
+                <input type="text" placeholder="Describe what you imagine..."
+                    class="bg-transparent border-none outline-none w-full text-zinc-200 placeholder-zinc-600/70 text-sm">
+
+                <button
+                    class="flex items-center gap-1 text-xs shrink-0 bg-zinc-800/50 hover:bg-zinc-800 px-2 py-1 rounded-md text-zinc-300 mr-2 transition-colors border border-zinc-700/50">
+                    <span class="text-[#9b72cb]">✨</span> AI
+                </button>
+
+
+                <button
+                    class="flex items-center justify-center w-[38px] h-[38px] shrink-0 rounded-full bg-[#c5a059] text-[#0d0d0d] hover:bg-white hover:scale-105 active:scale-95 shadow-lg transition-all"
+                    style="margin-right: -4px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="19" x2="12" y2="5"></line>
+                        <polyline points="5 12 12 5 19 12"></polyline>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Option: Swipe/Peek Carousel -->
+    <div class="flex flex-col gap-2 mt-4">
+        <h2 class="text-lg font-medium text-white">5. Swipe/Peek Input (滑動露出版)</h2>
+        <p class="text-xs text-zinc-500 mb-2">畫面右邊露出一角下一個輸入框，使用者可左右滑動或點擊邊緣來切換外層。保留最高級的沉浸感。</p>
+
+        <!-- 模擬 Carousel 的 Container (僅示意互動) -->
+        <div class="relative w-full overflow-hidden py-2" id="carousel-container">
+            <div class="flex transition-transform duration-300 ease-out" id="carousel-inner"
+                style="transform: translateX(0%);">
+
+                <!-- Slide 1: Auto -->
+                <div class="w-[88%] shrink-0 pr-2 transition-opacity duration-300" id="slide-0">
+                    <div
+                        class="relative flex items-center bg-[#121212] rounded-full px-3 py-3 border-auto-breathe w-full scale-[1]">
+                        <span
+                            class="absolute -top-6 left-2 text-[10px] text-[#c5a059] uppercase tracking-wider font-semibold">Auto</span>
+
+                        <!-- Image Search Button -->
+                        <button
+                            class="flex items-center justify-center w-8 h-8 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors shrink-0 mr-2"
+                            title="Search by Image">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path
+                                    d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                                </path>
+                                <circle cx="12" cy="13" r="4"></circle>
+                            </svg>
+                        </button>
+
+                        <input type="text" placeholder="Recall a story..." disabled
+                            class="bg-transparent border-none outline-none w-full text-zinc-200 placeholder-zinc-600 text-sm pl-1">
+                        <button
+                            class="flex items-center justify-center w-[38px] h-[38px] shrink-0 rounded-full bg-[#c5a059] text-[#0d0d0d] opacity-50 absolute right-2"
+                            disabled>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="19" x2="12" y2="5"></line>
+                                <polyline points="5 12 12 5 19 12"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Slide 2: AI -->
+                <div class="w-[88%] shrink-0 pr-2 opacity-60 transition-opacity duration-300" id="slide-1"
+                    onclick="slideTo(1)">
+                    <div class="ai-gradient-border w-full scale-[0.95] translate-y-[2px]" id="slide-1-inner">
+                        <span
+                            class="absolute -top-7 left-2 text-[10px] bg-gradient-to-r from-[#4285f4] to-[#9b72cb] text-transparent bg-clip-text uppercase tracking-wider font-semibold">✨
+                            AI Search</span>
+                        <div class="relative flex items-center bg-[#121212] rounded-full px-3 py-[11px] w-full">
+
+                            <!-- Image Search Button -->
+                            <button
+                                class="flex items-center justify-center w-8 h-8 rounded-full text-zinc-400 hover:text-[#9b72cb] hover:bg-zinc-800 transition-colors shrink-0 mr-2"
+                                title="Search by Image" disabled id="img-btn-slide-1">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path
+                                        d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                                    </path>
+                                    <circle cx="12" cy="13" r="4"></circle>
+                                </svg>
+                            </button>
+
+                            <input type="text" placeholder="Describe the vibe..." disabled
+                                class="bg-transparent border-none outline-none w-full text-zinc-400 text-sm pl-1">
+                            <button
+                                class="flex items-center justify-center w-[38px] h-[38px] shrink-0 rounded-full bg-[#c5a059] text-[#0d0d0d] transition-all absolute right-2"
+                                disabled id="btn-slide-1">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="12" y1="19" x2="12" y2="5"></line>
+                                    <polyline points="5 12 12 5 19 12"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: Keyword Match -->
+                <div class="w-[88%] shrink-0 pr-2 opacity-30 transition-opacity duration-300" id="slide-2"
+                    onclick="slideTo(2)">
+                    <div class="relative flex items-center bg-[#121212] rounded-full px-3 py-3 border border-zinc-700 w-full scale-[0.9] translate-y-[4px]"
+                        id="slide-2-inner">
+                        <span
+                            class="absolute -top-6 left-2 text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Keyword
+                            Match</span>
+
+                        <!-- Image Search Button -->
+                        <button
+                            class="flex items-center justify-center w-8 h-8 rounded-full text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors shrink-0 mr-2"
+                            title="Search by Image" disabled id="img-btn-slide-2">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path
+                                    d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                                </path>
+                                <circle cx="12" cy="13" r="4"></circle>
+                            </svg>
+                        </button>
+
+                        <input type="text" placeholder="Name, Author, or Director..." disabled
+                            class="bg-transparent border-none outline-none w-full text-zinc-500 text-sm pl-1">
+                        <button
+                            class="flex items-center justify-center w-[38px] h-[38px] shrink-0 rounded-full bg-[#c5a059] text-[#0d0d0d] absolute right-2"
+                            disabled id="btn-slide-2">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="19" x2="12" y2="5"></line>
+                                <polyline points="5 12 12 5 19 12"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <p class="text-[10px] text-zinc-600 text-center mt-2">↑ 點擊右側露出的半透明輸入框來切換</p>
+
+    </div>
+
+    <!-- Interactive script for Option 5 -->
+    <script>
+        let currentIndex = 0;
+
+        function slideTo(index) {
+            if (currentIndex === index) return;
+
+            const inner = document.getElementById('carousel-inner');
+            // 計算位移: 每次移動 w-[88%] (88vw 相對父容器寬)
+            const translateX = -(index * 88);
+            inner.style.transform = `translateX(${translateX}%)`;
+
+            // 更新狀態
+            for (let i = 0; i < 3; i++) {
+                const slide = document.getElementById(`slide-${i}`);
+                const innerBox = slide.querySelector('div'); // scale box
+                const input = slide.querySelector('input');
+
+                if (i === index) {
+                    slide.style.opacity = '1';
+                    innerBox.style.transform = 'scale(1) translateY(0px)';
+                    input.removeAttribute('disabled');
+                    const btn = document.getElementById(`btn-slide-${i}`);
+                    if (btn) btn.removeAttribute('disabled');
+                    const imgBtn = document.getElementById(`img-btn-slide-${i}`);
+                    if (imgBtn) imgBtn.removeAttribute('disabled');
+                } else {
+                    // 對焦點外的漸弱及縮小
+                    const distance = Math.abs(index - i);
+                    if (distance === 1) {
+                        slide.style.opacity = '0.6';
+                        innerBox.style.transform = 'scale(0.95) translateY(2px)';
+                    } else {
+                        slide.style.opacity = '0.3';
+                        innerBox.style.transform = 'scale(0.9) translateY(4px)';
+                    }
+                    input.setAttribute('disabled', 'true');
+                    const btn = document.getElementById(`btn-slide-${i}`);
+                    if (btn) btn.setAttribute('disabled', 'true');
+                    const imgBtn = document.getElementById(`img-btn-slide-${i}`);
+                    if (imgBtn) imgBtn.setAttribute('disabled', 'true');
+                    // 為了可以用點擊觸發，非 Active 加入 onclick (簡單防呆)
+                    slide.setAttribute('onclick', `slideTo(${i})`);
+                }
+            }
+
+            // 移除 Active 項目的 onclick 以免干擾輸入
+            document.getElementById(`slide-${index}`).removeAttribute('onclick');
+            currentIndex = index;
+        }
+
+        // 允許左滑回上一個
+        let touchstartX = 0;
+        let touchendX = 0;
+
+        document.getElementById('carousel-container').addEventListener('touchstart', e => {
+            touchstartX = e.changedTouches[0].screenX;
+        });
+        document.getElementById('carousel-container').addEventListener('touchend', e => {
+            touchendX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            if (touchendX < touchstartX - 40) { // 向左滑 (下一個)
+                if (currentIndex < 2) slideTo(currentIndex + 1);
+            }
+            if (touchendX > touchstartX + 40) { // 向右滑 (上一個)
+                if (currentIndex > 0) slideTo(currentIndex - 1);
+            }
+        }
+    </script>
+</body>
+
+</html>

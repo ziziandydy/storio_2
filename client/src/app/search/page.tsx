@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
-import { Search, Loader2, ArrowLeft, Bookmark, Film, BookOpen, Ticket, X, ArrowUp } from 'lucide-react';
+import React, { useState, useEffect, Suspense, useRef } from 'react';
+import { Search, Loader2, ArrowLeft, Bookmark, Film, BookOpen, Ticket, X, ArrowUp, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -39,7 +39,16 @@ function SearchContent() {
   const [loading, setLoading] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
   const [filter, setFilter] = useState<'movie' | 'book' | 'tv'>(initialFilter);
-  const inputRef = React.useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const [searchMode, setSearchMode] = useState<0 | 1 | 2>(0); // 0: Auto, 1: AI, 2: Keyword
+  const touchStartX = useRef<number>(0);
+
+  // Semantic Intent Detection (Auto Mode)
+  const isSemanticQuery = (q: string) => /怎麼|什麼|關於|想要|推薦|年代|哪部|哪一|有沒有|.*的.*/.test(q) || q.length > 12;
+  const isAutoSemantic = searchMode === 0 && isSemanticQuery(query);
+  const actualSearchMode = searchMode === 0 ? (isAutoSemantic ? 1 : 2) : searchMode;
+  const isAiSearch = searchMode === 1 || isAutoSemantic;
   const { token, loading: authLoading } = useAuth();
   const { showToast } = useToast();
   const { t } = useTranslation();
@@ -118,11 +127,29 @@ function SearchContent() {
 
       setLoading(true);
       try {
-        const res = await fetch(getApiUrl(`/api/v1/search/?q=${encodeURIComponent(debouncedQuery)}`), {
-          headers: {
-            'Accept-Language': language
-          }
-        });
+        let res;
+        if (isAiSearch) {
+          // AI Search Endpoint
+          res = await fetch(getApiUrl(`/api/v1/search/ai`), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept-Language': language
+            },
+            body: JSON.stringify({
+              query: debouncedQuery,
+              media_type: filter === 'movie' || filter === 'tv' ? filter : 'book' // or 'all'
+            })
+          });
+        } else {
+          // Standard Search Endpoint
+          res = await fetch(getApiUrl(`/api/v1/search/?q=${encodeURIComponent(debouncedQuery)}`), {
+            headers: {
+              'Accept-Language': language
+            }
+          });
+        }
+
         if (!res.ok) {
           console.error("Search API returned non-OK status");
           setResults([]);
@@ -189,7 +216,7 @@ function SearchContent() {
 
   return (
     <div className="min-h-screen bg-folio-black flex flex-col relative">
-      {/* Auth Loading Overlay */}
+      {/* Loading Overlay */}
       {authLoading && (
         <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
           <div className="flex flex-col items-center gap-6">
@@ -203,6 +230,23 @@ function SearchContent() {
               />
             </div>
             <p className="text-accent-gold font-bold tracking-[0.3em] uppercase text-xs animate-pulse">Consulting the Folio...</p>
+          </div>
+        </div>
+      )}
+
+      {loading && isAiSearch && !authLoading && (
+        <div className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm flex items-center justify-center">
+          <div className="flex flex-col items-center gap-6">
+            <div className="relative w-32 h-32">
+              <Image
+                src="/image/loading.gif"
+                alt="Loading AI..."
+                fill
+                className="object-contain"
+                unoptimized
+              />
+            </div>
+            <p className="bg-gradient-to-r from-[#4285f4] to-[#9b72cb] text-transparent bg-clip-text font-bold tracking-[0.2em] uppercase text-xs animate-pulse">Consulting the archival spirits...</p>
           </div>
         </div>
       )}
@@ -263,8 +307,8 @@ function SearchContent() {
       </main>
 
       {/* Sticky Bottom Search Controls */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 px-6 pb-8 pt-6 bg-gradient-to-t from-folio-black via-folio-black/95 to-transparent">
-        <div className="max-w-md mx-auto flex flex-col gap-4">
+      <div className="fixed bottom-0 left-0 right-0 z-40 px-6 pb-8 pt-20 bg-gradient-to-t from-[#0d0d0d] via-[#0d0d0d] via-65% to-transparent pointer-events-none">
+        <div className="max-w-md mx-auto flex flex-col gap-4 pointer-events-auto">
           {/* Segmented Control */}
           <div className="w-full bg-folio-card/80 backdrop-blur-xl p-1 rounded-full border border-white/10 flex relative overflow-hidden shadow-2xl">
             <div
@@ -287,47 +331,162 @@ function SearchContent() {
             </button>
           </div>
 
-          {/* Search Input */}
-          <div className="relative group w-full">
-            <div className="absolute inset-0 bg-accent-gold/5 blur-xl rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
-            <input
-              ref={inputRef}
-              type="text"
-              placeholder={t.search.placeholder}
-              defaultValue={initialQuery}
-              onChange={(e) => setQuery(e.target.value)} // Just for UI state (clear btn)
-              onKeyDown={handleSubmit}
-              className="w-full bg-folio-card/80 backdrop-blur-md hover:bg-folio-card focus:bg-black border border-white/10 focus:border-accent-gold/50 rounded-full py-4 pl-7 pr-32 text-base text-white placeholder:text-text-desc/50 focus:outline-none focus:border-accent-gold transition-all shadow-xl relative z-0"
-              autoFocus
-            />
+          {/* Search Input Carousel */}
+          <div
+            className="relative w-full overflow-hidden py-2"
+            onTouchStart={(e) => touchStartX.current = e.changedTouches[0].screenX}
+            onTouchEnd={(e) => {
+              const touchEndX = e.changedTouches[0].screenX;
+              if (touchEndX < touchStartX.current - 40) { // Swipe Left (Next)
+                setSearchMode(prev => ((prev + 1) % 3) as 0 | 1 | 2);
+              }
+              if (touchEndX > touchStartX.current + 40) { // Swipe Right (Prev)
+                setSearchMode(prev => ((prev + 2) % 3) as 0 | 1 | 2);
+              }
+            }}
+          >
+            <div
+              className="flex transition-transform duration-300 ease-out"
+              style={{ transform: `translateX(-${searchMode * 88}%)` }}
+            >
 
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10">
-              {query && !loading && (
-                <button
-                  onClick={handleClear}
-                  className="text-text-desc hover:text-white bg-white/5 rounded-full p-2 hover:bg-white/10 transition-all"
-                  title="Clear"
-                >
-                  <X size={16} />
-                </button>
-              )}
-
-              {loading && (
-                <div className="p-2">
-                  <Loader2 className="text-accent-gold animate-spin" size={20} />
-                </div>
-              )}
-
-              <button
-                onClick={(e) => handleSubmit(e)}
-                className={`flex items-center justify-center w-12 h-12 rounded-full transition-all ${loading ? 'bg-white/5 text-text-desc' : 'bg-accent-gold text-folio-black hover:bg-white hover:scale-105 active:scale-95 shadow-lg'
-                  }`}
-                title="Search"
+              {/* Slide 0: Auto */}
+              <div
+                className={`w-[88%] shrink-0 pr-2 transition-all duration-300 ${searchMode === 0 ? 'opacity-100' : searchMode === 1 ? 'opacity-60 cursor-pointer' : 'opacity-30 cursor-pointer'}`}
+                onClick={() => searchMode !== 0 && setSearchMode(0)}
               >
-                <ArrowUp size={22} strokeWidth={3} />
-              </button>
+                <div className={`relative flex items-center bg-[#121212] rounded-full px-3 py-3 w-full transition-transform duration-300 ${searchMode === 0 ? 'scale-100 translate-y-0 border-auto-breathe' : searchMode === 1 ? 'scale-[0.95] translate-y-[2px] border border-zinc-800' : 'scale-[0.9] translate-y-[4px] border border-zinc-800'}`}>
+                  <span className="absolute -top-[7px] left-6 bg-[#121212] px-2 text-[10px] text-accent-gold uppercase tracking-wider font-semibold z-10 leading-none">Auto</span>
+
+                  {/* Future Image Search Placeholder 
+                  <button className="flex items-center justify-center w-8 h-8 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors shrink-0 mr-2" disabled={searchMode !== 0}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                  </button>
+                  */}
+
+                  <input
+                    ref={searchMode === 0 ? inputRef : null}
+                    type="text"
+                    placeholder="Recall a story..."
+                    disabled={searchMode !== 0}
+                    defaultValue={searchMode === 0 ? initialQuery : ''}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={handleSubmit}
+                    className="bg-transparent border-none outline-none w-full text-zinc-200 placeholder-zinc-600 text-base pl-1"
+                  />
+
+                  {/* Submit logic handles clearing/loading state on the active input */}
+                  {searchMode === 0 && (
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10">
+                      {query && !loading && (
+                        <button onClick={handleClear} className="text-text-desc hover:text-white bg-white/5 rounded-full p-2 hover:bg-white/10 transition-all"><X size={16} /></button>
+                      )}
+                      {loading && <div className="p-2"><Loader2 className="text-accent-gold animate-spin" size={20} /></div>}
+                      <button
+                        onClick={handleSubmit}
+                        className={`flex items-center justify-center w-10 h-10 shrink-0 rounded-full transition-all ${loading ? 'bg-white/5 text-text-desc' : 'bg-accent-gold text-folio-black hover:bg-white hover:scale-105 active:scale-95 shadow-lg'}`}
+                      >
+                        <ArrowUp size={20} strokeWidth={3} />
+                      </button>
+                    </div>
+                  )}
+                  {searchMode !== 0 && (
+                    <button disabled className="flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-accent-gold text-folio-black opacity-50 absolute right-2">
+                      <ArrowUp size={20} strokeWidth={3} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Slide 1: AI Search */}
+              <div
+                className={`w-[88%] shrink-0 pr-2 transition-all duration-300 ${searchMode === 1 ? 'opacity-100' : searchMode === 0 ? 'opacity-60 cursor-pointer' : searchMode === 2 ? 'opacity-60 cursor-pointer' : 'opacity-30 cursor-pointer'}`}
+                onClick={() => searchMode !== 1 && setSearchMode(1)}
+              >
+                <div className={`relative w-full transition-transform duration-300 ${searchMode === 1 ? 'ai-gradient-border scale-100 translate-y-0' : searchMode === 0 ? 'scale-[0.95] translate-y-[2px] border border-zinc-800 rounded-full' : 'scale-[0.95] translate-y-[2px] border border-zinc-800 rounded-full'}`}>
+                  <div className="absolute -top-[7px] left-6 bg-[#121212] px-2 z-10 leading-none flex items-center rounded-full">
+                    <span className="text-[10px] bg-gradient-to-r from-[#4285f4] to-[#9b72cb] text-transparent bg-clip-text uppercase tracking-wider font-semibold">✨ AI Search</span>
+                  </div>
+                  <div className="relative flex items-center bg-[#121212] rounded-full px-3 py-[11px] w-full">
+
+                    <input
+                      ref={searchMode === 1 ? inputRef : null}
+                      type="text"
+                      placeholder="Describe the vibe or plot..."
+                      disabled={searchMode !== 1}
+                      defaultValue={searchMode === 1 ? initialQuery : ''}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onKeyDown={handleSubmit}
+                      className="bg-transparent border-none outline-none w-full text-zinc-200 placeholder-zinc-500 text-base pl-1"
+                    />
+
+                    {searchMode === 1 && (
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10">
+                        {query && !loading && (
+                          <button onClick={handleClear} className="text-text-desc hover:text-white bg-white/5 rounded-full p-2 hover:bg-white/10 transition-all"><X size={16} /></button>
+                        )}
+                        {loading && <div className="p-2"><Loader2 className="text-[#9b72cb] animate-spin" size={20} /></div>}
+                        <button
+                          onClick={handleSubmit}
+                          className={`flex items-center justify-center w-10 h-10 shrink-0 rounded-full transition-all ${loading ? 'bg-white/5 text-text-desc' : 'bg-gradient-to-tr from-[#9b72cb] to-[#4285f4] text-white hover:brightness-110 hover:scale-105 active:scale-95 shadow-lg'}`}
+                        >
+                          <ArrowUp size={20} strokeWidth={3} />
+                        </button>
+                      </div>
+                    )}
+                    {searchMode !== 1 && (
+                      <button disabled className="flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-gradient-to-tr from-[#9b72cb] to-[#4285f4] text-white opacity-50 absolute right-2">
+                        <ArrowUp size={20} strokeWidth={3} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Slide 2: Keyword Match */}
+              <div
+                className={`w-[88%] shrink-0 pr-2 transition-all duration-300 ${searchMode === 2 ? 'opacity-100' : 'opacity-30 cursor-pointer'}`}
+                onClick={() => searchMode !== 2 && setSearchMode(2)}
+              >
+                <div className={`relative flex items-center bg-[#121212] rounded-full px-3 py-3 border border-zinc-700 w-full transition-transform duration-300 ${searchMode === 2 ? 'scale-100 translate-y-0' : 'scale-[0.9] translate-y-[4px]'}`}>
+                  <span className="absolute -top-[7px] left-6 bg-[#121212] px-2 text-[10px] text-zinc-500 uppercase tracking-wider font-semibold z-10 leading-none">Keyword Match</span>
+
+                  <input
+                    ref={searchMode === 2 ? inputRef : null}
+                    type="text"
+                    placeholder="Name, Author, or Director..."
+                    disabled={searchMode !== 2}
+                    defaultValue={searchMode === 2 ? initialQuery : ''}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={handleSubmit}
+                    className="bg-transparent border-none outline-none w-full text-zinc-200 placeholder-zinc-600 text-base pl-1"
+                  />
+
+                  {searchMode === 2 && (
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10">
+                      {query && !loading && (
+                        <button onClick={handleClear} className="text-text-desc hover:text-white bg-white/5 rounded-full p-2 hover:bg-white/10 transition-all"><X size={16} /></button>
+                      )}
+                      {loading && <div className="p-2"><Loader2 className="text-zinc-400 animate-spin" size={20} /></div>}
+                      <button
+                        onClick={handleSubmit}
+                        className={`flex items-center justify-center w-10 h-10 shrink-0 rounded-full transition-all ${loading ? 'bg-white/5 text-text-desc' : 'bg-accent-gold text-folio-black hover:bg-white hover:scale-105 active:scale-95 shadow-lg'}`}
+                      >
+                        <ArrowUp size={20} strokeWidth={3} />
+                      </button>
+                    </div>
+                  )}
+                  {searchMode !== 2 && (
+                    <button disabled className="flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-accent-gold text-folio-black opacity-50 absolute right-2">
+                      <ArrowUp size={20} strokeWidth={3} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
             </div>
           </div>
+          <p className="text-[10px] text-zinc-600 text-center -mt-2 mb-2 pointer-events-none">滑動或點擊邊緣切換搜尋模式</p>
         </div>
       </div>
 
