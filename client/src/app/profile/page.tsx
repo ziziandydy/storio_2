@@ -16,6 +16,7 @@ import OnboardingModal from '@/components/OnboardingModal';
 import { supabase, getURL } from '@/lib/supabase';
 import { getApiUrl } from '@/lib/api';
 import { getTitleKeyByCount, TitleTranslationKey } from '@/utils/leveling';
+import packageJson from '../../../package.json';
 
 interface ProfileSectionProps {
   title: string;
@@ -89,6 +90,7 @@ export default function ProfilePage() {
   // Sub-view States
   const [showStatisticsSettings, setShowStatisticsSettings] = useState(false);
   const [showLanguageSettings, setShowLanguageSettings] = useState(false);
+  const [showContactSettings, setShowContactSettings] = useState(false);
 
   // Statistics Widget State
   const [widgets, setWidgets] = useState<string[]>(['7d', '30d', 'year', 'trend7', 'trend30']);
@@ -259,6 +261,53 @@ export default function ProfilePage() {
     if (lang === 'en-US') return 'English';
     return 'System Default';
   };
+
+  const handleContactSelect = (type: 'feature' | 'bug' | 'other') => {
+    // @ts-ignore
+    const localizedPrefix = t.profile.contactPrefix[type] || 'Contact';
+    const subject = `[Storio ${localizedPrefix}] from ${displayName}`;
+    window.location.href = `mailto:andismtu@gmail.com?subject=${encodeURIComponent(subject)}`;
+  };
+
+  if (showContactSettings) {
+    const CONTACT_OPTIONS = [
+      // @ts-ignore
+      { id: 'feature', icon: MessageSquare, label: t.profile.contactOptions?.feature || 'Suggest a Feature' },
+      // @ts-ignore
+      { id: 'bug', icon: AlertCircle, label: t.profile.contactOptions?.bug || 'Report a Bug' },
+      // @ts-ignore
+      { id: 'other', icon: Mail, label: t.profile.contactOptions?.other || 'Other' },
+    ];
+
+    return (
+      <div className="min-h-screen bg-folio-black text-text-primary pb-20 animate-in slide-in-from-right duration-300">
+        <header className="sticky top-0 z-30 bg-folio-black/80 backdrop-blur-xl p-6 flex items-center gap-6">
+          <button onClick={() => setShowContactSettings(false)} className="text-text-desc hover:text-white transition-colors bg-white/5 p-3 rounded-full">
+            <ArrowLeft size={20} />
+          </button>
+          <h1 className="text-xl font-bold font-serif tracking-wide text-white">{t.profile.items.contact}</h1>
+        </header>
+        <main className="max-w-md mx-auto p-6">
+          <div className="bg-folio-card border border-white/5 rounded-2xl overflow-hidden shadow-xl">
+            <div className="p-2 space-y-1">
+              {CONTACT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.id}
+                  onClick={() => handleContactSelect(opt.id as any)}
+                  className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors group rounded-xl"
+                >
+                  <div className="p-2 rounded-xl bg-white/5 text-accent-gold group-hover:scale-110 transition-transform">
+                    <opt.icon size={18} />
+                  </div>
+                  <span className="text-sm font-medium text-text-primary">{opt.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   // If showing language settings, render sub-view
   if (showLanguageSettings) {
@@ -519,7 +568,6 @@ export default function ProfilePage() {
               onClick={() => setShowOnboarding(true)}
             />
           )}
-          <ProfileItem icon={<Shield size={18} />} label={t.profile.items.security} />
         </ProfileSection>
 
         <ProfileSection title={t.profile.sections.settings}>
@@ -529,22 +577,13 @@ export default function ProfilePage() {
             value={getLanguageLabel(language)}
             onClick={() => setShowLanguageSettings(true)}
           />
-          <ProfileItem
-            icon={<Bell size={18} />}
-            label={t.profile.items.notifications}
-            toggle
-            checked={notificationsEnabled}
-            onClick={toggleNotifications}
-          />
           <ProfileItem icon={<Layers size={18} />} label={t.profile.items.statistics} onClick={() => setShowStatisticsSettings(true)} />
         </ProfileSection>
 
         <ProfileSection title={t.profile.sections.community}>
           <ProfileItem icon={<Share2 size={18} />} label={t.profile.items.share} onClick={handleShare} />
           <ProfileItem icon={<Star size={18} />} label={t.profile.items.rateApp} />
-          <ProfileItem icon={<Mail size={18} />} label={t.profile.items.contact} value="andismtu@gmail.com" onClick={() => window.location.href = 'mailto:andismtu@gmail.com'} />
-          <ProfileItem icon={<MessageSquare size={18} />} label={t.profile.items.suggest} />
-          <ProfileItem icon={<AlertCircle size={18} />} label={t.profile.items.bug} />
+          <ProfileItem icon={<Mail size={18} />} label={t.profile.items.contact} onClick={() => setShowContactSettings(true)} />
         </ProfileSection>
 
         <ProfileSection title={t.profile.sections.about}>
@@ -552,7 +591,7 @@ export default function ProfilePage() {
           <ProfileItem icon={<Shield size={18} />} label={t.profile.items.privacy} onClick={() => router.push('/privacy')} />
           <div className="p-4 text-center">
             <span className="text-[10px] text-text-desc font-bold tracking-[0.3em] uppercase opacity-40">
-              Version 2.1.0 (Build 20260221)
+              Version {packageJson.version}
             </span>
           </div>
         </ProfileSection>

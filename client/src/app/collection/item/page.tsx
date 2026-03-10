@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, Star, Loader2, Film, Book as BookIcon, Calendar, Trash2, Edit3, MessageSquarePlus, Info, Quote, ChevronRight, Tv } from 'lucide-react';
@@ -31,9 +31,9 @@ interface CollectionItem {
   year?: number;
 }
 
-export default function CollectionDetailPage() {
-  const params = useParams();
-  const id = params.id as string;
+function CollectionItemPageContent() {
+  const searchParams = useSearchParams();
+  const id = searchParams.get('id');
   const router = useRouter();
   const { token, loading: authLoading } = useAuth();
   const { showToast } = useToast();
@@ -56,7 +56,7 @@ export default function CollectionDetailPage() {
   useEffect(() => {
     const fetchItem = async () => {
       if (authLoading) return;
-      if (!token) return;
+      if (!token || !id) return;
 
       try {
         const res = await fetch(getApiUrl(`/api/v1/collection/${id}`), {
@@ -285,8 +285,8 @@ export default function CollectionDetailPage() {
                         key={inst.id}
                         href={`/collection/${inst.id}`}
                         className={`flex-none w-40 p-4 rounded-xl border transition-all group ${isCurrent
-                            ? 'bg-accent-gold/10 border-accent-gold cursor-default'
-                            : 'bg-[#121212] border-white/5 hover:border-white/20 hover:bg-white/5'
+                          ? 'bg-accent-gold/10 border-accent-gold cursor-default'
+                          : 'bg-[#121212] border-white/5 hover:border-white/20 hover:bg-white/5'
                           }`}
                       >
                         <div className="flex justify-between items-start mb-2">
@@ -556,5 +556,23 @@ export default function CollectionDetailPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function CollectionDetailPage() {
+  const { t } = useTranslation();
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#000000] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-6">
+          <div className="relative w-48 h-48">
+            <Image src="/image/loading.gif" alt="Loading..." fill className="object-contain" unoptimized priority />
+          </div>
+          <p className="text-accent-gold font-bold tracking-[0.3em] uppercase text-xs animate-pulse">{t.common.loading}</p>
+        </div>
+      </div>
+    }>
+      <CollectionItemPageContent />
+    </Suspense>
   );
 }

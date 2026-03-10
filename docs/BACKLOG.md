@@ -61,8 +61,12 @@
         - 強制將撰寫心得 (`RateAndReflectForm`) 的輸入框與 AI 潤飾限制在 100 字 (含字數計數器)。
         - 館藏 ID 前綴由 `FOLIO_REF_` 簡化為 `REF_`。
         - 修正首頁 `HeroStats` 與 `RateAndReflectForm` 按鈕中 Hardcoded 寫死的英文字串，全面接入 `locales.ts`。
-16. **基礎建設 (Infrastructure)**:
     - 實作 PWA 支援，使用者可將 Web App 加入主畫面。
+17. **Sprint 7 基礎建設 (Native iOS Refactor)**:
+    - **動態網路適配**: 實作自動偵測與綁定區網 IP 腳本 (`get-ip.js`)，解決 iOS Simulator / 真機測試時跨網段的 CORS 與連線失聯問題。
+    - **iOS 模擬器除錯**: 排除了 503 Backend 無法回傳 CORS Headers 的假錯覺，確保 `cap sync` 與 Xcode 的靜態資源更新流程順暢。
+    - **原生視覺優化**: 取代預設 Capacitor Splash Screen 與 Icon。實作 `NativeSplash.hide()` 以無縫銜接 Web 端飛入動畫。
+    - **路由降級策略**: 將原有的 Next.js App Router 的動態路由 (`[id]`) 完全重構成依賴 Query Parameters 的靜態頁面，使得 `output: 'export'` 能夠 100% 成功。
 
 ## 🚀 SPRINT 5: 深度客製化分享 (已完成大部分核心功能)
 - [x] **分享控制中心**: 實作 `ShareModal` 提供即時預覽、比例切換 (9:16, 4:5, 1:1) 與內容開關。
@@ -76,8 +80,8 @@
 - [x] **原生分享 (Native Sharing)**: 整合 Web Share API。
 
 ### 🐛 Known Issues (Bugs to Fix)
-- [x] **iOS Safari Share Image Blank/Duplicate**: `html-to-image` exports fail or produce identical images on Safari due to internal Cache Key truncation of Proxy URLs (`/_next/image`).
-  - *Fix*: Added `includeQueryParams: true` to prevent Base64 cache collisions, explicitly set CORS (`crossOrigin="anonymous"`), and apply image `w` compression payload thinning.
+- [ ] **分享預覽與匯出圖片空白 (Share Image Blank Issue Returned)**: 在 Preview 和實際分享時，圖片又出現無法正確帶入的問題。(*Note: 先前修復包含 `html-to-image` 的 Safari 緩存問題但似乎已失效或有新狀況，待下次開發時排查*)。
+  - *Previous Fix Attempt*: Added `includeQueryParams: true` to prevent Base64 cache collisions, explicitly set CORS (`crossOrigin="anonymous"`), and apply image `w` compression payload thinning.
 
 ## 📅 SPRINT 6: 月度回顧與擴充功能 (已完成核心分享機制)
 - [x] **月度回顧**: 實作行事曆視圖的總結分享 (Instagram 貼文格式)。

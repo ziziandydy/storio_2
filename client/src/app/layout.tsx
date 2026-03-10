@@ -4,10 +4,10 @@ import "./globals.css";
 import { ToastProvider } from "@/components/ToastProvider";
 
 const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
-const roboto = Roboto({ 
+const roboto = Roboto({
   weight: ['300', '400', '500', '700'],
-  subsets: ["latin"], 
-  variable: '--font-roboto' 
+  subsets: ["latin"],
+  variable: '--font-roboto'
 });
 
 export const metadata: Metadata = {
@@ -29,6 +29,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -38,7 +39,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${roboto.variable} font-sans`}>
+      <body className={`${inter.variable} ${roboto.variable} font-sans pt-[var(--sa-top)] pb-[var(--sa-bottom)] bg-folio-black min-h-screen`}>
         <ToastProvider>
           {children}
         </ToastProvider>

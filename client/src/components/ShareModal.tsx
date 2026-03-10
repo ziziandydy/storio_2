@@ -7,6 +7,10 @@ import { toPng } from 'html-to-image';
 import download from 'downloadjs';
 import { useTranslation } from '@/hooks/useTranslation';
 import MemoryCardTemplate from './share/MemoryCardTemplate';
+import { getOptimizedShareImageUrl } from '@/lib/image-utils';
+import { Capacitor } from '@capacitor/core';
+import { Share } from '@capacitor/share';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 
 type AspectRatio = '9:16' | '4:5' | '1:1';
 type TemplateType = 'default' | 'pure' | 'ticket' | '3d' | 'tv' | 'desk';
@@ -43,31 +47,14 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
   const [isDownloaded, setIsDownloaded] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
 
-  // Pre-fetch image as Base64 to guarantee capture success (Simplified to direct proxy with cache buster)
-  const [proxiedPoster, setProxiedPoster] = useState<string | null>(null);
-
-  React.useEffect(() => {
-    if (!item?.posterPath) return;
-
-    let url = item.posterPath;
-
-    // Fix Safari Memory Limit: Shrink image payload using Next.js optimization API.
-    // Downscale from w=640 to w=384 to drastically reduce Base64 footprint in Canvas
-    // Add cache buster to bypass Safari disk cache and force fresh fetch with CORS headers
-    if (url.startsWith('http')) {
-      url = `/_next/image?url=${encodeURIComponent(url)}&w=384&q=75&t=${new Date().getTime()}`;
-    }
-
-    setProxiedPoster(url);
-  }, [item?.posterPath]);
-
   const proxiedItem = useMemo(() => {
     if (!item) return undefined;
     return {
       ...item,
-      posterPath: proxiedPoster || item.posterPath,
+      // Apply client-side resizing and opaque cache defense
+      posterPath: getOptimizedShareImageUrl(item.posterPath, false),
     };
-  }, [item, proxiedPoster]);
+  }, [item]);
 
   // Template visibility logic
   const TEMPLATES: { id: TemplateType; icon: any; label: string; hidden?: boolean }[] = [
@@ -174,25 +161,53 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
     const dataUrl = await handleCapture();
     if (!dataUrl) return;
 
-    try {
-      const blob = await (await fetch(dataUrl)).blob();
-      const file = new File([blob], `${fileName}.png`, { type: 'image/png' });
+    const shareMessage = `${t.details.shareMessage} ${window.location.origin}`;
 
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
+    try {
+      if (Capacitor.isNativePlatform()) {
+        // --- NATIVE SHARE (iOS) ---
+        // 1. Extract Base64 payload (remove data:image/png;base64,)
+        const base64Data = dataUrl.split(',')[1];
+        if (!base64Data) throw new Error("Invalid Base64 format");
+
+        // 2. Write to Capacitor's temporary cache directory
+        const fileNameWithExt = `${fileName}_${Date.now()}.png`;
+        const savedFile = await Filesystem.writeFile({
+          path: fileNameWithExt,
+          data: base64Data,
+          directory: Directory.Cache
+        });
+
+        // 3. Invoke Native Share Sheet
+        await Share.share({
           title: title,
-          text: `${t.details.shareMessage} ${window.location.origin}`,
-          files: [file],
+          text: shareMessage,
+          url: savedFile.uri // Must be full absolute file:// path returned by Filesystem
         });
       } else {
-        download(dataUrl, `${fileName}.png`);
-        setIsDownloaded(true);
-        setTimeout(() => setIsDownloaded(false), 2000);
+        // --- WEB SHARE ---
+        const blob = await (await fetch(dataUrl)).blob();
+        const file = new File([blob], `${fileName}.png`, { type: 'image/png' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: title,
+            text: shareMessage,
+            files: [file],
+          });
+        } else {
+          // Fallback if browser doesn't support file sharing
+          download(dataUrl, `${fileName}.png`);
+          setIsDownloaded(true);
+          setTimeout(() => setIsDownloaded(false), 2000);
+        }
       }
     } catch (error) {
       console.error('Share failed:', error);
-      // Fallback if share API fails unexpectedly
-      download(dataUrl, `${fileName}.png`);
+      // Ultimate Fallback
+      if (!Capacitor.isNativePlatform()) {
+        download(dataUrl, `${fileName}.png`);
+      }
     }
   };
 
@@ -407,7 +422,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
                 <div className="flex flex-col sm:flex-row gap-3 pt-4">
                   <button
                     onClick={handleShare}
-                    disabled={isGenerating || (!proxiedPoster && isSingleItem)}
+                    disabled={isGenerating || isSingleItem}
                     className="flex-1 py-4 bg-accent-gold text-folio-black rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-white transition-all shadow-xl active:scale-[0.98] disabled:opacity-50"
                   >
                     {isGenerating ? (
@@ -418,7 +433,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
                   </button>
                   <button
                     onClick={handleDownload}
-                    disabled={isGenerating || (!proxiedPoster && isSingleItem)}
+                    disabled={isGenerating || isSingleItem}
                     className="flex-1 py-4 bg-white/5 text-white hover:bg-white/10 rounded-2xl font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all border border-white/10 disabled:opacity-50"
                   >
                     {isDownloaded ? <><Check size={14} /> {t.shareModal.saved}</> : <><Download size={14} /> {t.shareModal.download}</>}

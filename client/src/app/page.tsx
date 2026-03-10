@@ -40,10 +40,10 @@ export default function Home() {
       // Case 1: Logged in user missing profile info
       const isRegistered = user && user.is_anonymous === false;
       const hasSkippedProfile = sessionStorage.getItem('storio_skipped_profile');
-      
+
       // Check if profile is explicitly marked as completed
       const isProfileIncomplete = isRegistered && !user.user_metadata?.profile_completed;
-      
+
       if (isProfileIncomplete && !hasSkippedProfile) {
         setOnboardingStep('profile');
         setShowOnboarding(true);
@@ -73,15 +73,15 @@ export default function Home() {
 
   const handleLogin = async (provider: 'google' | 'apple' | 'email') => {
     try {
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider: provider as any,
-            options: {
-                redirectTo: getURL('/auth/callback')
-            }
-        });
-        if (error) throw error;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: provider as any,
+        options: {
+          redirectTo: getURL('/auth/callback')
+        }
+      });
+      if (error) throw error;
     } catch (error) {
-        console.error('Login failed:', error);
+      console.error('Login failed:', error);
     }
   };
 
@@ -91,8 +91,8 @@ export default function Home() {
       {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
 
       {/* Onboarding Modal */}
-      <OnboardingModal 
-        isOpen={showOnboarding} 
+      <OnboardingModal
+        isOpen={showOnboarding}
         onClose={handleOnboardingClose}
         onLogin={handleLogin}
         onContinueAsGuest={handleOnboardingClose}
@@ -101,9 +101,9 @@ export default function Home() {
 
       {/* Background Layer */}
       <div className="fixed inset-0 z-0 bg-folio-black pointer-events-none">
-        <Image 
-          src="/image/heroBackground.webp" 
-          alt="Hero Background" 
+        <Image
+          src="/image/heroBackground.webp"
+          alt="Hero Background"
           fill
           className="object-cover opacity-30 mix-blend-screen"
           priority
@@ -114,21 +114,21 @@ export default function Home() {
       </div>
 
       {/* Header - Minimalist */}
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 px-6 py-4 flex items-center justify-between ${scrollY > 20 ? 'bg-folio-black/80 backdrop-blur-xl border-b border-white/5' : 'bg-transparent'}`}>
+      <header className={`fixed top-[var(--sa-top)] left-0 right-0 z-50 transition-all duration-500 px-6 py-4 flex items-center justify-between ${scrollY > 20 ? 'bg-folio-black/80 backdrop-blur-xl border-b border-white/5' : 'bg-transparent'}`}>
         <div className="flex items-center gap-3">
-           <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-white/10 shadow-[0_0_15px_rgba(233,108,38,0.2)]">
-             <Image 
-               src="/image/logo/logo.png" 
-               fill 
-               alt="Storio" 
-               className="object-cover" 
-               priority
-               sizes="32px"
-             />
-           </div>
-           <span className={`text-sm font-bold tracking-widest uppercase text-white/90 ${scrollY > 20 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'} transition-all duration-500`}>Storio</span>
+          <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-white/10 shadow-[0_0_15px_rgba(233,108,38,0.2)]">
+            <Image
+              src="/image/logo/logo.png"
+              fill
+              alt="Storio"
+              className="object-cover"
+              priority
+              sizes="32px"
+            />
+          </div>
+          <span className={`text-sm font-bold tracking-widest uppercase text-white/90 ${scrollY > 20 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'} transition-all duration-500`}>Storio</span>
         </div>
-        
+
         <Link href="/profile" className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 backdrop-blur border border-white/10 flex items-center justify-center transition-all hover:scale-105 active:scale-95 group overflow-hidden">
           {user?.user_metadata?.avatar_url ? (
             <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
@@ -140,45 +140,45 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="relative z-10 pt-28 pb-40 space-y-16">
-        
+
         {/* Hero Section */}
         <div className="flex flex-col items-center justify-center text-center px-4 mb-8">
-            <h1 className="text-5xl md:text-8xl font-black font-serif text-white tracking-tighter mb-6 drop-shadow-2xl">
-                Storio
-            </h1>
-            <p className="text-xl md:text-2xl text-text-desc font-light tracking-wide max-w-2xl mb-10 drop-shadow-lg">
-                {t.home.heroSubtitle}
-            </p>
+          <h1 className="text-5xl md:text-8xl font-black font-serif text-white tracking-tighter mb-6 drop-shadow-2xl">
+            Storio
+          </h1>
+          <p className="text-xl md:text-2xl text-text-desc font-light tracking-wide max-w-2xl mb-10 drop-shadow-lg">
+            {t.home.heroSubtitle}
+          </p>
         </div>
 
         {/* Stats Section */}
         <div className="flex flex-col items-center gap-12">
-            <HomeStats />
-            
-            <div className="flex gap-4">
-                <Link href="/collection" className="group px-8 py-4 bg-accent-gold text-folio-black rounded-full font-black uppercase tracking-widest text-xs hover:bg-white transition-all shadow-[0_0_30px_rgba(233,108,38,0.4)] flex items-center gap-2">
-                {t.home.viewStorio} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                </Link>
-            </div>
+          <HomeStats />
+
+          <div className="flex gap-4">
+            <Link href="/collection" className="group px-8 py-4 bg-accent-gold text-folio-black rounded-full font-black uppercase tracking-widest text-xs hover:bg-white transition-all shadow-[0_0_30px_rgba(233,108,38,0.4)] flex items-center gap-2">
+              {t.home.viewStorio} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
         </div>
-        
+
         {/* Trending Sections */}
         <div className="space-y-16">
-          <SectionSlider 
+          <SectionSlider
             title={t.home.trendingMovies}
-            endpoint="/api/v1/search/trending/movies" 
+            endpoint="/api/v1/search/trending/movies"
             viewAllLink="/search?filter=movie"
           />
 
-          <SectionSlider 
+          <SectionSlider
             title={t.home.trendingSeries}
-            endpoint="/api/v1/search/trending/series" 
+            endpoint="/api/v1/search/trending/series"
             viewAllLink="/search?filter=tv"
           />
-          
-          <SectionSlider 
+
+          <SectionSlider
             title={t.home.trendingReads}
-            endpoint="/api/v1/search/trending/books" 
+            endpoint="/api/v1/search/trending/books"
             viewAllLink="/search?filter=book"
           />
         </div>

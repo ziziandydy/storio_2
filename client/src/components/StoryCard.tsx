@@ -44,7 +44,7 @@ const StoryCard: React.FC<StoryCardProps> = ({
     if (onViewDetails) {
       onViewDetails();
     } else {
-      router.push(`/details/${type}/${external_id}`);
+      router.push(`/details?type=${type}&id=${external_id}`);
     }
   };
 

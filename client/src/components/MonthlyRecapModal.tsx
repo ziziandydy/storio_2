@@ -9,7 +9,10 @@ import { useTranslation } from '@/hooks/useTranslation';
 import MonthlyRecapTemplate from './share/MonthlyRecapTemplate';
 import { getApiUrl } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
-import { Story } from '@/types';
+import { getOptimizedShareImageUrl } from '@/lib/image-utils';
+import { Capacitor } from '@capacitor/core';
+import { Share } from '@capacitor/share';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 
 type AspectRatio = '9:16' | '4:5' | '1:1';
 type TemplateType = 'calendar' | 'collage' | 'waterfall' | 'shelf';
@@ -56,17 +59,12 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                     const data = await res.json();
                     if (isMounted) {
                         // Also preload images for the items to prevent CORS issues on capture
-                        const itemsWithProxiedImages = data.items.map((item: any, index: number) => {
+                        const itemsWithProxiedImages = data.items.map((item: any) => {
                             let url = item.poster_url;
                             if (!url) return item;
 
-                            // Fix Safari Memory Limit: Shrink image payload using Next.js optimization API.
-                            // Decreased w=640 to w=256 to prevent Safari Base64 decode race-condition on 8 concurrent images.
-                            if (url.startsWith('http')) {
-                                url = `/_next/image?url=${encodeURIComponent(url)}&w=256&q=75&t=${new Date().getTime()}-${index}`;
-                            }
-
-                            return { ...item, poster_url: url };
+                            // Switch to Option A fix: Apply client-side resizing (w185) and cache busting 
+                            return { ...item, poster_url: getOptimizedShareImageUrl(url, true) };
                         });
 
                         setStatsData({
@@ -186,23 +184,51 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
         const dataUrl = await handleCapture();
         if (!dataUrl) return;
 
-        try {
-            const blob = await (await fetch(dataUrl)).blob();
-            const file = new File([blob], `${fileName}.png`, { type: 'image/png' });
+        const shareMessage = `${t.details.shareMessage} ${window.location.origin}`;
 
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                await navigator.share({
+        try {
+            if (Capacitor.isNativePlatform()) {
+                // --- NATIVE SHARE (iOS) ---
+                // 1. Extract Base64 payload (remove data:image/png;base64,)
+                const base64Data = dataUrl.split(',')[1];
+                if (!base64Data) throw new Error("Invalid Base64 format");
+
+                // 2. Write to Capacitor's temporary cache directory
+                const fileNameWithExt = `${fileName}_${Date.now()}.png`;
+                const savedFile = await Filesystem.writeFile({
+                    path: fileNameWithExt,
+                    data: base64Data,
+                    directory: Directory.Cache
+                });
+
+                // 3. Invoke Native Share Sheet
+                await Share.share({
                     title: monthName,
-                    text: `${t.details.shareMessage} ${window.location.origin}`,
-                    files: [file],
+                    text: shareMessage,
+                    url: savedFile.uri // Must be full absolute file:// path returned by Filesystem
                 });
             } else {
-                download(dataUrl, `${fileName}.png`);
-                setIsDownloaded(true);
-                setTimeout(() => setIsDownloaded(false), 2000);
+                // --- WEB SHARE ---
+                const blob = await (await fetch(dataUrl)).blob();
+                const file = new File([blob], `${fileName}.png`, { type: 'image/png' });
+
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        title: monthName,
+                        text: shareMessage,
+                        files: [file],
+                    });
+                } else {
+                    download(dataUrl, `${fileName}.png`);
+                    setIsDownloaded(true);
+                    setTimeout(() => setIsDownloaded(false), 2000);
+                }
             }
         } catch (error) {
-            download(dataUrl, `${fileName}.png`);
+            console.error('Share failed:', error);
+            if (!Capacitor.isNativePlatform()) {
+                download(dataUrl, `${fileName}.png`);
+            }
         }
     };
 

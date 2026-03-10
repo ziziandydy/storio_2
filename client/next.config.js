@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    output: 'export',
     images: {
+        unoptimized: true,
         remotePatterns: [
             {
                 protocol: 'https',
@@ -33,34 +35,6 @@ const nextConfig = {
                 pathname: '/**',
             },
         ],
-    },
-    async rewrites() {
-        return [
-            {
-                source: '/proxy/tmdb/:path*',
-                destination: 'https://image.tmdb.org/t/p/:path*',
-            },
-            {
-                source: '/proxy/googlebooks/:path*',
-                destination: 'https://books.google.com/:path*',
-            },
-        ];
-    },
-    async headers() {
-        return [
-            {
-                source: '/_next/image',
-                headers: [
-                    { key: 'Access-Control-Allow-Origin', value: '*' },
-                ],
-            },
-            {
-                source: '/proxy/:path*',
-                headers: [
-                    { key: 'Access-Control-Allow-Origin', value: '*' },
-                ],
-            }
-        ];
     },
 };
 

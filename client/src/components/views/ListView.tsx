@@ -22,7 +22,7 @@ export default function ListView({ stories }: ListViewProps) {
         // Others are standard (1x1)
         const isLarge = index === 0 || (index > 0 && index % 12 === 0);
         const isWide = index === 4 || (index > 4 && index % 12 === 5);
-        
+
         let spanClasses = "col-span-1 row-span-1";
         if (isLarge) {
           spanClasses = "md:col-span-2 md:row-span-2 aspect-[2/3] md:aspect-auto";
@@ -32,7 +32,7 @@ export default function ListView({ stories }: ListViewProps) {
 
         return (
           <div key={story.id} className={`${spanClasses} group bg-folio-card border border-folio-outline rounded-xl overflow-hidden hover:bg-folio-card-hover transition-all flex flex-col h-full shadow-lg relative`}>
-            <StoryCard 
+            <StoryCard
               external_id={story.external_id}
               title={story.title}
               type={story.media_type}
@@ -44,7 +44,7 @@ export default function ListView({ stories }: ListViewProps) {
               notes={story.notes}
               addedAt={story.created_at}
               viewingNumber={story.viewingNumber}
-              onViewDetails={() => router.push(`/collection/${story.id}`)}
+              onViewDetails={() => router.push(`/collection/item?id=${story.id}`)}
             />
           </div>
         );

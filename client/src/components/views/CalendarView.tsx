@@ -132,7 +132,7 @@ export default function CalendarView({ stories }: CalendarViewProps) {
   const handleDayClick = (date: Date, dayStories: Story[]) => {
     if (dayStories.length === 0) return;
     if (dayStories.length === 1) {
-      router.push(`/collection/${dayStories[0].id}`);
+      router.push(`/collection/item?id=${dayStories[0].id}`);
     } else {
       setSelectedDate(date);
     }
@@ -210,7 +210,7 @@ export default function CalendarView({ stories }: CalendarViewProps) {
                 {selectedStories.map(story => (
                   <div
                     key={story.id}
-                    onClick={() => router.push(`/collection/${story.id}`)}
+                    onClick={() => router.push(`/collection/item?id=${story.id}`)}
                     className="flex gap-4 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5 group"
                   >
                     <div className="relative w-16 h-24 flex-shrink-0 rounded-lg overflow-hidden shadow-lg">
@@ -277,13 +277,13 @@ function MonthGrid({ month, storiesByDate, onDayClick, onShareClick, locale }: {
     : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   if (isFuture) {
-    return <div id={`month-${format(month, 'yyyy-MM')}`} className="h-[60vh] w-full" />;
+    return <div id={`month-${format(month, 'yyyy-MM')}`} className="h-[60vh] w-full scroll-mt-[calc(var(--sa-top)_+_8rem)]" />;
   }
 
   return (
-    <div id={`month-${format(month, 'yyyy-MM')}`}>
+    <div id={`month-${format(month, 'yyyy-MM')}`} className="scroll-mt-[calc(var(--sa-top)_+_8rem)]">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 px-2 sticky top-16 z-20 bg-folio-black/95 backdrop-blur py-2 border-b border-white/5">
+      <div className="flex items-center justify-between mb-4 px-2 sticky top-[calc(var(--sa-top)_+_5rem)] z-20 bg-folio-black/95 backdrop-blur py-2 border-b border-white/5">
         <h2 className="text-xl font-serif font-bold text-accent-gold capitalize">
           {format(month, 'MMMM yyyy', { locale })}
         </h2>

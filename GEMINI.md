@@ -60,6 +60,9 @@
 - **Agents**:
   - `codebase_investigator`: 用於複雜的代碼庫分析、架構理解與 Root Cause Analysis。
 - **Skills** (位於 `.agents/skills/`):
+  - `find-skills`: 幫助您發掘並安裝開源 Agent 技能生態系統中的新技能。當需要特定功能時，可詢問「如何做 X」或「是否有技能可以...」來呼叫它。
+  - `react-expert`: 提供 React 特性、Hooks 最佳實踐與 Server Components 等進階開發建議。
+  - `supabase-postgres-best-practices`: 協助撰寫符合官方最佳實踐的 PostgreSQL schemas、優化查詢與設計 RLS 安全政策。
   - `ralph-tui-prd`: 協助 PRD 撰寫與 TUI 相關任務。
   - `tdd`: 提供 TDD (Test-Driven Development) 最佳實踐、介面設計與重構建議。
   - `user-journeys`: 定義與分析使用者旅程 (User Journeys)。

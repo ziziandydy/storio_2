@@ -252,8 +252,9 @@ function SearchContent() {
         </div>
       )}
 
+      <div className="fixed top-0 left-0 right-0 h-[var(--sa-top)] bg-folio-black z-[100] pointer-events-none" />
       {/* Top Header - Minimal Back Button */}
-      <header className="fixed top-0 left-0 right-0 z-30 p-6 flex justify-between items-center bg-gradient-to-b from-folio-black/90 to-transparent pointer-events-none">
+      <header className="fixed top-[var(--sa-top)] left-0 right-0 z-30 p-6 flex justify-between items-center bg-gradient-to-b from-folio-black/90 to-transparent pointer-events-none">
         <Link href="/" className="pointer-events-auto text-text-desc hover:text-white transition-colors bg-white/5 p-3 rounded-full backdrop-blur-md border border-white/5 hover:bg-white/10">
           <ArrowLeft size={20} />
         </Link>
@@ -308,7 +309,7 @@ function SearchContent() {
       </main>
 
       {/* Sticky Bottom Search Controls */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 px-6 pb-8 pt-20 bg-gradient-to-t from-[#0d0d0d] via-[#0d0d0d] via-65% to-transparent pointer-events-none">
+      <div className="fixed bottom-[var(--sa-bottom)] left-0 right-0 z-40 px-6 pb-8 pt-20 bg-gradient-to-t from-[#0d0d0d] via-[#0d0d0d] via-65% to-transparent pointer-events-none">
         <div className="max-w-md mx-auto flex flex-col gap-4 pointer-events-auto">
           {/* Segmented Control */}
           <div className="w-full bg-folio-card/80 backdrop-blur-xl p-1 rounded-full border border-white/10 flex relative overflow-hidden shadow-2xl">

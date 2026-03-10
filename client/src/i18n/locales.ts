@@ -172,6 +172,16 @@ export const translations = {
         terms: 'Terms of Use',
         privacy: 'Privacy Policy',
       },
+      contactOptions: {
+        feature: 'Suggest a Feature',
+        bug: 'Report a Bug',
+        other: 'Other',
+      },
+      contactPrefix: {
+        feature: 'Feature Request',
+        bug: 'Bug Report',
+        other: 'Contact',
+      },
       shareMessage: 'Welcome to Storio, collect the stories that moves you:',
       statsTitle: 'Statistics',
       langTitle: 'Language',
@@ -387,6 +397,16 @@ export const translations = {
         bug: '回報問題',
         terms: '使用條款',
         privacy: '隱私權政策',
+      },
+      contactOptions: {
+        feature: '功能建議',
+        bug: '回報問題',
+        other: '其他',
+      },
+      contactPrefix: {
+        feature: '功能建議',
+        bug: '問題回報',
+        other: '聯絡我們',
       },
       shareMessage: '歡迎來到 Storio，收藏打動你的故事：',
       statsTitle: '統計設定',

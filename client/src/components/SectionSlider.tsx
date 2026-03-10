@@ -103,7 +103,7 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
         const errorData = await res.json();
         throw new Error(errorData.detail || 'Failed to add item');
       }
-      
+
       return await res.json();
     } catch (error: any) {
       throw error; // Let modal handle UI
@@ -175,7 +175,7 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
                 <Search size={24} />
               </div>
               <p className="text-xs text-text-desc font-medium leading-relaxed group-hover:text-text-primary">
-Not what you&apos;re looking for?
+                Not what you&apos;re looking for?
               </p>
               <span className="text-[10px] uppercase font-bold tracking-widest text-accent-gold border-b border-accent-gold/30 pb-0.5">
                 Find Stories
@@ -190,18 +190,18 @@ Not what you&apos;re looking for?
 
       {/* Add To Folio Modal */}
       {selectedStory && (
-        <AddToFolioModal 
-          isOpen={isAddModalOpen} 
-          onClose={() => setIsAddModalOpen(false)} 
-          onSave={handleAddToFolio} 
+        <AddToFolioModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onSave={handleAddToFolio}
           onViewDetails={(id) => {
             if (id) {
-              router.push(`/collection/${id}`);
+              router.push(`/collection/item?id=${id}`);
             } else {
-              router.push(`/details/${selectedStory.media_type}/${selectedStory.external_id}`);
+              router.push(`/details?type=${selectedStory.media_type}&id=${selectedStory.external_id}`);
             }
           }}
-          title={selectedStory.title} 
+          title={selectedStory.title}
           external_id={selectedStory.external_id}
         />
       )}

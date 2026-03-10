@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import AddToFolioModal from '@/components/AddToFolioModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useSettingsStore } from '@/store/settingsStore';
@@ -11,11 +11,13 @@ import { getApiUrl } from '@/lib/api';
 import { ItemDetail } from '@/types';
 import StoryDetailsView from '@/components/StoryDetailsView';
 
-export default function DetailsPage() {
-  const params = useParams();
+function DetailsPageContent() {
+  const searchParams = useSearchParams();
   const router = useRouter();
-  const type = typeof params.type === 'string' ? params.type : (Array.isArray(params.type) ? params.type[0] : '');
-  const id = typeof params.id === 'string' ? params.id : (Array.isArray(params.id) ? params.id[0] : '');
+
+  const type = searchParams.get('type') || '';
+  const id = searchParams.get('id') || '';
+
   const { token } = useAuth();
   const { language } = useSettingsStore();
 
@@ -26,7 +28,11 @@ export default function DetailsPage() {
 
   useEffect(() => {
     const fetchDetails = async () => {
-      if (!type || !id) return;
+      if (!type || !id) {
+        setLoading(false);
+        setError('Missing required URL parameters.');
+        return;
+      }
 
       setLoading(true);
       try {
@@ -47,7 +53,7 @@ export default function DetailsPage() {
     };
 
     fetchDetails();
-  }, [type, id]);
+  }, [type, id, language]);
 
   const handleAddToFolio = async (rating: number, notes: string, date?: string) => {
     if (!item || !token) return;
@@ -124,14 +130,28 @@ export default function DetailsPage() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSave={handleAddToFolio}
-        onViewDetails={(id) => {
-          if (id) {
-            router.push(`/collection/${id}`);
+        onViewDetails={(newId) => {
+          if (newId) {
+            router.push(`/collection/item?id=${newId}`);
           }
         }}
         title={item.title}
         external_id={item.external_id}
       />
     </>
+  );
+}
+
+export default function DetailsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#000000] flex items-center justify-center">
+        <div className="relative w-48 h-48">
+          <Image src="/image/loading.gif" alt="Loading..." fill className="object-contain" unoptimized />
+        </div>
+      </div>
+    }>
+      <DetailsPageContent />
+    </Suspense>
   );
 }

@@ -77,7 +77,7 @@ export default function GalleryView({ stories }: GalleryViewProps) {
               `}
               onClick={() => {
                 if (index === selectedIndex) {
-                  router.push(`/collection/${story.id}`);
+                  router.push(`/collection/item?id=${story.id}`);
                 } else {
                   emblaApi?.scrollTo(index);
                 }

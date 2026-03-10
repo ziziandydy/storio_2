@@ -2,10 +2,15 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { SplashScreen as NativeSplash } from '@capacitor/splash-screen';
+
 export default function SplashScreen({ onComplete }: { onComplete?: () => void }) {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
+    // Hide native splash screen as soon as our web splash is ready
+    NativeSplash.hide().catch(console.error);
+
     // Video length seems to be around 3-4 seconds based on typical splashes.
     // We set a timeout to fade it out. 
     // Ideally we listen to 'onended' event of video, but timeout is smoother for UI transitions.
