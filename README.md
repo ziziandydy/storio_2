@@ -39,10 +39,20 @@ graph TD
 
 ## Tech Stack
 
-- **Frontend**: Next.js 14 (React), TypeScript, Tailwind CSS, Framer Motion
-- **Native Wrapper**: Capacitor (iOS support with Native Plugins)
-- **Backend**: Python 3.12 (FastAPI), Pydantic
-- **Database & Auth**: Supabase (PostgreSQL), Anonymous Login
+This project leverages a modern, serverless ecosystem:
+
+- **Frontend: Next.js 14 (React) & Tailwind CSS**
+  - *Why*: Chosen for its robust App Router architecture and static export capabilities. Tailwind enables rapid implementation of the bespoke "Folio Black" and "Storio Gold" design system without the overhead of heavy UI libraries.
+- **Native Wrapper: Capacitor**
+  - *Why*: Allows the Next.js static export to be deployed as a true native iOS application. It provides seamless access to native APIs (like iOS Share Sheet and Filesystem) while maintaining a single web codebase.
+- **Backend: FastAPI (Python)**
+  - *Why*: Python is the optimal choice for integrating AI/Agent workflows and external API orchestration (TMDB, Google Books). FastAPI provides exceptional performance and automatic OpenAPI documentation.
+- **Database & Auth: Supabase (PostgreSQL)**
+  - *Why*: Provides a robust, scalable relational database alongside out-of-the-box Anonymous Auth, which is critical for Storio's frictionless guest onboarding strategy.
+- **Infrastructure & Automation**:
+  - **Vercel**: For hosting the Frontend and Serverless Backend.
+  - **Railway**: Used for specific backend or worker deployments (if applicable).
+  - **n8n**: For workflow automation and background data processing.
 - **Testing**: Playwright (E2E), Pytest
 
 ## Getting Started
@@ -94,3 +104,11 @@ npx cap sync ios
 # Open in Xcode to build and run on a Simulator or Device
 npx cap open ios
 ```
+
+---
+
+## About This Project
+
+Storio was built entirely through **pure vibe coding and AI tools**. 
+
+Prior to this project, I had zero coding experience. I am currently transitioning from a **Data PM to a Build PM**. Storio represents an independent endeavor where I drove everything—from initial product definition and UX/UI decisions to the actual full-stack implementation—proving that with modern AI tools, product managers can bring their complete visions to life without being blocked by traditional engineering constraints.
