@@ -6,9 +6,10 @@
 
 Storio 2 是一個強調「沉浸式行動優先 (Mobile-First)」的個人典藏室系統，核心概念為「Storio - Collect stories in your folio」。
 
-*   **Frontend**: Next.js (React App Router) + Tailwind CSS，部署於 Vercel (免費方案)。
-*   **Backend**: FastAPI (Python)，部署於 Railway (免費方案)。
-*   **Database & Auth**: Supabase (PostgreSQL) 提供資料庫、身分驗證 (包含 Anonymous Login，免費方案)。
+*   **Frontend**: Next.js (React App Router) + Tailwind CSS，支援 Static HTML Export 並封裝於 **Capacitor (iOS)**。
+*   **Backend**: FastAPI (Python)，部署於 Vercel Serverless Functions。
+*   **Landing Page**: 獨立的 `index.html` (Tailwind CDN) 置於根目錄，支援 GitHub Pages 與多語系。
+*   **Database & Auth**: Supabase (PostgreSQL) 提供資料庫、身分驗證 (包含 Anonymous Login)。
 
 ## 2. 核心目錄結構 (Directory Structure)
 

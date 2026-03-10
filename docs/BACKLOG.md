@@ -3,7 +3,23 @@
 2026-02-21 UAT 測試後紀錄。
 
 ## ✅ 最近完成 (Completed)
-1.  **訪客登入 Logo**: 修復 `OnboardingModal.tsx` 中損壞的 Logo 路徑。
+1.  **正式產品介紹頁 (Landing Page Refinement)**:
+    *   重構 `index.html` 為沉浸式產品介紹頁。
+    *   實作「金探子」滑鼠跟隨光暈、啟動展開動畫。
+    *   實作雙語切換 (EN/ZH) 邏輯。
+    *   整合「多次觀看紀錄」、「AI 共筆心得」等核心敘事。
+    *   展示團隊成員與 Builder 轉型故事。
+2.  **Sprint 7 基礎建設 (Native iOS Refactor)**:
+    *   **路由靜態化**: 將 `/details/[type]/[id]` 重構成 `/details?id=...`，確保 `output: 'export'` 成功。
+    *   **原生分享整合**: 導入 `@capacitor/share` 與 `@capacitor/filesystem` 解決 iOS 分享空白問題。
+    *   **啟動體驗優化**: 設定 `launchAutoHide: false` 並更換原生 Splash 圖檔為純黑，實現無縫進入動畫。
+    *   **動態島適配**: 修正 Header `sticky` 邏輯與安全區域遮罩，防止內容穿透動態島。
+3.  **Profile 頁面重構 (UX Polish)**:
+    *   移除未開發完成的「安全性與隱私」與「通知」。
+    *   重構「聯絡我們」為次級頁面 (Sub-view)，支援自動帶入標題的 `mailto:` 功能。
+    *   將版號改為動態讀取 `package.json`。
+4.  **自動化 Release 流程**: 導入 `standard-version` 實作自動版號升級與 `CHANGELOG.md` 生成。
+5.  **訪客登入 Logo**: 修復 `OnboardingModal.tsx` 中損壞的 Logo 路徑。
 2.  **描述文字截斷**: 在 `StoryDetailsView.tsx` 實作「查看更多」/「顯示部分」功能。
 3.  **隱藏未評分顯示**: 在 `StoryCard.tsx` 中，將尚未評分的項目完全隱藏評分指標。
 4.  **重複收藏警告**: 更新 `AddToFolioModal` 與 `DetailsPage`，若已收藏則提示「再次觀看/閱讀」的意圖，而非簡單的警告。
