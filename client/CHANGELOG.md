@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.5](https://github.com/ziziandydy/storio_2/compare/v0.1.4...v0.1.5) (2026-03-10)
+
+
+### Features
+
+* add landing page (index.html) for GitHub Pages and submodule usage ([bf5ed1d](https://github.com/ziziandydy/storio_2/commit/bf5ed1d47a9d8c66a23e3ce151418ea46eb6bbb4))
+* launch immersive dual-language landing page ([3d2916d](https://github.com/ziziandydy/storio_2/commit/3d2916d318834756ccfd8dd28402c7627d9b601a))
+
 ### [0.1.4](https://github.com/ziziandydy/storio_2/compare/v0.1.3...v0.1.4) (2026-03-10)
 
 ### [0.1.3](https://github.com/ziziandydy/storio_2/compare/v0.1.2...v0.1.3) (2026-03-10)
