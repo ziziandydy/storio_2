@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.2](https://github.com/ziziandydy/storio_2/compare/v0.1.1...v0.1.2) (2026-03-10)
+
+
+### Bug Fixes
+
+* **ios:** prevent initial splash screen flicker across all platforms ([2ebc721](https://github.com/ziziandydy/storio_2/commit/2ebc721ef1c3950190d16dee1d9e08785a73ca2a))
+
 ### 0.1.1 (2026-03-10)
 
 
