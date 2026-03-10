@@ -9,7 +9,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -21,6 +21,7 @@
                         'folio-black': '#0d0d0d',
                         'accent-gold': '#c5a059',
                         'card-surface': '#121212',
+                        'folio-outline': '#2a2a2a',
                     },
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
@@ -38,114 +39,450 @@
             overflow-x: hidden;
         }
         .gold-glow {
-            text-shadow: 0 0 20px rgba(197, 160, 89, 0.3);
+            text-shadow: 0 0 40px rgba(197, 160, 89, 0.2);
         }
-        .bg-mesh {
-            background-image: radial-gradient(at 0% 0%, rgba(197, 160, 89, 0.1) 0, transparent 50%),
-                              radial-gradient(at 100% 100%, rgba(197, 160, 89, 0.05) 0, transparent 50%);
+        /* "Golden Snitch" Mouse Following Glow */
+        .snitch-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(197, 160, 89, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+            transform: translate(-50%, -50%);
+            will-change: left, top;
+            filter: blur(20px);
+        }
+        /* Intro "Opening" Animation */
+        .page-unfold {
+            animation: unfold 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes unfold {
+            0% { clip-path: inset(50% 0 50% 0); transform: scale(1.05); filter: blur(10px); }
+            100% { clip-path: inset(0 0 0 0); transform: scale(1); filter: blur(0); }
         }
         .reveal {
-            animation: reveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(40px) scale(0.98);
+            filter: blur(5px);
+            transition: all 1.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        @keyframes reveal {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            filter: blur(0);
         }
         .floating {
             animation: floating 6s ease-in-out infinite;
         }
         @keyframes floating {
             0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
+            50% { transform: translateY(-15px); }
         }
+        .glass-card {
+            background: rgba(18, 18, 18, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .nav-blur {
+            backdrop-filter: blur(20px);
+            background: rgba(13, 13, 13, 0.6);
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #0d0d0d; }
+        ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c5a059; }
     </style>
 </head>
 <body class="bg-folio-black font-sans selection:bg-accent-gold/30">
 
+    <div id="snitch" class="snitch-glow"></div>
+
     <!-- Navigation -->
-    <nav class="fixed top-0 left-0 right-0 z-50 px-6 py-6 flex justify-between items-center backdrop-blur-md bg-folio-black/20 border-b border-white/5">
+    <nav class="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex justify-between items-center nav-blur border-b border-white/5 transition-all duration-500">
         <div class="flex items-center gap-3">
             <img src="image/logo/logo.png" alt="Storio" class="w-8 h-8 rounded-lg shadow-lg border border-white/10">
-            <span class="text-sm font-black tracking-[0.3em] uppercase text-white/90">Storio</span>
+            <span class="text-sm font-black tracking-[0.3em] uppercase text-white/90 hidden sm:inline-block">Storio</span>
         </div>
-        <a href="https://storio.andismtu.com/" target="_blank" class="px-6 py-2.5 bg-white/5 hover:bg-accent-gold hover:text-folio-black text-accent-gold rounded-full text-[10px] font-black uppercase tracking-widest transition-all border border-accent-gold/30 flex items-center gap-2 group">
-            Explore Storio
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-0.5 transition-transform"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-        </a>
+        <div class="flex items-center gap-4">
+            <button onclick="toggleLanguage()" class="p-2 text-white/40 hover:text-accent-gold transition-colors text-[10px] font-black uppercase tracking-widest flex items-center gap-1 border border-white/10 rounded-lg px-3">
+                <span id="lang-text">EN</span>
+            </button>
+            <a href="https://storio.andismtu.com/" target="_blank" class="px-5 py-2 bg-accent-gold text-folio-black rounded-full text-[10px] font-black uppercase tracking-widest transition-all hover:bg-white hover:scale-105 active:scale-95 flex items-center gap-2 group shadow-lg shadow-accent-gold/20" data-i18n="nav_explore">
+                Explore Storio
+            </a>
+        </div>
     </nav>
 
     <!-- Hero Section -->
-    <section class="relative min-h-screen flex flex-col items-center justify-center pt-20 px-6 overflow-hidden bg-mesh">
-        <!-- Background Asset -->
-        <div class="absolute inset-0 z-0 opacity-30 pointer-events-none">
-            <img src="image/heroBackground.webp" alt="Background" class="w-full h-full object-cover mix-blend-screen">
+    <section class="relative min-h-screen flex flex-col items-center justify-center pt-20 px-6 overflow-hidden page-unfold">
+        <div class="absolute inset-0 z-0 opacity-30 pointer-events-none border-folio-outline border-b">
+            <img src="image/heroBackground.webp" alt="Background" class="w-full h-full object-cover mix-blend-screen scale-110">
             <div class="absolute inset-0 bg-gradient-to-b from-folio-black via-transparent to-folio-black"></div>
         </div>
 
-        <!-- Content -->
-        <div class="relative z-10 max-w-4xl w-full text-center space-y-10 reveal">
-            <div class="space-y-4">
-                <span class="inline-block px-4 py-1.5 bg-accent-gold/10 border border-accent-gold/20 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-accent-gold mb-4">
+        <div class="relative z-10 max-w-5xl w-full text-center space-y-10">
+            <div class="space-y-6">
+                <span class="inline-block px-4 py-1.5 bg-accent-gold/10 border border-accent-gold/20 rounded-full text-[9px] font-black uppercase tracking-[0.3em] text-accent-gold mb-2" data-i18n="hero_tag">
                     Digital Pensieve & Folio
                 </span>
-                <h1 class="text-6xl md:text-8xl font-black font-serif tracking-tighter leading-none gold-glow">
-                    Collect stories in your <span class="italic text-accent-gold">folio.</span>
+                <h1 class="text-5xl md:text-7xl lg:text-8xl font-black font-serif tracking-tighter leading-[1.1] gold-glow" data-i18n="hero_title">
+                    Collect stories in your <br/><span class="italic text-accent-gold">folio.</span>
                 </h1>
-                <p class="text-lg md:text-xl text-white/60 font-light tracking-wide max-w-2xl mx-auto leading-relaxed">
-                    A quiet, sophisticated sanctuary for curating your personal collection of movies, series, and books. Preserve your memories, one story at a time.
+                <p class="text-base md:text-xl text-white/50 font-light tracking-wide max-w-2xl mx-auto leading-relaxed" data-i18n="hero_desc">
+                    A quiet, sophisticated sanctuary for curating your personal collection of movies, series, and books.
                 </p>
             </div>
 
-            <!-- Platform Availability -->
-            <div class="flex flex-col items-center gap-6">
-                <div class="flex flex-wrap justify-center gap-4 text-[10px] font-bold text-white/40 tracking-[0.1em] uppercase">
-                    <span class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 1.44S10.22 5 8 5a4.91 4.91 0 0 0-5 4.78c0 4.22 3 12.22 6 12.22 1.25 0 2.5-1.06 4-1.06Z"/><path d="M12 5a3 3 0 0 1 3-3"/></svg>
-                        iOS App Store
-                    </span>
-                    <span class="opacity-20">•</span>
-                    <span class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
-                        Desktop Web
-                    </span>
-                    <span class="opacity-20">•</span>
-                    <span class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg>
-                        Mobile Web
-                    </span>
-                </div>
-
-                <div class="flex flex-col sm:flex-row gap-4 w-full max-w-md justify-center mt-4">
-                    <!-- iOS App Store Button (Placeholder) -->
-                    <a href="#" class="flex-1 px-8 py-4 bg-white text-folio-black font-black rounded-2xl hover:bg-accent-gold transition-all shadow-[0_0_30px_rgba(255,255,255,0.15)] uppercase text-xs tracking-widest flex items-center justify-center gap-3 group">
-                        Try on Mobile
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-y-[-2px] transition-transform"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 1.44S10.22 5 8 5a4.91 4.91 0 0 0-5 4.78c0 4.22 3 12.22 6 12.22 1.25 0 2.5-1.06 4-1.06Z"/><path d="M12 5a3 3 0 0 1 3-3"/></svg>
+            <div class="flex flex-col items-center gap-8">
+                <div class="flex flex-col sm:flex-row gap-5 w-full max-w-lg justify-center mt-4">
+                    <a href="#" class="flex-1 px-8 py-4 bg-white text-folio-black font-black rounded-2xl hover:bg-accent-gold transition-all shadow-[0_20px_50px_rgba(255,255,255,0.1)] uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 group">
+                        <span data-i18n="cta_mobile">Try on Mobile</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="group-hover:translate-y-[-2px] transition-transform"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 1.44S10.22 5 8 5a4.91 4.91 0 0 0-5 4.78c0 4.22 3 12.22 6 12.22 1.25 0 2.5-1.06 4-1.06Z"/><path d="M12 5a3 3 0 0 1 3-3"/></svg>
                     </a>
-                    <!-- Web App Button -->
-                    <a href="https://storio.andismtu.com/" target="_blank" class="flex-1 px-8 py-4 bg-white/5 text-white font-black rounded-2xl border border-white/10 hover:bg-white/10 transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-3">
-                        Try on Web
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                    <a href="https://storio.andismtu.com/" target="_blank" class="flex-1 px-8 py-4 bg-white/5 text-white font-black rounded-2xl border border-white/10 hover:bg-white/10 transition-all uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3">
+                        <span data-i18n="cta_web">Try on Web</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
                     </a>
                 </div>
             </div>
         </div>
 
-        <!-- Scroll Indicator -->
         <div class="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/20 floating">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="m7 13 5 5 5-5"/><path d="m7 6 5 5 5-5"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="m7 13 5 5 5-5"/><path d="m7 6 5 5 5-5"/></svg>
+        </div>
+    </section>
+
+    <!-- Vision Section -->
+    <section class="py-40 px-6 relative bg-folio-black overflow-hidden border-y border-white/5">
+        <div class="max-w-4xl mx-auto space-y-16 reveal">
+            <div class="text-center space-y-8 text-balance">
+                <h2 class="text-accent-gold text-[10px] font-black uppercase tracking-[0.5em]" data-i18n="vision_tag">The Vision</h2>
+                <h3 class="text-4xl md:text-6xl font-black font-serif leading-tight" data-i18n="vision_title">Not a database. <br/><span class="italic text-accent-gold">A Pensieve.</span></h3>
+                <p class="text-lg md:text-2xl text-white/60 font-light tracking-wide max-w-3xl mx-auto leading-relaxed" data-i18n="vision_copy">
+                    In Storio, every entry is a memory card — not a row in a spreadsheet. Your folio holds your relationship with each story: when you encountered it, what you felt, and how your perspective shifted when you returned years later.
+                </p>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-12 text-white/20">
+                <div class="flex flex-col items-center gap-3">
+                    <div class="w-12 h-12 rounded-full bg-[#0d0d0d] border border-white/10 flex items-center justify-center">
+                        <div class="w-4 h-4 rounded-sm bg-[#0d0d0d] border border-white/20"></div>
+                    </div>
+                    <span class="text-[8px] font-black tracking-widest uppercase">Folio Black #0d0d0d</span>
+                </div>
+                <div class="flex flex-col items-center gap-3">
+                    <div class="w-12 h-12 rounded-full bg-[#c5a059] border border-white/10"></div>
+                    <span class="text-[8px] font-black tracking-widest uppercase text-accent-gold/60">Storio Gold #c5a059</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-40 px-6 bg-folio-black">
+        <div class="max-w-6xl mx-auto space-y-24">
+            <div class="text-center space-y-6 reveal">
+                <h2 class="text-accent-gold text-[10px] font-black uppercase tracking-[0.4em]" data-i18n="feat_tag">Core Experience</h2>
+                <h3 class="text-4xl md:text-6xl font-black font-serif" data-i18n="feat_title">Designed for Immersion.</h3>
+            </div>
+
+            <div class="grid sm:grid-cols-2 gap-8 reveal">
+                <!-- F1: Memory Timeline -->
+                <div class="group p-12 glass-card rounded-[48px] hover:bg-white/5 transition-all duration-700 border-white/5 hover:border-accent-gold/20 relative overflow-hidden">
+                    <div class="relative z-10 space-y-6">
+                        <div class="w-14 h-14 bg-accent-gold/10 rounded-2xl flex items-center justify-center text-accent-gold group-hover:scale-110 transition-transform duration-500 shadow-xl shadow-accent-gold/5">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M2 12h20"/><path d="m4.93 4.93 14.14 14.14"/><path d="m4.93 19.07 14.14-14.14"/></svg>
+                        </div>
+                        <h4 class="text-2xl font-black font-serif" data-i18n="feat_1_title">Memory Timeline</h4>
+                        <p class="text-white/40 leading-relaxed text-sm" data-i18n="feat_1_desc">Locate your favorite works instantly with smart search. Every rewatch or reread creates a new, distinct memory card—capturing how your perspective evolves over time.</p>
+                    </div>
+                </div>
+
+                <!-- F2: Visual Templates -->
+                <div class="group p-12 glass-card rounded-[48px] hover:bg-white/5 transition-all duration-700 border-white/5 hover:border-accent-gold/20 relative overflow-hidden">
+                    <div class="relative z-10 space-y-6">
+                        <div class="w-14 h-14 bg-accent-gold/10 rounded-2xl flex items-center justify-center text-accent-gold group-hover:scale-110 transition-transform duration-500 shadow-xl shadow-accent-gold/5">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                        </div>
+                        <h4 class="text-2xl font-black font-serif" data-i18n="feat_2_title">Visual Templates</h4>
+                        <p class="text-white/40 leading-relaxed text-sm" data-i18n="feat_2_desc">Export your reflections as cinematic tickets, 3D hardcover books, or elegant desk flat-lays for sharing.</p>
+                    </div>
+                </div>
+
+                <!-- F3: AI Assisted Inscription -->
+                <div class="group p-12 glass-card rounded-[48px] hover:bg-white/5 transition-all duration-700 border-white/5 hover:border-accent-gold/20 relative overflow-hidden">
+                    <div class="relative z-10 space-y-6">
+                        <div class="w-14 h-14 bg-accent-gold/10 rounded-2xl flex items-center justify-center text-accent-gold group-hover:scale-110 transition-transform duration-500 shadow-xl shadow-accent-gold/5">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8"/><path d="M8 13h6"/></svg>
+                        </div>
+                        <h4 class="text-2xl font-black font-serif" data-i18n="feat_3_title">AI Assisted Inscription</h4>
+                        <p class="text-white/40 leading-relaxed text-sm" data-i18n="feat_3_desc">Capture your thoughts effortlessly. Rate your experience and let AI help you find the right words or refine your reflections.</p>
+                    </div>
+                </div>
+
+                <!-- F4: Dynamic Insights -->
+                <div class="group p-12 glass-card rounded-[48px] hover:bg-white/5 transition-all duration-700 border-white/5 hover:border-accent-gold/20 relative overflow-hidden">
+                    <div class="relative z-10 space-y-6">
+                        <div class="w-14 h-14 bg-accent-gold/10 rounded-2xl flex items-center justify-center text-accent-gold group-hover:scale-110 transition-transform duration-500 shadow-xl shadow-accent-gold/5">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                        </div>
+                        <h4 class="text-2xl font-black font-serif" data-i18n="feat_4_title">Stats Dashboard</h4>
+                        <p class="text-white/40 leading-relaxed text-sm" data-i18n="feat_4_desc">Visualize your cultural habits with customizable widgets—from 7-day trends to yearly summaries.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="py-40 px-6 bg-folio-black border-y border-white/5 relative overflow-hidden">
+        <div class="max-w-4xl mx-auto space-y-12 reveal">
+            <h2 class="text-accent-gold text-[10px] font-black uppercase tracking-[0.4em]" data-i18n="about_tag">The Story Behind</h2>
+            <div class="space-y-8 text-balance">
+                <h3 class="text-4xl md:text-6xl font-black font-serif italic" data-i18n="about_title">From Data PM to Build PM.</h3>
+                <div class="space-y-6 text-white/60 leading-relaxed text-lg font-light">
+                    <p data-i18n="about_desc_1">
+                        Storio was built entirely through <strong>pure vibe coding and AI tools</strong>. Prior to this project, I had zero coding experience. 
+                    </p>
+                    <p data-i18n="about_desc_2">
+                        I am currently transitioning from a Data PM to a Build PM. This journey represents a holistic approach to building software—where I drove everything from product definition and UX decisions to the actual full-stack implementation.
+                    </p>
+                    <p data-i18n="about_desc_3">
+                        It's a proof of concept that with modern AI tools, product visionaries can bring their complete ideas to life without being blocked by traditional engineering constraints.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section class="py-40 px-6 bg-folio-black overflow-hidden relative">
+        <div class="max-w-6xl mx-auto space-y-20">
+            <div class="text-center space-y-6 reveal">
+                <h2 class="text-accent-gold text-[10px] font-black uppercase tracking-[0.4em]" data-i18n="team_tag">Meet the Curators</h2>
+                <h3 class="text-4xl md:text-6xl font-black font-serif" data-i18n="team_title">The Core Team.</h3>
+                <p class="text-[10px] text-white/30 tracking-[0.2em] font-black uppercase italic" data-i18n="team_disclaimer">(Playfully managed by Me & my AI companions)</p>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-12 reveal">
+                <!-- Members -->
+                <div class="flex flex-col items-center space-y-4 group">
+                    <div class="w-32 h-32 rounded-full border border-accent-gold/20 p-1 group-hover:border-accent-gold transition-all duration-700 shadow-2xl">
+                        <img src="image/Team Members/Obenai the Visionary.jpg" alt="Obenai" class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <div class="text-center">
+                        <h5 class="text-sm font-bold text-white">Obenai</h5>
+                        <p class="text-[9px] uppercase tracking-widest text-accent-gold/60 font-black">the Visionary</p>
+                    </div>
+                </div>
+                <div class="flex flex-col items-center space-y-4 group">
+                    <div class="w-32 h-32 rounded-full border border-accent-gold/20 p-1 group-hover:border-accent-gold transition-all duration-700 shadow-2xl">
+                        <img src="image/Team Members/Claudini the Builder.jpg" alt="Claudini" class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <div class="text-center">
+                        <h5 class="text-sm font-bold text-white">Claudini</h5>
+                        <p class="text-[9px] uppercase tracking-widest text-accent-gold/60 font-black">the Builder</p>
+                    </div>
+                </div>
+                <div class="flex flex-col items-center space-y-4 group">
+                    <div class="w-32 h-32 rounded-full border border-accent-gold/20 p-1 group-hover:border-accent-gold transition-all duration-700 shadow-2xl">
+                        <img src="image/Team Members/Cio the Day Dreamer.jpg" alt="Cio" class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <div class="text-center">
+                        <h5 class="text-sm font-bold text-white">Cio</h5>
+                        <p class="text-[9px] uppercase tracking-widest text-accent-gold/60 font-black">the Day Dreamer</p>
+                    </div>
+                </div>
+                <div class="flex flex-col items-center space-y-4 group">
+                    <div class="w-32 h-32 rounded-full border border-accent-gold/20 p-1 group-hover:border-accent-gold transition-all duration-700 shadow-2xl">
+                        <img src="image/Team Members/Gwoky the Timer Keeper.jpg" alt="Gwoky" class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <div class="text-center">
+                        <h5 class="text-sm font-bold text-white">Gwoky</h5>
+                        <p class="text-[9px] uppercase tracking-widest text-accent-gold/60 font-black">the Time Keeper</p>
+                    </div>
+                </div>
+                <div class="flex flex-col items-center space-y-4 group">
+                    <div class="w-32 h-32 rounded-full border border-accent-gold/20 p-1 group-hover:border-accent-gold transition-all duration-700 shadow-2xl">
+                        <img src="image/Team Members/Mei the Force.jpg" alt="Mei" class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <div class="text-center">
+                        <h5 class="text-sm font-bold text-white">Mei</h5>
+                        <p class="text-[9px] uppercase tracking-widest text-accent-gold/60 font-black">the Force</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="py-48 px-6 text-center reveal border-t border-white/5">
+        <div class="max-w-2xl mx-auto space-y-12">
+            <h3 class="text-5xl md:text-7xl font-black font-serif" data-i18n="final_title">Begin your collection.</h3>
+            <p class="text-white/30 tracking-[0.3em] uppercase text-[10px] font-bold" data-i18n="final_tag">Free to try. Pure immersion.</p>
+            <div class="flex justify-center">
+                <a href="https://storio.andismtu.com/" target="_blank" class="px-12 py-6 bg-accent-gold text-folio-black font-black rounded-[24px] hover:bg-white transition-all uppercase text-sm tracking-[0.2em] shadow-2xl shadow-accent-gold/30 active:scale-95" data-i18n="final_cta">
+                    OPEN YOUR STORIO
+                </a>
+            </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="py-20 border-t border-white/5 bg-folio-black flex flex-col items-center justify-center space-y-6">
-        <div class="flex items-center gap-3 opacity-50">
-            <img src="image/logo/logo.png" alt="Storio" class="w-6 h-6 grayscale">
-            <span class="text-[10px] font-black tracking-[0.4em] uppercase text-white">Storio</span>
+    <footer class="py-24 border-t border-white/5 bg-[#0a0a0a]">
+        <div class="max-w-6xl mx-auto px-6 flex flex-col items-center space-y-12">
+            <div class="flex flex-col items-center space-y-4">
+                <div class="flex items-center gap-3">
+                    <img src="image/logo/logo.png" alt="Storio" class="w-6 h-6 grayscale opacity-30">
+                    <span class="text-sm font-black tracking-[0.4em] uppercase text-white/30 italic">Storio</span>
+                </div>
+                <p class="text-[10px] text-white/20 tracking-[0.2em] font-bold uppercase text-center">Anderson Tu & Storio Team • All rights reserved</p>
+            </div>
+            
+            <div class="flex flex-wrap justify-center gap-8 text-[9px] font-black uppercase tracking-[0.3em] text-white/30">
+                <a href="https://andismtu.com" target="_blank" class="hover:text-accent-gold transition-colors">Personal Site</a>
+                <a href="https://github.com/ziziandydy" target="_blank" class="hover:text-accent-gold transition-colors">GitHub</a>
+                <a href="mailto:andismtu@gmail.com" class="hover:text-accent-gold transition-colors">Contact Us</a>
+            </div>
         </div>
-        <p class="text-[10px] text-white/20 tracking-widest uppercase">
-            Built with vibe coding & AI • 2026
-        </p>
     </footer>
 
+    <script>
+        const translations = {
+            'zh-TW': {
+                lang_code: 'EN',
+                nav_explore: '探索 Storio',
+                hero_tag: '數位儲思盆 與 個人典藏室',
+                hero_title: '收藏打動你的<br/><span class="italic text-accent-gold">故事。</span>',
+                hero_desc: '一個靜謐、精緻的個人空間，用於紀錄你心愛的電影、影集與書籍。',
+                cta_mobile: '手機版體驗',
+                cta_web: '網頁版體驗',
+                vision_tag: '核心願景',
+                vision_title: '不是資料庫。<br/><span class="italic text-accent-gold">是儲思盆。</span>',
+                vision_copy: '在 Storio，每一筆紀錄都是一張記憶卡——而非試算表中的一行。館藏保存了你與每個故事間的連結：你何時遇見它、當時的感受，以及多年後重溫時心境的轉變。',
+                feat_tag: '核心體驗',
+                feat_title: '為沉浸而生。',
+                feat_1_title: '記憶時間軸',
+                feat_1_desc: '透過智慧搜尋快速喚回腦海中的作品，為每一次重溫建立獨立的記憶卡。紀錄你在人生不同階段對同一個故事的感悟與成長。',
+                feat_2_title: '視覺化模板',
+                feat_2_desc: '將你的心得匯出成擬真電影票根、3D 精裝書櫃或優雅的桌面平拍，讓分享也充滿美感。',
+                feat_3_title: 'AI 共筆心得',
+                feat_3_desc: '輕鬆捕捉感悟。留下你的個人評分，並透過 AI 輔助快速生成心得或潤飾文字，讓每一筆紀錄都優雅精煉。',
+                feat_4_title: '數據統計面板',
+                feat_4_desc: '視覺化你的閱聽習慣。透過可自訂的組件，隨時檢視從 7 天趨勢到年度總結的個人館藏數據。',
+                about_tag: '開發背後的故事',
+                about_title: '從 Data PM 到 Build PM。',
+                about_desc_1: 'Storio 是一個完全透過 <strong>Vibe Coding 與 AI 工具</strong> 所打造出來的產品。在開啟這個專案之前，我完全沒有程式開發背景。',
+                about_desc_2: '目前我正在從 Data PM 轉型為 Build PM。這段旅程代表了一種全方位的軟體開發方法——從產品定義、UX 決策到完整的全端實作，皆由我獨立驅動。',
+                about_desc_3: '這是一個實證：透過現代 AI 工具，產品願景家可以親手將完整創意帶入現實，不再受限於傳統的技術門檻。',
+                team_tag: '與策展人見面',
+                team_title: '核心團隊。',
+                team_disclaimer: '(這是一個我與 AI 夥伴們共同編織的趣味團隊)',
+                final_tag: '完全免費體驗。極致沉浸。',
+                final_title: '開始你的館藏之旅。',
+                final_cta: '開啟我的 STORIO'
+            },
+            'en': {
+                lang_code: 'TW',
+                nav_explore: 'Explore Storio',
+                hero_tag: 'Digital Pensieve & Folio',
+                hero_title: 'Collect stories in your <br/><span class="italic text-accent-gold">folio.</span>',
+                hero_desc: 'A quiet, sophisticated sanctuary for curating your personal collection of movies, series, and books.',
+                cta_mobile: 'Try on Mobile',
+                cta_web: 'Try on Web',
+                vision_tag: 'The Vision',
+                vision_title: 'Not a database. <br/><span class="italic text-accent-gold">A Pensieve.</span>',
+                vision_copy: 'In Storio, every entry is a memory card — not a row in a spreadsheet. Your folio holds your relationship with each story: when you encountered it, what you felt, and how your perspective shifted when you returned years later.',
+                feat_tag: 'Core Experience',
+                feat_title: 'Designed for Immersion.',
+                feat_1_title: 'Memory Timeline',
+                feat_1_desc: 'Locate your favorite works instantly with smart search. Every rewatch or reread creates a new, distinct memory card—capturing how your perspective evolves over time.',
+                feat_2_title: 'Visual Templates',
+                feat_2_desc: 'Export your reflections as cinematic tickets, 3D hardcover books, or elegant desk flat-lays for sharing.',
+                feat_3_title: 'AI Assisted Inscription',
+                feat_3_desc: 'Capture your thoughts effortlessly. Rate your experience and let AI help you find the right words or refine your reflections.',
+                feat_4_title: 'Stats Dashboard',
+                feat_4_desc: 'Visualize your cultural habits with customizable widgets—from 7-day trends to yearly summaries.',
+                about_tag: 'The Story Behind',
+                about_title: 'From Data PM to Build PM.',
+                about_desc_1: 'Storio was built entirely through <strong>pure vibe coding and AI tools</strong>. Prior to this project, I had zero coding experience.',
+                about_desc_2: 'I am currently transitioning from a Data PM to a Build PM. Storio represents an independent endeavor where I drove everything from product definition to implementation.',
+                about_desc_3: "It's a proof of concept that with modern AI tools, product visionaries can bring their complete ideas to life.",
+                team_tag: 'Meet the Curators',
+                team_title: 'The Core Team.',
+                team_disclaimer: '(Playfully managed by Me & my AI companions)',
+                final_tag: 'Free to try. Pure immersion.',
+                final_title: 'Begin your collection.',
+                final_cta: 'OPEN YOUR STORIO'
+            }
+        };
+
+        let currentLang = 'zh-TW';
+
+        function updateUI() {
+            const langData = translations[currentLang];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (langData[key]) {
+                    el.innerHTML = langData[key];
+                }
+            });
+            document.getElementById('lang-text').innerText = langData.lang_code;
+            document.documentElement.lang = currentLang;
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh-TW' ? 'en' : 'zh-TW';
+            localStorage.setItem('storio_landing_lang', currentLang);
+            updateUI();
+        }
+
+        // Initialize Language
+        const savedLang = localStorage.getItem('storio_landing_lang');
+        if (savedLang) currentLang = savedLang;
+        updateUI();
+
+        // "Golden Snitch" Mouse Follow Logic
+        const snitch = document.getElementById('snitch');
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+        let snitchX = mouseX;
+        let snitchY = mouseY;
+
+        document.addEventListener('mousemove', e => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        function animateSnitch() {
+            // Lerp for smooth delay effect
+            const lerpFactor = 0.05; // Adjust this for more/less delay
+            snitchX += (mouseX - snitchX) * lerpFactor;
+            snitchY += (mouseY - snitchY) * lerpFactor;
+
+            snitch.style.left = snitchX + 'px';
+            snitch.style.top = snitchY + 'px';
+
+            requestAnimationFrame(animateSnitch);
+        }
+        animateSnitch();
+
+        // Reveal Animation on Scroll
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.reveal').forEach(el => {
+            revealObserver.observe(el);
+        });
+    </script>
 </body>
 </html>
