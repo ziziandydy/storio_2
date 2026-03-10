@@ -1,5 +1,8 @@
-## MODIFIED Requirements
+# profile-settings Specification
 
+## Purpose
+TBD - created by archiving change profile-refactor. Update Purpose after archive.
+## Requirements
 ### Requirement: Profile Settings Options
 The system SHALL display standard settings and community options in the Profile page, but MUST NOT display features that are currently incomplete (such as Notifications and Security & Privacy).
 
@@ -17,3 +20,4 @@ The system SHALL display standard settings and community options in the Profile 
 - **WHEN** the user views the "Community & Support" section
 - **THEN** they see "Share Storio", "Rate on App Store", and the new "Contact Us" item.
 - **AND** they DO NOT see standalone "Suggest a Feature" or "Report a Bug" items.
+
