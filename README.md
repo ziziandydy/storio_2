@@ -1,57 +1,96 @@
-# Storio 2 (Folio & Memories)
+# Storio — Collect stories in your folio
 
-![Storio Gold Banner](https://via.placeholder.com/1200x300/0d0d0d/e96c26?text=Storio+Folio)
+> A quiet, sophisticated digital Pensieve for curating your personal collection of movies, series, and books.
 
-## 1. 產品概述
-**Storio** 是一款結合了「書籍」與「影視」的沉浸式館藏 App。我們將收藏行為轉化為在「儲思盆 (Pensieve)」中保存記憶的過程，讓每一次的紀錄都充滿儀式感。
+![Storio Banner](https://via.placeholder.com/1200x630/0d0d0d/c5a059?text=Storio+-+Your+Digital+Folio)
 
-核心理念：**"Storio - Collect stories in your folio"**
+*(Replace the placeholder above with a real screenshot or GIF demonstrating the App's UI, such as the Home Dashboard or the Share Card feature)*
 
-詳細產品需求請參閱：[Storio 產品需求文檔 (PRD) v4.0](docs/PRD.md)
+---
 
-## 2. 核心架構 (Agent-Centric)
-本專案採用 Agent-Centric 架構，由後端 Python Agent 驅動核心邏輯。
+## Why I Built This
 
-### 🤖 Agents (代理)
-- **CuratorAgent (策展人)**: 負責管理 Folio 內容、處理收藏邏輯、支持重複觀看 (Rewatch) 紀錄。
-- **SearchAgent (搜查官)**: 負責調用外部 API (TMDB, Google Books) 尋找作品。
-- **ScribeAgent (書記)**: 負責處理心得記錄、AI 潤飾。
+The modern media landscape is fragmented. We track movies on Letterboxd/IMDb, series on Trakt, and books on Goodreads. This scattered approach turns the deeply personal act of "remembering a great story" into a sterile, data-entry chore across multiple uninspiring platforms. 
 
-### 🛠 Skills (技能)
-- **TMDBSkill**: 串接 TMDB API (Movie/TV 雙源)。
-- **GoogleBooksSkill**: 串接 Google Books API。
-- **SupabaseSkill**: 處理資料庫 CRUD、Auth 驗證與權限。
-- **AISkill**: 整合 Gemini/OpenAI 進行心得潤飾與建議。
+I built **Storio** to solve this pain point. It's not designed to be a social network or an encyclopedic database. It is designed as a **digital Pensieve**—a private, beautifully crafted digital folio where the focus is entirely on *your* relationship with the story. It brings books and screen media together under one roof, treating each entry not as a database row, but as a cherished memory.
 
-## 3. 技術堆疊
-- **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS, Framer Motion
-- **Backend**: Python 3.12 (FastAPI), Pydantic
-- **Database**: Supabase (PostgreSQL)
-- **Auth**: Supabase Auth (Anonymous Login)
-- **Design System**: "Folio Black" (#0d0d0d) + "Storio Gold" (#c5a059)
+## Product Decisions
 
-## 4. 特色功能 (v2.1)
-- **Curated Stats Dashboard**: 首頁沉浸式數據儀表板，支援輪播展示個人收藏統計（7天/30天/年度/趨勢圖），並可於 Profile 頁面客製化。
-- **Bottom-Focused Search**: 針對行動裝置優化的搜尋介面，將搜尋框與篩選器移至底部，提升單手操作體驗。
-- **Memory Timeline**: 在詳情頁展示同一作品的多次觀看紀錄 (1st View, 2nd View...)，方便回顧不同時期的感悟。
-- **Archival Inscription**: 擬真檔案卡風格的心得撰寫區，支援印章式評分與無縫編輯。
-- **Backdrop-First Design**: 沉浸式詳情頁，讓影像說故事。
-- **Guest Access**: 完整的訪客體驗（限 10 筆收藏），並提供 Onboarding 引導。
+To achieve this vision, several key product and design decisions were made:
 
-## 5. 安裝與執行
+1. **Backdrop-First & Cinematic UI**: We abandoned the traditional "white background with lists" approach. Storio uses a completely dark theme (`#0d0d0d`) with "Storio Gold" accents. When viewing a story, the artwork expands to fill the background with a cinematic blur, pulling the user into the mood of the piece.
+2. **The "Rewatch/Reread" Philosophy**: Most trackers struggle with items you consume multiple times. In Storio, adding a movie you've already seen doesn't just update a counter; it creates a *new, distinct memory card* on your timeline. This allows you to have different reflections and ratings for the exact same story across different periods of your life.
+3. **Frictionless Onboarding (Anonymous First)**: Users shouldn't have to surrender their email just to see if the app is good. Storio utilizes Supabase Anonymous Auth, allowing users to instantly start searching and curating their folio (up to 10 items) the moment they open the app, before ever being asked to sign up.
+4. **Agent-Centric Backend**: To handle the disparate data structures of TMDB (movies/TV) and Google Books, the FastAPI backend uses an "Agent" pattern (Curator, Search, Scribe). This abstracts the complexity away from the frontend, delivering unified `Story` objects to the client.
+5. **Native iOS Feel via Web Tech**: Built as a Next.js Static Export wrapped in Capacitor, the app implements meticulous CSS safe-area padding and native Share/Filesystem plugins to feel indistinguishable from a Swift app on an iPhone.
 
-### Client (Frontend)
-```bash
-cd client
-pnpm install
-pnpm dev
+## Architecture
+
+Storio is built using a modern, serverless architecture optimized for cross-platform deployment.
+
+```mermaid
+graph TD
+    Client[Next.js App Router<br/>Static Export + Capacitor] -->|REST API| API[FastAPI Serverless Backend]
+    API -->|Agent Skills| TMDB[TMDB API]
+    API -->|Agent Skills| GBooks[Google Books API]
+    API -->|PostgreSQL| DB[(Supabase DB)]
+    Client -->|Auth State| Auth[Supabase Auth]
 ```
 
-### Server (Backend)
+## Tech Stack
+
+- **Frontend**: Next.js 14 (React), TypeScript, Tailwind CSS, Framer Motion
+- **Native Wrapper**: Capacitor (iOS support with Native Plugins)
+- **Backend**: Python 3.12 (FastAPI), Pydantic
+- **Database & Auth**: Supabase (PostgreSQL), Anonymous Login
+- **Testing**: Playwright (E2E), Pytest
+
+## Getting Started
+
+### Prerequisites
+- Node.js (v20+) & `pnpm`
+- Python 3.12+
+- Xcode & CocoaPods (for iOS deployment)
+- A Supabase Project
+- API Keys for TMDB and Google Books
+
+### 1. Backend (FastAPI) Setup
 ```bash
 cd server
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+
+# Copy env template and fill in your keys
+cp .env.example .env
+
+# Run the development server
 python -m uvicorn app.main:app --reload --port 8010
+```
+
+### 2. Frontend (Next.js) Setup
+```bash
+cd client
+pnpm install
+
+# Setup your local environment variables
+# Requires NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY
+cp .env.local.example .env.local
+
+# Run the web development server (Will auto-detect IP for mobile testing)
+pnpm dev
+```
+
+### 3. iOS Deployment (Capacitor)
+Storio is fully optimized for iOS static export.
+```bash
+cd client
+# Build the static HTML export
+pnpm run build
+
+# Sync the web assets to the iOS project
+npx cap sync ios
+
+# Open in Xcode to build and run on a Simulator or Device
+npx cap open ios
 ```
