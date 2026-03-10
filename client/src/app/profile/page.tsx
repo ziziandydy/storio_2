@@ -279,35 +279,37 @@ export default function ProfilePage() {
       { id: 'other', icon: Mail, label: t.profile.contactOptions?.other || 'Other' },
     ];
 
-    return (
-      <div className="min-h-screen bg-folio-black text-text-primary pb-20 animate-in slide-in-from-right duration-300">
-        <header className="sticky top-0 z-30 bg-folio-black/80 backdrop-blur-xl p-6 flex items-center gap-6">
-          <button onClick={() => setShowContactSettings(false)} className="text-text-desc hover:text-white transition-colors bg-white/5 p-3 rounded-full">
-            <ArrowLeft size={20} />
-          </button>
-          <h1 className="text-xl font-bold font-serif tracking-wide text-white">{t.profile.items.contact}</h1>
-        </header>
-        <main className="max-w-md mx-auto p-6">
-          <div className="bg-folio-card border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-            <div className="p-2 space-y-1">
-              {CONTACT_OPTIONS.map((opt) => (
-                <button
-                  key={opt.id}
-                  onClick={() => handleContactSelect(opt.id as any)}
-                  className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors group rounded-xl"
-                >
-                  <div className="p-2 rounded-xl bg-white/5 text-accent-gold group-hover:scale-110 transition-transform">
-                    <opt.icon size={18} />
-                  </div>
-                  <span className="text-sm font-medium text-text-primary">{opt.label}</span>
-                </button>
-              ))}
+        return (
+          <div className="min-h-screen bg-folio-black text-text-primary animate-in slide-in-from-right duration-300 overflow-hidden">
+            <header className="sticky top-[var(--sa-top)] z-30 bg-folio-black/80 backdrop-blur-xl p-6 flex items-center gap-6">
+              <button onClick={() => setShowContactSettings(false)} className="text-text-desc hover:text-white transition-colors bg-white/5 p-3 rounded-full">
+                <ArrowLeft size={20} />
+              </button>
+              <h1 className="text-xl font-bold font-serif tracking-wide text-white">{t.profile.items.contact}</h1>
+            </header>
+            <div className="max-w-md mx-auto p-6">
+              <div className="bg-folio-card border border-white/5 rounded-[32px] overflow-hidden shadow-2xl">
+                <div className="p-3 space-y-2">
+                  {CONTACT_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.id}
+                      onClick={() => handleContactSelect(opt.id as any)}
+                      className="w-full flex items-center gap-5 p-5 hover:bg-white/5 active:bg-white/10 transition-all group rounded-2xl"
+                    >
+                      <div className="p-3 rounded-2xl bg-white/5 text-accent-gold group-hover:scale-110 group-active:scale-95 transition-all">
+                        <opt.icon size={22} />
+                      </div>
+                      <div className="flex flex-col items-start">
+                        <span className="text-base font-bold text-text-primary group-hover:text-white transition-colors">{opt.label}</span>
+                      </div>
+                      <ChevronRight size={18} className="ml-auto text-text-desc opacity-20 group-hover:opacity-100 transition-opacity" />
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
-        </main>
-      </div>
-    );
-  }
+        );  }
 
   // If showing language settings, render sub-view
   if (showLanguageSettings) {
@@ -319,7 +321,7 @@ export default function ProfilePage() {
 
     return (
       <div className="min-h-screen bg-folio-black text-text-primary pb-20 animate-in slide-in-from-right duration-300">
-        <header className="sticky top-0 z-30 bg-folio-black/80 backdrop-blur-xl p-6 flex items-center gap-6">
+          <header className="sticky top-[var(--sa-top)] z-30 bg-folio-black/80 backdrop-blur-xl p-6 flex items-center gap-6">
           <button onClick={() => setShowLanguageSettings(false)} className="text-text-desc hover:text-white transition-colors bg-white/5 p-3 rounded-full">
             <ArrowLeft size={20} />
           </button>
@@ -356,7 +358,7 @@ export default function ProfilePage() {
   if (showStatisticsSettings) {
     return (
       <div className="min-h-screen bg-folio-black text-text-primary pb-20">
-        <header className="sticky top-0 z-30 bg-folio-black/80 backdrop-blur-xl p-6 flex items-center gap-6">
+          <header className="sticky top-[var(--sa-top)] z-30 bg-folio-black/80 backdrop-blur-xl p-6 flex items-center gap-6">
           <button onClick={() => setShowStatisticsSettings(false)} className="text-text-desc hover:text-white transition-colors bg-white/5 p-3 rounded-full">
             <ArrowLeft size={20} />
           </button>
@@ -390,7 +392,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-folio-black text-text-primary pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-folio-black/80 backdrop-blur-xl p-6 flex items-center gap-6">
+        <header className="sticky top-[var(--sa-top)] z-30 bg-folio-black/80 backdrop-blur-xl p-6 flex items-center gap-6">
         <button onClick={handleBack} className="text-text-desc hover:text-white transition-colors bg-white/5 p-3 rounded-full">
           <ArrowLeft size={20} />
         </button>

@@ -14,21 +14,28 @@ import OnboardingModal from '@/components/OnboardingModal';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase, getURL } from '@/lib/supabase';
+import { SplashScreen as NativeSplash } from '@capacitor/splash-screen';
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
   const { t } = useTranslation();
   const [scrollY, setScrollY] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [showSplash, setShowSplash] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState<'social' | 'email' | 'otp' | 'profile'>('social');
 
   useEffect(() => {
-    // Check if splash has been shown in this session
+    // Determine splash state on mount
     const hasSeenSplash = sessionStorage.getItem('hasSeenSplash');
     if (!hasSeenSplash) {
       setShowSplash(true);
+    } else {
+      // If skipping splash, hide native one immediately
+      NativeSplash.hide().catch(() => {});
     }
+    
+    setIsInitialized(true);
 
     const handleScroll = () => setScrollY(window.scrollY);
     window.addEventListener('scroll', handleScroll);
@@ -36,7 +43,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!authLoading) {
+    if (isInitialized && !authLoading) {
       // Case 1: Logged in user missing profile info
       const isRegistered = user && user.is_anonymous === false;
       const hasSkippedProfile = sessionStorage.getItem('storio_skipped_profile');
@@ -84,6 +91,10 @@ export default function Home() {
       console.error('Login failed:', error);
     }
   };
+
+  if (!isInitialized) {
+    return <div className="fixed inset-0 bg-folio-black z-[200]" />;
+  }
 
   return (
     <div className="bg-folio-black min-h-screen text-white font-sans relative overflow-x-hidden selection:bg-accent-gold/30">
