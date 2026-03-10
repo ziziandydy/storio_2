@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Storio — Collect stories in your folio</title>
+    <meta name="description" content="A quiet, sophisticated digital Pensieve for curating your personal collection of movies, series, and books.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'folio-black': '#0d0d0d',
+                        'accent-gold': '#c5a059',
+                        'card-surface': '#121212',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #0d0d0d;
+            color: white;
+            overflow-x: hidden;
+        }
+        .gold-glow {
+            text-shadow: 0 0 20px rgba(197, 160, 89, 0.3);
+        }
+        .bg-mesh {
+            background-image: radial-gradient(at 0% 0%, rgba(197, 160, 89, 0.1) 0, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(197, 160, 89, 0.05) 0, transparent 50%);
+        }
+        .reveal {
+            animation: reveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes reveal {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .floating {
+            animation: floating 6s ease-in-out infinite;
+        }
+        @keyframes floating {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body class="bg-folio-black font-sans selection:bg-accent-gold/30">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 px-6 py-6 flex justify-between items-center backdrop-blur-md bg-folio-black/20 border-b border-white/5">
+        <div class="flex items-center gap-3">
+            <img src="image/logo/logo.png" alt="Storio" class="w-8 h-8 rounded-lg shadow-lg border border-white/10">
+            <span class="text-sm font-black tracking-[0.3em] uppercase text-white/90">Storio</span>
+        </div>
+        <a href="https://storio.andismtu.com/" target="_blank" class="px-6 py-2.5 bg-white/5 hover:bg-accent-gold hover:text-folio-black text-accent-gold rounded-full text-[10px] font-black uppercase tracking-widest transition-all border border-accent-gold/30 flex items-center gap-2 group">
+            Explore Storio
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-0.5 transition-transform"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-screen flex flex-col items-center justify-center pt-20 px-6 overflow-hidden bg-mesh">
+        <!-- Background Asset -->
+        <div class="absolute inset-0 z-0 opacity-30 pointer-events-none">
+            <img src="image/heroBackground.webp" alt="Background" class="w-full h-full object-cover mix-blend-screen">
+            <div class="absolute inset-0 bg-gradient-to-b from-folio-black via-transparent to-folio-black"></div>
+        </div>
+
+        <!-- Content -->
+        <div class="relative z-10 max-w-4xl w-full text-center space-y-10 reveal">
+            <div class="space-y-4">
+                <span class="inline-block px-4 py-1.5 bg-accent-gold/10 border border-accent-gold/20 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-accent-gold mb-4">
+                    Digital Pensieve & Folio
+                </span>
+                <h1 class="text-6xl md:text-8xl font-black font-serif tracking-tighter leading-none gold-glow">
+                    Collect stories in your <span class="italic text-accent-gold">folio.</span>
+                </h1>
+                <p class="text-lg md:text-xl text-white/60 font-light tracking-wide max-w-2xl mx-auto leading-relaxed">
+                    A quiet, sophisticated sanctuary for curating your personal collection of movies, series, and books. Preserve your memories, one story at a time.
+                </p>
+            </div>
+
+            <!-- Platform Availability -->
+            <div class="flex flex-col items-center gap-6">
+                <div class="flex flex-wrap justify-center gap-4 text-[10px] font-bold text-white/40 tracking-[0.1em] uppercase">
+                    <span class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 1.44S10.22 5 8 5a4.91 4.91 0 0 0-5 4.78c0 4.22 3 12.22 6 12.22 1.25 0 2.5-1.06 4-1.06Z"/><path d="M12 5a3 3 0 0 1 3-3"/></svg>
+                        iOS App Store
+                    </span>
+                    <span class="opacity-20">•</span>
+                    <span class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+                        Desktop Web
+                    </span>
+                    <span class="opacity-20">•</span>
+                    <span class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg>
+                        Mobile Web
+                    </span>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-4 w-full max-w-md justify-center mt-4">
+                    <!-- iOS App Store Button (Placeholder) -->
+                    <a href="#" class="flex-1 px-8 py-4 bg-white text-folio-black font-black rounded-2xl hover:bg-accent-gold transition-all shadow-[0_0_30px_rgba(255,255,255,0.15)] uppercase text-xs tracking-widest flex items-center justify-center gap-3 group">
+                        Try on Mobile
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-y-[-2px] transition-transform"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 1.44S10.22 5 8 5a4.91 4.91 0 0 0-5 4.78c0 4.22 3 12.22 6 12.22 1.25 0 2.5-1.06 4-1.06Z"/><path d="M12 5a3 3 0 0 1 3-3"/></svg>
+                    </a>
+                    <!-- Web App Button -->
+                    <a href="https://storio.andismtu.com/" target="_blank" class="flex-1 px-8 py-4 bg-white/5 text-white font-black rounded-2xl border border-white/10 hover:bg-white/10 transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-3">
+                        Try on Web
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scroll Indicator -->
+        <div class="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/20 floating">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="m7 13 5 5 5-5"/><path d="m7 6 5 5 5-5"/></svg>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-20 border-t border-white/5 bg-folio-black flex flex-col items-center justify-center space-y-6">
+        <div class="flex items-center gap-3 opacity-50">
+            <img src="image/logo/logo.png" alt="Storio" class="w-6 h-6 grayscale">
+            <span class="text-[10px] font-black tracking-[0.4em] uppercase text-white">Storio</span>
+        </div>
+        <p class="text-[10px] text-white/20 tracking-widest uppercase">
+            Built with vibe coding & AI • 2026
+        </p>
+    </footer>
+
+</body>
+</html>
