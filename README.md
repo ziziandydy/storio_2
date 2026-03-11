@@ -2,7 +2,7 @@
 
 > A quiet, sophisticated digital Pensieve for curating your personal collection of movies, series, and books.
 
-![Storio Banner](https://via.placeholder.com/1200x630/0d0d0d/c5a059?text=Storio+-+Your+Digital+Folio)
+![Storio Banner](image/heroBackground.webp)
 
 *(Replace the placeholder above with a real screenshot or GIF demonstrating the App's UI, such as the Home Dashboard or the Share Card feature)*
 
