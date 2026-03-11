@@ -46,3 +46,4 @@ test-results/
 # Agent
 .gemini/tmp/
 .vercel
+Sites/
