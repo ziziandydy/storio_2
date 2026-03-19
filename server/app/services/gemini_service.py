@@ -54,7 +54,7 @@ class GeminiService:
         print(f"DEBUG: Fetching new book recommendations from Gemini for {language}...")
         try:
             cls.configure()
-            model = genai.GenerativeModel('gemini-2.0-flash')
+            model = genai.GenerativeModel('gemini-2.5-flash')
             
             lang_name = "Traditional Chinese (繁體中文)" if language == "zh-TW" else "English"
             market = "Taiwan/Chinese" if language == "zh-TW" else "International/US"
@@ -119,7 +119,7 @@ class GeminiService:
         if settings.GEMINI_API_KEY:
             try:
                 cls.configure()
-                model = genai.GenerativeModel('gemini-2.0-flash')
+                model = genai.GenerativeModel('gemini-2.5-flash')
                 response = await asyncio.wait_for(
                     model.generate_content_async(f"{system_prompt}\n\n{user_prompt}"),
                     timeout=10.0
@@ -163,7 +163,7 @@ class GeminiService:
 
         try:
             cls.configure()
-            model = genai.GenerativeModel('gemini-2.0-flash')
+            model = genai.GenerativeModel('gemini-2.5-flash')
             
             lang_name = "Traditional Chinese (繁體中文)" if language == "zh-TW" else "English"
 

@@ -5,7 +5,8 @@ import {
   ArrowLeft, User, Shield, Bell, Globe, Mail,
   MessageSquare, Star, Share2, LogIn, Database,
   ChevronRight, Info, AlertCircle, LogOut, Layers,
-  Edit3, Save, X, Check, Calendar, Lock, Camera, Loader2
+  Edit3, Save, X, Check, Calendar, Lock, Camera, Loader2,
+  Trash2, Eraser
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -17,6 +18,7 @@ import { supabase, getURL } from '@/lib/supabase';
 import { getApiUrl } from '@/lib/api';
 import { getTitleKeyByCount, TitleTranslationKey } from '@/utils/leveling';
 import packageJson from '../../../package.json';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ProfileSectionProps {
   title: string;
@@ -91,6 +93,13 @@ export default function ProfilePage() {
   const [showStatisticsSettings, setShowStatisticsSettings] = useState(false);
   const [showLanguageSettings, setShowLanguageSettings] = useState(false);
   const [showContactSettings, setShowContactSettings] = useState(false);
+  const [showPrivacySettings, setShowPrivacySettings] = useState(false);
+
+  // Dangerous Operation States
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+  const [confirmInput, setConfirmInput] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Statistics Widget State
   const [widgets, setWidgets] = useState<string[]>(['7d', '30d', 'year', 'trend7', 'trend30']);
@@ -219,6 +228,54 @@ export default function ProfilePage() {
     router.refresh();
   };
 
+  const handleClearData = async () => {
+    if (confirmInput.toUpperCase() !== 'CLEAR DATA') return;
+    setIsProcessing(true);
+    try {
+      const res = await fetch(getApiUrl('/api/v1/user/me/data'), {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setCollectionCount(0);
+        setIsClearModalOpen(false);
+        setConfirmInput('');
+        // Show success toast (if we had a global toast)
+        router.refresh();
+      } else {
+        throw new Error('Failed to clear data');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Failed to clear data');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (confirmInput.toUpperCase() !== 'DELETE ACCOUNT') return;
+    setIsProcessing(true);
+    try {
+      const res = await fetch(getApiUrl('/api/v1/user/me'), {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        await signOut();
+        router.push('/');
+        router.refresh();
+      } else {
+        throw new Error('Failed to delete account');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Failed to delete account');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleLogin = async (provider: 'google' | 'apple' | 'email') => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -266,7 +323,13 @@ export default function ProfilePage() {
     // @ts-ignore
     const localizedPrefix = t.profile.contactPrefix[type] || 'Contact';
     const subject = `[Storio ${localizedPrefix}] from ${displayName}`;
-    window.location.href = `mailto:andismtu@gmail.com?subject=${encodeURIComponent(subject)}`;
+    
+    // 獲取簡單的系統與版本資訊
+    const osInfo = typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown';
+    const appVersion = packageJson.version || 'Unknown';
+    const body = `\n\n\n---\nApp Version: ${appVersion}\nSystem Info: ${osInfo}`;
+    
+    window.location.href = `mailto:andismtu@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
   if (showContactSettings) {
@@ -382,6 +445,190 @@ export default function ProfilePage() {
             </div>
           </div>
         </main>
+      </div>
+    );
+  }
+
+  // If showing privacy settings, render sub-view
+  if (showPrivacySettings) {
+    return (
+      <div className="min-h-screen bg-folio-black text-text-primary pb-20 animate-in slide-in-from-right duration-300 overflow-hidden">
+        <header className="sticky top-[var(--sa-top)] z-30 bg-folio-black/80 backdrop-blur-xl p-6 flex items-center gap-6">
+          <button onClick={() => setShowPrivacySettings(false)} className="text-text-desc hover:text-white transition-colors bg-white/5 p-3 rounded-full">
+            <ArrowLeft size={20} />
+          </button>
+          <h1 className="text-xl font-bold font-serif tracking-wide text-white">{t.profile.privacyTitle}</h1>
+        </header>
+        <main className="max-w-md mx-auto p-6 space-y-6">
+          <p className="text-xs text-text-desc leading-relaxed px-2">
+            {t.privacy.desc}
+          </p>
+          <div className="bg-folio-card border border-white/5 rounded-[32px] overflow-hidden shadow-2xl">
+            <div className="p-2 space-y-1">
+              <button
+                onClick={() => {
+                  setConfirmInput('');
+                  setIsClearModalOpen(true);
+                }}
+                className="w-full flex items-center gap-4 p-5 hover:bg-white/5 transition-all group rounded-2xl text-left"
+              >
+                <div className="p-2 rounded-xl bg-red-500/10 text-red-500 group-hover:scale-110 transition-transform">
+                  <Eraser size={20} />
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm font-bold text-white block">{t.privacy.clearData}</span>
+                  <span className="text-[10px] text-text-desc">{t.privacy.clearDataDesc}</span>
+                </div>
+                <ChevronRight size={16} className="text-text-desc opacity-40" />
+              </button>
+
+              <button
+                onClick={() => {
+                  setConfirmInput('');
+                  setIsDeleteModalOpen(true);
+                }}
+                className="w-full flex items-center gap-4 p-5 hover:bg-white/5 transition-all group rounded-2xl text-left"
+              >
+                <div className="p-2 rounded-xl bg-red-500/10 text-red-500 group-hover:scale-110 transition-transform">
+                  <Trash2 size={20} />
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm font-bold text-red-500 block">{t.privacy.deleteAccount}</span>
+                  <span className="text-[10px] text-text-desc">{t.privacy.deleteAccountDesc}</span>
+                </div>
+                <ChevronRight size={16} className="text-text-desc opacity-40" />
+              </button>
+            </div>
+          </div>
+        </main>
+
+        {/* Clear Data Confirmation Modal */}
+        <AnimatePresence>
+          {isClearModalOpen && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => !isProcessing && setIsClearModalOpen(false)}
+                className="absolute inset-0 bg-black/95 backdrop-blur-md"
+              />
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                className="relative w-full max-w-sm bg-[#121212] border border-white/10 rounded-[32px] p-8 shadow-2xl flex flex-col gap-6"
+              >
+                <div className="flex flex-col gap-3 text-center">
+                  <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-2 text-red-500">
+                    <Eraser size={28} />
+                  </div>
+                  <h3 className="text-xl font-bold text-white font-serif">{t.privacy.clearDataModal.title}</h3>
+                  <p className="text-xs text-text-desc leading-relaxed">
+                    {t.privacy.clearDataModal.desc}
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <p className="text-[10px] text-center text-text-desc uppercase tracking-widest font-black">
+                    {t.privacy.clearDataModal.instruction.split('<bold>')[0]}
+                    <span className="text-red-500">CLEAR DATA</span>
+                    {t.privacy.clearDataModal.instruction.split('</bold>')[1]}
+                  </p>
+                  <input
+                    type="text"
+                    placeholder="CLEAR DATA"
+                    value={confirmInput}
+                    onChange={(e) => setConfirmInput(e.target.value)}
+                    className="w-full bg-black/50 border border-white/10 rounded-2xl px-4 py-4 text-center text-white placeholder:text-white/10 focus:outline-none focus:border-red-500/50 transition-all tracking-[0.2em] font-black uppercase text-sm"
+                    autoFocus
+                  />
+                  <div className="flex flex-col gap-3 pt-2">
+                    <button
+                      onClick={handleClearData}
+                      disabled={confirmInput.toUpperCase() !== 'CLEAR DATA' || isProcessing}
+                      className="w-full py-4 bg-red-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl active:scale-[0.98] disabled:opacity-20 disabled:grayscale transition-all flex items-center justify-center gap-2"
+                    >
+                      {isProcessing ? <Loader2 className="animate-spin" size={18} /> : <Eraser size={18} />}
+                      {t.privacy.clearDataModal.confirm}
+                    </button>
+                    <button
+                      onClick={() => setIsClearModalOpen(false)}
+                      disabled={isProcessing}
+                      className="w-full py-4 bg-white/5 text-text-desc hover:text-white rounded-2xl font-bold uppercase tracking-widest text-[10px] transition-all"
+                    >
+                      {t.common.cancel}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Delete Account Confirmation Modal */}
+        <AnimatePresence>
+          {isDeleteModalOpen && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => !isProcessing && setIsDeleteModalOpen(false)}
+                className="absolute inset-0 bg-black/95 backdrop-blur-md"
+              />
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                className="relative w-full max-w-sm bg-[#121212] border border-white/10 rounded-[32px] p-8 shadow-2xl flex flex-col gap-6"
+              >
+                <div className="flex flex-col gap-3 text-center">
+                  <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-2 text-red-500 animate-pulse">
+                    <AlertCircle size={28} />
+                  </div>
+                  <h3 className="text-xl font-bold text-white font-serif">{t.privacy.deleteAccountModal.title}</h3>
+                  <p className="text-xs text-text-desc leading-relaxed">
+                    {t.privacy.deleteAccountModal.desc}
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <p className="text-[10px] text-center text-text-desc uppercase tracking-widest font-black">
+                    {t.privacy.deleteAccountModal.instruction.split('<bold>')[0]}
+                    <span className="text-red-500">DELETE ACCOUNT</span>
+                    {t.privacy.deleteAccountModal.instruction.split('</bold>')[1]}
+                  </p>
+                  <input
+                    type="text"
+                    placeholder="DELETE ACCOUNT"
+                    value={confirmInput}
+                    onChange={(e) => setConfirmInput(e.target.value)}
+                    className="w-full bg-black/50 border border-white/10 rounded-2xl px-4 py-4 text-center text-white placeholder:text-white/10 focus:outline-none focus:border-red-500/50 transition-all tracking-[0.2em] font-black uppercase text-sm"
+                    autoFocus
+                  />
+                  <div className="flex flex-col gap-3 pt-2">
+                    <button
+                      onClick={handleDeleteAccount}
+                      disabled={confirmInput.toUpperCase() !== 'DELETE ACCOUNT' || isProcessing}
+                      className="w-full py-4 bg-red-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl active:scale-[0.98] disabled:opacity-20 disabled:grayscale transition-all flex items-center justify-center gap-2"
+                    >
+                      {isProcessing ? <Loader2 className="animate-spin" size={18} /> : <Trash2 size={18} />}
+                      {t.privacy.deleteAccountModal.confirm}
+                    </button>
+                    <button
+                      onClick={() => setIsDeleteModalOpen(false)}
+                      disabled={isProcessing}
+                      className="w-full py-4 bg-white/5 text-text-desc hover:text-white rounded-2xl font-bold uppercase tracking-widest text-[10px] transition-all"
+                    >
+                      {t.common.cancel}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     );
   }
@@ -580,6 +827,13 @@ export default function ProfilePage() {
             onClick={() => setShowLanguageSettings(true)}
           />
           <ProfileItem icon={<Layers size={18} />} label={t.profile.items.statistics} onClick={() => setShowStatisticsSettings(true)} />
+          {!isAnonymous && (
+            <ProfileItem
+              icon={<Shield size={18} />}
+              label={t.profile.items.privacy}
+              onClick={() => setShowPrivacySettings(true)}
+            />
+          )}
         </ProfileSection>
 
         <ProfileSection title={t.profile.sections.community}>
@@ -590,7 +844,7 @@ export default function ProfilePage() {
 
         <ProfileSection title={t.profile.sections.about}>
           <ProfileItem icon={<Info size={18} />} label={t.profile.items.terms} onClick={() => router.push('/terms')} />
-          <ProfileItem icon={<Shield size={18} />} label={t.profile.items.privacy} onClick={() => router.push('/privacy')} />
+          <ProfileItem icon={<Shield size={18} />} label={t.profile.items.privacyPolicy} onClick={() => router.push('/privacy')} />
           <div className="p-4 text-center">
             <span className="text-[10px] text-text-desc font-bold tracking-[0.3em] uppercase opacity-40">
               Version {packageJson.version}

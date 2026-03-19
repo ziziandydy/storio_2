@@ -102,6 +102,10 @@ class CollectionService:
             raise HTTPException(status_code=404, detail="Story not found")
         return {"status": "success"}
 
+    def clear_user_data(self, user_id: str):
+        """Clear all collection data for a user."""
+        self.repo.delete_user_stories(user_id)
+
     def get_stats(self, user_id: str) -> dict:
         return self.repo.get_collection_stats(user_id)
 

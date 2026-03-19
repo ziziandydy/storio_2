@@ -48,13 +48,13 @@
             left: 0;
             width: 400px;
             height: 400px;
-            background: radial-gradient(circle, rgba(197, 160, 89, 0.15) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(197, 160, 89, 0.3) 0%, transparent 75%);
             border-radius: 50%;
             pointer-events: none;
             z-index: 1;
             transform: translate(-50%, -50%);
             will-change: left, top;
-            filter: blur(20px);
+            filter: blur(15px);
         }
         /* Intro "Opening" Animation */
         .page-unfold {
@@ -119,9 +119,9 @@
 
     <!-- Hero Section -->
     <section class="relative min-h-screen flex flex-col items-center justify-center pt-20 px-6 overflow-hidden page-unfold">
-        <div class="absolute inset-0 z-0 opacity-30 pointer-events-none border-folio-outline border-b">
-            <img src="image/heroBackground.webp" alt="Background" class="w-full h-full object-cover mix-blend-screen scale-110">
-            <div class="absolute inset-0 bg-gradient-to-b from-folio-black via-transparent to-folio-black"></div>
+        <div class="absolute inset-0 z-0 opacity-20 pointer-events-none border-folio-outline border-b">
+            <img src="image/heroBackground_v2.jpg" alt="Background" class="w-full h-full object-cover scale-110">
+            <div class="absolute inset-0 bg-gradient-to-b from-folio-black via-folio-black/60 to-folio-black"></div>
         </div>
 
         <div class="relative z-10 max-w-5xl w-full text-center space-y-10">

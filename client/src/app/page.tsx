@@ -113,10 +113,10 @@ export default function Home() {
       {/* Background Layer */}
       <div className="fixed inset-0 z-0 bg-folio-black pointer-events-none">
         <Image
-          src="/image/heroBackground.webp"
+          src="/image/heroBackground_v2.jpg"
           alt="Hero Background"
           fill
-          className="object-cover opacity-30 mix-blend-screen"
+          className="object-cover opacity-20"
           priority
           unoptimized
           sizes="100vw"

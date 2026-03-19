@@ -53,4 +53,22 @@ if (fs.existsSync(backendMainPath)) {
     console.log(`⚠️ server/app/main.py not found at ${backendMainPath}`);
 }
 
+// Update capacitor.config.ts
+const capConfigPath = path.join(__dirname, '..', 'capacitor.config.ts');
+if (fs.existsSync(capConfigPath)) {
+    let capConfig = fs.readFileSync(capConfigPath, 'utf8');
+    const urlRegex = /url:\s*['"]http:\/\/[^'"]+['"]/g;
+    
+    if (urlRegex.test(capConfig)) {
+        capConfig = capConfig.replace(urlRegex, `url: 'http://${ip}:3010'`);
+    } else {
+        // If url doesn't exist, we insert it after androidScheme
+        capConfig = capConfig.replace(/androidScheme:\s*'[^']+',?/g, `androidScheme: 'https',\n    url: 'http://${ip}:3010',`);
+    }
+    fs.writeFileSync(capConfigPath, capConfig);
+    console.log(`✅ [Capacitor] capacitor.config.ts updated with url: 'http://${ip}:3010'`);
+} else {
+    console.log(`⚠️ capacitor.config.ts not found at ${capConfigPath}`);
+}
+
 console.log('🚀 Network configured for cross-device iOS testing.\n');

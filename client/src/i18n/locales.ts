@@ -160,7 +160,7 @@ export const translations = {
         syncStatus: 'Sync Status',
         notSynced: 'Not Synced',
         active: 'Active',
-        security: 'Security & Privacy',
+        privacy: 'Privacy & Safety',
         language: 'Language',
         notifications: 'Notifications',
         statistics: 'Statistics',
@@ -170,7 +170,7 @@ export const translations = {
         suggest: 'Suggest a Feature',
         bug: 'Report a Bug',
         terms: 'Terms of Use',
-        privacy: 'Privacy Policy',
+        privacyPolicy: 'Privacy Policy',
       },
       contactOptions: {
         feature: 'Suggest a Feature',
@@ -185,6 +185,7 @@ export const translations = {
       shareMessage: 'Welcome to Storio, collect the stories that moves you:',
       statsTitle: 'Statistics',
       langTitle: 'Language',
+      privacyTitle: 'Privacy & Safety',
       widgets: {
         '7d': 'Last 7 Days',
         '30d': 'Last 30 Days',
@@ -193,6 +194,26 @@ export const translations = {
         'year': 'This Year',
         'trend7': '7-Day Trend Chart',
         'trend30': '30-Day Trend Chart',
+      }
+    },
+    privacy: {
+      title: 'Privacy & Safety',
+      desc: 'Manage your data and account settings. These actions are permanent and cannot be undone.',
+      clearData: 'Clear All Data',
+      clearDataDesc: 'Remove all collections and stories.',
+      deleteAccount: 'Delete Account',
+      deleteAccountDesc: 'Permanently delete your account and data.',
+      clearDataModal: {
+        title: 'Clear All Data?',
+        desc: 'This will permanently remove all your saved movies, series, books, and reflections. Your account will remain active.',
+        instruction: 'Type <bold>CLEAR DATA</bold> to confirm:',
+        confirm: 'Clear Data',
+      },
+      deleteAccountModal: {
+        title: 'Delete Account?',
+        desc: 'This action is irreversible. It will permanently delete your account, identity, and all associated collections from Storio.',
+        instruction: 'Type <bold>DELETE ACCOUNT</bold> to confirm:',
+        confirm: 'Delete Account',
       }
     },
     shareModal: {
@@ -386,7 +407,7 @@ export const translations = {
         syncStatus: '同步狀態',
         notSynced: '未同步',
         active: '已啟用',
-        security: '安全性與隱私',
+        privacy: '隱私與安全性',
         language: '語言',
         notifications: '通知',
         statistics: '統計數據',
@@ -396,7 +417,7 @@ export const translations = {
         suggest: '功能建議',
         bug: '回報問題',
         terms: '使用條款',
-        privacy: '隱私權政策',
+        privacyPolicy: '隱私權政策',
       },
       contactOptions: {
         feature: '功能建議',
@@ -411,6 +432,7 @@ export const translations = {
       shareMessage: '歡迎來到 Storio，收藏打動你的故事：',
       statsTitle: '統計設定',
       langTitle: '語言設定',
+      privacyTitle: '隱私與安全性',
       widgets: {
         '7d': '過去 7 天',
         '30d': '過去 30 天',
@@ -419,6 +441,26 @@ export const translations = {
         'year': '今年',
         'trend7': '7日趨勢圖',
         'trend30': '30日趨勢圖',
+      }
+    },
+    privacy: {
+      title: '隱私與安全性',
+      desc: '管理您的資料與帳號設定。這些動作是永久性的，且無法復原。',
+      clearData: '清除所有資料',
+      clearDataDesc: '移除所有館藏與心得。',
+      deleteAccount: '刪除帳號',
+      deleteAccountDesc: '永久刪除您的帳號與所有資料。',
+      clearDataModal: {
+        title: '清除所有資料？',
+        desc: '這將永久移除您收藏的所有電影、影集、書籍及心得。您的帳號將會保留。',
+        instruction: '請輸入 <bold>CLEAR DATA</bold> 以確認：',
+        confirm: '清除資料',
+      },
+      deleteAccountModal: {
+        title: '刪除帳號？',
+        desc: '此動作無法復原。這將永久刪除您的帳號、身份以及 Storio 中所有關聯的館藏。',
+        instruction: '請輸入 <bold>DELETE ACCOUNT</bold> 以確認：',
+        confirm: '刪除帳號',
       }
     },
     shareModal: {

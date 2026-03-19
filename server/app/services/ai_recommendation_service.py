@@ -77,7 +77,7 @@ class AIRecommendationService:
             
         try:
             genai.configure(api_key=settings.GEMINI_API_KEY)
-            model = genai.GenerativeModel('gemini-2.0-flash')
+            model = genai.GenerativeModel('gemini-2.5-flash')
             
             lang_name = "Traditional Chinese (繁體中文)" if language == "zh-TW" else "English"
             market_context = "Taiwan/Chinese" if language == "zh-TW" else "International/US"

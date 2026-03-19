@@ -3,7 +3,12 @@
 2026-02-21 UAT 測試後紀錄。
 
 ## ✅ 最近完成 (Completed)
-1.  **正式產品介紹頁 (Landing Page Refinement)**:
+1.  **隱私與安全性 (Privacy & Safety)**:
+    *   在 Profile 頁面實作 `Privacy & Safety` 子視圖。
+    *   實作「清除所有資料」與「刪除帳號」功能，整合後端 API。
+    *   採用與 `StoryCard` 刪除一致的 UX，需輸入確認字串 ("CLEAR DATA" / "DELETE ACCOUNT")。
+    *   (待 UAT 驗證)
+2.  **正式產品介紹頁 (Landing Page Refinement)**:
     *   重構 `index.html` 為沉浸式產品介紹頁。
     *   實作「金探子」滑鼠跟隨光暈、啟動展開動畫。
     *   實作雙語切換 (EN/ZH) 邏輯。
@@ -109,6 +114,7 @@
 - [ ] **新增類別 (Shows)**: 擴充系統以支援「展演 (Show)」類別（如表演、劇場、演唱會等），包含搜索與建立 Memory。
 - [ ] **Apple Sign-in**: 待註冊 Apple Developer 帳號後串接。
 - [ ] **智慧搜尋 (AI Search)**: 將現有搜尋升級為 AI 驅動的自然語言搜尋，允許使用者透過中英文、作者、書名、作品特色等描述快速尋找與發現作品。
+- [ ] **分季收藏 (Seasons)**: 讓使用者可以自由新增影集的不同季別，例如只將已觀看的第 1~5 季加入收藏，而尚未觀看的第 6~8 季則保留。
 
 ## 🎨 UI/UX 優化 (UI/UX Polish)
 - [x] **多次觀看記錄 (Multi-View)**: 已確立設計方向，針對重複觀看同一作品，將建立**多張獨立的 Memory Card**。

@@ -89,6 +89,10 @@ class CollectionRepository:
         response = self.table.delete().eq("id", str(story_id)).eq("user_id", user_id).execute()
         return len(response.data) > 0
 
+    def delete_user_stories(self, user_id: str):
+        """Clear all stories for a specific user."""
+        self.table.delete().eq("user_id", user_id).execute()
+
     def get_collection_stats(self, user_id: str) -> dict:
         from datetime import datetime, timedelta, timezone
         from collections import defaultdict

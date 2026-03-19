@@ -2,9 +2,7 @@
 
 > A quiet, sophisticated digital Pensieve for curating your personal collection of movies, series, and books.
 
-![Storio Banner](image/heroBackground.webp)
-
-*(Replace the placeholder above with a real screenshot or GIF demonstrating the App's UI, such as the Home Dashboard or the Share Card feature)*
+![Storio Banner](image/heroBackground_v2.jpg)
 
 ---
 

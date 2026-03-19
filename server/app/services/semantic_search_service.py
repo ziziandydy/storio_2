@@ -52,7 +52,7 @@ class SemanticSearchService:
         if settings.GEMINI_API_KEY:
             try:
                 genai.configure(api_key=settings.GEMINI_API_KEY)
-                model = genai.GenerativeModel('gemini-2.0-flash')
+                model = genai.GenerativeModel('gemini-2.5-flash')
                 response = await asyncio.wait_for(
                     model.generate_content_async(f"{system_prompt}\n\n{user_prompt}"),
                     timeout=10.0

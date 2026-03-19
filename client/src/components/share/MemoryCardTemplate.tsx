@@ -56,9 +56,11 @@ export default function MemoryCardTemplate({
         const isDataUrl = src.startsWith('data:');
         const isBlobUrl = src.startsWith('blob:');
         const isLocalStatic = src.startsWith('/image/');
+        const isProxyUrl = src.startsWith('/proxy/'); // Added proxy bypass
 
         // Next.js Image Optimization API and custom Rewrites require crossOrigin to prevent Tainted Canvas
-        const needsCors = !(isDataUrl || isBlobUrl || isLocalStatic);
+        // BUT our local rewrites (/proxy/...) are technically same-origin to the browser, so we should NOT use anonymous.
+        const needsCors = !(isDataUrl || isBlobUrl || isLocalStatic || isProxyUrl);
 
         const props = {
             src,
