@@ -289,14 +289,11 @@ export default function MemoryCardTemplate({
             <div style={currentDim} className="bg-[#1a1a1a] flex flex-col items-center justify-center overflow-hidden relative font-serif perspective-[2000px]">
                 {/* Environment / Background - Dark Library Shelf */}
                 <div className="absolute inset-0 bg-[#2a1a10] overflow-hidden">
-                    {/* Back wall of the shelf (Dark Library) */}
-                    <div
-                        className="absolute inset-0 opacity-40 mix-blend-multiply"
-                        style={{
-                            backgroundImage: `url('https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=80&w=2000&auto=format&fit=crop')`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                        }}
+                    {/* Back wall of the shelf (Local asset — previously Unsplash, now proxied-safe) */}
+                    <img
+                        {...getImageProps('/image/share/library_bg.jpg')}
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-multiply"
                     />
 
                     {/* The Shelf Board Top Surface (Perspective depth) */}

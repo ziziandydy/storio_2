@@ -47,12 +47,21 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
   const [isDownloaded, setIsDownloaded] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
 
+  const SHARE_DEBUG = process.env.NODE_ENV === 'development' ||
+    process.env.NEXT_PUBLIC_SHARE_DEBUG === 'true';
+
   const proxiedItem = useMemo(() => {
     if (!item) return undefined;
+    const proxiedUrl = getOptimizedShareImageUrl(item.posterPath, false);
+    if (SHARE_DEBUG) {
+      const isValid = proxiedUrl.includes('_t=') && proxiedUrl.includes('salt=');
+      console.log(`[ShareDebug][1] Original posterPath: ${item.posterPath.substring(0, 60)}`);
+      console.log(`[ShareDebug][1] Proxied URL: ${proxiedUrl.substring(0, 80)}`);
+      console.log(`[ShareDebug][1] URL valid (has _t & salt): ${isValid}`);
+    }
     return {
       ...item,
-      // Apply client-side resizing and opaque cache defense
-      posterPath: getOptimizedShareImageUrl(item.posterPath, false),
+      posterPath: proxiedUrl,
     };
   }, [item]);
 
@@ -76,23 +85,29 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
 
   const waitForAllImages = async (element: HTMLElement) => {
     const images = Array.from(element.querySelectorAll('img'));
-    console.log(`[ShareDebug] Found ${images.length} images in capture area.`);
+    if (SHARE_DEBUG) console.log(`[ShareDebug][2] Found ${images.length} images in capture area.`);
     await Promise.all(images.map(async (img, i) => {
-      // Basic load check
       if (!img.complete) {
         await new Promise((resolve) => {
           img.onload = resolve;
           img.onerror = resolve;
         });
       }
-      // Critical for Safari: Force decode
+      let decodeResult: 'ok' | 'failed' = 'ok';
       try {
-        if (img.decode) {
-          await img.decode();
-          console.log(`[ShareDebug] Image ${i} decoded successfully.`);
-        }
+        if (img.decode) await img.decode();
       } catch (e) {
-        console.warn(`[ShareDebug] Image ${i} decode failed (might be non-image or empty):`, e);
+        decodeResult = 'failed';
+        if (SHARE_DEBUG) console.warn(`[ShareDebug][2] Image ${i} decode failed:`, e);
+      }
+      if (SHARE_DEBUG) {
+        console.log(`[ShareDebug][2] Image ${i}:`, {
+          src: img.src.substring(0, 50),
+          complete: img.complete,
+          naturalWidth: img.naturalWidth,
+          crossOrigin: img.crossOrigin || null,
+          decodeResult,
+        });
       }
     }));
   };
@@ -114,27 +129,29 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
 
       // Double Capture Strategy for Safari
       const warmUpStart = performance.now();
-      console.log('[ShareDebug] Running Warm-up Capture...');
+      if (SHARE_DEBUG) console.log('[ShareDebug][3] Running Warm-up Capture...');
+      let warmUpLength = 0;
       try {
-        await toPng(templateRef.current, {
+        const warmUpResult = await toPng(templateRef.current, {
           cacheBust: false,
           pixelRatio: 1,
           backgroundColor: '#0d0d0d',
           skipAutoScale: true,
           includeQueryParams: true,
         });
-        console.log(`[ShareDebug] Warm-up finished in ${Math.round(performance.now() - warmUpStart)}ms`);
+        warmUpLength = warmUpResult.length;
+        if (SHARE_DEBUG) console.log(`[ShareDebug][3] Warm-up result: length=${warmUpLength}, valid=${warmUpLength >= 1000}, time=${Math.round(performance.now() - warmUpStart)}ms`);
+        if (SHARE_DEBUG && warmUpLength < 1000) console.warn('[ShareDebug][3] Warm-up produced suspiciously small output — possible blank image');
       } catch (e) {
-        console.warn('[ShareDebug] Warm-up capture failed (expected)', e);
+        if (SHARE_DEBUG) console.warn('[ShareDebug][3] Warm-up capture failed (expected on first run)', e);
       }
 
-      // Let the GPU catch up
-      console.log('[ShareDebug] Waiting for Safari async Base64 decoding (800ms)...');
-      await new Promise(resolve => setTimeout(resolve, 800)); // Increased to let Base64 decode
+      if (SHARE_DEBUG) console.log('[ShareDebug] Waiting 800ms for Safari async Base64 decoding...');
+      await new Promise(resolve => setTimeout(resolve, 800));
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
       const finalStart = performance.now();
-      console.log('[ShareDebug] Running Final Capture...');
+      if (SHARE_DEBUG) console.log('[ShareDebug][4] Running Final Capture...');
       const dataUrl = await toPng(templateRef.current, {
         cacheBust: false,
         pixelRatio: ratio,
@@ -146,8 +163,24 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
           transformOrigin: 'top left'
         }
       });
-      console.log(`[ShareDebug] Final Capture finished in ${Math.round(performance.now() - finalStart)}ms`);
-      console.log('[ShareDebug] Capture success. Data URL length:', dataUrl.length);
+
+      // Blank image detection
+      const isValidFormat = dataUrl.startsWith('data:image/png;base64,');
+      const isValidLength = dataUrl.length >= 5000;
+      if (SHARE_DEBUG) {
+        console.log(`[ShareDebug][4] Final capture: length=${dataUrl.length}, time=${Math.round(performance.now() - finalStart)}ms`);
+        console.log(`[ShareDebug][4] Header check: ${dataUrl.substring(0, 30)}`);
+        console.log(`[ShareDebug][4] Status: ${!isValidFormat ? 'invalid-format' : !isValidLength ? 'blank' : 'ok'}`);
+      }
+      if (!isValidFormat) {
+        console.error('[ShareDebug][4] ERROR: dataUrl is not a valid PNG base64 string');
+        return null;
+      }
+      if (!isValidLength) {
+        console.warn('[ShareDebug][4] WARN: dataUrl is suspiciously short — treating as blank image');
+        return null;
+      }
+
       return dataUrl;
     } catch (error) {
       console.error('[ShareDebug] Capture failed:', error);
@@ -159,7 +192,10 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
 
   const handleShare = async () => {
     const dataUrl = await handleCapture();
-    if (!dataUrl) return;
+    if (!dataUrl) {
+      alert('圖片生成失敗，請稍後再試。若問題持續，請開啟 SHARE_DEBUG 並回報 log。');
+      return;
+    }
 
     const shareMessage = `${t.details.shareMessage} ${window.location.origin}`;
 
@@ -177,13 +213,24 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
           data: base64Data,
           directory: Directory.Cache
         });
+        if (SHARE_DEBUG) {
+          console.log(`[ShareDebug][5] File written: ${savedFile.uri}`);
+          console.log(`[ShareDebug][5] URI valid (starts with file://): ${savedFile.uri.startsWith('file://')}`);
+        }
 
         // 3. Invoke Native Share Sheet
-        await Share.share({
-          title: title,
-          text: shareMessage,
-          url: savedFile.uri // Must be full absolute file:// path returned by Filesystem
-        });
+        if (SHARE_DEBUG) console.log(`[ShareDebug][6] Share invoked with url: ${savedFile.uri}`);
+        try {
+          await Share.share({
+            title: title,
+            text: shareMessage,
+            url: savedFile.uri
+          });
+          if (SHARE_DEBUG) console.log('[ShareDebug][6] Share result: success');
+        } catch (shareErr) {
+          if (SHARE_DEBUG) console.error(`[ShareDebug][6] Share result: error`, shareErr);
+          throw shareErr;
+        }
       } else {
         // --- WEB SHARE ---
         const blob = await (await fetch(dataUrl)).blob();
@@ -422,7 +469,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
                 <div className="flex flex-col sm:flex-row gap-3 pt-4">
                   <button
                     onClick={handleShare}
-                    disabled={isGenerating || isSingleItem}
+                    disabled={isGenerating}
                     className="flex-1 py-4 bg-accent-gold text-folio-black rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-white transition-all shadow-xl active:scale-[0.98] disabled:opacity-50"
                   >
                     {isGenerating ? (
@@ -433,7 +480,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
                   </button>
                   <button
                     onClick={handleDownload}
-                    disabled={isGenerating || isSingleItem}
+                    disabled={isGenerating}
                     className="flex-1 py-4 bg-white/5 text-white hover:bg-white/10 rounded-2xl font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all border border-white/10 disabled:opacity-50"
                   >
                     {isDownloaded ? <><Check size={14} /> {t.shareModal.saved}</> : <><Download size={14} /> {t.shareModal.download}</>}

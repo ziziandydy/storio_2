@@ -41,6 +41,7 @@ export default function CalendarView({ stories }: CalendarViewProps) {
   const topSentinelRef = useRef<HTMLDivElement>(null);
   const bottomSentinelRef = useRef<HTMLDivElement>(null);
   const isFetchingRef = useRef(false);
+  const isScrollReadyRef = useRef(false); // 防止初始化時 Observer 過早觸發 prepend
 
   // Group stories by date
   const storiesByDate = useMemo(() => {
@@ -82,7 +83,9 @@ export default function CalendarView({ stories }: CalendarViewProps) {
       if (element) {
         element.scrollIntoView({ behavior: 'instant', block: 'start' });
       }
-    }, 100);
+      // 滾動完成後才開放 Observer 觸發 prepend，避免跳回頂部
+      isScrollReadyRef.current = true;
+    }, 300);
     return () => clearTimeout(timer);
   }, []);
 
@@ -94,26 +97,9 @@ export default function CalendarView({ stories }: CalendarViewProps) {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           if (entry.target === topSentinelRef.current) {
-            // Maintain scroll position logic would go here, but for simplicity we just load
-            // To prevent jumping, we might need a more complex layout, 
-            // but let's try standard prepend first.
-            // Actually, prepend usually causes jump. 
-            // Let's stick to append (downwards) logic for "Past -> Future" or just "Future -> Past"?
-            // Calendar is usually chronological. 
-
-            // For this iteration, let's implement "Load Previous" button behavior automatically?
-            // Or better: Let's focus on the UX. Infinite scroll upwards is hard without specific virtualization libs.
-
-            // Simplification: We only auto-load downwards (Future) or Upwards (Past)?
-            // Let's try loading previous months.
-
-            // NOTE: Saving scroll position is tricky in React purely with state.
-            // We will skip auto-prepend to avoid UX glitches and instead just rely on
-            // the user scrolling up into "newly added space".
-
-            const currentScrollHeight = document.documentElement.scrollHeight;
+            // 等初始 scrollIntoView 完成後才觸發，避免掛載時立刻 prepend 導致跳回頂部
+            if (!isScrollReadyRef.current) return;
             loadMoreMonths('prev');
-            // Restoration of scroll position happens in useLayoutEffect ideally
           } else if (entry.target === bottomSentinelRef.current) {
             loadMoreMonths('next');
           }
