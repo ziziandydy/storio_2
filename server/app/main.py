@@ -19,9 +19,9 @@ origins = [
     "capacitor://localhost",
     "http://capacitor.localhost",
     "capacitor://127.0.0.1",
-    "capacitor://192.168.50.184",
-    "http://192.168.50.184:3010",
-    "http://192.168.50.184:3000",
+    "capacitor://192.168.50.137",
+    "http://192.168.50.137:3010",
+    "http://192.168.50.137:3000",
     os.getenv("FRONTEND_URL", ""), # Production Vercel URL
     "https://storio-2.vercel.app",  # Placeholder, update with actual
 ]

@@ -53,6 +53,42 @@
 ✅ **[Enhancement] 日期邏輯與穩定性配置**: 套用 `parseISO` 與穩定 Hash 演算法取代 `Math.random()`。
 ✅ **[UX/UI] 骨架圖載入動畫與 i18n 支持**: 取代文字 loading 並補齊 i18n。
 
+---
+
+## Round 2 修復紀錄 (2026-03-20)
+
+### 新發現的根因
+
+#### R2-1：Backend CORS 衝突（`proxy.py` × `CORSMiddleware`）
+`proxy.py` 手動回傳 `Access-Control-Allow-Origin: *`，與全域 `CORSMiddleware` 的 `allow_credentials=True` 並存，違反 W3C 規範。Safari 嚴格模式下會拒絕整個 CORS 回應，導致所有代理圖片載入失敗。
+- **修復**：移除 `proxy.py` 的手動 Header，CORS 完全交由 `CORSMiddleware` 處理。加入 `[ProxyDebug]` log 記錄 request origin。
+
+#### R2-2：`3d` 模板外部 CSS 背景圖（Unsplash Tainted Canvas）
+`MemoryCardTemplate.tsx` 的 `3d` 模板直接使用外部 Unsplash URL 作為 CSS `background-image: url('https://images.unsplash.com/...')`：
+1. 完全繞過後端 Proxy 機制
+2. `html-to-image` 使用 XHR 抓取此 URL，但無法保證 Unsplash CORS 回應穩定
+3. `waitForAllImages` 只掃描 `<img>` 標籤，CSS 背景圖無法被偵測到
+- **修復**：下載圖片至本地 `client/public/image/share/library_bg.jpg`，改用 `<img>` 標籤配合 `getImageProps`，納入 `waitForAllImages` 監控範圍。
+
+### 新增防禦機制
+
+#### ShareDebug 全流程 Log（6 個環節）
+透過 `NEXT_PUBLIC_SHARE_DEBUG=true` 環境變數開啟，涵蓋：
+1. `proxiedItem` URL 驗證（`_t`、`salt` 是否存在）
+2. 每張圖片的 `naturalWidth`、`crossOrigin`、decode 結果
+3. 暖機 Capture 長度驗證（`< 1000` 警告）
+4. 正式 Capture 長度與格式驗證（`< 5000` 或非 PNG 視為空白圖）
+5. `Filesystem.writeFile` URI 格式確認（`file://` 開頭）
+6. `Share.share` 成功 / 失敗紀錄
+
+#### 空白圖自動偵測
+`handleCapture` 回傳 `null` 時，`handleShare` / `handleDownload` 顯示明確錯誤提示，告別靜默失敗。
+
+### 已知殘留限制
+- **`3d` 模板 CSS 3D 渲染**：`html-to-image` 不支援 `preserve-3d`，截圖視覺失真，為既知限制。
+- **`backdrop-blur` 消失**：`html-to-image` 不支援 `backdrop-filter: blur()`，毛玻璃效果截圖中不顯示，為既知視覺差異。
+- **長期方案**：若上述問題持續影響體驗，建議改用後端 Pillow 產圖作為 fallback（`handleCapture` 失敗時呼叫後端 API）。
+
 ## 5. 跨平台 (iOS/Safari) 深度除錯紀錄 (Debugging Scenarios)
 為了在 Dev 環境 (尤其是電腦版 Chrome/Safari) 重現 iOS Production 環境中 WebKit 引擎特有的嚴格渲染與 CORS 限制問題，我們採取了以下多種情境的模擬與分析：
 

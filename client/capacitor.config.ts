@@ -7,7 +7,7 @@ const config: CapacitorConfig = {
   server: {
     cleartext: true,
     androidScheme: 'https',
-    url: 'http://192.168.50.184:3010',
+    url: 'http://192.168.50.137:3010',
   },
   plugins: {
     SplashScreen: {

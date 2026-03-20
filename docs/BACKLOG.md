@@ -101,8 +101,12 @@
 - [x] **原生分享 (Native Sharing)**: 整合 Web Share API。
 
 ### 🐛 Known Issues (Bugs to Fix)
-- [ ] **分享預覽與匯出圖片空白 (Share Image Blank Issue Returned)**: 在 Preview 和實際分享時，圖片又出現無法正確帶入的問題。(*Note: 先前修復包含 `html-to-image` 的 Safari 緩存問題但似乎已失效或有新狀況，待下次開發時排查*)。
-  - *Previous Fix Attempt*: Added `includeQueryParams: true` to prevent Base64 cache collisions, explicitly set CORS (`crossOrigin="anonymous"`), and apply image `w` compression payload thinning.
+- [x] **分享預覽與匯出圖片空白 (Share Image Blank Issue — Round 2)**: *(已修復 2026-03-20)*
+  - **Root Cause 1**：`proxy.py` 手動設定 `Access-Control-Allow-Origin: *` 與 `CORSMiddleware` 的 `allow_credentials=True` 產生規範衝突，導致 Safari 拒絕 CORS 回應。→ 已移除手動 Header。
+  - **Root Cause 2**：`3d` 書架模板使用外部 Unsplash URL 作為 CSS `background-image`，繞過 Proxy 機制，`html-to-image` 無法安全抓取，觸發 Tainted Canvas。→ 已下載圖片至本地 `library_bg.jpg` 並改為 `<img>` 標籤。
+  - **加強**：新增 `SHARE_DEBUG` 全流程 log（6 個環節）與空白圖自動偵測，方便未來真機除錯。
+- [ ] **`3d` 書架模板截圖視覺失真 (CSS 3D Transforms)**: `html-to-image` 不支援 `preserve-3d` / `backfaceVisibility`，截圖中書本 3D 效果攤平變形。為既知限制，需考慮改用後端產圖方案。
+- [x] **行事曆視圖進入時跳至一月 (CalendarView Month Jump Bug)**: *(已修復 2026-03-20)* IntersectionObserver 在掛載瞬間觸發 `loadMoreMonths('prev')`，將舊月份 prepend 至頂部，導致頁面跳回最舊月份。→ 新增 `isScrollReadyRef`，等初始 `scrollIntoView` 完成後才開放 Observer 觸發。
 
 ## 📅 SPRINT 6: 月度回顧與擴充功能 (已完成核心分享機制)
 - [x] **月度回顧**: 實作行事曆視圖的總結分享 (Instagram 貼文格式)。
