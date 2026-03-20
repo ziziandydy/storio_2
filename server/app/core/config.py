@@ -12,6 +12,11 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: Optional[str] = None
     OPENAI_API_KEY: Optional[str] = None
 
+    # CORS
+    DEV_CORS_ORIGIN: Optional[str] = None
+    FRONTEND_URL: Optional[str] = None
+    CORS_ORIGINS: Optional[str] = None
+
     # Supabase
     SUPABASE_URL: Optional[str] = None
     SUPABASE_ANON_KEY: Optional[str] = None

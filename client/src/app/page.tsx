@@ -11,6 +11,7 @@ import SectionSlider from '@/components/SectionSlider';
 import NavigationFAB from '@/components/NavigationFAB';
 import SplashScreen from '@/components/SplashScreen';
 import OnboardingModal from '@/components/OnboardingModal';
+import OnboardingGuideModal, { hasSeenOnboarding, markOnboardingSeen } from '@/components/OnboardingGuideModal';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase, getURL } from '@/lib/supabase';
@@ -24,6 +25,7 @@ export default function Home() {
   const [showSplash, setShowSplash] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState<'social' | 'email' | 'otp' | 'profile'>('social');
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     // Determine splash state on mount
@@ -59,11 +61,18 @@ export default function Home() {
 
       // Case 2: Guest user seeing onboarding for the first time
       if (user?.is_anonymous !== false) {
-        const hasSeenOnboarding = sessionStorage.getItem('hasSeenOnboarding');
-        if (!hasSeenOnboarding && !showSplash) {
+        const hasSeenOnboardingModal = sessionStorage.getItem('hasSeenOnboarding');
+        if (!hasSeenOnboardingModal && !showSplash) {
           setOnboardingStep('social');
           setShowOnboarding(true);
+          return;
         }
+      }
+
+      // Case 3: 功能引導學習卡（首次使用，登入流程結束後）
+      if (!showSplash && !hasSeenOnboarding()) {
+        const timer = setTimeout(() => setShowGuide(true), 400);
+        return () => clearTimeout(timer);
       }
     }
   }, [authLoading, user, showSplash]);
@@ -101,13 +110,19 @@ export default function Home() {
       {/* Intro Animation */}
       {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
 
-      {/* Onboarding Modal */}
+      {/* Onboarding Modal（登入） */}
       <OnboardingModal
         isOpen={showOnboarding}
         onClose={handleOnboardingClose}
         onLogin={handleLogin}
         onContinueAsGuest={handleOnboardingClose}
         initialStep={onboardingStep}
+      />
+
+      {/* Feature Guide（學習卡） */}
+      <OnboardingGuideModal
+        isOpen={showGuide}
+        onClose={() => setShowGuide(false)}
       />
 
       {/* Background Layer */}

@@ -6,8 +6,9 @@ import {
   MessageSquare, Star, Share2, LogIn, Database,
   ChevronRight, Info, AlertCircle, LogOut, Layers,
   Edit3, Save, X, Check, Calendar, Lock, Camera, Loader2,
-  Trash2, Eraser
+  Trash2, Eraser, BookOpen
 } from 'lucide-react';
+import OnboardingGuideModal from '@/components/OnboardingGuideModal';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
@@ -94,6 +95,7 @@ export default function ProfilePage() {
   const [showLanguageSettings, setShowLanguageSettings] = useState(false);
   const [showContactSettings, setShowContactSettings] = useState(false);
   const [showPrivacySettings, setShowPrivacySettings] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   // Dangerous Operation States
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -842,7 +844,10 @@ export default function ProfilePage() {
           <ProfileItem icon={<Mail size={18} />} label={t.profile.items.contact} onClick={() => setShowContactSettings(true)} />
         </ProfileSection>
 
+        <OnboardingGuideModal isOpen={showGuide} onClose={() => setShowGuide(false)} />
+
         <ProfileSection title={t.profile.sections.about}>
+          <ProfileItem icon={<BookOpen size={18} />} label={t.onboardingGuide.replayLabel} onClick={() => setShowGuide(true)} />
           <ProfileItem icon={<Info size={18} />} label={t.profile.items.terms} onClick={() => router.push('/terms')} />
           <ProfileItem icon={<Shield size={18} />} label={t.profile.items.privacyPolicy} onClick={() => router.push('/privacy')} />
           <div className="p-4 text-center">
