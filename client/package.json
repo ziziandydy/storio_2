@@ -3,8 +3,8 @@
   "version": "0.1.5",
   "private": true,
   "scripts": {
-    "dev": "node scripts/get-ip.js && next dev -p 3010",
-    "build": "node scripts/get-ip.js && next build",
+    "dev": "next dev -p 3010",
+    "build": "next build",
     "start": "next start -p 3010",
     "lint": "next lint",
     "release": "standard-version"
