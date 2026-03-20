@@ -19,10 +19,8 @@ origins = [
     "capacitor://localhost",
     "http://capacitor.localhost",
     "capacitor://127.0.0.1",
-    "capacitor://192.168.50.137",
-    "http://192.168.50.137:3010",
-    "http://192.168.50.137:3000",
-    os.getenv("FRONTEND_URL", ""), # Production Vercel URL
+    os.getenv("DEV_CORS_ORIGIN", ""),  # 區網 IP，於 server/.env 設定 (dev only)
+    os.getenv("FRONTEND_URL", ""),     # Production Vercel URL
     "https://storio-2.vercel.app",  # Placeholder, update with actual
 ]
 
