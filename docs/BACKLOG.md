@@ -3,7 +3,14 @@
 2026-02-21 UAT 測試後紀錄。
 
 ## ✅ 最近完成 (Completed)
-1.  **隱私與安全性 (Privacy & Safety)**:
+1.  **首次使用引導學習卡 (Onboarding Feature Guide)** *(2026-03-20)*:
+    *   新增 `OnboardingGuideModal`：4 張卡片輪播（Embla Carousel + dot indicator 可點擊回上一步）。
+    *   新增 `FeatureGuideCard`：Storio / Explore & Collect / Score & Reflect / Recap & Share。
+    *   略過 / 底部按鈕使用 `safe-area-inset` 適配 iOS 瀏海 & Home Indicator。
+    *   首頁登入流程結束後 400ms 延遲 fade-in，`localStorage` 控制不重複顯示。
+    *   Profile → About 新增「如何使用 / How to Use」入口（可重新觀看）。
+    *   支援繁中 / 英文雙語，統一使用 `locales.ts`。
+2.  **隱私與安全性 (Privacy & Safety)**:
     *   在 Profile 頁面實作 `Privacy & Safety` 子視圖。
     *   實作「清除所有資料」與「刪除帳號」功能，整合後端 API。
     *   採用與 `StoryCard` 刪除一致的 UX，需輸入確認字串 ("CLEAR DATA" / "DELETE ACCOUNT")。

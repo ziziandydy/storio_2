@@ -47,6 +47,10 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
   const [isDownloaded, setIsDownloaded] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
 
+  // 預先快取圖片：Modal 開啟後背景靜默生成，Share 時直接使用
+  // 解決 Web Share API 需在 user gesture 內呼叫的限制（非同步生成會讓 gesture 過期）
+  const [cachedDataUrl, setCachedDataUrl] = useState<string | null>(null);
+
   const SHARE_DEBUG = process.env.NODE_ENV === 'development' ||
     process.env.NEXT_PUBLIC_SHARE_DEBUG === 'true';
 
@@ -82,6 +86,27 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
   ];
 
   const isSingleItem = !!item;
+
+  // 判斷是否支援原生分享（iOS native app 或支援 Web Share API 的行動瀏覽器）
+  // Mac Safari/Chrome 支援；Windows/Linux 桌面 Chrome 通常不支援
+  const canNativeShare = Capacitor.isNativePlatform() || (typeof navigator !== 'undefined' && !!navigator.share);
+
+  // 預生成快取：Modal 開啟或設定變更後在背景靜默生成圖片
+  // 解決 Web Share API 需在 user gesture 上下文內呼叫的問題
+  // (非同步 handleCapture 需 ~2-3s，手勢過期後 navigator.share() 會丟 NotAllowedError)
+  useEffect(() => {
+    if (!isOpen) {
+      setCachedDataUrl(null);
+      return;
+    }
+    // 等 DOM render 完成後開始預生成（600ms delay 讓動畫與圖片載入穩定）
+    const timer = setTimeout(async () => {
+      const dataUrl = await handleCapture();
+      if (dataUrl) setCachedDataUrl(dataUrl);
+    }, 600);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, selectedTemplate, aspectRatio, showTitle, showRating, showReflection]);
 
   const waitForAllImages = async (element: HTMLElement) => {
     const images = Array.from(element.querySelectorAll('img'));
@@ -191,7 +216,8 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
   };
 
   const handleShare = async () => {
-    const dataUrl = await handleCapture();
+    // 優先使用預快取圖片（確保 navigator.share() 在 user gesture 內被呼叫）
+    const dataUrl = cachedDataUrl ?? await handleCapture();
     if (!dataUrl) {
       alert('圖片生成失敗，請稍後再試。若問題持續，請開啟 SHARE_DEBUG 並回報 log。');
       return;
@@ -259,7 +285,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
   };
 
   const handleDownload = async () => {
-    const dataUrl = await handleCapture();
+    const dataUrl = cachedDataUrl ?? await handleCapture();
     if (dataUrl) {
       download(dataUrl, `${fileName}.png`);
       setIsDownloaded(true);
@@ -467,24 +493,44 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
 
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                  <button
-                    onClick={handleShare}
-                    disabled={isGenerating}
-                    className="flex-1 py-4 bg-accent-gold text-folio-black rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-white transition-all shadow-xl active:scale-[0.98] disabled:opacity-50"
-                  >
-                    {isGenerating ? (
-                      <Loader2 className="animate-spin" size={18} />
-                    ) : (
-                      <><Share2 size={18} /> {t.details.share}</>
-                    )}
-                  </button>
-                  <button
-                    onClick={handleDownload}
-                    disabled={isGenerating}
-                    className="flex-1 py-4 bg-white/5 text-white hover:bg-white/10 rounded-2xl font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all border border-white/10 disabled:opacity-50"
-                  >
-                    {isDownloaded ? <><Check size={14} /> {t.shareModal.saved}</> : <><Download size={14} /> {t.shareModal.download}</>}
-                  </button>
+                  {canNativeShare ? (
+                    // 支援原生分享：顯示分享 + 下載兩個按鈕
+                    <>
+                      <button
+                        onClick={handleShare}
+                        disabled={isGenerating}
+                        className="flex-1 py-4 bg-accent-gold text-folio-black rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-white transition-all shadow-xl active:scale-[0.98] disabled:opacity-50"
+                      >
+                        {isGenerating ? (
+                          <Loader2 className="animate-spin" size={18} />
+                        ) : (
+                          <><Share2 size={18} /> {t.details.share}</>
+                        )}
+                      </button>
+                      <button
+                        onClick={handleDownload}
+                        disabled={isGenerating}
+                        className="flex-1 py-4 bg-white/5 text-white hover:bg-white/10 rounded-2xl font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all border border-white/10 disabled:opacity-50"
+                      >
+                        {isDownloaded ? <><Check size={14} /> {t.shareModal.saved}</> : <><Download size={14} /> {t.shareModal.download}</>}
+                      </button>
+                    </>
+                  ) : (
+                    // 桌面瀏覽器不支援原生分享：主按鈕直接下載，語意清晰
+                    <button
+                      onClick={handleDownload}
+                      disabled={isGenerating}
+                      className="flex-1 py-4 bg-accent-gold text-folio-black rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-white transition-all shadow-xl active:scale-[0.98] disabled:opacity-50"
+                    >
+                      {isGenerating ? (
+                        <Loader2 className="animate-spin" size={18} />
+                      ) : isDownloaded ? (
+                        <><Check size={18} /> {t.shareModal.saved}</>
+                      ) : (
+                        <><Download size={18} /> {t.shareModal.download}</>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>

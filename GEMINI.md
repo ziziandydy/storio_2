@@ -55,15 +55,54 @@
 - **文字準確性**: 確保影像中的文字拼寫正確且符合專業語境。
 - **高品質標準**: 產出具備現代感、精緻且符合 "Storio Gold" 美學的視覺素材。
 
-## 7. Agents & Skills (Available Tools)
+## 7. 新功能開發流程（強制執行）
+
+收到任何功能需求或開發任務時，**必須**依序執行以下流程，**不得跳過任何步驟**：
+
+### 設計階段
+1. **`superpowers:brainstorming`** — 探索需求，對齊設計方向（**禁止在此步驟前寫任何程式碼**）
+2. **`wireframe-prototyping`** — 若涉及 UI 變更，先視覺確認
+3. 閱讀 `docs/StorioWiki.md` 確認架構脈絡，確認 `GEMINI.md` 術語規範
+4. **`openspec-propose`** — 將 brainstorming 結論正式化為 proposal/design/specs/tasks
+
+### 實作階段
+5. **`superpowers:writing-plans`** — 將 tasks.md 拆解為有依賴關係的實作步驟
+6. **`superpowers:using-git-worktrees`** — 建立隔離功能分支
+7. **`superpowers:test-driven-development`** — 先寫測試，再寫實作
+8. **`openspec-apply-change`** — 按 tasks.md 逐一實作
+
+### 完成階段
+9. **`superpowers:verification-before-completion`** — 跑測試，確認真的通過才宣告完成
+10. **`superpowers:requesting-code-review`** — 請求 code review
+11. **`openspec-archive-change`** — 歸檔變更
+
+> **Bug 修復**可簡化為：`superpowers:systematic-debugging` → TDD → 實作 → verification
+
+---
+
+## 8. Agents & Skills (Available Tools)
 善用以下專門 Agent 與 Skill 來輔助開發：
 - **Agents**:
   - `codebase_investigator`: 用於複雜的代碼庫分析、架構理解與 Root Cause Analysis。
-- **Skills** (位於 `.agents/skills/`):
-  - `find-skills`: 幫助您發掘並安裝開源 Agent 技能生態系統中的新技能。當需要特定功能時，可詢問「如何做 X」或「是否有技能可以...」來呼叫它。
+- **Skills — 流程管理 (superpowers)**:
+  - `superpowers:brainstorming`: 新功能前必用，探索需求與設計方向
+  - `superpowers:writing-plans`: 將 spec 拆解為實作步驟
+  - `superpowers:executing-plans`: 按計畫執行，含 review checkpoints
+  - `superpowers:test-driven-development`: TDD 流程，先測試再實作
+  - `superpowers:systematic-debugging`: 遇到 bug 時系統化排查
+  - `superpowers:verification-before-completion`: 宣告完成前必跑驗證
+  - `superpowers:requesting-code-review`: 完成後請求 code review
+  - `superpowers:using-git-worktrees`: 建立隔離功能分支
+  - `superpowers:finishing-a-development-branch`: 決定如何整合完成的分支
+- **Skills — OpenSpec 工作流**:
+  - `openspec-propose`: 新功能提案（生成 proposal/design/specs/tasks）
+  - `openspec-apply-change`: 執行 OpenSpec 任務
+  - `openspec-explore`: 探索模式（思考夥伴）
+  - `openspec-archive-change`: 歸檔已完成的變更
+- **Skills — 領域技術**:
+  - `find-skills`: 幫助您發掘並安裝開源 Agent 技能生態系統中的新技能。
   - `react-expert`: 提供 React 特性、Hooks 最佳實踐與 Server Components 等進階開發建議。
   - `supabase-postgres-best-practices`: 協助撰寫符合官方最佳實踐的 PostgreSQL schemas、優化查詢與設計 RLS 安全政策。
-  - `ralph-tui-prd`: 協助 PRD 撰寫與 TUI 相關任務。
   - `tdd`: 提供 TDD (Test-Driven Development) 最佳實踐、介面設計與重構建議。
   - `user-journeys`: 定義與分析使用者旅程 (User Journeys)。
   - `wireframe-prototyping`: 協助 UI 原型設計與 Wireframing。

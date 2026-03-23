@@ -68,7 +68,7 @@
 
 ## Wave 4 — 驗證與測試
 
-- [ ] 10.1 撰寫 `server/tests/test_rate_limiting.py`：驗證 AI 端點 10/min 限制、一般搜尋 30/min 限制
+- [x] 10.1 撰寫 `server/tests/test_rate_limiting.py`：驗證 AI 端點 10/min 限制、一般搜尋 30/min 限制
 - [x] 10.2 撰寫測試驗證超長 query（>200 字元）被正確拒絕（422）
 - [x] 10.3 確認 `server/app/core/supabase.py` 啟動後 log 不含任何 key 字串
 - [x] 10.4 確認所有 HTTP 端點的 exception handler 不在 response 中洩漏原始錯誤訊息
