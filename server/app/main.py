@@ -57,9 +57,9 @@ def read_root():
 @app.get("/_debug/ip")
 def debug_ip(request: Request):
     """暫時端點：確認 Railway 環境的 IP 偵測（驗證後移除）"""
-    from slowapi.util import get_remote_address
+    from app.core.limiter import get_client_ip
     return {
-        "detected_ip": get_remote_address(request),
+        "detected_ip": get_client_ip(request),
         "client_host": request.client.host if request.client else None,
         "x_forwarded_for": request.headers.get("X-Forwarded-For"),
         "x_real_ip": request.headers.get("X-Real-IP"),
