@@ -55,7 +55,7 @@ multidict==6.6.4
 numpy==1.26.4
 openai==2.7.1
 outcome==1.3.0.post0
-packaging==25.0
+packaging==24.2
 pandas==2.1.4
 phonenumbers==8.13.27
 pluggy==1.6.0
