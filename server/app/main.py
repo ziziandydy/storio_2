@@ -1,6 +1,6 @@
 import os
 import logging
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -52,15 +52,3 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 @app.get("/")
 def read_root():
     return {"status": "online", "system": "Storio Core"}
-
-
-@app.get("/_debug/ip")
-def debug_ip(request: Request):
-    """暫時端點：確認 Railway 環境的 IP 偵測（驗證後移除）"""
-    from app.core.limiter import get_client_ip
-    return {
-        "detected_ip": get_client_ip(request),
-        "client_host": request.client.host if request.client else None,
-        "x_forwarded_for": request.headers.get("X-Forwarded-For"),
-        "x_real_ip": request.headers.get("X-Real-IP"),
-    }
