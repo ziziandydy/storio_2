@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 
 class AISearchRequest(BaseModel):
-    query: str
+    query: str = Field(..., min_length=1, max_length=200)
     media_type: Optional[str] = Field(default="movie", pattern="^(movie|book|tv|all)$")
 
 class TMDBDiscoverParams(BaseModel):

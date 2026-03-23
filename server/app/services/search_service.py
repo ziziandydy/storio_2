@@ -1,8 +1,13 @@
+import logging
 import httpx
 import asyncio
 import random
 import re
 from typing import List, Optional
+
+logger = logging.getLogger(__name__)
+
+_HTTPX_TIMEOUT = httpx.Timeout(connect=5.0, read=15.0, write=5.0, pool=5.0)
 from app.schemas.item import StoryBase, ItemDetailResponse, Review, MediaAsset
 from app.core.config import settings
 from app.services.ai_recommendation_service import AIRecommendationService
@@ -242,7 +247,7 @@ class SearchService:
                 reviews=reviews
             )
         except Exception as e:
-            print(f"TMDB Detail Error: {e}")
+            logger.error("TMDB detail fetch failed: %s", e)
             return None
 
     @staticmethod
@@ -347,7 +352,7 @@ class SearchService:
                 reviews=[]
             )
         except Exception as e:
-            print(f"Google Books Detail Error: {e}")
+            logger.error("Google Books detail fetch failed: %s", e)
             return None
 
     @staticmethod
@@ -384,7 +389,7 @@ class SearchService:
                 ))
             return results
         except Exception as e:
-            print(f"TMDB Trending {media_type} Error: {e}")
+            logger.error("TMDB trending %s fetch failed: %s", media_type, e)
             return []
 
     @staticmethod
@@ -432,7 +437,7 @@ class SearchService:
                 ))
             return results[:20]
         except Exception as e:
-            print(f"Google Books Trending Error: {e}")
+            logger.error("Google Books trending fetch failed: %s", e)
             return []
 
     @staticmethod
@@ -459,7 +464,7 @@ class SearchService:
                 source="ai_recommendation"
             )
         except Exception as e:
-            print(f"Error fetching cover for {title}: {e}")
+            logger.error("Cover fetch failed for '%s': %s", title, e)
             return None
 
     @staticmethod
@@ -509,7 +514,7 @@ class SearchService:
             
             return results
         except Exception as e:
-            print(f"TMDB Search Error: {e}")
+            logger.error("TMDB search failed: %s", e)
             return []
 
     @staticmethod
@@ -535,13 +540,13 @@ class SearchService:
                 ))
             return results
         except Exception as e:
-            print(f"Google Books Error: {e}")
+            logger.error("Google Books search failed: %s", e)
             return []
 
     @staticmethod
     async def search_multi(query: str, language: str = "zh-TW") -> List[StoryBase]:
         if not query: return []
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=_HTTPX_TIMEOUT) as client:
             tmdb_task = SearchService.search_tmdb(client, query, language)
             gbooks_task = SearchService.search_google_books(client, query, language)
             results_tmdb, results_gbooks = await asyncio.gather(tmdb_task, gbooks_task)
@@ -606,7 +611,7 @@ class SearchService:
                         source="tmdb"
                     ))
             except Exception as e:
-                print(f"TMDB Discover Error: {e}")
+                logger.error("TMDB discover failed: %s", e)
 
         # Adding Google Books specific semantic parameters
         if intent.media_type == "book" and intent.google_books_params:
@@ -635,6 +640,6 @@ class SearchService:
                         source="google_books"
                     ))
             except Exception as e:
-                print(f"Google Books Discover Error: {e}")
+                logger.error("Google Books discover failed: %s", e)
                 
         return results

@@ -1,7 +1,10 @@
+import logging
 import google.generativeai as genai
 from openai import AsyncOpenAI
 from app.core.config import settings
 import json
+
+logger = logging.getLogger(__name__)
 import datetime
 import asyncio
 import re
@@ -22,7 +25,7 @@ class GeminiService:
             raise ValueError("OpenAI API Key missing")
         
         try:
-            print("DEBUG: Falling back to OpenAI...")
+            logger.debug("Gemini unavailable, falling back to OpenAI")
             client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
             response = await client.chat.completions.create(
                 model="gpt-4o-mini", # Use a cost-effective model
@@ -34,7 +37,7 @@ class GeminiService:
             )
             return response.choices[0].message.content
         except Exception as e:
-            print(f"OpenAI Fallback Error: {e}")
+            logger.error("OpenAI fallback failed: %s", e)
             raise e
 
     @classmethod
@@ -44,14 +47,14 @@ class GeminiService:
         
         # Return cache if valid
         if cls._cache and cls._last_update == cache_id:
-            print(f"DEBUG: Returning cached Gemini book recommendations for {language}")
+            logger.debug("Returning cached book recommendations for %s", language)
             return cls._cache
 
         if not settings.GEMINI_API_KEY:
-            print("Gemini API Key missing")
+            logger.warning("GEMINI_API_KEY not configured, skipping Gemini")
             return []
 
-        print(f"DEBUG: Fetching new book recommendations from Gemini for {language}...")
+        logger.debug("Fetching new book recommendations from Gemini for %s", language)
         try:
             cls.configure()
             model = genai.GenerativeModel('gemini-2.5-flash')
@@ -88,7 +91,7 @@ class GeminiService:
             return cls._cache
 
         except Exception as e:
-            print(f"Gemini Recommendation Error: {e}")
+            logger.error("Gemini recommendation failed: %s", e)
             return cls._cache
 
     @classmethod
@@ -136,7 +139,7 @@ class GeminiService:
                 if isinstance(parsed_data, list):
                     return [str(s) for s in parsed_data[:3]]
             except Exception as e:
-                print(f"Gemini Suggestion Error: {e}")
+                logger.error("Gemini suggestion generation failed: %s", e)
 
         # 2. Try OpenAI Fallback
         if settings.OPENAI_API_KEY:
@@ -152,7 +155,7 @@ class GeminiService:
                 if isinstance(parsed_data, list):
                     return [str(s) for s in parsed_data[:3]]
             except Exception as e:
-                print(f"OpenAI Suggestion Fallback Error: {e}")
+                logger.error("OpenAI suggestion fallback failed: %s", e)
 
         return []
 
@@ -192,20 +195,20 @@ class GeminiService:
             return response.text.replace("```", "").strip()
 
         except Exception as e:
-            print(f"Gemini Refine Error: {e}")
+            logger.error("Gemini refine failed: %s", e)
             return content
 
         except Exception as e:
-            print(f"Gemini Refine Error: {e}")
-            
+            logger.error("Gemini refine failed (second handler): %s", e)
+
             # OpenAI Fallback
             if settings.OPENAI_API_KEY:
                 try:
                     system_prompt = "You are an expert editor polishing Traditional Chinese text. Output ONLY the refined text."
                     user_prompt = f"Original: {content}\n\nRefine this text to be more fluent and insightful:"
-                    
+
                     return await cls._call_openai_fallback(system_prompt, user_prompt)
                 except Exception as openai_error:
-                    print(f"OpenAI Refine Error: {openai_error}")
+                    logger.error("OpenAI refine fallback failed: %s", openai_error)
 
             return content

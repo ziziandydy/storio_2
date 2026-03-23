@@ -1,6 +1,9 @@
+import logging
 import datetime
 import asyncio
 from typing import List, Dict, Optional
+
+logger = logging.getLogger(__name__)
 from app.core.supabase import get_supabase_client
 from app.schemas.item import StoryBase
 
@@ -25,7 +28,7 @@ class TrendingService:
 
         # 1. L1 Memory Cache
         if cache_key in cls._mem_cache:
-            print(f"DEBUG: Returning L1 Memory Cache for {lang_type_key}")
+            logger.debug("Returning L1 memory cache for %s", lang_type_key)
             return cls._mem_cache[cache_key]
 
         # 2. L2 Database Cache (Supabase) - Run in ThreadPool to avoid blocking
@@ -39,13 +42,13 @@ class TrendingService:
                     return response.data[0]["data"]
                 return None
             except Exception as e:
-                print(f"DB Read Error for {lang_type_key}: {e}")
+                logger.error("DB cache read failed for %s: %s", lang_type_key, e)
                 return None
 
         db_data = await loop.run_in_executor(None, _fetch_from_db)
         
         if db_data:
-            print(f"DEBUG: Returning L2 DB Cache for {lang_type_key}")
+            logger.debug("Returning L2 DB cache for %s", lang_type_key)
             # Convert dicts back to Pydantic models
             results = [StoryBase(**item) for item in db_data]
             # Update L1
@@ -53,7 +56,7 @@ class TrendingService:
             return results
 
         # 3. Cache Miss - Fetch from Source
-        print(f"DEBUG: Cache Miss for {lang_type_key}. Fetching from Source API...")
+        logger.debug("Cache miss for %s, fetching from source API", lang_type_key)
         results = await fetch_func()
         
         if results:
@@ -73,9 +76,9 @@ class TrendingService:
                         "data": json_data
                     }
                     supabase.table("trending_cache").insert(insert_data).execute()
-                    print(f"DEBUG: Persisted {lang_type_key} to DB")
+                    logger.debug("Persisted %s to DB cache", lang_type_key)
                 except Exception as e:
-                    print(f"DB Write Error for {lang_type_key}: {e}")
+                    logger.error("DB cache write failed for %s: %s", lang_type_key, e)
 
             # Fire and forget DB write
             await loop.run_in_executor(None, _write_to_db)

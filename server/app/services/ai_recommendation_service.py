@@ -1,8 +1,11 @@
+import logging
 import google.generativeai as genai
 from openai import AsyncOpenAI
 from app.core.config import settings
 from app.core.supabase import get_supabase_client
 import json
+
+logger = logging.getLogger(__name__)
 import datetime
 import asyncio
 from typing import List, Dict
@@ -21,7 +24,7 @@ class AIRecommendationService:
 
         # L1 Cache: Memory
         if cls._cache and cls._last_update == cache_id:
-            print(f"DEBUG: Returning L1 cached recommendations for {language}")
+            logger.debug("Returning L1 cached recommendations for %s", language)
             return cls._cache
 
         # L2 Cache: Database (Supabase)
@@ -38,7 +41,7 @@ class AIRecommendationService:
                     return response.data[0]["books"]
                 return None
             except Exception as e:
-                print(f"DB Cache Read Error: {e}")
+                logger.error("DB cache read failed for recommendations: %s", e)
                 return None
 
         db_books = await loop.run_in_executor(None, _fetch_daily_rec)
@@ -48,7 +51,7 @@ class AIRecommendationService:
             return db_books
 
         # Cache Miss: Fetch from AI
-        print(f"DEBUG: Attempting Gemini Recommendation for {language}...")
+        logger.debug("Cache miss, fetching recommendations from Gemini for %s", language)
         result = await cls._try_gemini(language)
         if not result:
             result = await cls._try_openai(language)
@@ -63,7 +66,7 @@ class AIRecommendationService:
                     data = { "date": f"{today}_{language}", "books": result }
                     supabase.table("daily_recommendations").insert(data).execute()
                 except Exception as e:
-                    print(f"DB Cache Write Error: {e}")
+                    logger.error("DB cache write failed for recommendations: %s", e)
             
             await loop.run_in_executor(None, _persist_daily_rec)
             return result
@@ -106,7 +109,7 @@ class AIRecommendationService:
             return books[:30]
 
         except Exception as e:
-            print(f"Gemini Rec Error: {e}")
+            logger.error("Gemini recommendation fetch failed: %s", e)
             return []
 
     @classmethod
@@ -137,5 +140,5 @@ class AIRecommendationService:
                 text = text[text.find("["):text.rfind("]")+1]
             return json.loads(text)[:30]
         except Exception as e:
-            print(f"OpenAI Rec Error: {e}")
+            logger.error("OpenAI recommendation fetch failed: %s", e)
             return []

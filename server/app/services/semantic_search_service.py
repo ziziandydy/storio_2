@@ -1,6 +1,9 @@
+import logging
 import google.generativeai as genai
 from openai import AsyncOpenAI
 import json
+
+logger = logging.getLogger(__name__)
 import asyncio
 import re
 from app.core.config import settings
@@ -62,7 +65,7 @@ class SemanticSearchService:
                 parsed_data = json.loads(text)
                 return AISearchIntent(**parsed_data)
             except Exception as e:
-                print(f"Gemini Intent Parsing Error: {e}")
+                logger.error("Gemini intent parsing failed: %s", e)
 
         # 2. Try OpenAI Fallback
         if settings.OPENAI_API_KEY:
@@ -84,7 +87,7 @@ class SemanticSearchService:
                 parsed_data = json.loads(text)
                 return AISearchIntent(**parsed_data)
             except Exception as e:
-                print(f"OpenAI Intent Parsing Fallback Error: {e}")
+                logger.error("OpenAI intent parsing fallback failed: %s", e)
 
         # Fallback if both fail
         return AISearchIntent(

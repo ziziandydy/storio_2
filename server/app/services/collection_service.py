@@ -1,6 +1,9 @@
+import logging
 from typing import List
 from uuid import UUID
 from fastapi import HTTPException, status
+
+logger = logging.getLogger(__name__)
 from app.repositories.collection_repo import CollectionRepository
 from app.schemas.item import StoryCreate, StoryResponse, StoryCheckResponse, StoryInstance
 
@@ -25,17 +28,17 @@ class CollectionService:
         return stories
 
     def get_collection_item(self, user_id: str, story_id: UUID) -> StoryResponse:
-        print(f"DEBUG: Fetching item {story_id} for user {user_id}")
+        logger.debug("Fetching item %s for user %s", story_id, user_id)
         story = self.repo.get_story(user_id, story_id)
         if not story:
             raise HTTPException(status_code=404, detail="Collection item not found")
-        
-        print(f"DEBUG: Found story {story.title} ({story.external_id})")
-        
+
+        logger.debug("Found story '%s' (%s)", story.title, story.external_id)
+
         # Calculate viewing number and relations
         try:
             instances_data = self.repo.get_instances_by_external_id(user_id, story.external_id)
-            print(f"DEBUG: Found {len(instances_data)} instances")
+            logger.debug("Found %d instances for story %s", len(instances_data), story_id)
             
             # Sort by created_at ASC
             sorted_instances = sorted(instances_data, key=lambda x: x['created_at'])
@@ -61,10 +64,10 @@ class CollectionService:
                 related_list.append(inst_obj)
             
             story.related_instances = related_list
-            print("DEBUG: Related instances processed")
-            
+            logger.debug("Related instances processed for story %s", story_id)
+
         except Exception as e:
-            print(f"DEBUG: Error processing instances: {e}")
+            logger.error("Error processing instances for story %s: %s", story_id, e)
             # Don't fail the request, just log error and return basic story
             # But in dev we want to see it.
             pass

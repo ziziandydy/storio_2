@@ -1,7 +1,12 @@
+import logging
 from fastapi import APIRouter, HTTPException, Query, Request, Response
 import httpx
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
+
+HTTPX_TIMEOUT = httpx.Timeout(connect=5.0, read=15.0, write=5.0, pool=5.0)
+
 
 @router.get("/image")
 async def proxy_image(request: Request, url: str = Query(..., description="The URL of the image to proxy")):
@@ -12,10 +17,7 @@ async def proxy_image(request: Request, url: str = Query(..., description="The U
     if not url.startswith("http"):
         raise HTTPException(status_code=400, detail="Invalid URL protocol")
 
-    origin = request.headers.get("origin", "none")
-    print(f"[ProxyDebug] Request origin: {origin}, url: {url[:60]}")
-
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=HTTPX_TIMEOUT) as client:
         try:
             res = await client.get(url, follow_redirects=True)
             res.raise_for_status()
@@ -31,5 +33,5 @@ async def proxy_image(request: Request, url: str = Query(..., description="The U
             return Response(content=res.content, media_type=content_type, headers=headers)
 
         except Exception as e:
-            print(f"[ProxyDebug] Proxy Error for {url[:60]}: {e}")
+            logger.error("Proxy image fetch failed for %s: %s", url[:60], e)
             raise HTTPException(status_code=502, detail="Failed to fetch external image")

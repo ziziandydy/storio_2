@@ -1,6 +1,9 @@
+import logging
 from typing import List, Optional
 from uuid import UUID
 from app.core.supabase import get_supabase_client
+
+logger = logging.getLogger(__name__)
 from app.schemas.item import StoryCreate, StoryResponse
 
 class CollectionRepository:
@@ -58,11 +61,9 @@ class CollectionRepository:
         # Map to DB schema constraints
         data = self._map_to_db(data)
         
-        print(f"DEBUG: Inserting data for user {user_id}: {data}")
-        
         try:
             response = self.table.insert(data).execute()
-            print(f"DEBUG: Insert response: {response}")
+            logger.debug("Story inserted successfully for user %s", user_id)
             
             if response.data:
                 # Ensure compatibility with StoryResponse schema
@@ -70,7 +71,7 @@ class CollectionRepository:
                 # Pydantic v2 handles defaults, but let's be safe and catch errors
                 return StoryResponse(**item)
         except Exception as e:
-            print(f"Create Story Error: {e}")
+            logger.error("Failed to create story for user %s: %s", user_id, e)
             raise e
             
         raise ValueError("Failed to insert story")
