@@ -15,7 +15,7 @@
 - [x] 3.2 在 `main.py` 加入全域 `RateLimitExceeded` exception handler，統一返回 `{"detail": "Rate limit exceeded. Please try again later."}`
 - [x] 3.3 在 `search.py` 的 `GET /` 路由加入 `@limiter.limit("30/minute")` decorator
 - [x] 3.4 在 `search.py` 的 `POST /ai` 路由加入 `@limiter.limit("10/minute")` decorator
-- [ ] 3.5 確認 Railway 環境的 `X-Forwarded-For` header 傳遞，確保 IP 偵測正確
+- [x] 3.5 確認 Railway 環境的 `X-Forwarded-For` header 傳遞，確保 IP 偵測正確（自定義 `get_client_ip()` 取代 slowapi 預設 `get_remote_address`）
 
 ---
 
