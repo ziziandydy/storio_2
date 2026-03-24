@@ -107,6 +107,22 @@
 - [x] **典藏容量限制 (Guest Limit Upsell)**: 完成訪客 10 筆上限與引導註冊流程。
 - [x] **原生分享 (Native Sharing)**: 整合 Web Share API。
 
+### 🔒 Security & Reliability (Wave 3 Deferred — 2026-03-24)
+
+> 以下項目來自 security-hardening change Wave 3，已分析影響範圍與嚴重度。
+
+- [ ] **[REL-1] 環境變數啟動驗證 (Env Var Startup Validation)**
+  - **說明**：`TMDB_API_KEY`、`SUPABASE_URL`、`SUPABASE_ANON_KEY` 缺少時，服務仍正常啟動，直到第一次請求才會拋出錯誤（Supabase 連線失敗 / TMDB API 401）。
+  - **影響範圍**：所有 API endpoints，Railway 部署後偵錯困難。
+  - **Severity**：`Medium` — 不影響正常運行的使用者，但部署時若漏設 env var 會造成所有功能靜默失效，難以即時察覺。
+  - **修復方向**：在 `server/app/main.py` 的 FastAPI `lifespan` startup event 中驗證必要 env var，缺少時立即 `raise RuntimeError` 中止啟動。
+
+- [ ] **[REL-2] datetime 解析容錯 (datetime.fromisoformat Error Handling)**
+  - **說明**：`server/app/repositories/collection_repo.py:110` 使用 `datetime.fromisoformat()` 解析 Supabase 回傳的 `created_at`，若欄位為 `None` 或格式異常（如時區字串差異），直接拋出 `ValueError` / `TypeError`，導致整個 API call 500。
+  - **影響範圍**：`GET /api/v1/collection/` — 館藏列表頁面完全無法載入。
+  - **Severity**：`Medium-High` — 資料異常時影響核心功能，使用者看到空白頁面且無有意義的錯誤訊息。
+  - **修復方向**：對所有 `datetime.fromisoformat()` 呼叫加入 `try/except (ValueError, TypeError)`，解析失敗返回 `None`，上層 service 層以 `None` 作為預設值排序。
+
 ### 🐛 Known Issues (Bugs to Fix)
 - [x] **分享預覽與匯出圖片空白 (Share Image Blank Issue — Round 2)**: *(已修復 2026-03-20)*
   - **Root Cause 1**：`proxy.py` 手動設定 `Access-Control-Allow-Origin: *` 與 `CORSMiddleware` 的 `allow_credentials=True` 產生規範衝突，導致 Safari 拒絕 CORS 回應。→ 已移除手動 Header。
