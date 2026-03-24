@@ -54,7 +54,8 @@ origins = [
     "capacitor://127.0.0.1",
     os.getenv("DEV_CORS_ORIGIN", ""),  # 區網 IP，於 server/.env 設定 (dev only)
     os.getenv("FRONTEND_URL", ""),     # Production Vercel URL
-    "https://storio-2.vercel.app",
+    "https://storio.andismtu.com",
+    "https://storio-2.vercel.app",  # 舊域名保留，防止舊連結失效
 ]
 
 # Add more origins from env if provided as comma-separated string

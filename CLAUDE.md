@@ -190,7 +190,7 @@ find-skills                         # 尋找新技能
 16. **`/gstack` browse** — 部署至 Vercel / Railway 後，headless browser 驗證 production 頁面正常：
     ```bash
     # Frontend smoke test
-    $B goto https://storio-2.vercel.app
+    $B goto https://storio.andismtu.com
     $B console          # 確認無 JS error
     $B screenshot /tmp/prod-check.png
     $B responsive /tmp/prod-responsive   # mobile / tablet / desktop 三張截圖
