@@ -28,10 +28,19 @@ Storio puts everything in one place. The goal is not to build another database. 
 
 <table>
   <tr>
-    <td align="center"><img src="image/screenshot-01-onboarding.png" width="200"/><br/><sub>Onboarding</sub></td>
+    <td align="center"><img src="image/screenshot-01-onboarding.png" width="200"/><br/><sub>Home</sub></td>
     <td align="center"><img src="image/screenshot-02-search.png" width="200"/><br/><sub>Search</sub></td>
-    <td align="center"><img src="image/screenshot-03-details-movie.png" width="200"/><br/><sub>Story Details</sub></td>
-    <td align="center"><img src="image/screenshot-04-details-cinematic.png" width="200"/><br/><sub>Cinematic UI</sub></td>
+    <td align="center"><img src="image/screenshot-03-details.png" width="200"/><br/><sub>Story Details</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="image/screenshot-04-details-cinematic.png" width="200"/><br/><sub>Cast & Streaming</sub></td>
+    <td align="center"><img src="image/screenshot-05-reflection.png" width="200"/><br/><sub>Add & Reflect</sub></td>
+    <td align="center"><img src="image/screenshot-06-calendar.png" width="200"/><br/><sub>Calendar View</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="image/screenshot-07-gallery.png" width="200"/><br/><sub>Gallery</sub></td>
+    <td align="center"><img src="image/screenshot-08-share.png" width="200"/><br/><sub>Share Card</sub></td>
+    <td align="center"><img src="image/screenshot-09-monthlySharing.png" width="200"/><br/><sub>Monthly Recap</sub></td>
   </tr>
 </table>
 
