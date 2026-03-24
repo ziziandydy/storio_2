@@ -58,3 +58,41 @@ def test_create_story_inserts_into_collections_table(mock_supabase):
     insert_call_args = mock_table.insert.call_args[0][0]
     assert insert_call_args["user_id"] == user_id
     assert insert_call_args["title"] == "Dune"
+
+
+# --- datetime 容錯 (REL-2) ---
+
+def test_get_collection_stats_raises_when_created_at_is_none(mock_supabase):
+    """created_at 為 None 時，get_collection_stats 不應拋出 TypeError，應跳過該筆資料"""
+    mock_table = MagicMock()
+    mock_supabase.table.return_value = mock_table
+    mock_response = MagicMock()
+    mock_response.data = [
+        {"created_at": "2024-01-15T10:00:00+00:00"},
+        {"created_at": None},                          # ← 觸發 TypeError
+        {"created_at": "2024-02-01T08:00:00+00:00"},
+    ]
+    mock_table.select.return_value.eq.return_value.execute.return_value = mock_response
+
+    repo = CollectionRepository()
+    # 目前會拋出 TypeError：fromisoformat argument must be str
+    result = repo.get_collection_stats("user-123")
+    assert isinstance(result, dict)
+    assert "last_30_days" in result
+
+
+def test_get_collection_stats_raises_when_created_at_malformed(mock_supabase):
+    """created_at 格式異常時，get_collection_stats 不應拋出 ValueError，應跳過該筆資料"""
+    mock_table = MagicMock()
+    mock_supabase.table.return_value = mock_table
+    mock_response = MagicMock()
+    mock_response.data = [
+        {"created_at": "2024-01-15T10:00:00+00:00"},
+        {"created_at": "not-a-date"},                  # ← 觸發 ValueError
+    ]
+    mock_table.select.return_value.eq.return_value.execute.return_value = mock_response
+
+    repo = CollectionRepository()
+    result = repo.get_collection_stats("user-123")
+    assert isinstance(result, dict)
+    assert result["last_30_days"] >= 0

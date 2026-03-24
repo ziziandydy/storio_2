@@ -1,8 +1,5 @@
-# profile-settings Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change profile-refactor. Update Purpose after archive.
-## Requirements
 ### Requirement: Profile Settings Options
 The system SHALL display standard settings and community options in the Profile page, but MUST NOT display features that are currently incomplete (such as Notifications and Security & Privacy).
 The system SHALL also display a "重新觀看引導 / View Onboarding" option that allows the user to replay the feature guide at any time.
@@ -19,7 +16,7 @@ The system SHALL also display a "重新觀看引導 / View Onboarding" option th
 
 #### Scenario: Viewing Community Section
 - **WHEN** the user views the "Community & Support" section
-- **THEN** they see "Share Storio", "Rate on App Store", and the new "Contact Us" item.
+- **THEN** they see "Share Storio", "Rate on App Store", and the "Contact Us" item.
 - **AND** they DO NOT see standalone "Suggest a Feature" or "Report a Bug" items.
 
 #### Scenario: Replaying Onboarding from Profile

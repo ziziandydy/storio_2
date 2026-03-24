@@ -107,7 +107,15 @@ class CollectionRepository:
         # For a personal app, this is fine. If it scales, we optimize.
         response = self.table.select("created_at").eq("user_id", user_id).execute()
         
-        created_ats = [datetime.fromisoformat(item['created_at']) for item in response.data]
+        created_ats = []
+        for item in response.data:
+            raw = item.get('created_at')
+            if not raw:
+                continue
+            try:
+                created_ats.append(datetime.fromisoformat(raw))
+            except (ValueError, TypeError):
+                continue
         
         # Initialize counters
         stats = {

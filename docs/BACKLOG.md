@@ -1,6 +1,6 @@
 # Storio 專案待辦清單與未來優化 (Backlog & Future Improvements)
 
-2026-02-21 UAT 測試後紀錄。
+最後更新：2026-03-24
 
 ## ✅ 最近完成 (Completed)
 1.  **首次使用引導學習卡 (Onboarding Feature Guide)** *(2026-03-20)*:
@@ -10,22 +10,23 @@
     *   首頁登入流程結束後 400ms 延遲 fade-in，`localStorage` 控制不重複顯示。
     *   Profile → About 新增「如何使用 / How to Use」入口（可重新觀看）。
     *   支援繁中 / 英文雙語，統一使用 `locales.ts`。
-2.  **隱私與安全性 (Privacy & Safety)**:
+2.  **隱私與安全性 (Privacy & Safety)** *(實作完成，待 UAT 驗證)*:
     *   在 Profile 頁面實作 `Privacy & Safety` 子視圖。
     *   實作「清除所有資料」與「刪除帳號」功能，整合後端 API。
     *   採用與 `StoryCard` 刪除一致的 UX，需輸入確認字串 ("CLEAR DATA" / "DELETE ACCOUNT")。
-    *   (待 UAT 驗證)
+    *   OpenSpec change: `add-account-deletion`（剩 4.1~4.3 UAT 測試任務未完成）
 2.  **正式產品介紹頁 (Landing Page Refinement)**:
     *   重構 `index.html` 為沉浸式產品介紹頁。
     *   實作「金探子」滑鼠跟隨光暈、啟動展開動畫。
     *   實作雙語切換 (EN/ZH) 邏輯。
     *   整合「多次觀看紀錄」、「AI 共筆心得」等核心敘事。
     *   展示團隊成員與 Builder 轉型故事。
-2.  **Sprint 7 基礎建設 (Native iOS Refactor)**:
-    *   **路由靜態化**: 將 `/details/[type]/[id]` 重構成 `/details?id=...`，確保 `output: 'export'` 成功。
-    *   **原生分享整合**: 導入 `@capacitor/share` 與 `@capacitor/filesystem` 解決 iOS 分享空白問題。
+2.  **Sprint 7 基礎建設 (Native iOS Refactor)** *(路由靜態化完成；iOS 原生部分待 Apple Developer 帳號)*:
+    *   **路由靜態化**: ✅ 將 `/details/[type]/[id]` 重構成 `/details?id=...`，確保 `output: 'export'` 成功。
+    *   **原生分享整合**: ✅ 導入 `@capacitor/share` 與 `@capacitor/filesystem` 解決 iOS 分享空白問題。
     *   **啟動體驗優化**: 設定 `launchAutoHide: false` 並更換原生 Splash 圖檔為純黑，實現無縫進入動畫。
     *   **動態島適配**: 修正 Header `sticky` 邏輯與安全區域遮罩，防止內容穿透動態島。
+    *   OpenSpec change: `ios-static-export-refactor`（Tasks 4.x~7.x 需 Apple Developer 帳號，暫緩）
 3.  **Profile 頁面重構 (UX Polish)**:
     *   移除未開發完成的「安全性與隱私」與「通知」。
     *   重構「聯絡我們」為次級頁面 (Sub-view)，支援自動帶入標題的 `mailto:` 功能。
@@ -111,13 +112,13 @@
 
 > 以下項目來自 security-hardening change Wave 3，已分析影響範圍與嚴重度。
 
-- [ ] **[REL-1] 環境變數啟動驗證 (Env Var Startup Validation)**
+- [x] **[REL-1] 環境變數啟動驗證 (Env Var Startup Validation)** *(已完成 2026-03-24)*
   - **說明**：`TMDB_API_KEY`、`SUPABASE_URL`、`SUPABASE_ANON_KEY` 缺少時，服務仍正常啟動，直到第一次請求才會拋出錯誤（Supabase 連線失敗 / TMDB API 401）。
   - **影響範圍**：所有 API endpoints，Railway 部署後偵錯困難。
   - **Severity**：`Medium` — 不影響正常運行的使用者，但部署時若漏設 env var 會造成所有功能靜默失效，難以即時察覺。
   - **修復方向**：在 `server/app/main.py` 的 FastAPI `lifespan` startup event 中驗證必要 env var，缺少時立即 `raise RuntimeError` 中止啟動。
 
-- [ ] **[REL-2] datetime 解析容錯 (datetime.fromisoformat Error Handling)**
+- [x] **[REL-2] datetime 解析容錯 (datetime.fromisoformat Error Handling)** *(已完成 2026-03-24)*
   - **說明**：`server/app/repositories/collection_repo.py:110` 使用 `datetime.fromisoformat()` 解析 Supabase 回傳的 `created_at`，若欄位為 `None` 或格式異常（如時區字串差異），直接拋出 `ValueError` / `TypeError`，導致整個 API call 500。
   - **影響範圍**：`GET /api/v1/collection/` — 館藏列表頁面完全無法載入。
   - **Severity**：`Medium-High` — 資料異常時影響核心功能，使用者看到空白頁面且無有意義的錯誤訊息。
