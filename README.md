@@ -1,112 +1,172 @@
 # Storio — Collect stories in your folio
 
-> A quiet, sophisticated digital Pensieve for curating your personal collection of movies, series, and books.
+> One place to track every book you read, every film you watch, and every series you finish.
 
 ![Storio Banner](image/heroBackground_v2.jpg)
+
+**[Live →](https://storio.andismtu.com)** &nbsp;·&nbsp; iOS TestFlight coming soon
 
 ---
 
 ## Why I Built This
 
-The modern media landscape is fragmented. We track movies on Letterboxd/IMDb, series on Trakt, and books on Goodreads. This scattered approach turns the deeply personal act of "remembering a great story" into a sterile, data-entry chore across multiple uninspiring platforms. 
+My wife wanted to keep a record of every book and film she experienced each year. Something she could look back on, and share. But she couldn't find anything that handled both books and screen media in one place.
 
-I built **Storio** to solve this pain point. It's not designed to be a social network or an encyclopedic database. It is designed as a **digital Pensieve**—a private, beautifully crafted digital folio where the focus is entirely on *your* relationship with the story. It brings books and screen media together under one roof, treating each entry not as a database row, but as a cherished memory.
+So I started building Storio around Chinese New Year 2026. I had no coding experience. I put in about 4 to 10 hours a week while working a full-time PM job. Three months later, it's live.
 
-## Product Decisions
+---
 
-To achieve this vision, several key product and design decisions were made:
+## The Problem
 
-1. **Backdrop-First & Cinematic UI**: We abandoned the traditional "white background with lists" approach. Storio uses a completely dark theme (`#0d0d0d`) with "Storio Gold" accents. When viewing a story, the artwork expands to fill the background with a cinematic blur, pulling the user into the mood of the piece.
-2. **The "Rewatch/Reread" Philosophy**: Most trackers struggle with items you consume multiple times. In Storio, adding a movie you've already seen doesn't just update a counter; it creates a *new, distinct memory card* on your timeline. This allows you to have different reflections and ratings for the exact same story across different periods of your life.
-3. **Frictionless Onboarding (Anonymous First)**: Users shouldn't have to surrender their email just to see if the app is good. Storio utilizes Supabase Anonymous Auth, allowing users to instantly start searching and curating their folio (up to 10 items) the moment they open the app, before ever being asked to sign up.
-4. **Agent-Centric Backend**: To handle the disparate data structures of TMDB (movies/TV) and Google Books, the FastAPI backend uses an "Agent" pattern (Curator, Search, Scribe). This abstracts the complexity away from the frontend, delivering unified `Story` objects to the client.
-5. **Native iOS Feel via Web Tech**: Built as a Next.js Static Export wrapped in Capacitor, the app implements meticulous CSS safe-area padding and native Share/Filesystem plugins to feel indistinguishable from a Swift app on an iPhone.
+People track movies on Letterboxd, books on Goodreads or Bookmory. That means multiple apps, multiple logins, and multiple places to remember something that should feel personal and simple.
+
+Storio puts everything in one place. The goal is not to build another database. It is to give you a private folio where each entry feels like a memory.
+
+---
+
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><img src="image/screenshot-01-onboarding.png" width="200"/><br/><sub>Onboarding</sub></td>
+    <td align="center"><img src="image/screenshot-02-search.png" width="200"/><br/><sub>Search</sub></td>
+    <td align="center"><img src="image/screenshot-03-details-movie.png" width="200"/><br/><sub>Story Details</sub></td>
+    <td align="center"><img src="image/screenshot-04-details-cinematic.png" width="200"/><br/><sub>Cinematic UI</sub></td>
+  </tr>
+</table>
+
+---
+
+## Key Product Decisions
+
+**1. Dark, cinematic UI**
+
+No white backgrounds or long lists. Storio uses a dark theme (`#0d0d0d`) with Storio Gold accents. When you open a story, the artwork fills the screen with a soft blur behind all the metadata.
+
+**2. Multiple watches, multiple memories**
+
+Most apps break when you watch the same film twice. In Storio, watching it again creates a new card on your timeline. You can write different notes and give it a different rating each time.
+
+**3. No sign-up required to start**
+
+You should be able to try the app before giving us your email. Storio uses Supabase Anonymous Auth, so you can add up to 10 stories right away without creating an account.
+
+**4. One clean data format from multiple sources**
+
+Movies come from TMDB. Books come from Google Books. Their data formats are very different. The backend uses an agent pattern to turn all of that into one clean `Story` object that the app can use.
+
+**5. Feels like a native iOS app**
+
+The app is built with Next.js and wrapped in Capacitor. It uses iOS safe-area padding and native share and file plugins so it behaves like a real iOS app, even though the core is web code.
+
+---
 
 ## Architecture
 
-Storio is built using a modern, serverless architecture optimized for cross-platform deployment.
-
 ```mermaid
 graph TD
-    Client[Next.js App Router<br/>Static Export + Capacitor] -->|REST API| API[FastAPI Serverless Backend]
-    API -->|Agent Skills| TMDB[TMDB API]
-    API -->|Agent Skills| GBooks[Google Books API]
+    Client[Next.js App Router<br/>Static Export + Capacitor] -->|REST API| API[FastAPI Backend<br/>Railway]
+    API -->|Search & metadata| TMDB[TMDB API]
+    API -->|Search & metadata| GBooks[Google Books API]
     API -->|PostgreSQL| DB[(Supabase DB)]
     Client -->|Auth State| Auth[Supabase Auth]
 ```
 
+---
+
 ## Tech Stack
 
-This project leverages a modern, serverless ecosystem:
+| Layer | Technology | Why |
+|---|---|---|
+| Frontend | Next.js 14 + Tailwind CSS | Static export for Capacitor. Tailwind makes the custom design system fast to build. |
+| Native Wrapper | Capacitor | Wraps the web app as a real iOS app with access to Share Sheet and Filesystem. |
+| Backend | FastAPI (Python) | Good fit for agent workflows and calling multiple external APIs. |
+| Database & Auth | Supabase (PostgreSQL) | Handles anonymous auth out of the box, which is key for the no-sign-up onboarding. |
+| Hosting | Vercel + Railway | Frontend on Vercel. Backend on Railway. |
+| Automation | n8n | Background data processing. |
+| Testing | Playwright (E2E), Pytest | |
 
-- **Frontend: Next.js 14 (React) & Tailwind CSS**
-  - *Why*: Chosen for its robust App Router architecture and static export capabilities. Tailwind enables rapid implementation of the bespoke "Folio Black" and "Storio Gold" design system without the overhead of heavy UI libraries.
-- **Native Wrapper: Capacitor**
-  - *Why*: Allows the Next.js static export to be deployed as a true native iOS application. It provides seamless access to native APIs (like iOS Share Sheet and Filesystem) while maintaining a single web codebase.
-- **Backend: FastAPI (Python)**
-  - *Why*: Python is the optimal choice for integrating AI/Agent workflows and external API orchestration (TMDB, Google Books). FastAPI provides exceptional performance and automatic OpenAPI documentation.
-- **Database & Auth: Supabase (PostgreSQL)**
-  - *Why*: Provides a robust, scalable relational database alongside out-of-the-box Anonymous Auth, which is critical for Storio's frictionless guest onboarding strategy.
-- **Infrastructure & Automation**:
-  - **Vercel**: For hosting the Frontend and Serverless Backend.
-  - **Railway**: Used for specific backend or worker deployments (if applicable).
-  - **n8n**: For workflow automation and background data processing.
-- **Testing**: Playwright (E2E), Pytest
+---
+
+## How I Built This
+
+I had zero coding experience when I started. Here is what my workflow actually looked like.
+
+### The workflow
+
+**Step 1: Write a spec first**
+
+Every feature started with a written proposal — problem statement, design decisions, and acceptance criteria — before any code was written. I used [OpenSpec](https://github.com/open-spec/openspec) inside Claude Code CLI to turn each proposal into a structured set of specs and tasks. I pushed back on AI outputs, adjusted scope, and made product decisions before touching the implementation.
+
+**Step 2: Keep the AI in context**
+
+LLMs have no memory between sessions. To work around this, I kept a set of living documents in the repo: `StorioWiki.md`, `BACKLOG.md`, `DEV_SETUP.md`, and formal bug reports. At the start of each session, the right documents gave the AI exactly where things stood. For significant bugs, I wrote a formal bug report and saved it so future sessions could pick it up.
+
+**Step 3: Use structured review before shipping**
+
+I used [superpowers](https://github.com/obra/superpowers) and [gstack](https://github.com/garrytan/gstack) to add structure to the AI loop. Every feature went through TDD (tests written before implementation), a QA pass with a headless browser, and a code review step. I updated the backlog and wiki after each session so the next one could start clean.
+
+Primary tools: **Gemini CLI** and **Claude Code CLI**.
+
+### The hardest problem
+
+The share feature looked simple: pull a poster image, turn it into a share card, export as PNG.
+
+It turned out to be the hardest part of the project.
+
+TMDB poster images are hosted on a different domain. When `html-to-image` tried to draw them onto a canvas, the browser blocked the export because of cross-origin restrictions. On iOS and Safari, there were more problems: memory limits caused the image to fail at high resolution, the blurred background would disappear, and fonts would not load in time.
+
+The fix required three changes at once: routing all external images through a Next.js proxy to add the right CORS headers, capping the pixel ratio at `1.5` on mobile to avoid memory overflow, and pre-loading fonts before the canvas render started.
+
+The key was understanding why the browser was blocking each step, not just trying fixes until something worked.
+
+---
 
 ## Getting Started
 
 ### Prerequisites
-- Node.js (v20+) & `pnpm`
-- Python 3.12+
-- Xcode & CocoaPods (for iOS deployment)
-- A Supabase Project
-- API Keys for TMDB and Google Books
 
-### 1. Backend (FastAPI) Setup
+- Node.js (v20+) and `pnpm`
+- Python 3.12+
+- Xcode and CocoaPods (for iOS)
+- A Supabase project
+- API keys for TMDB and Google Books
+
+### 1. Backend
+
 ```bash
 cd server
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-
-# Copy env template and fill in your keys
 cp .env.example .env
-
-# Run the development server
 python -m uvicorn app.main:app --reload --port 8010
 ```
 
-### 2. Frontend (Next.js) Setup
+### 2. Frontend
+
 ```bash
 cd client
 pnpm install
-
-# Setup your local environment variables
-# Requires NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY
 cp .env.local.example .env.local
-
-# Run the web development server (Will auto-detect IP for mobile testing)
 pnpm dev
 ```
 
-### 3. iOS Deployment (Capacitor)
-Storio is fully optimized for iOS static export.
+### 3. iOS
+
 ```bash
 cd client
-# Build the static HTML export
 pnpm run build
-
-# Sync the web assets to the iOS project
 npx cap sync ios
-
-# Open in Xcode to build and run on a Simulator or Device
 npx cap open ios
 ```
 
 ---
 
-## About This Project
+## About
 
-Storio was built entirely through **pure vibe coding and AI tools**. 
+I am a PM transitioning from data to building. Storio is my side project and portfolio piece. I built it part-time over three months with no prior coding experience, using AI tools and a structured workflow.
 
-Prior to this project, I had zero coding experience. I am currently transitioning from a **Data PM to a Build PM**. Storio represents an independent endeavor where I drove everything—from initial product definition and UX/UI decisions to the actual full-stack implementation—proving that with modern AI tools, product managers can bring their complete visions to life without being blocked by traditional engineering constraints.
+The point is not that AI wrote the code. The point is that a PM who thinks carefully about problems, keeps good documentation, and uses the right tools can ship a real product on their own.
+
+**[storio.andismtu.com](https://storio.andismtu.com)** &nbsp;·&nbsp; [LinkedIn](https://www.linkedin.com/in/anderson-tu/) &nbsp;·&nbsp; [andismtu.com](https://andismtu.com)
