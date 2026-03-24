@@ -117,7 +117,7 @@ superpowers:brainstorming           # 新功能前必用：探索需求、對齊
 superpowers:writing-plans           # 將 spec 拆解為實作步驟
 superpowers:executing-plans         # 按計畫執行，含 review checkpoints
 superpowers:test-driven-development # TDD 流程：先測試再實作
-superpowers:systematic-debugging    # 遇到 bug 時系統化排查
+superpowers:systematic-debugging    # 遇到 bug 時系統化排查（無 browser 需求）
 superpowers:verification-before-completion # 宣告完成前必跑驗證
 superpowers:requesting-code-review  # 完成後請求 code review
 superpowers:receiving-code-review   # 謹慎評估 review 意見
@@ -130,6 +130,16 @@ openspec-propose                    # 新功能提案（生成 proposal/design/s
 openspec-apply-change               # 執行 OpenSpec 任務
 openspec-explore                    # 探索模式（思考夥伴）
 openspec-archive-change             # 歸檔已完成的變更
+
+# gstack — 瀏覽器 QA 與部署驗證（已安裝於 ~/.claude/skills/gstack）
+gstack                              # headless Chrome 操控：截圖、驗部署、dogfood 流程
+/qa                                 # 自動 QA：headless browser 找 UI bug → 自動修 → commit
+/review                             # Pre-landing code review（SQL 安全、LLM trust boundary）
+/investigate                        # 系統化 debug（含 browser 截圖存證）→ 取代或補充 systematic-debugging
+/ship                               # 完整 ship 流程：merge base、run tests、bump version、push、PR
+/office-hours                       # 腦力激盪：YC 六個 forcing questions 幫助釐清需求與價值（用在 brainstorming 前）
+/plan-ceo-review                    # CEO 視角 plan review：挑戰前提、找 10-star 產品、確認方向夠大膽
+/plan-eng-review                    # Eng Manager 視角 plan review：架構、資料流、edge cases、測試覆蓋
 
 # 領域技術
 react-expert                        # React Hooks 最佳實踐
@@ -156,23 +166,37 @@ find-skills                         # 尋找新技能
 收到任何功能需求或開發任務時，**必須**依序執行以下流程，**不得跳過任何步驟**：
 
 ### 設計階段
-1. **`superpowers:brainstorming`** — 探索需求，對齊設計方向（**禁止在此步驟前寫任何程式碼**）
-2. **`wireframe-prototyping`** — 若涉及 UI 變更，先視覺確認
-3. 閱讀 `docs/StorioWiki.md` 確認架構脈絡，確認 `GEMINI.md` 術語規範
-4. **`openspec-propose`** — 將 brainstorming 結論正式化為 proposal/design/specs/tasks
+1. **`/office-hours`（可選）** — 新功能方向不確定時，先用 YC 六個 forcing questions 釐清需求
+2. **`superpowers:brainstorming`** — 探索需求，對齊設計方向（**禁止在此步驟前寫任何程式碼**）
+3. **`wireframe-prototyping`** — 若涉及 UI 變更，先視覺確認
+4. 閱讀 `docs/StorioWiki.md` 確認架構脈絡，確認 `GEMINI.md` 術語規範
+5. **`openspec-propose`** — 將 brainstorming 結論正式化為 proposal/design/specs/tasks
+6. **`/plan-ceo-review`（可選）** — 對方向與範圍有疑慮時，做 CEO 視角的策略確認
+7. **`/plan-eng-review`（可選）** — 架構複雜時，在寫程式前先做工程審查
 
 ### 實作階段
-5. **`superpowers:writing-plans`** — 將 tasks.md 拆解為有依賴關係的實作步驟
-6. **`superpowers:using-git-worktrees`** — 建立隔離功能分支
-7. **`superpowers:test-driven-development`** — 先寫測試，再寫實作
-8. **`openspec-apply-change`** — 按 tasks.md 逐一實作
+8. **`superpowers:writing-plans`** — 將 tasks.md 拆解為有依賴關係的實作步驟
+9. **`superpowers:using-git-worktrees`** — 建立隔離功能分支
+10. **`superpowers:test-driven-development`** — 先寫測試，再寫實作
+11. **`openspec-apply-change`** — 按 tasks.md 逐一實作
 
 ### 完成階段
-9. **`superpowers:verification-before-completion`** — 跑測試，確認真的通過才宣告完成
-10. **`superpowers:requesting-code-review`** — 請求 code review
-11. **`openspec-archive-change`** — 歸檔變更
+12. **`/qa`（gstack）** — 若涉及 UI 變更，headless browser 自動掃 UI bug、截圖存證、自動修復
+13. **`superpowers:verification-before-completion`** — 跑全套測試，確認通過才宣告完成
+14. **`/review`（gstack）** — Pre-landing code review（SQL 安全、LLM trust boundary 等）
+15. **`openspec-archive-change`** — 歸檔變更
 
-> **Bug 修復**可簡化為：`superpowers:systematic-debugging` → TDD → 實作 → verification
+### 部署驗證階段（每次部署後必跑）
+16. **`/gstack` browse** — 部署至 Vercel / Railway 後，headless browser 驗證 production 頁面正常：
+    ```bash
+    # Frontend smoke test
+    $B goto https://storio-2.vercel.app
+    $B console          # 確認無 JS error
+    $B screenshot /tmp/prod-check.png
+    $B responsive /tmp/prod-responsive   # mobile / tablet / desktop 三張截圖
+    ```
+
+> **Bug 修復**可簡化為：`/investigate`（gstack，有 browser 截圖） 或 `superpowers:systematic-debugging`（純程式碼） → TDD → 實作 → `/qa` 驗證
 
 ---
 
