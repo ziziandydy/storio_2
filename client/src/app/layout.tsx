@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Roboto } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ToastProvider";
+import { RenderServiceWarmup } from "@/components/RenderServiceWarmup";
 
 const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
 const roboto = Roboto({
@@ -41,6 +42,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} ${roboto.variable} font-sans pt-[var(--sa-top)] pb-[var(--sa-bottom)] bg-folio-black min-h-screen`}>
         <ToastProvider>
+          <RenderServiceWarmup />
           {children}
         </ToastProvider>
       </body>

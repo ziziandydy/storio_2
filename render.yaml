@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: storio-puppeteer-service
+    runtime: node
+    region: singapore
+    plan: free
+    rootDir: puppeteer-service
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: PORT
+        value: 4000
+      - key: FRONTEND_URL
+        value: https://storio.andismtu.com
+      - key: ALLOWED_ORIGINS
+        value: https://storio.andismtu.com
+    healthCheckPath: /health

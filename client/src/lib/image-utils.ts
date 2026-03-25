@@ -42,10 +42,7 @@ export function getOptimizedShareImageUrl(url: string, isMonthly: boolean = fals
         const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010';
         processedUrl = `${backendUrl}/api/v1/proxy/image?url=${encodeURIComponent(processedUrl)}`;
         
-        // Append cache-buster timestamp and salt
-        const salt = Math.random().toString(36).substring(2, 7);
-        const timestamp = new Date().getTime();
-        processedUrl = `${processedUrl}&_t=${timestamp}&salt=${salt}`;
+        // （Puppeteer 路徑不需要 cache-busting，已移除 _t timestamp 與 salt）
     }
 
     return processedUrl;
