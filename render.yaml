@@ -5,7 +5,7 @@ services:
     region: singapore
     plan: free
     rootDir: puppeteer-service
-    buildCommand: npm install
+    buildCommand: npm install && npx puppeteer browsers install chrome
     startCommand: npm start
     envVars:
       - key: NODE_VERSION
