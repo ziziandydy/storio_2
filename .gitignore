@@ -47,3 +47,5 @@ test-results/
 .gemini/tmp/
 .vercel
 Sites/
+.gstack/
+.worktrees/

@@ -107,8 +107,56 @@ kill -9 <PID>
 
 ---
 
-## 5. 重要開發參數
+## 5. Puppeteer Service 本地開發
+
+Puppeteer Service 是獨立的 Node.js 服務（`puppeteer-service/`），負責截圖生成。
+
+### 啟動指令
+
+```bash
+cd puppeteer-service
+
+# 重要：FRONTEND_URL 預設為 localhost:3000，但 Storio 前端跑在 3010
+FRONTEND_URL=http://localhost:3010 npm start
+```
+
+> **⚠️ 常見錯誤**：忘記設 `FRONTEND_URL` 會導致 Puppeteer 嘗試連接 `localhost:3000`（不存在），
+> `POST /render` 會回傳 504 timeout。
+
+### 連帶的 `.env.local` 設定
+
+`client/.env.local` 需加入：
+```
+NEXT_PUBLIC_PUPPETEER_SERVICE_URL=http://localhost:4000
+```
+
+### 驗證步驟
+
+```bash
+# Step 1：確認服務健康
+curl http://localhost:4000/health
+# 預期：{"status":"ok","uptime":...}
+
+# Step 2：測試截圖（需要前端也在跑）
+curl -X POST http://localhost:4000/render \
+  -H "Content-Type: application/json" \
+  -d '{"template":"memory-card","item":{"title":"Inception","posterPath":"/image/defaultMoviePoster.svg","type":"movie","rating":9},"settings":{"selectedTemplate":"default","aspectRatio":"9:16"}}' \
+  --output /tmp/test-render.png && open /tmp/test-render.png
+```
+
+### 端口總覽
+
+| 服務 | Port |
+|------|------|
+| Frontend (Next.js) | 3010 |
+| Backend (FastAPI) | 8010 |
+| Puppeteer Service | 4000 |
+
+---
+
+## 6. 重要開發參數
 - **Backend URL**: `http://<您的區域網路IP>:8010` (由自動化腳本寫入 `client/.env.local` 來決定)
 - **Frontend URL**: `http://localhost:3010` 或 `http://<您的區域網路IP>:3010`
+- **Puppeteer Service**: `http://localhost:4000`（本地開發）
 - **Database**: Supabase PostgreSQL (Table: `collections`, `users` ... etc)
 - **Auth**: Supabase Anonymous Auth

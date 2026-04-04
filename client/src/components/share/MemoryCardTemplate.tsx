@@ -71,9 +71,8 @@ export default function MemoryCardTemplate({
         return props;
     };
 
-    // Use standard path with cache buster for Safari
-    const LOGO_PATH = `/image/logo/logo.png?t=${new Date().getTime()}`;
-    const DESK_BG_PATH = `/image/share/desk_bg.jpg?t=${new Date().getTime()}`;
+    const LOGO_PATH = '/image/logo/logo.png';
+    const DESK_BG_PATH = '/image/share/desk_bg.jpg';
 
     // --- Helper: Stamp Component ---
     const StampRating = () => (
