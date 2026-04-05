@@ -16,6 +16,7 @@ import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase, getURL } from '@/lib/supabase';
 import { SplashScreen as NativeSplash } from '@capacitor/splash-screen';
+import { isNativePlatform, nativeAppleSignIn } from '@/lib/appleAuth';
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
@@ -89,13 +90,20 @@ export default function Home() {
 
   const handleLogin = async (provider: 'google' | 'apple' | 'email') => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: provider as any,
-        options: {
-          redirectTo: getURL('/auth/callback')
-        }
-      });
-      if (error) throw error;
+      if (provider === 'apple' && isNativePlatform()) {
+        const { error, cancelled } = await nativeAppleSignIn();
+        if (cancelled) return; // 用戶主動取消，靜默處理
+        if (error) throw error;
+        // 登入成功：關閉 modal，讓 onAuthStateChange → page.tsx useEffect 自動接手
+        // （useEffect 會偵測 profile_completed，決定是否重新開啟 profile 步驟）
+        setShowOnboarding(false);
+      } else {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: provider as any,
+          options: { redirectTo: getURL('/auth/callback') }
+        });
+        if (error) throw error;
+      }
     } catch (error) {
       console.error('Login failed:', error);
     }
