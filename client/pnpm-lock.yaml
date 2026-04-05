@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@capacitor-community/apple-sign-in':
+        specifier: ^7.1.0
+        version: 7.1.0(@capacitor/core@7.6.0)
       '@capacitor/cli':
         specifier: ^7.6.0
         version: 7.6.0
@@ -38,18 +41,12 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
-      downloadjs:
-        specifier: ^1.4.7
-        version: 1.4.7
       embla-carousel-react:
         specifier: ^8.6.0
         version: 8.6.0(react@18.3.1)
       framer-motion:
         specifier: ^11.0.3
         version: 11.18.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      html-to-image:
-        specifier: ^1.11.13
-        version: 1.11.13
       lucide-react:
         specifier: ^0.330.0
         version: 0.330.0(react@18.3.1)
@@ -72,9 +69,6 @@ importers:
       '@types/canvas-confetti':
         specifier: ^1.9.0
         version: 1.9.0
-      '@types/downloadjs':
-        specifier: ^1.4.6
-        version: 1.4.6
       '@types/node':
         specifier: ^20
         version: 20.19.33
@@ -119,6 +113,11 @@ packages:
   '@babel/helper-validator-identifier@7.28.5':
     resolution: {integrity: sha512-qSs4ifwzKJSV39ucNjsvc6WVHs6b7S03sOh2OcHF9UHfVPqWWALUsNUVzhSBiItjRZoLHx7nIarVjqKVusUZ1Q==}
     engines: {node: '>=6.9.0'}
+
+  '@capacitor-community/apple-sign-in@7.1.0':
+    resolution: {integrity: sha512-df7cA7vfvvvilTtpJKeVvxO31W+py5t3HK9233GBD5MvgAgtGvCqeQ3pI0noNkVsKPF9B1g/po8Mph6s4bVSmw==}
+    peerDependencies:
+      '@capacitor/core': '>=7.0.0'
 
   '@capacitor/cli@7.6.0':
     resolution: {integrity: sha512-3PL8xIgXLj1037NqmuzoKXNOi80AdY7eSCnX6/A7RfjFqT8TEiCL+PlHsHtg6/BSZGSmmxGGBjH3nXrNCRoFhw==}
@@ -380,9 +379,6 @@ packages:
   '@types/canvas-confetti@1.9.0':
     resolution: {integrity: sha512-aBGj/dULrimR1XDZLtG9JwxX1b4HPRF6CX9Yfwh3NvstZEm1ZL7RBnel4keCPSqs1ANRu1u2Aoz9R+VmtjYuTg==}
 
-  '@types/downloadjs@1.4.6':
-    resolution: {integrity: sha512-mp3w70vsaiLRT9ix92fmI9Ob2yJAPZm6tShJtofo2uHbN11G2i6a0ApIEjBl/kv3e9V7Pv7jMjk1bUwYWvMHvA==}
-
   '@types/fs-extra@8.1.5':
     resolution: {integrity: sha512-0dzKcwO+S8s2kuF5Z9oUWatQJj5Uq/iqphEtE3GQJVRRYm/tD1LglU2UnXi2A8jLq5umkGouOXOR9y0n613ZwQ==}
 
@@ -411,6 +407,9 @@ packages:
 
   '@types/react@18.3.28':
     resolution: {integrity: sha512-z9VXpC7MWrhfWipitjNdgCauoMLRdIILQsAEV+ZesIzBq/oUlxk0m3ApZuMFCXdnS4U7KrI+l3WRUEGQ8K1QKw==}
+
+  '@types/scriptjs@0.0.2':
+    resolution: {integrity: sha512-GFrUgzGYfNX3VWZwMyzr0JrBwzLv5Kes4BQBvo6hXdRy14/GBbpCiVwwB7v1o2xIEvFf+9GyznmYhuesQQjSag==}
 
   '@types/slice-ansi@4.0.0':
     resolution: {integrity: sha512-+OpjSaq85gvlZAYINyzKpLeiFkSC4EsC6IIiT6v6TLSU5k5U83fHGj9Lel8oKEXM0HqgrMVCjXPDPVICtxF7EQ==}
@@ -1015,9 +1014,6 @@ packages:
     resolution: {integrity: sha512-sCm11ak2oY6DglEPpCB8TixLjWAxd3kJTs6UIcSasNYxXdFPV+YKlye92c8H4kKFqV5qYMIh7d+cYecEg0dIkA==}
     engines: {node: '>=6'}
 
-  downloadjs@1.4.7:
-    resolution: {integrity: sha512-LN1gO7+u9xjU5oEScGFKvXhYf7Y/empUIIEAGBs1LzUq/rg5duiDrkuH5A2lQGd5jfMOb9X9usDa2oVXwJ0U/Q==}
-
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
     engines: {node: '>= 0.4'}
@@ -1465,9 +1461,6 @@ packages:
   hosted-git-info@4.1.0:
     resolution: {integrity: sha512-kyCuEOWjJqZuDbRHzL8V93NzQhwIB71oFWSyzVo+KPZI+pnQPPxucdkrOZvkLRnrf5URsQM+IJ09Dw29cRALIA==}
     engines: {node: '>=10'}
-
-  html-to-image@1.11.13:
-    resolution: {integrity: sha512-cuOPoI7WApyhBElTTb9oqsawRvZ0rHhaHwghRLlTuffoD1B2aDemlCruLeZrUIIdvG7gs9xeELEPm6PhuASqrg==}
 
   iceberg-js@0.8.1:
     resolution: {integrity: sha512-1dhVQZXhcHje7798IVM+xoo/1ZdVfzOMIc8/rgVSijRK38EDqOJoGula9N/8ZI5RD8QTxNQtK/Gozpr+qUqRRA==}
@@ -2301,6 +2294,9 @@ packages:
   scheduler@0.23.2:
     resolution: {integrity: sha512-UOShsPwz7NrMUqhR6t0hWjFduvOzbtv7toDH1/hIrfRNIDBnnBWd0CwJTGvTpngVlmwGCdP9/Zl/tVrDqcuYzQ==}
 
+  scriptjs@2.5.9:
+    resolution: {integrity: sha512-qGVDoreyYiP1pkQnbnFAUIS5AjenNwwQBdl7zeos9etl+hYKWahjRTfzAZZYBv5xNHx7vNKCmaLDQZ6Fr2AEXg==}
+
   semver@5.7.2:
     resolution: {integrity: sha512-cBznnQ9KjJqU67B52RMC65CMarK2600WFnbkcaiwWq3xy/5haFJlshgnpjovMVJ+Hff49d8GEn0b87C5pDQ10g==}
     hasBin: true
@@ -2773,6 +2769,12 @@ snapshots:
 
   '@babel/helper-validator-identifier@7.28.5': {}
 
+  '@capacitor-community/apple-sign-in@7.1.0(@capacitor/core@7.6.0)':
+    dependencies:
+      '@capacitor/core': 7.6.0
+      '@types/scriptjs': 0.0.2
+      scriptjs: 2.5.9
+
   '@capacitor/cli@7.6.0':
     dependencies:
       '@ionic/cli-framework-output': 2.2.8
@@ -3093,8 +3095,6 @@ snapshots:
 
   '@types/canvas-confetti@1.9.0': {}
 
-  '@types/downloadjs@1.4.6': {}
-
   '@types/fs-extra@8.1.5':
     dependencies:
       '@types/node': 20.19.33
@@ -3121,6 +3121,8 @@ snapshots:
     dependencies:
       '@types/prop-types': 15.7.15
       csstype: 3.2.3
+
+  '@types/scriptjs@0.0.2': {}
 
   '@types/slice-ansi@4.0.0': {}
 
@@ -3732,8 +3734,6 @@ snapshots:
     dependencies:
       find-up: 3.0.0
       minimatch: 3.1.2
-
-  downloadjs@1.4.7: {}
 
   dunder-proto@1.0.1:
     dependencies:
@@ -4347,8 +4347,6 @@ snapshots:
   hosted-git-info@4.1.0:
     dependencies:
       lru-cache: 6.0.0
-
-  html-to-image@1.11.13: {}
 
   iceberg-js@0.8.1: {}
 
@@ -5181,6 +5179,8 @@ snapshots:
   scheduler@0.23.2:
     dependencies:
       loose-envify: 1.4.0
+
+  scriptjs@2.5.9: {}
 
   semver@5.7.2: {}
 

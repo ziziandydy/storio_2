@@ -1,6 +1,8 @@
 PODS:
   - Capacitor (7.6.0):
     - CapacitorCordova
+  - CapacitorCommunityAppleSignIn (7.1.0):
+    - Capacitor
   - CapacitorCordova (7.6.0)
   - CapacitorFilesystem (7.1.8):
     - Capacitor
@@ -13,6 +15,7 @@ PODS:
 
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/.pnpm/@capacitor+ios@7.6.0_@capacitor+core@7.6.0/node_modules/@capacitor/ios`)"
+  - "CapacitorCommunityAppleSignIn (from `../../node_modules/.pnpm/@capacitor-community+apple-sign-in@7.1.0_@capacitor+core@7.6.0/node_modules/@capacitor-community/apple-sign-in`)"
   - "CapacitorCordova (from `../../node_modules/.pnpm/@capacitor+ios@7.6.0_@capacitor+core@7.6.0/node_modules/@capacitor/ios`)"
   - "CapacitorFilesystem (from `../../node_modules/.pnpm/@capacitor+filesystem@7.1.8_@capacitor+core@7.6.0/node_modules/@capacitor/filesystem`)"
   - "CapacitorShare (from `../../node_modules/.pnpm/@capacitor+share@7.0.4_@capacitor+core@7.6.0/node_modules/@capacitor/share`)"
@@ -25,6 +28,8 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   Capacitor:
     :path: "../../node_modules/.pnpm/@capacitor+ios@7.6.0_@capacitor+core@7.6.0/node_modules/@capacitor/ios"
+  CapacitorCommunityAppleSignIn:
+    :path: "../../node_modules/.pnpm/@capacitor-community+apple-sign-in@7.1.0_@capacitor+core@7.6.0/node_modules/@capacitor-community/apple-sign-in"
   CapacitorCordova:
     :path: "../../node_modules/.pnpm/@capacitor+ios@7.6.0_@capacitor+core@7.6.0/node_modules/@capacitor/ios"
   CapacitorFilesystem:
@@ -36,12 +41,13 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Capacitor: 6e644e9e3369368ac601c77a0fad57f34b78aaa6
+  CapacitorCommunityAppleSignIn: 271cb2860576fd2961508bbfa7a82117d93eadca
   CapacitorCordova: f163aa2e84b79efc54d6a75b305bc7e05fb80c5d
   CapacitorFilesystem: c63fc54df41e5a6761785a7f3c49dc696c22e296
   CapacitorShare: 25f7fc5dd0e4edbde5d6801c6de5d14a8b450a41
   CapacitorSplashScreen: 409eeaaeac603d264f209c0fcb718aa22fe1f7bb
   IONFilesystemLib: 21a63377696b2d8fab5632ecfb7d2ac67bddb68a
 
-PODFILE CHECKSUM: 82ac08e49546b60275db52fc24806257139cf93f
+PODFILE CHECKSUM: a2c9f2be550c328fa6d79bfd10b185b2f57f415d
 
 COCOAPODS: 1.16.2
