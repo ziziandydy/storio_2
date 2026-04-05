@@ -92,6 +92,10 @@ app.post('/render', async (req, res) => {
       window.__RENDER_DATA__ = data;
     }, { template, item, settings: settings || {} });
 
+    // 等待 React 渲染 + 字型 woff2 下載完成（包含 CJK unicode-range subset）
+    // 注入後 React 開始下載字型，waitForNetworkIdle 確保所有字型已到位
+    await page.waitForNetworkIdle({ timeout: 15000, idleTime: 500 }).catch(() => {});
+
     // Poll window.__RENDER_READY__，timeout 30s
     await page.waitForFunction(
       () => window.__RENDER_READY__ === true,
