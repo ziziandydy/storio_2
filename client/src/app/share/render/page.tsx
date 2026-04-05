@@ -60,8 +60,21 @@ export default function ShareRenderPage() {
         clearInterval(poll);
         setRenderData(data);
 
-        // 等字型載入完成後設置 ready signal
-        document.fonts.ready.then(() => {
+        // 等字型載入完成後設置 ready signal（含 CJK 子集）
+        document.fonts.ready.then(async () => {
+          // 取出 CSS 變數中的實際字型名稱（例如 "__Noto_Sans_TC_4cf4f1"）
+          const notoFamily = getComputedStyle(document.body)
+            .getPropertyValue('--font-noto-tc')
+            .split(',')[0]
+            .trim();
+          if (notoFamily) {
+            // 強制載入中文字元對應的 woff2 子集，避免 display:swap 在截圖時仍是 fallback
+            await Promise.all([
+              document.fonts.load(`400 16px ${notoFamily}`, '中文字型'),
+              document.fonts.load(`500 16px ${notoFamily}`, '中文字型'),
+              document.fonts.load(`700 16px ${notoFamily}`, '中文字型'),
+            ]).catch(() => {});
+          }
           (window as Window).__RENDER_READY__ = true;
         });
         return;
