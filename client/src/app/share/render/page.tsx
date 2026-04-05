@@ -59,26 +59,6 @@ export default function ShareRenderPage() {
       if (data) {
         clearInterval(poll);
         setRenderData(data);
-
-        // 等字型載入完成後設置 ready signal（含 CJK 子集）
-        document.fonts.ready.then(async () => {
-          // 取出 CSS 變數中的實際字型名稱（例如 "__Noto_Sans_TC_4cf4f1"）
-          const notoFamily = getComputedStyle(document.body)
-            .getPropertyValue('--font-noto-tc')
-            .split(',')[0]
-            .trim();
-          if (notoFamily) {
-            // 強制載入中文字元對應的 woff2 子集，避免 display:swap 在截圖時仍是 fallback
-            // 包含 weight 900（font-black）以確保 ticket/heading 標題正確渲染
-            await Promise.all([
-              document.fonts.load(`400 16px ${notoFamily}`, '中文字型'),
-              document.fonts.load(`500 16px ${notoFamily}`, '中文字型'),
-              document.fonts.load(`700 16px ${notoFamily}`, '中文字型'),
-              document.fonts.load(`900 16px ${notoFamily}`, '中文字型'),
-            ]).catch(() => {});
-          }
-          (window as Window).__RENDER_READY__ = true;
-        });
         return;
       }
 
@@ -90,6 +70,28 @@ export default function ShareRenderPage() {
 
     return () => clearInterval(poll);
   }, []);
+
+  // 在 React re-render 完成並 DOM 更新後等待字型（含 CJK 子集）
+  useEffect(() => {
+    if (!renderData) return;
+
+    // 雙 rAF：確保 React render 已 commit 至 DOM 並完成 paint，
+    // 使瀏覽器有機會請求正確的 CJK unicode-range woff2 子集，
+    // 再呼叫 document.fonts.ready 等待所有進行中的字型下載
+    let raf1: number, raf2: number;
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        document.fonts.ready.then(() => {
+          (window as Window).__RENDER_READY__ = true;
+        });
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, [renderData]);
 
   if (!renderData) {
     // 等待資料注入，顯示空白（Puppeteer 不需要 loading UI）
