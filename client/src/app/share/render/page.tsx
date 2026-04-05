@@ -75,15 +75,38 @@ export default function ShareRenderPage() {
   useEffect(() => {
     if (!renderData) return;
 
-    // 雙 rAF：確保 React render 已 commit 至 DOM 並完成 paint，
-    // 使瀏覽器有機會請求正確的 CJK unicode-range woff2 子集，
-    // 再呼叫 document.fonts.ready 等待所有進行中的字型下載
+    // 注意：不使用 document.fonts.ready，因為頁面首次載入時（無 CJK 內容）
+    // 它就已 resolve，之後呼叫 .then() 立即執行，不會等後來的 CJK 子集下載。
+    // 改用 document.fonts.load() 並傳入實際內容文字，
+    // 強制下載對應的 unicode-range woff2 子集。
     let raf1: number, raf2: number;
     raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => {
-        document.fonts.ready.then(() => {
-          (window as Window).__RENDER_READY__ = true;
-        });
+      raf2 = requestAnimationFrame(async () => {
+        const notoFamily = getComputedStyle(document.body)
+          .getPropertyValue('--font-noto-tc')
+          .split(',')[0]
+          .trim();
+
+        if (notoFamily) {
+          // 從實際內容取出所有文字，觸發對應的 CJK unicode-range 子集下載
+          const item = renderData.item;
+          const contentText = [
+            item.title,
+            item.reflection,
+            item.monthName,
+          ].filter(Boolean).join('');
+
+          if (contentText) {
+            await Promise.all([
+              document.fonts.load(`400 16px ${notoFamily}`, contentText),
+              document.fonts.load(`500 16px ${notoFamily}`, contentText),
+              document.fonts.load(`700 16px ${notoFamily}`, contentText),
+              document.fonts.load(`900 16px ${notoFamily}`, contentText),
+            ]).catch(() => {});
+          }
+        }
+
+        (window as Window).__RENDER_READY__ = true;
       });
     });
 
