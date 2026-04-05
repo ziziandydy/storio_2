@@ -185,7 +185,7 @@ export default function MemoryCardTemplate({
 
                 {/* Info Overlay */}
                 <div className="mt-8 text-center space-y-4 z-10 w-full max-w-[300px] flex flex-col items-center">
-                    {showTitle && <h2 className="text-xl font-bold text-white tracking-tight uppercase line-clamp-2 w-full">{title}</h2>}
+                    {showTitle && <h2 className="text-xl font-bold font-sans text-white tracking-tight uppercase line-clamp-2 w-full">{title}</h2>}
 
                     {showRating && rating > 0 && (
                         <div className="transform scale-75 -mt-2">
@@ -195,7 +195,7 @@ export default function MemoryCardTemplate({
 
                     {showReflection && reflection && (
                         <div className="bg-black/40 border border-white/10 p-3 rounded-lg backdrop-blur-sm w-full">
-                            <p className="text-[10px] text-text-desc leading-relaxed line-clamp-3">
+                            <p className="text-[10px] font-sans text-text-desc leading-relaxed line-clamp-3">
                                 &quot;{reflection}&quot;
                             </p>
                         </div>
@@ -357,7 +357,7 @@ export default function MemoryCardTemplate({
                         </div>
                         <div className="relative z-20 w-full h-full flex flex-col items-center justify-between py-8">
                             <span className="text-[8px] font-black text-accent-gold/90 uppercase tracking-widest rotate-90 whitespace-nowrap drop-shadow-md">Storio</span>
-                            <span className="text-[10px] font-bold text-white uppercase tracking-wider rotate-90 line-clamp-2 w-40 text-center drop-shadow-md" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.9)' }}>{title}</span>
+                            <span className="text-[10px] font-bold font-serif text-white uppercase tracking-wider rotate-90 line-clamp-2 w-40 text-center drop-shadow-md" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.9)' }}>{title}</span>
                             <span className="text-[8px] font-mono text-white/60 rotate-90 drop-shadow-md">{year}</span>
                         </div>
                         {/* Spine Lighting (Lit from top-left, meaning the front of the spine gets the light) */}
@@ -472,7 +472,7 @@ export default function MemoryCardTemplate({
                 <div className="absolute bottom-10 left-8 right-8 z-40 flex flex-col items-center pointer-events-none gap-4">
                     {showTitle && (
                         <div className="bg-black/40 backdrop-blur-md border border-white/10 px-6 py-2 rounded-full shadow-[0_10px_20px_rgba(0,0,0,0.8)]">
-                            <h2 className="text-sm font-bold text-white tracking-tight uppercase drop-shadow-md">{title}</h2>
+                            <h2 className="text-sm font-bold font-serif text-white tracking-tight uppercase drop-shadow-md">{title}</h2>
                         </div>
                     )}
 
