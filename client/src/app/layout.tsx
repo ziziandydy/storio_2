@@ -11,7 +11,7 @@ const roboto = Roboto({
   variable: '--font-roboto'
 });
 const notoSansTC = Noto_Sans_TC({
-  weight: ['400', '500', '700'],
+  weight: ['400', '500', '700', '900'],
   preload: false,
   display: 'swap',
   variable: '--font-noto-tc',

@@ -69,10 +69,12 @@ export default function ShareRenderPage() {
             .trim();
           if (notoFamily) {
             // 強制載入中文字元對應的 woff2 子集，避免 display:swap 在截圖時仍是 fallback
+            // 包含 weight 900（font-black）以確保 ticket/heading 標題正確渲染
             await Promise.all([
               document.fonts.load(`400 16px ${notoFamily}`, '中文字型'),
               document.fonts.load(`500 16px ${notoFamily}`, '中文字型'),
               document.fonts.load(`700 16px ${notoFamily}`, '中文字型'),
+              document.fonts.load(`900 16px ${notoFamily}`, '中文字型'),
             ]).catch(() => {});
           }
           (window as Window).__RENDER_READY__ = true;
