@@ -230,7 +230,7 @@ export default function MemoryCardTemplate({
                     <div className="p-6 border-b-2 border-dashed border-folio-black/20 flex justify-between items-start">
                         <div className="space-y-1">
                             <p className="text-[8px] font-black uppercase tracking-widest opacity-60">Admit One</p>
-                            <h2 className="text-xl font-black leading-tight uppercase line-clamp-2">{title}</h2>
+                            <h2 className="text-xl font-black font-serif leading-tight uppercase line-clamp-2">{title}</h2>
                         </div>
                         <div className="text-right">
                             <p className="text-[10px] font-black">{year}</p>
