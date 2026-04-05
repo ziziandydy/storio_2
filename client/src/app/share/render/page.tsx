@@ -106,6 +106,9 @@ export default function ShareRenderPage() {
           }
         }
 
+        // fonts.load() resolve 後瀏覽器需要再一個 render frame
+        // 才會用新字型重繪文字，Puppeteer 才能截到正確畫面
+        await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
         (window as Window).__RENDER_READY__ = true;
       });
     });
