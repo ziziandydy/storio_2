@@ -1,9 +1,18 @@
 # Storio 專案待辦清單與未來優化 (Backlog & Future Improvements)
 
-最後更新：2026-03-24
+最後更新：2026-04-05
 
 ## ✅ 最近完成 (Completed)
-1.  **首次使用引導學習卡 (Onboarding Feature Guide)** *(2026-03-20)*:
+
+1.  **分享圖片 Puppeteer 微服務 (Share Image Puppeteer Refactor)** *(2026-04-05)*:
+    *   以 Railway Puppeteer 截圖微服務（`puppeteer-service/`）完全取代 `html-to-image`，徹底解決 `preserve-3d`、`backdrop-filter` 在 Safari/WKWebView 截圖失真問題。
+    *   前端新增 `/share/render` 渲染頁，`ShareModal` 與 `MonthlyRecapModal` 改呼叫 Puppeteer service API。
+    *   TTL Cache (`render-cache.ts`) + queue 機制確保不重複截圖、不阻塞 UI。
+    *   10 個模板（6 MemoryCard + 4 MonthlyRecap）E2E 驗證全數通過，含繁體中文渲染。
+    *   **修復 CJK 字型 Bug**：Puppeteer headless Chrome 在 `uppercase` + CSS 繼承 font-family 組合下無法正確載入 Noto TC 字型。修復方式：所有 CJK + `uppercase` 元素直接設定 `font-serif` / `font-sans`，不依賴繼承。
+    *   `3d` 模板 preserve-3d 效果已可正確截圖（原 html-to-image 限制已解除）。
+
+2.  **首次使用引導學習卡 (Onboarding Feature Guide)** *(2026-03-20)*:
     *   新增 `OnboardingGuideModal`：4 張卡片輪播（Embla Carousel + dot indicator 可點擊回上一步）。
     *   新增 `FeatureGuideCard`：Storio / Explore & Collect / Score & Reflect / Recap & Share。
     *   略過 / 底部按鈕使用 `safe-area-inset` 適配 iOS 瀏海 & Home Indicator。
@@ -129,7 +138,7 @@
   - **Root Cause 1**：`proxy.py` 手動設定 `Access-Control-Allow-Origin: *` 與 `CORSMiddleware` 的 `allow_credentials=True` 產生規範衝突，導致 Safari 拒絕 CORS 回應。→ 已移除手動 Header。
   - **Root Cause 2**：`3d` 書架模板使用外部 Unsplash URL 作為 CSS `background-image`，繞過 Proxy 機制，`html-to-image` 無法安全抓取，觸發 Tainted Canvas。→ 已下載圖片至本地 `library_bg.jpg` 並改為 `<img>` 標籤。
   - **加強**：新增 `SHARE_DEBUG` 全流程 log（6 個環節）與空白圖自動偵測，方便未來真機除錯。
-- [ ] **`3d` 書架模板截圖視覺失真 (CSS 3D Transforms)**: `html-to-image` 不支援 `preserve-3d` / `backfaceVisibility`，截圖中書本 3D 效果攤平變形。為既知限制，需考慮改用後端產圖方案。
+- [x] **`3d` 書架模板截圖視覺失真 (CSS 3D Transforms)** *(已修復 2026-04-05)*: 改用 Puppeteer 微服務截圖後，`preserve-3d` 透視效果完整保留，3D 書本視覺正常。`html-to-image` 限制已解除。
 - [x] **行事曆視圖進入時跳至一月 (CalendarView Month Jump Bug)**: *(已修復 2026-03-20)* IntersectionObserver 在掛載瞬間觸發 `loadMoreMonths('prev')`，將舊月份 prepend 至頂部，導致頁面跳回最舊月份。→ 新增 `isScrollReadyRef`，等初始 `scrollIntoView` 完成後才開放 Observer 觸發。
 
 ## 📅 SPRINT 6: 月度回顧與擴充功能 (已完成核心分享機制)

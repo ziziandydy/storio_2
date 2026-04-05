@@ -128,10 +128,11 @@
 ### 4.1 Frontend (Client)
 *   **State Management**: Zustand (`userStore` 處理全域用戶狀態同步, `viewStore`, `settingsStore`)。
 *   **Localization (i18n)**: 內建靜態字典檔 (`locales.ts`) 與 `useTranslation` hook，支援 `en-US` 與 `zh-TW`。所有新增的 UI 文本（包含 Web Share API 所需字串）均需加入翻譯字典。
-*   **Image Proxying (`/_next/image`) for CORS**: Direct fetches of TMDB URLs for `<canvas>` manipulation (via `html-to-image`) result in Tainted Canvas errors in Safari/iOS. All exterior image rendering (posters) must be routed through Next.js proxy, with explicit `crossOrigin="anonymous"` applied to bypass strict WebKit CORS checks, reducing payload size `w=384`.
-*   **html-to-image Cache Preservation**: To prevent `html-to-image` from generating a single identical Cache Key for all proxy strings (e.g., `/_next/image?url=...`), all `toPng()` calls must explicitly enable `includeQueryParams: true`. Otherwise, a Javascript Variable Collision will replicate the first resolved Base64 texture across all child renders.
+*   **Image Proxying (`/_next/image`) for CORS**: All exterior image rendering (posters) must be routed through Next.js proxy, with explicit `crossOrigin="anonymous"` applied to bypass strict WebKit CORS checks, reducing payload size `w=384`.
+*   **分享圖片架構（Puppeteer 微服務）**: 分享圖片改由 Railway 上的 Puppeteer 截圖微服務生成（`puppeteer-service/`），取代原有的 `html-to-image`。前端渲染頁面 `/share/render` 接受 `window.__RENDER_DATA__` 注入，完成渲染後設定 `window.__RENDER_READY__ = true` 通知 Puppeteer 截圖。TTL Cache (`render-cache.ts`) 減少重複請求。此架構徹底解決 `preserve-3d`、`backdrop-filter` 在 Safari/WKWebView 截圖失真問題。
+*   **CJK 字型渲染注意事項（Puppeteer 環境）**: Puppeteer headless Chrome 在 `text-transform: uppercase` + CSS font-family **繼承**（非直接設定）組合下，無法觸發正確的 Noto TC CJK woff2 下載。所有含 CJK 內容且有 `uppercase` 的元素，**必須直接在元素上設定** `font-serif` 或 `font-sans`，不能靠 CSS 繼承。
 *   **Utility**: `getURL` 工具函式確保絕對 URL 重導向的健壯性。
-*   **Libraries**: `html-to-image`, `downloadjs`。
+*   **Libraries**: `downloadjs`。（`html-to-image` 已移除）
 
 ### 4.2 Backend (Server)
 *   **Database**: Supabase (PostgreSQL)。

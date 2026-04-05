@@ -89,6 +89,59 @@
 - **`backdrop-blur` 消失**：`html-to-image` 不支援 `backdrop-filter: blur()`，毛玻璃效果截圖中不顯示，為既知視覺差異。
 - **長期方案**：若上述問題持續影響體驗，建議改用後端 Pillow 產圖作為 fallback（`handleCapture` 失敗時呼叫後端 API）。
 
+---
+
+## Round 3：Puppeteer 微服務遷移 (2026-04-05)
+
+### 背景
+
+`html-to-image` 存在無法解決的結構性限制（`preserve-3d`、`backdrop-filter` 在 Puppeteer / WKWebView 截圖失真），決定以 Railway Puppeteer 微服務完全取代。
+
+### 架構變更
+
+| 項目 | 舊架構 | 新架構 |
+|------|--------|--------|
+| 截圖方式 | `html-to-image`（前端 canvas） | Railway Puppeteer 微服務 |
+| 渲染環境 | 使用者瀏覽器（Safari/Chrome） | headless Chromium（Railway） |
+| preserve-3d | ❌ 截圖攤平 | ✅ 正確渲染 |
+| backdrop-blur | ❌ 消失 | ✅ 正確渲染 |
+| CJK 字型 | 依賴瀏覽器系統字型 | Noto Sans TC Web Font（Google CDN） |
+
+### 新發現：Puppeteer headless Chrome CJK 字型渲染 Bug
+
+**症狀**：特定模板中中文字顯示為方塊（□□□□），同頁其他中文正常。
+
+**根本原因**：Puppeteer headless Chrome 在以下條件組合下，無法觸發 Noto TC CJK unicode-range woff2 下載：
+- `text-transform: uppercase` CSS 屬性
+- font-family 透過 CSS **繼承**（非直接設定在元素上）
+
+**受影響元素**：
+- `MemoryCardTemplate`：ticket `h2`、3D spine `span`、3D pill `h2`、TV `h2`/`p`
+- `MonthlyRecapTemplate`：collage `h1`、waterfall `h2`、shelf `h1`/tag `p`、shelf book spine `span`
+
+**修復方式**：所有含 CJK 內容且有 `uppercase` 的元素，直接在元素上加 `font-serif` 或 `font-sans` class，不能靠 CSS 繼承。
+
+**已驗證**：直接設定 `font-serif` / `font-sans` 的元素（如 default 模板 `h1`）不受此 bug 影響。
+
+### 其他技術發現
+
+**字型載入時序**：
+- `document.fonts.ready` 在頁面初次載入（無 CJK 內容）時就已 resolve，不適合用來等待後注入的 CJK 字型。
+- 改用 `document.fonts.load('900 16px FontName', contentText)` 搭配實際內容文字，強制下載對應 unicode-range subset。
+- Puppeteer 注入 `__RENDER_DATA__` 後加 `waitForNetworkIdle(idleTime: 500ms)`，確保所有字型 woff2 下載完成後再等 `__RENDER_READY__`。
+
+**雙層 rAF**：兩個巢狀 `requestAnimationFrame` 確保 React render commit + paint 完成後再執行字型載入邏輯。
+
+### Action Items
+
+✅ **[Architecture]** Railway Puppeteer 微服務部署，`/health` + `/render` endpoint
+✅ **[Frontend]** `/share/render` 靜態渲染頁，`__RENDER_DATA__` / `__RENDER_READY__` 協議
+✅ **[Fix]** 所有 uppercase + CJK 元素直接設定 font class（MemoryCardTemplate + MonthlyRecapTemplate）
+✅ **[Fix]** `waitForNetworkIdle` 確保字型下載
+✅ **[E2E]** 10 個模板（6 MemoryCard + 4 MonthlyRecap）繁體中文渲染全數驗證通過
+
+---
+
 ## 5. 跨平台 (iOS/Safari) 深度除錯紀錄 (Debugging Scenarios)
 為了在 Dev 環境 (尤其是電腦版 Chrome/Safari) 重現 iOS Production 環境中 WebKit 引擎特有的嚴格渲染與 CORS 限制問題，我們採取了以下多種情境的模擬與分析：
 
