@@ -107,17 +107,23 @@ export function isAppleCancelError(err: any): boolean {
 
 export async function nativeAppleSignIn(): Promise<{ error: Error | null; cancelled: boolean }> {
   try {
-    // 產生隨機 nonce（Supabase 用來驗證 Apple ID Token，防止 replay attack）
+    // 產生隨機 nonce（rawNonce → Supabase；sha256(rawNonce) → Apple）
+    // Apple 規格：authorize() 傳入 SHA-256 雜湊值；Apple ID Token 的 nonce claim 即為此雜湊值
+    // Supabase 規格：signInWithIdToken() 傳入 rawNonce，Supabase 自行雜湊後與 Token 比對
     const rawNonce = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    const hashedNonceBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(rawNonce));
+    const hashedNonce = Array.from(new Uint8Array(hashedNonceBuffer))
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
 
     const options: SignInWithAppleOptions = {
       clientId: 'com.storio.app',
-      redirectURI: '',
+      redirectURI: '', // native 模式不需要 redirect URI，傳空字串為有意為之
       scopes: 'email name',
       state: '',
-      nonce: rawNonce,
+      nonce: hashedNonce, // Apple 需要 SHA-256 雜湊值
     };
 
     const result = await SignInWithApple.authorize(options);
@@ -130,7 +136,7 @@ export async function nativeAppleSignIn(): Promise<{ error: Error | null; cancel
     const { error } = await supabase.auth.signInWithIdToken({
       provider: 'apple',
       token: identityToken,
-      nonce: rawNonce, // 必須與 authorize() 傳入的 nonce 一致
+      nonce: rawNonce, // Supabase 需要原始 rawNonce（Supabase 內部自行雜湊比對）
     });
 
     if (error) return { error: new Error(error.message), cancelled: false };
