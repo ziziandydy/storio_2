@@ -215,7 +215,7 @@ export default function MonthlyRecapTemplate({
                         <img {...getImageProps(LOGO_PATH)} className="w-6 h-6" />
                         <span className="text-[12px] font-black tracking-[0.2em] uppercase text-accent-gold drop-shadow-md pt-0.5">Storio</span>
                     </div>
-                    <h1 className="text-5xl font-black tracking-tight text-accent-gold leading-none uppercase drop-shadow-md w-full">{monthShort}</h1>
+                    <h1 className="text-5xl font-black font-sans tracking-tight text-accent-gold leading-none uppercase drop-shadow-md w-full">{monthShort}</h1>
                 </div>
 
                 <div className="flex-1 flex flex-col justify-center min-h-0 relative z-10">
@@ -284,7 +284,7 @@ export default function MonthlyRecapTemplate({
                 </div>
 
                 <div className="absolute bottom-6 left-6 z-20 bg-black/60 backdrop-blur-xl p-4 rounded-2xl border border-accent-gold/20 shadow-2xl">
-                    <h2 className="text-2xl font-black uppercase text-accent-gold mb-1">{monthShort}</h2>
+                    <h2 className="text-2xl font-black font-sans uppercase text-accent-gold mb-1">{monthShort}</h2>
                     <p className="text-[10px] font-bold text-white uppercase tracking-wider">{statsString}</p>
                 </div>
 
@@ -307,7 +307,7 @@ export default function MonthlyRecapTemplate({
                 <div className="absolute inset-0 bg-gradient-to-b from-[#3a2518] to-[#120a06] z-0 opacity-80" />
 
                 <div className="absolute top-10 z-10 w-full text-center">
-                    <h1 className="text-[48px] font-black text-accent-gold drop-shadow-lg tracking-tight uppercase">{monthShort}</h1>
+                    <h1 className="text-[48px] font-black font-serif text-accent-gold drop-shadow-lg tracking-tight uppercase">{monthShort}</h1>
                 </div>
 
                 <div className="relative z-10 flex-1 w-full flex flex-col justify-end px-12 pb-24">
@@ -321,7 +321,7 @@ export default function MonthlyRecapTemplate({
                             <div className="absolute top-0 right-1/2 w-[2px] h-[40px] bg-white/40 -mt-[40px] origin-bottom transform rotate-[15deg]" />
 
                             <div className="mt-5 text-center px-1 w-full flex flex-col items-center">
-                                <p className="text-[12px] font-black text-[#5a4634] uppercase tracking-widest">{monthShort}</p>
+                                <p className="text-[12px] font-black font-serif text-[#5a4634] uppercase tracking-widest">{monthShort}</p>
                                 <div className="w-4/5 h-px bg-[#5a4634]/30 my-2" />
                                 <div className="space-y-1 w-full text-center">
                                     {summary.movie > 0 && <p className="text-[9px] font-bold text-[#3e2723] uppercase">{summary.movie} Movies</p>}
@@ -364,7 +364,7 @@ export default function MonthlyRecapTemplate({
                                                 <div className="absolute top-1 bottom-1 right-2 w-[2px] border-l border-white/20 border-r border-black/40 z-10" />
                                                 <div className="absolute top-0 w-full h-[2px] bg-white/30 left-0 z-10" />
                                                 <div className="absolute bottom-0 w-full h-[4px] bg-black/60 left-0 z-10" />
-                                                <span className="relative z-20 text-[14px] font-bold text-white uppercase tracking-widest drop-shadow-[1px_1px_2px_rgba(0,0,0,0.8)] truncate w-full text-center mix-blend-normal" style={{ fontFamily: 'Georgia, serif' }}>
+                                                <span className="relative z-20 font-serif text-[14px] font-bold text-white uppercase tracking-widest drop-shadow-[1px_1px_2px_rgba(0,0,0,0.8)] truncate w-full text-center mix-blend-normal">
                                                     {item.title}
                                                 </span>
                                                 {/* Textures */}
