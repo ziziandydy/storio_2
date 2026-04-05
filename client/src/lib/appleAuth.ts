@@ -7,8 +7,11 @@ export function isNativePlatform(): boolean {
 }
 
 /** 用戶主動取消 Apple 授權時，plugin 拋出 code 1001 */
-export function isAppleCancelError(err: any): boolean {
-  return err?.code === '1001' || err?.message?.includes('canceled') || err?.message?.includes('cancelled');
+export function isAppleCancelError(err: unknown): boolean {
+  if (typeof err !== 'object' || err === null) return false;
+  const e = err as Record<string, unknown>;
+  return e.code === '1001' ||
+    (typeof e.message === 'string' && (e.message.includes('canceled') || e.message.includes('cancelled')));
 }
 
 export async function nativeAppleSignIn(): Promise<{ error: Error | null; cancelled: boolean }> {
@@ -48,14 +51,16 @@ export async function nativeAppleSignIn(): Promise<{ error: Error | null; cancel
     // Apple 只在首次授權提供 givenName / familyName，有值就寫入 metadata 供 profile 步驟 pre-fill
     if (givenName || familyName) {
       const fullName = [givenName, familyName].filter(Boolean).join(' ');
-      await supabase.auth.updateUser({ data: { full_name: fullName } });
+      const { error: updateError } = await supabase.auth.updateUser({ data: { full_name: fullName } });
+      if (updateError) console.warn('[appleAuth] full_name 寫入失敗:', updateError.message);
     }
 
     return { error: null, cancelled: false };
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (isAppleCancelError(err)) {
       return { error: null, cancelled: true };
     }
-    return { error: err, cancelled: false };
+    const error = err instanceof Error ? err : new Error(String(err));
+    return { error, cancelled: false };
   }
 }
