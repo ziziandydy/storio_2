@@ -31,7 +31,7 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        sans: ["var(--font-inter)", "var(--font-noto-tc)", "system-ui", "sans-serif"],
         roboto: ["var(--font-roboto)", "sans-serif"],
         heading: ["Libre Franklin", "NeuaHaasUnica", "sans-serif"],
       },
