@@ -115,6 +115,9 @@ export default function Home() {
 
   return (
     <div className="bg-folio-black min-h-screen text-white font-sans relative overflow-x-hidden selection:bg-accent-gold/30">
+      {/* 動態島安全區域遮罩 */}
+      <div className="fixed top-0 left-0 right-0 h-[var(--sa-top)] bg-folio-black z-[100] pointer-events-none" />
+
       {/* Intro Animation */}
       {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
 

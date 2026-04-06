@@ -34,7 +34,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <div className="fixed top-6 inset-x-0 z-[200] flex justify-center pointer-events-none">
+      <div className="fixed top-[calc(var(--sa-top)+0.5rem)] inset-x-0 z-[200] flex justify-center pointer-events-none">
         <AnimatePresence mode="wait">
           {toasts.map((toast) => (
             <motion.div

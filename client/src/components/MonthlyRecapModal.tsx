@@ -265,7 +265,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
 
           <button
             onClick={onClose}
-            className="fixed top-6 right-6 z-[120] p-3 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all backdrop-blur-md"
+            className="fixed top-[calc(var(--sa-top)+0.5rem)] right-6 z-[120] p-3 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all backdrop-blur-md"
           >
             <X size={24} />
           </button>
