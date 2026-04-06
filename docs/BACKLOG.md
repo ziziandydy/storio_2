@@ -54,7 +54,7 @@
 8.  **身分驗證與引導 (Auth & Onboarding)**:
     - 實作 Email OTP 登入流程。
     - 優化 Onboarding Modal 佈局 (動態寬度)。
-    - 設定 Google/Apple OAuth。
+    - 設定 Google/Apple OAuth。✅ Apple Sign-In 已完成（native + web hybrid）。
 9.  **館藏與詳情 (Collection & Details)**:
     - 修復 "Series" 顯示為 "Book" 的 Bug。
     - 實作安全的刪除對話框 (需輸入 "REMOVE")。
@@ -149,7 +149,7 @@
 - [ ] **智慧提醒 (Notifications)**: 規劃與客製化推播通知功能，提醒用戶記錄。
 - [ ] **影像辨識 (Vision AI)**: 支援上傳票根或截圖，自動辨識並快速加入 Memory。
 - [ ] **新增類別 (Shows)**: 擴充系統以支援「展演 (Show)」類別（如表演、劇場、演唱會等），包含搜索與建立 Memory。
-- [ ] **Apple Sign-in**: 待註冊 Apple Developer 帳號後串接。
+- [x] **Apple Sign-in**: ✅ 已完成（2026-04-05）。Hybrid 方案：iOS 原生用 Face ID（`@capacitor-community/apple-sign-in` + `signInWithIdToken`），Web 用 OAuth redirect。GitHub Actions 每 5 個月自動更新 JWT Secret Key。
 - [ ] **智慧搜尋 (AI Search)**: 將現有搜尋升級為 AI 驅動的自然語言搜尋，允許使用者透過中英文、作者、書名、作品特色等描述快速尋找與發現作品。
 - [ ] **分季收藏 (Seasons)**: 讓使用者可以自由新增影集的不同季別，例如只將已觀看的第 1~5 季加入收藏，而尚未觀看的第 6~8 季則保留。
 
