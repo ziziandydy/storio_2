@@ -16,6 +16,7 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import OnboardingModal from '@/components/OnboardingModal';
 import { supabase, getURL } from '@/lib/supabase';
+import { isNativePlatform, nativeAppleSignIn } from '@/lib/appleAuth';
 import { getApiUrl } from '@/lib/api';
 import { getTitleKeyByCount, TitleTranslationKey } from '@/utils/leveling';
 import packageJson from '../../../package.json';
@@ -280,13 +281,18 @@ export default function ProfilePage() {
 
   const handleLogin = async (provider: 'google' | 'apple' | 'email') => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: provider as any,
-        options: {
-          redirectTo: getURL('/auth/callback')
-        }
-      });
-      if (error) throw error;
+      if (provider === 'apple' && isNativePlatform()) {
+        const { error, cancelled } = await nativeAppleSignIn();
+        if (cancelled) return;
+        if (error) throw error;
+        setShowOnboarding(false);
+      } else {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: provider as any,
+          options: { redirectTo: getURL('/auth/callback') }
+        });
+        if (error) throw error;
+      }
     } catch (error) {
       console.error('Login failed:', error);
     }
