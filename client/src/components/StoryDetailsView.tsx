@@ -76,8 +76,8 @@ export default function StoryDetailsView({ item, showAddButton = true, onAddClic
           <div className="absolute inset-0 bg-gradient-to-r from-folio-black/40 via-transparent to-transparent z-10" />
         </div>
 
-        {/* Header Overlay */}
-        <header className="relative z-30 p-6 flex justify-between items-center max-w-container-max mx-auto">
+        {/* Header Overlay — pt 加入 safe-area-inset-top 確保返回鍵不被動態島遮擋 */}
+        <header className="relative z-30 px-6 pb-6 flex justify-between items-center max-w-container-max mx-auto" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1.5rem)' }}>
           <button
             onClick={onBack}
             className="group flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-white hover:text-folio-black transition-all"

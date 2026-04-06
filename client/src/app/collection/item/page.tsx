@@ -186,8 +186,10 @@ function CollectionItemPageContent() {
 
   return (
     <div className="min-h-screen bg-folio-black text-text-primary relative font-sans antialiased">
+      {/* 動態島遮罩 */}
+      <div className="fixed top-0 left-0 right-0 h-[var(--sa-top)] bg-folio-black z-[100] pointer-events-none" />
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-folio-black/90 backdrop-blur-xl border-b border-white/5 p-4">
+      <header className="sticky top-[var(--sa-top)] z-30 bg-folio-black/90 backdrop-blur-xl border-b border-white/5 p-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <Link href="/collection" className="flex items-center gap-2 text-text-desc hover:text-accent-gold transition-colors text-xs font-bold tracking-widest uppercase">
             <ArrowLeft size={18} />

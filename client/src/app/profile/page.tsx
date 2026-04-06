@@ -352,6 +352,7 @@ export default function ProfilePage() {
 
         return (
           <div className="min-h-screen bg-folio-black text-text-primary animate-in slide-in-from-right duration-300 overflow-hidden">
+            <div className="fixed top-0 left-0 right-0 h-[var(--sa-top)] bg-folio-black z-[100] pointer-events-none" />
             <header className="sticky top-[var(--sa-top)] z-30 bg-folio-black/80 backdrop-blur-xl p-6 flex items-center gap-6">
               <button onClick={() => setShowContactSettings(false)} className="text-text-desc hover:text-white transition-colors bg-white/5 p-3 rounded-full">
                 <ArrowLeft size={20} />
@@ -392,6 +393,7 @@ export default function ProfilePage() {
 
     return (
       <div className="min-h-screen bg-folio-black text-text-primary pb-20 animate-in slide-in-from-right duration-300">
+          <div className="fixed top-0 left-0 right-0 h-[var(--sa-top)] bg-folio-black z-[100] pointer-events-none" />
           <header className="sticky top-[var(--sa-top)] z-30 bg-folio-black/80 backdrop-blur-xl p-6 flex items-center gap-6">
           <button onClick={() => setShowLanguageSettings(false)} className="text-text-desc hover:text-white transition-colors bg-white/5 p-3 rounded-full">
             <ArrowLeft size={20} />
@@ -429,6 +431,7 @@ export default function ProfilePage() {
   if (showStatisticsSettings) {
     return (
       <div className="min-h-screen bg-folio-black text-text-primary pb-20">
+          <div className="fixed top-0 left-0 right-0 h-[var(--sa-top)] bg-folio-black z-[100] pointer-events-none" />
           <header className="sticky top-[var(--sa-top)] z-30 bg-folio-black/80 backdrop-blur-xl p-6 flex items-center gap-6">
           <button onClick={() => setShowStatisticsSettings(false)} className="text-text-desc hover:text-white transition-colors bg-white/5 p-3 rounded-full">
             <ArrowLeft size={20} />
@@ -461,6 +464,7 @@ export default function ProfilePage() {
   if (showPrivacySettings) {
     return (
       <div className="min-h-screen bg-folio-black text-text-primary pb-20 animate-in slide-in-from-right duration-300 overflow-hidden">
+        <div className="fixed top-0 left-0 right-0 h-[var(--sa-top)] bg-folio-black z-[100] pointer-events-none" />
         <header className="sticky top-[var(--sa-top)] z-30 bg-folio-black/80 backdrop-blur-xl p-6 flex items-center gap-6">
           <button onClick={() => setShowPrivacySettings(false)} className="text-text-desc hover:text-white transition-colors bg-white/5 p-3 rounded-full">
             <ArrowLeft size={20} />
@@ -646,6 +650,8 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-folio-black text-text-primary pb-20">
+      {/* 動態島遮罩 */}
+      <div className="fixed top-0 left-0 right-0 h-[var(--sa-top)] bg-folio-black z-[100] pointer-events-none" />
       {/* Header */}
         <header className="sticky top-[var(--sa-top)] z-30 bg-folio-black/80 backdrop-blur-xl p-6 flex items-center gap-6">
         <button onClick={handleBack} className="text-text-desc hover:text-white transition-colors bg-white/5 p-3 rounded-full">
