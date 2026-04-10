@@ -1,10 +1,34 @@
 # Storio 專案待辦清單與未來優化 (Backlog & Future Improvements)
 
-最後更新：2026-04-05
+最後更新：2026-04-10
 
 ## ✅ 最近完成 (Completed)
 
-1.  **分享圖片 Puppeteer 微服務 (Share Image Puppeteer Refactor)** *(2026-04-05)*:
+1.  **iOS App Store 審核被拒修復（Build 2）** *(2026-04-10)*:
+    *   **根本原因**：`Info.plist` 缺少 `NSCameraUsageDescription`，Profile 頭像 `<input type="file" accept="image/*">` 觸發相機選項時，iOS TCC crash（Bug Type 309 / SIGABRT）。
+    *   **修復**：補齊 `NSCameraUsageDescription`（頭像拍照）與 `NSFaceIDUsageDescription`（Apple Sign-In）。
+    *   **版號**：Xcode Build Number 從 1 升至 2，版號維持 1.0。
+    *   **策略調整**：改為先 TestFlight 內部測試（相機/FaceID 權限提示驗證），通過後再送審。
+
+2.  **iOS App Store Phase 1：Xcode & Apple Developer 設定** *(2026-04-10)*:
+    *   App Icons 所有尺寸填滿（AppIcon.co 生成）。
+    *   Bundle ID `com.storio.app` 與 Apple Developer Console 確認一致。
+    *   版號升至 `1.0.0`（`package.json` + Xcode Build Number）。
+    *   Sign in with Apple Capability 已加入 Xcode Signing & Capabilities。
+    *   Deployment Target 確認 iOS 14.0+。
+    *   隱私政策 URL `/privacy` 頁面內容確認符合 Apple 審查要求。
+
+2.  **帳號刪除 UAT 測試（add-account-deletion Tasks 4.1~4.3）** *(2026-04-10)*:
+    *   測試「清除資料」：`collections` 與 `stories` 紀錄移除，帳號 Profile 保留。
+    *   測試「刪除帳號」：Supabase Auth 使用者已不存在，關聯資料同步清除。
+    *   驗證多語系切換在 Privacy & Safety 頁面與 Modal 中正確。
+
+3.  **iOS 動態島 UI Bug 修復** *(2026-04-07 真機驗證通過)*:
+    *   修復動態島透明穿透問題（safe-area 遮罩、BACK 按鈕、Toast、Modal 關閉鈕位置）。
+    *   修復動態島區域透明穿透與返回鍵遮擋問題。
+    *   全頁面 QA 掃描通過，真機驗證（iPhone 16 Pro）。
+
+4.  **分享圖片 Puppeteer 微服務 (Share Image Puppeteer Refactor)** *(2026-04-05)*:
     *   以 Railway Puppeteer 截圖微服務（`puppeteer-service/`）完全取代 `html-to-image`，徹底解決 `preserve-3d`、`backdrop-filter` 在 Safari/WKWebView 截圖失真問題。
     *   前端新增 `/share/render` 渲染頁，`ShareModal` 與 `MonthlyRecapModal` 改呼叫 Puppeteer service API。
     *   TTL Cache (`render-cache.ts`) + queue 機制確保不重複截圖、不阻塞 UI。

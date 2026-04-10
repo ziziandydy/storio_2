@@ -19,6 +19,6 @@
 
 ## 4. 驗證與測試
 
-- [ ] 4.1 測試「清除資料」：驗證資料庫中的 `collections` 與 `stories` 紀錄已被移除，但帳號與 Profile 依然存在。
-- [ ] 4.2 測試「刪除帳號」：驗證 Supabase Auth 使用者已不存在，且其所有關聯資料已同步清除。
-- [ ] 4.3 驗證多語系切換在 Privacy & Safety 頁面與 Modal 中的正確性。
+- [x] 4.1 測試「清除資料」：驗證資料庫中的 `collections` 與 `stories` 紀錄已被移除，但帳號與 Profile 依然存在。
+- [x] 4.2 測試「刪除帳號」：驗證 Supabase Auth 使用者已不存在，且其所有關聯資料已同步清除。
+- [x] 4.3 驗證多語系切換在 Privacy & Safety 頁面與 Modal 中的正確性。

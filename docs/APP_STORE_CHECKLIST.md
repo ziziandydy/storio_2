@@ -4,25 +4,29 @@
 
 ---
 
-## 🐛 Phase 0：UI Bug 修復（上架前必修）
+## 🐛 Phase 0：UI Bug 修復（上架前必修）✅ 完成（2026-04-07 真機驗證通過）
 
-- [ ] **動態島透明穿透**：多個頁面的動態島區域背景透明，捲動內容從後方露出
-  - [ ] `StoryDetailsView.tsx` — 返回鍵與動態島重疊，無 safe-area 遮罩
-  - [ ] `collection/item/page.tsx` — header `sticky top-0` 未加 safe-area 遮罩
-  - [ ] `profile/page.tsx` 主畫面 — 確認主 header 是否有 safe-area 遮罩
-  - [ ] `details/page.tsx` — 確認 back 按鈕位置
-- [ ] 全頁面 QA 掃描（gstack headless browser 截圖存證）
+- [x] **動態島透明穿透**：多個頁面的動態島區域背景透明，捲動內容從後方露出
+  - [x] `StoryDetailsView.tsx` — 返回鍵與動態島重疊，無 safe-area 遮罩
+  - [x] `collection/item/page.tsx` — header `sticky top-0` 未加 safe-area 遮罩
+  - [x] `profile/page.tsx` 主畫面 — 確認主 header 是否有 safe-area 遮罩
+  - [x] `details/page.tsx` — 確認 back 按鈕位置
+- [x] 全頁面 QA 掃描（gstack headless browser 截圖存證）
 
 ---
 
-## 🍎 Phase 1：Xcode & Apple Developer 設定
+## 🍎 Phase 1：Xcode & Apple Developer 設定 ✅ 完成（2026-04-10）
 
-- [ ] **App Icons**：所有尺寸填滿（1024×1024 for App Store + 各裝置）
+- [x] **App Icons**：所有尺寸填滿（1024×1024 for App Store + 各裝置）
   - 工具：使用 [AppIcon.co](https://appicon.co) 或 Xcode Asset Catalog
-- [ ] **Bundle ID**：確認 `com.storio.app` 與 Apple Developer Console 一致
-- [ ] **版號設定**：`client/package.json` version + Xcode Build Number 遞增（目前為 0.1.5）
-- [ ] **Sign in with Apple Capability**：Xcode → App target → Signing & Capabilities → 確認已加入
-- [ ] **Deployment Target**：確認 iOS 14.0+
+- [x] **Bundle ID**：確認 `com.storio.app` 與 Apple Developer Console 一致
+- [x] **版號設定**：`client/package.json` version `1.0.0` + Xcode Build `2`（因送審被拒，Build 從 1 遞增至 2）
+- [x] **Sign in with Apple Capability**：Xcode → App target → Signing & Capabilities → 確認已加入
+- [x] **Deployment Target**：確認 iOS 14.0+
+- [x] **Info.plist Privacy Descriptions**（2026-04-10 修復，因審核被拒補齊）：
+  - [x] `NSCameraUsageDescription` — 頭像拍照
+  - [x] `NSFaceIDUsageDescription` — Apple Sign-In 生物驗證
+  - [x] `NSPhotoLibraryUsageDescription` — 頭像相片選取（原本已有）
 
 ---
 
@@ -57,15 +61,17 @@
 
 ---
 
-## 🧪 Phase 4：TestFlight 測試
+## 🧪 Phase 4：TestFlight 測試 ← 目前進行
 
 - [ ] Build & Archive（Xcode → Product → Archive）
 - [ ] 上傳至 App Store Connect（Distribute → App Store Connect → Upload）
-- [ ] TestFlight 內部測試（自己的帳號）
-  - [ ] Apple Sign-In 流程
+- [ ] TestFlight 內部測試（自己的帳號）驗證以下功能後再送審：
+  - [ ] **相機權限**：Profile 頭像 → 拍照，確認系統跳出相機權限提示（不 crash）
+  - [ ] **Face ID 權限**：Apple Sign-In 流程，確認 Face ID 提示文字正確顯示
+  - [ ] Apple Sign-In 完整登入流程
   - [ ] Google Sign-In 流程
   - [ ] 訪客模式 → 登入遷移
-  - [ ] 分享圖片生成
+  - [ ] 分享圖片生成（至少一個模板）
   - [ ] 動態島區域無穿透
 
 ---
@@ -89,3 +95,4 @@
 | Apple Sign-In 必要性 | App 有第三方登入（Google）→ 必須同時支援 Apple Sign-In ✅ 已完成 |
 | 隱私權頁面 | `/privacy` 頁面已有，URL 填入 App Store Connect |
 | JWT 自動更新 | GitHub Actions 已設定，每 5 個月自動更新 Apple Secret Key |
+| **第一次送審被拒原因** | Build 1 缺少 `NSCameraUsageDescription` → TCC crash。Build 2 已補齊 Camera + FaceID description |
