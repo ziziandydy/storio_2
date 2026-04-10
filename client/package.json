@@ -1,10 +1,11 @@
 {
   "name": "storio-2-client",
-  "version": "0.1.5",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3010",
     "build": "next build",
+    "build:ios": "sh scripts/build-ios.sh",
     "start": "next start -p 3010",
     "lint": "next lint",
     "release": "standard-version"
