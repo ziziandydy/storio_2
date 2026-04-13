@@ -332,6 +332,82 @@
         </div>
     </section>
 
+    <!-- Support & FAQ -->
+    <section id="support" class="py-20 border-t border-white/5 bg-[#0a0a0a]">
+        <div class="max-w-2xl mx-auto px-6">
+            <!-- Section Header -->
+            <div class="text-center mb-12">
+                <p class="text-[9px] font-black uppercase tracking-[0.4em] text-white/30 mb-4" data-i18n="support_tag">Support & FAQ</p>
+                <p class="text-sm text-white/50 leading-relaxed" data-i18n="support_intro"></p>
+            </div>
+
+            <!-- FAQ Accordion -->
+            <div class="mb-12">
+
+                <div class="border-t border-white/5">
+                    <button onclick="toggleFaq(this)" class="w-full text-left py-5 flex justify-between items-center group">
+                        <span class="text-xs font-bold text-accent-gold tracking-wide" data-i18n="faq_q1"></span>
+                        <span class="faq-arrow text-white/30 text-sm ml-4 flex-shrink-0">＋</span>
+                    </button>
+                    <div class="faq-body overflow-hidden" style="max-height:0;transition:max-height 0.35s ease;">
+                        <p class="text-xs text-white/40 leading-relaxed pb-5" data-i18n="faq_a1"></p>
+                    </div>
+                </div>
+
+                <div class="border-t border-white/5">
+                    <button onclick="toggleFaq(this)" class="w-full text-left py-5 flex justify-between items-center group">
+                        <span class="text-xs font-bold text-accent-gold tracking-wide" data-i18n="faq_q2"></span>
+                        <span class="faq-arrow text-white/30 text-sm ml-4 flex-shrink-0">＋</span>
+                    </button>
+                    <div class="faq-body overflow-hidden" style="max-height:0;transition:max-height 0.35s ease;">
+                        <p class="text-xs text-white/40 leading-relaxed pb-5" data-i18n="faq_a2"></p>
+                    </div>
+                </div>
+
+                <div class="border-t border-white/5">
+                    <button onclick="toggleFaq(this)" class="w-full text-left py-5 flex justify-between items-center group">
+                        <span class="text-xs font-bold text-accent-gold tracking-wide" data-i18n="faq_q3"></span>
+                        <span class="faq-arrow text-white/30 text-sm ml-4 flex-shrink-0">＋</span>
+                    </button>
+                    <div class="faq-body overflow-hidden" style="max-height:0;transition:max-height 0.35s ease;">
+                        <p class="text-xs text-white/40 leading-relaxed pb-5" data-i18n="faq_a3"></p>
+                    </div>
+                </div>
+
+                <div class="border-t border-white/5">
+                    <button onclick="toggleFaq(this)" class="w-full text-left py-5 flex justify-between items-center group">
+                        <span class="text-xs font-bold text-accent-gold tracking-wide" data-i18n="faq_q4"></span>
+                        <span class="faq-arrow text-white/30 text-sm ml-4 flex-shrink-0">＋</span>
+                    </button>
+                    <div class="faq-body overflow-hidden" style="max-height:0;transition:max-height 0.35s ease;">
+                        <p class="text-xs text-white/40 leading-relaxed pb-5" data-i18n="faq_a4"></p>
+                    </div>
+                </div>
+
+                <div class="border-t border-white/5 border-b border-b-white/5">
+                    <button onclick="toggleFaq(this)" class="w-full text-left py-5 flex justify-between items-center group">
+                        <span class="text-xs font-bold text-accent-gold tracking-wide" data-i18n="faq_q5"></span>
+                        <span class="faq-arrow text-white/30 text-sm ml-4 flex-shrink-0">＋</span>
+                    </button>
+                    <div class="faq-body overflow-hidden" style="max-height:0;transition:max-height 0.35s ease;">
+                        <p class="text-xs text-white/40 leading-relaxed pb-5" data-i18n="faq_a5"></p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Contact CTA -->
+            <div class="text-center">
+                <p class="text-xs text-white/30 mb-4 tracking-wide" data-i18n="support_cta">Still need help?</p>
+                <a href="mailto:andismtu@gmail.com"
+                   class="inline-block border border-accent-gold/30 px-7 py-3 hover:bg-accent-gold/10 transition-colors">
+                    <span class="text-accent-gold font-bold tracking-widest text-sm">andismtu@gmail.com</span>
+                </a>
+                <p class="text-[10px] text-white/20 mt-3 tracking-widest uppercase" data-i18n="support_reply"></p>
+            </div>
+        </div>
+    </section>
+
     <!-- Footer -->
     <footer class="py-24 border-t border-white/5 bg-[#0a0a0a]">
         <div class="max-w-6xl mx-auto px-6 flex flex-col items-center space-y-12">
@@ -384,7 +460,21 @@
                 team_disclaimer: '(這是一個我與 AI 夥伴們共同編織的趣味團隊)',
                 final_tag: '完全免費體驗。極致沉浸。',
                 final_title: '開始你的館藏之旅。',
-                final_cta: '開啟我的 STORIO'
+                final_cta: '開啟我的 STORIO',
+                support_tag: 'Support & FAQ',
+                support_intro: '有任何問題、Bug 回報或功能建議，我們隨時在這裡。',
+                support_cta: 'Still need help?',
+                support_reply: '通常在 1–2 個工作天內回覆',
+                faq_q1: '如何開始典藏電影或書籍？',
+                faq_a1: '點擊首頁的「+」按鈕，搜尋片名或書名，點「加入」即可典藏，資料自動同步至帳號。',
+                faq_q2: '我的資料會不會遺失？',
+                faq_a2: '不會。典藏資料綁定帳號（Apple ID / Google / Email），換機後登入即可還原所有內容。',
+                faq_q3: 'App 遇到問題怎麼辦？',
+                faq_a3: '請先重啟 App。若問題持續，請寄信至 andismtu@gmail.com，說明問題與裝置型號，我們通常在 1–2 個工作天內回覆。',
+                faq_q4: 'AI 寫心得如何使用？',
+                faq_a4: '進入任一典藏項目，點「評分與心得」，輸入幾個關鍵詞後點擊 ✦ AI 潤飾按鈕，Storio 會自動擴寫成完整心得（100 字限制）。',
+                faq_q5: 'AI 搜尋如何使用？',
+                faq_a5: '在探索頁面，點擊搜尋列旁的 ✦ 圖示切換至 AI 搜尋，用自然語言描述想找的作品，例如「發生在日本的懸疑驚悚片」，AI 會自動推薦符合的作品。'
             },
             'en': {
                 lang_code: 'TW',
@@ -417,7 +507,21 @@
                 team_disclaimer: '(Playfully managed by Me & my AI companions)',
                 final_tag: 'Free to try. Pure immersion.',
                 final_title: 'Begin your collection.',
-                final_cta: 'OPEN YOUR STORIO'
+                final_cta: 'OPEN YOUR STORIO',
+                support_tag: 'Support & FAQ',
+                support_intro: 'Have a question, found a bug, or want to share feedback? We\'re here to help.',
+                support_cta: 'Still need help?',
+                support_reply: 'Replies within 1–2 business days',
+                faq_q1: 'How do I start adding movies or books?',
+                faq_a1: 'Tap the + button on the home screen, search by title, and tap "Add to Storio." Your collection syncs to your account automatically.',
+                faq_q2: 'Will my data be lost if I switch devices?',
+                faq_a2: 'No. Your collection is linked to your account (Apple ID, Google, or email). Sign in on any device to restore everything.',
+                faq_q3: 'What should I do if the app isn\'t working?',
+                faq_a3: 'Try restarting the app first. If the issue persists, email us at andismtu@gmail.com with a description and your device model.',
+                faq_q4: 'How do I use AI to write a reflection?',
+                faq_a4: 'Open any item, tap "Score & Reflect," write a few words, then tap the ✦ AI button. Storio will refine your reflection automatically (100-character limit).',
+                faq_q5: 'How do I use AI Search?',
+                faq_a5: 'On the Explore page, tap the ✦ icon next to the search bar to switch to AI Search. Describe what you\'re looking for in natural language — like "a slow-burn thriller set in Japan" — and Storio will find matching titles.'
             }
         };
 
@@ -439,6 +543,20 @@
             currentLang = currentLang === 'zh-TW' ? 'en' : 'zh-TW';
             localStorage.setItem('storio_landing_lang', currentLang);
             updateUI();
+        }
+
+        function toggleFaq(btn) {
+            const body = btn.nextElementSibling;
+            const arrow = btn.querySelector('.faq-arrow');
+            const isOpen = body.style.maxHeight && body.style.maxHeight !== '0px';
+            // 收合所有項目
+            document.querySelectorAll('.faq-body').forEach(b => { b.style.maxHeight = '0px'; });
+            document.querySelectorAll('.faq-arrow').forEach(a => { a.textContent = '＋'; });
+            // 若原本是收合的則展開
+            if (!isOpen) {
+                body.style.maxHeight = body.scrollHeight + 'px';
+                arrow.textContent = '－';
+            }
         }
 
         // Initialize Language
