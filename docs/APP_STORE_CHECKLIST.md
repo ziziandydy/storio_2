@@ -1,6 +1,7 @@
 # iOS App Store 上架 Checklist
 
-> 近期最主要目標。依序完成，完成後打 `[x]`。
+> ✅ **v1.0 正式上架成功（2026-04-17）**
+> 所有 Phase 均已完成。此文件保留作為歷史記錄。
 
 ---
 
@@ -32,29 +33,29 @@
 
 ## 📝 Phase 2：App Store Connect 填寫
 
-- [ ] 建立 App 記錄（若尚未建立）
-- [ ] **基本資訊**
-  - [ ] App 名稱：`Storio`
-  - [ ] 副標題（30 字）：`Collect stories in your folio`
-  - [ ] 描述（4000 字以內）
-  - [ ] 關鍵字（100 字元）：電影、書籍、日記、典藏、記錄...
-  - [ ] 支援 URL：`https://storio.andismtu.com`
-  - [ ] 隱私權政策 URL：`https://storio.andismtu.com/privacy`
-- [ ] **截圖**（必填：iPhone 6.5 吋 / 建議：6.7 吋，各 1~10 張）
-  - [ ] 首頁 / Onboarding
-  - [ ] 搜尋頁
-  - [ ] 詳情頁
-  - [ ] 分享圖片
-  - [ ] Profile 頁
-- [ ] **App 分級**：填寫內容分級問卷（預期：4+）
-- [ ] **定價**：Free
-- [ ] **上架地區**：全球（或台灣優先）
+- [x] 建立 App 記錄（若尚未建立）
+- [x] **基本資訊**
+  - [x] App 名稱：`Storio`
+  - [x] 副標題（30 字）：`Collect stories in your folio`
+  - [x] 描述（4000 字以內）
+  - [x] 關鍵字（100 字元）：電影、書籍、日記、典藏、記錄...
+  - [x] 支援 URL：`https://storio.andismtu.com`
+  - [x] 隱私權政策 URL：`https://storio.andismtu.com/privacy`
+- [x] **截圖**（必填：iPhone 6.5 吋 / 建議：6.7 吋，各 1~10 張）
+  - [x] 首頁 / Onboarding
+  - [x] 搜尋頁
+  - [x] 詳情頁
+  - [x] 分享圖片
+  - [x] Profile 頁
+- [x] **App 分級**：填寫內容分級問卷（預期：4+）
+- [x] **定價**：Free
+- [x] **上架地區**：全球（或台灣優先）
 
 ---
 
 ## 🔒 Phase 3：App Privacy 聲明
 
-- [ ] App Store Connect → App Privacy → 填寫資料收集聲明
+- [x] App Store Connect → App Privacy → 填寫資料收集聲明
   - 收集項目：Email address、Name（來自 Apple/Google Sign-In）
   - 用途：Authentication
   - 是否與第三方分享：否
@@ -63,27 +64,27 @@
 
 ## 🧪 Phase 4：TestFlight 測試 ← 目前進行
 
-- [ ] Build & Archive（Xcode → Product → Archive）
-- [ ] 上傳至 App Store Connect（Distribute → App Store Connect → Upload）
-- [ ] TestFlight 內部測試（自己的帳號）驗證以下功能後再送審：
-  - [ ] **相機權限**：Profile 頭像 → 拍照，確認系統跳出相機權限提示（不 crash）
-  - [ ] **Face ID 權限**：Apple Sign-In 流程，確認 Face ID 提示文字正確顯示
-  - [ ] Apple Sign-In 完整登入流程
-  - [ ] Google Sign-In 流程
-  - [ ] 訪客模式 → 登入遷移
-  - [ ] 分享圖片生成（至少一個模板）
-  - [ ] 動態島區域無穿透
+- [x] Build & Archive（Xcode → Product → Archive）
+- [x] 上傳至 App Store Connect（Distribute → App Store Connect → Upload）
+- [x] TestFlight 內部測試（自己的帳號）驗證以下功能後再送審：
+  - [x] **相機權限**：Profile 頭像 → 拍照，確認系統跳出相機權限提示（不 crash）
+  - [x] **Face ID 權限**：Apple Sign-In 流程，確認 Face ID 提示文字正確顯示
+  - [x] Apple Sign-In 完整登入流程
+  - [x] Google Sign-In 流程
+  - [x] 訪客模式 → 登入遷移
+  - [x] 分享圖片生成（至少一個模板）
+  - [x] 動態島區域無穿透
 
 ---
 
 ## 🚀 Phase 5：提交審核
 
-- [ ] 審核備註（Review Notes）填寫：
+- [x] 審核備註（Review Notes）填寫：
   - 說明 Guest 模式（允許不登入使用）
   - Apple Sign-In 已整合（Face ID / Apple ID）
   - 後端 API 位於 Railway
-- [ ] 提交審核（Submit for Review）
-- [ ] 等待審核結果（通常 1~3 個工作天）
+- [x] 提交審核（Submit for Review）
+- [x] 等待審核結果（通常 1~3 個工作天）
 
 ---
 

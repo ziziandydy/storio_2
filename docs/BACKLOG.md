@@ -1,10 +1,23 @@
 # Storio 專案待辦清單與未來優化 (Backlog & Future Improvements)
 
-最後更新：2026-04-10
+最後更新：2026-04-17
+
+---
+
+## 🎉 里程碑：v1.0 正式上架 App Store（2026-04-17）
+
+Storio 1.0 正式通過 Apple 審核並上架 App Store。歷經動態島修復、Puppeteer 截圖重構、Apple Sign-In 整合、多次送審拒絕修復（NSCameraUsageDescription、隱私標籤、建構環境變數），最終成功上架。
+
+---
 
 ## ✅ 最近完成 (Completed)
 
-1.  **iOS App Store 審核被拒修復（Build 2）** *(2026-04-10)*:
+1.  **iOS App Store v1.0 正式上架** *(2026-04-17)*:
+    *   Build 3 通過 Apple 審查，Storio 1.0 正式上架 App Store。
+    *   修復項目：`NSCameraUsageDescription`、`NSFaceIDUsageDescription`、隱私標籤（Name/Email 改為 Authentication）、移除無效測試帳號、修正建構環境變數（build-ios.sh 暫移 .env.local）。
+    *   官網新增 Support & FAQ 區塊（修復 Apple Support URL 拒絕問題）。
+
+2.  **iOS App Store 審核被拒修復（Build 2）** *(2026-04-10)*:
     *   **根本原因**：`Info.plist` 缺少 `NSCameraUsageDescription`，Profile 頭像 `<input type="file" accept="image/*">` 觸發相機選項時，iOS TCC crash（Bug Type 309 / SIGABRT）。
     *   **修復**：補齊 `NSCameraUsageDescription`（頭像拍照）與 `NSFaceIDUsageDescription`（Apple Sign-In）。
     *   **版號**：Xcode Build Number 從 1 升至 2，版號維持 1.0。
