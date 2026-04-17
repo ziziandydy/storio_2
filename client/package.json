@@ -8,7 +8,8 @@
     "build:ios": "sh scripts/build-ios.sh",
     "start": "next start -p 3010",
     "lint": "next lint",
-    "release": "standard-version"
+    "release": "standard-version",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@capacitor-community/apple-sign-in": "^7.1.0",
@@ -40,6 +41,7 @@
     "autoprefixer": "^10.0.1",
     "eslint": "^8",
     "eslint-config-next": "14.1.0",
+    "patch-package": "^8.0.1",
     "postcss": "^8",
     "standard-version": "^9.5.0",
     "tailwindcss": "^3.3.0",
