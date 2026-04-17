@@ -63,6 +63,22 @@ ai_recommendation_service.py
 
 ## 詳細設計
 
+### `client/src/i18n/locales.ts` 新增字串
+
+```typescript
+// zh-TW（settings 區塊）
+settings_region: '地區',           // Profile settings 列表標籤
+settings_region_title: '地區設定', // Sub-view 頁面標題
+
+// en-US
+settings_region: 'Region',
+settings_region_title: 'Region',
+```
+
+地區名稱（台灣、Japan 等）直接由 `REGION_OPTIONS[].zhName` / `.enName` 依 `settingsStore.language` 決定顯示語言，不走 locales.ts key。
+
+---
+
 ### `client/src/utils/detectRegion.ts`（新增）
 
 ```typescript

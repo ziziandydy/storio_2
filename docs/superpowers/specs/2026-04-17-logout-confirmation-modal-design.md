@@ -46,12 +46,9 @@ Animation: scale 0.9→1, opacity 0→1, y 20→0
 │   [LogOut icon, gold, 28px]  │
 │                              │
 │   確定要登出嗎？              │  ← text-xl font-bold text-white
-│   Sign out of Storio?        │
+│   Sign out?                  │
 │                              │
-│   你的典藏資料已雲端同步，    │  ← text-sm text-white/50
-│   下次登入即可立即還原。      │
-│                              │
-│  [取消]      [登出]          │
+│  [取消 Cancel]  [登出 Sign Out]│
 └──────────────────────────────┘
 
 取消按鈕：flex-1, border border-white/10, text-white/60, rounded-2xl, py-3
@@ -69,12 +66,10 @@ Animation: scale 0.9→1, opacity 0→1, y 20→0
 ```typescript
 // zh-TW
 logout_confirm_title: '確定要登出嗎？',
-logout_confirm_body: '你的典藏資料已雲端同步，下次登入即可立即還原。',
 logout_confirm_cta: '登出',
 
 // en-US
 logout_confirm_title: 'Sign out?',
-logout_confirm_body: 'Your collection is safely synced to the cloud. Sign back in anytime to restore everything.',
 logout_confirm_cta: 'Sign Out',
 ```
 
@@ -112,9 +107,8 @@ const [showLogoutModal, setShowLogoutModal] = useState(false);
         <div className="w-14 h-14 rounded-full bg-red-950/30 border border-red-500/20 flex items-center justify-center text-accent-gold">
           <LogOut size={28} />
         </div>
-        <div className="text-center space-y-2">
+        <div className="text-center">
           <h2 className="text-xl font-bold text-white">{t.common.logout_confirm_title}</h2>
-          <p className="text-sm text-white/50 leading-relaxed">{t.common.logout_confirm_body}</p>
         </div>
         <div className="flex gap-3 w-full">
           <button
