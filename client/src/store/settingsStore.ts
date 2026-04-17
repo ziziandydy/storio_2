@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { detectRegion } from '@/utils/detectRegion';
 
 interface SettingsState {
   language: 'zh-TW' | 'en-US' | 'system';
@@ -16,7 +17,7 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       language: 'system',
-      region: 'TW', // Default to Taiwan for MVP
+      region: detectRegion(),
       notificationsEnabled: true,
       theme: 'dark',
       setLanguage: (lang) => set({ language: lang }),

@@ -82,22 +82,22 @@ class SearchService:
     # --- Public Trending Methods (Cached via TrendingService) ---
 
     @staticmethod
-    async def get_trending_movies(client: httpx.AsyncClient, language: str = "zh-TW") -> List[StoryBase]:
+    async def get_trending_movies(client: httpx.AsyncClient, language: str = "zh-TW", region: str = "TW") -> List[StoryBase]:
         async def fetcher():
-            return await SearchService._fetch_tmdb_trending(client, "movie", language)
-        return await TrendingService.get_trending("movie", fetcher, language)
+            return await SearchService._fetch_tmdb_trending(client, "movie", language, region)
+        return await TrendingService.get_trending("movie", fetcher, language, region)
 
     @staticmethod
-    async def get_trending_series(client: httpx.AsyncClient, language: str = "zh-TW") -> List[StoryBase]:
+    async def get_trending_series(client: httpx.AsyncClient, language: str = "zh-TW", region: str = "TW") -> List[StoryBase]:
         async def fetcher():
-            return await SearchService._fetch_tmdb_trending(client, "tv", language)
-        return await TrendingService.get_trending("series", fetcher, language)
+            return await SearchService._fetch_tmdb_trending(client, "tv", language, region)
+        return await TrendingService.get_trending("series", fetcher, language, region)
 
     @staticmethod
-    async def get_trending_books(client: httpx.AsyncClient, language: str = "zh-TW") -> List[StoryBase]:
+    async def get_trending_books(client: httpx.AsyncClient, language: str = "zh-TW", region: str = "TW") -> List[StoryBase]:
         async def fetcher():
-            return await SearchService._fetch_ai_books(client, language)
-        return await TrendingService.get_trending("book", fetcher, language)
+            return await SearchService._fetch_ai_books(client, language, region)
+        return await TrendingService.get_trending("book", fetcher, language, region)
 
     # --- Internal Fetchers (Source of Truth) ---
 
@@ -356,9 +356,9 @@ class SearchService:
             return None
 
     @staticmethod
-    async def _fetch_tmdb_trending(client: httpx.AsyncClient, media_type: str, language: str = "zh-TW") -> List[StoryBase]:
+    async def _fetch_tmdb_trending(client: httpx.AsyncClient, media_type: str, language: str = "zh-TW", region: str = "TW") -> List[StoryBase]:
         headers = {}
-        params = {"language": language, "region": "TW"}
+        params = {"language": language, "region": region}
         if settings.TMDB_ACCESS_TOKEN:
             headers["Authorization"] = f"Bearer {settings.TMDB_ACCESS_TOKEN}"
         elif settings.TMDB_API_KEY:
@@ -393,11 +393,11 @@ class SearchService:
             return []
 
     @staticmethod
-    async def _fetch_ai_books(client: httpx.AsyncClient, language: str = "zh-TW") -> List[StoryBase]:
-        # Pass language to AI service to get localized recommendations
-        ai_books = await AIRecommendationService._try_gemini(language)
+    async def _fetch_ai_books(client: httpx.AsyncClient, language: str = "zh-TW", region: str = "TW") -> List[StoryBase]:
+        # Pass language and region to AI service to get localized recommendations
+        ai_books = await AIRecommendationService._try_gemini(language, region)
         if not ai_books:
-            ai_books = await AIRecommendationService._try_openai(language)
+            ai_books = await AIRecommendationService._try_openai(language, region)
         
         if ai_books:
             # Limit concurrency to 5 requests at a time
@@ -468,9 +468,9 @@ class SearchService:
             return None
 
     @staticmethod
-    async def search_tmdb(client: httpx.AsyncClient, query: str, language: str = "zh-TW") -> List[StoryBase]:
+    async def search_tmdb(client: httpx.AsyncClient, query: str, language: str = "zh-TW", region: str = "TW") -> List[StoryBase]:
         headers = {}
-        params = {"query": query, "language": language, "region": "TW"}
+        params = {"query": query, "language": language, "region": region}
         if settings.TMDB_ACCESS_TOKEN: headers["Authorization"] = f"Bearer {settings.TMDB_ACCESS_TOKEN}"
         elif settings.TMDB_API_KEY: params["api_key"] = settings.TMDB_API_KEY
         else: return []
@@ -544,34 +544,32 @@ class SearchService:
             return []
 
     @staticmethod
-    async def search_multi(query: str, language: str = "zh-TW") -> List[StoryBase]:
+    async def search_multi(query: str, language: str = "zh-TW", region: str = "TW") -> List[StoryBase]:
         if not query: return []
         async with httpx.AsyncClient(timeout=_HTTPX_TIMEOUT) as client:
-            tmdb_task = SearchService.search_tmdb(client, query, language)
+            tmdb_task = SearchService.search_tmdb(client, query, language, region)
             gbooks_task = SearchService.search_google_books(client, query, language)
             results_tmdb, results_gbooks = await asyncio.gather(tmdb_task, gbooks_task)
             return results_tmdb + results_gbooks
 
     @staticmethod
-    async def search_by_intent(client: httpx.AsyncClient, intent: AISearchIntent, language: str = "zh-TW") -> List[StoryBase]:
+    async def search_by_intent(client: httpx.AsyncClient, intent: AISearchIntent, language: str = "zh-TW", region: str = "TW") -> List[StoryBase]:
         if not intent.is_semantic or not intent.tmdb_params and not intent.google_books_params:
             # Fallback to standard multi-search
             if intent.media_type == "movie":
-                return await SearchService.search_tmdb(client, intent.fallback_query, language)
+                return await SearchService.search_tmdb(client, intent.fallback_query, language, region)
             elif intent.media_type == "book":
                 return await SearchService.search_google_books(client, intent.fallback_query, language)
             elif intent.media_type == "tv":
-                # Current search_tmdb searches both movie and tv, but we can filter if needed. The search_tmdb already returns both.
-                # Actually, our search_tmdb does both, let's just use it and filter
-                results = await SearchService.search_tmdb(client, intent.fallback_query, language)
+                results = await SearchService.search_tmdb(client, intent.fallback_query, language, region)
                 return [r for r in results if r.media_type == "tv"]
             else:
-                return await SearchService.search_multi(intent.fallback_query, language)
+                return await SearchService.search_multi(intent.fallback_query, language, region)
 
         results = []
         if intent.media_type in ["movie", "tv"] and intent.tmdb_params:
             endpoint = "movie" if intent.media_type == "movie" else "tv"
-            params = {"language": language, "region": "TW", "sort_by": intent.tmdb_params.sort_by or "popularity.desc"}
+            params = {"language": language, "region": region, "sort_by": intent.tmdb_params.sort_by or "popularity.desc"}
             if intent.tmdb_params.with_genres:
                 params["with_genres"] = intent.tmdb_params.with_genres
             if intent.tmdb_params.with_keywords:

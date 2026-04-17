@@ -20,11 +20,12 @@ class SemanticSearchService:
         return text
 
     @classmethod
-    async def parse_intent(cls, query: str, media_type: str = "movie") -> AISearchIntent:
+    async def parse_intent(cls, query: str, media_type: str = "movie", language: str = "zh-TW", region: str = "TW") -> AISearchIntent:
         system_prompt = f"""
         You are a semantic search intent parser for a media catalog containing movies, tv shows, and books.
         Your task is to convert a user's natural language query into structured search parameters for TMDB (movies/tv) or Google Books API.
-        
+
+        User context: language={language}, region={region}
         The user is looking for: {media_type}
         
         Determine if the query is a "semantic" search (describing a plot, genre, vibe) or a standard keyword search (just a title or name).

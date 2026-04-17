@@ -34,7 +34,7 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
   const scrollRef = useRef<HTMLDivElement>(null);
   const { token } = useAuth();
   const { showToast } = useToast();
-  const { language } = useSettingsStore();
+  const { language, region } = useSettingsStore();
   const router = useRouter();
 
   // Add To Folio Modal State
@@ -51,7 +51,8 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
       try {
         const res = await fetch(getApiUrl(endpoint), {
           headers: {
-            'Accept-Language': language
+            'Accept-Language': language,
+            'X-Region': region,
           }
         });
         if (!res.ok) throw new Error('Network response was not ok');
@@ -65,7 +66,7 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
     };
 
     fetchData();
-  }, [endpoint, title, language]);
+  }, [endpoint, title, language, region]);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {

@@ -53,7 +53,7 @@ function SearchContent() {
   const { token, loading: authLoading } = useAuth();
   const { showToast } = useToast();
   const { t } = useTranslation();
-  const { language } = useSettingsStore();
+  const { language, region } = useSettingsStore();
 
   // Add To Folio Modal State
   const [selectedStory, setSelectedStory] = useState<StoryResult | null>(null);
@@ -135,7 +135,8 @@ function SearchContent() {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Accept-Language': language
+              'Accept-Language': language,
+              'X-Region': region,
             },
             body: JSON.stringify({
               query: debouncedQuery,
@@ -146,7 +147,8 @@ function SearchContent() {
           // Standard Search Endpoint
           res = await fetch(getApiUrl(`/api/v1/search/?q=${encodeURIComponent(debouncedQuery)}`), {
             headers: {
-              'Accept-Language': language
+              'Accept-Language': language,
+              'X-Region': region,
             }
           });
         }

@@ -10,33 +10,50 @@ import datetime
 import asyncio
 from typing import List, Dict
 
+REGION_MARKET_MAP: Dict[str, str] = {
+    "TW": "Taiwan",
+    "HK": "Hong Kong",
+    "MO": "Macao",
+    "CN": "China (Mainland)",
+    "SG": "Singapore",
+    "MY": "Malaysia",
+    "JP": "Japan",
+    "KR": "South Korea",
+    "US": "United States",
+    "CA": "Canada",
+    "GB": "United Kingdom",
+    "AU": "Australia",
+    "NZ": "New Zealand",
+    "FR": "France",
+    "DE": "Germany",
+    "ES": "Spain",
+    "IT": "Italy",
+    "BR": "Brazil",
+    "IN": "India",
+    "PH": "Philippines",
+}
+
 class AIRecommendationService:
     _cache: List[Dict[str, str]] = []
     _last_update: datetime.date = None
 
     @classmethod
-    async def get_daily_book_recommendations(cls, language: str = "zh-TW") -> List[Dict[str, str]]:
+    async def get_daily_book_recommendations(cls, language: str = "zh-TW", region: str = "TW") -> List[Dict[str, str]]:
         today = datetime.date.today()
         loop = asyncio.get_running_loop()
-        
-        # Combined cache key
-        cache_id = f"{today}_{language}"
+
+        cache_id = f"{today}_{language}_{region}"
 
         # L1 Cache: Memory
         if cls._cache and cls._last_update == cache_id:
-            logger.debug("Returning L1 cached recommendations for %s", language)
+            logger.debug("Returning L1 cached recommendations for %s", cache_id)
             return cls._cache
 
         # L2 Cache: Database (Supabase)
         def _fetch_daily_rec():
             try:
                 supabase = get_supabase_client()
-                # We reuse the date column but encode language if needed, 
-                # or just use a combined ID if the table schema allows.
-                # Since I don't want to change schema, let's check if we can filter by language.
-                # If table doesn't have language column, we might need to store it in date as "2026-02-21_zh-TW"
-                lang_date = f"{today}_{language}"
-                response = supabase.table("daily_recommendations").select("books").eq("date", lang_date).execute()
+                response = supabase.table("daily_recommendations").select("books").eq("date", cache_id).execute()
                 if response.data and len(response.data) > 0:
                     return response.data[0]["books"]
                 return None
@@ -51,60 +68,60 @@ class AIRecommendationService:
             return db_books
 
         # Cache Miss: Fetch from AI
-        logger.debug("Cache miss, fetching recommendations from Gemini for %s", language)
-        result = await cls._try_gemini(language)
+        logger.debug("Cache miss, fetching recommendations from Gemini for %s", cache_id)
+        result = await cls._try_gemini(language, region)
         if not result:
-            result = await cls._try_openai(language)
-            
+            result = await cls._try_openai(language, region)
+
         if result:
             cls._cache = result
             cls._last_update = cache_id
-            
+
             def _persist_daily_rec():
                 try:
                     supabase = get_supabase_client()
-                    data = { "date": f"{today}_{language}", "books": result }
+                    data = { "date": cache_id, "books": result }
                     supabase.table("daily_recommendations").insert(data).execute()
                 except Exception as e:
                     logger.error("DB cache write failed for recommendations: %s", e)
-            
+
             await loop.run_in_executor(None, _persist_daily_rec)
             return result
-            
+
         return []
 
     @classmethod
-    async def _try_gemini(cls, language: str = "zh-TW") -> List[Dict[str, str]]:
+    async def _try_gemini(cls, language: str = "zh-TW", region: str = "TW") -> List[Dict[str, str]]:
         if not settings.GEMINI_API_KEY:
             return []
-            
+
         try:
             genai.configure(api_key=settings.GEMINI_API_KEY)
             model = genai.GenerativeModel('gemini-2.5-flash')
-            
+
             lang_name = "Traditional Chinese (繁體中文)" if language == "zh-TW" else "English"
-            market_context = "Taiwan/Chinese" if language == "zh-TW" else "International/US"
-            
+            market = REGION_MARKET_MAP.get(region, region)
+
             prompt = f"""
             Recommend 30 books suitable for a "Daily Recommendation" to the general public.
             Language: {lang_name}.
-            Market: Popular in {market_context} market.
+            Market: Popular in {market} market.
             Categories: Contemporary literature, classics, self-help, business, sci-fi, etc.
-            
+
             Output strictly as a JSON Array of objects:
             [{{"title": "Book Title", "author": "Author Name"}}, ...]
             No markdown tags, no extra text.
             """
-            
+
             response = await asyncio.wait_for(
                 model.generate_content_async(prompt),
                 timeout=25.0
             )
-            
+
             text = response.text.replace("```json", "").replace("```", "").strip()
             if "[" in text and "]" in text:
                 text = text[text.find("["):text.rfind("]")+1]
-                
+
             books = json.loads(text)
             return books[:30]
 
@@ -113,15 +130,16 @@ class AIRecommendationService:
             return []
 
     @classmethod
-    async def _try_openai(cls, language: str = "zh-TW") -> List[Dict[str, str]]:
+    async def _try_openai(cls, language: str = "zh-TW", region: str = "TW") -> List[Dict[str, str]]:
         if not settings.OPENAI_API_KEY:
             return []
-            
+
         try:
             client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
             lang_name = "Traditional Chinese (繁體中文)" if language == "zh-TW" else "English"
-            
-            prompt = f"Recommend 30 trending books in {lang_name}. Return JSON Array only: [{{'title': '...', 'author': '...'}}]"
+            market = REGION_MARKET_MAP.get(region, region)
+
+            prompt = f"Recommend 30 trending books in {lang_name} popular in {market}. Return JSON Array only: [{{'title': '...', 'author': '...'}}]"
 
             response = await asyncio.wait_for(
                 client.chat.completions.create(
@@ -133,7 +151,7 @@ class AIRecommendationService:
                 ),
                 timeout=25.0
             )
-            
+
             content = response.choices[0].message.content
             text = content.replace("```json", "").replace("```", "").strip()
             if "[" in text and "]" in text:

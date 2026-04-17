@@ -186,8 +186,22 @@ find-skills                         # 尋找新技能
 14. **`/review`（gstack）** — Pre-landing code review（SQL 安全、LLM trust boundary 等）
 15. **`openspec-archive-change`** — 歸檔變更
 
+### iOS 發佈階段（每次上傳 TestFlight / App Store 前必跑）
+16. **版本號更新** — 使用 `client/scripts/bump-version.sh` 同步更新所有版本：
+    ```bash
+    cd client
+    ./scripts/bump-version.sh 1.x.x   # 指定新版本號（patch / minor / major）
+    ./scripts/bump-version.sh --build  # 同版本重新上傳時，只遞增 build number
+    ```
+    腳本會同時更新：`package.json`、`ios/App/App.xcodeproj/project.pbxproj`（兩處）
+17. **重新 build 並 sync**：
+    ```bash
+    npm run build && npx cap sync ios
+    ```
+18. **Xcode Archive** — Product → Archive → Distribute App → App Store Connect → Upload
+
 ### 部署驗證階段（每次部署後必跑）
-16. **`/gstack` browse** — 部署至 Vercel / Railway 後，headless browser 驗證 production 頁面正常：
+19. **`/gstack` browse** — 部署至 Vercel / Railway 後，headless browser 驗證 production 頁面正常：
     ```bash
     # Frontend smoke test
     $B goto https://storio.andismtu.com

@@ -17,6 +17,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import OnboardingModal from '@/components/OnboardingModal';
 import { supabase, getURL } from '@/lib/supabase';
 import { isNativePlatform, nativeAppleSignIn } from '@/lib/appleAuth';
+import { nativeGoogleSignIn } from '@/lib/googleAuth';
 import { getApiUrl } from '@/lib/api';
 import { getTitleKeyByCount, TitleTranslationKey } from '@/utils/leveling';
 import packageJson from '../../../package.json';
@@ -77,7 +78,7 @@ const ProfileItem = ({ icon, label, value, onClick, danger = false, toggle = fal
 export default function ProfilePage() {
   const router = useRouter();
   const { user, loading, signOut, updateProfile, token } = useAuth();
-  const { language, notificationsEnabled, setLanguage, toggleNotifications } = useSettingsStore();
+  const { language, region, notificationsEnabled, setLanguage, setRegion, toggleNotifications } = useSettingsStore();
   const { t } = useTranslation();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -94,6 +95,7 @@ export default function ProfilePage() {
   // Sub-view States
   const [showStatisticsSettings, setShowStatisticsSettings] = useState(false);
   const [showLanguageSettings, setShowLanguageSettings] = useState(false);
+  const [showRegionSettings, setShowRegionSettings] = useState(false);
   const [showContactSettings, setShowContactSettings] = useState(false);
   const [showPrivacySettings, setShowPrivacySettings] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -287,6 +289,11 @@ export default function ProfilePage() {
         if (cancelled) return;
         if (error) throw error;
         setShowOnboarding(false);
+      } else if (provider === 'google' && isNativePlatform()) {
+        const { error, cancelled } = await nativeGoogleSignIn();
+        if (cancelled) return;
+        if (error) throw error;
+        setShowOnboarding(false);
       } else {
         const { error } = await supabase.auth.signInWithOAuth({
           provider: provider as any,
@@ -383,6 +390,69 @@ export default function ProfilePage() {
             </div>
           </div>
         );  }
+
+  const REGION_OPTIONS = [
+    { code: 'TW', flag: '🇹🇼', zhName: '台灣', enName: 'Taiwan' },
+    { code: 'HK', flag: '🇭🇰', zhName: '香港', enName: 'Hong Kong' },
+    { code: 'MO', flag: '🇲🇴', zhName: '澳門', enName: 'Macao' },
+    { code: 'CN', flag: '🇨🇳', zhName: '中國', enName: 'China' },
+    { code: 'SG', flag: '🇸🇬', zhName: '新加坡', enName: 'Singapore' },
+    { code: 'MY', flag: '🇲🇾', zhName: '馬來西亞', enName: 'Malaysia' },
+    { code: 'JP', flag: '🇯🇵', zhName: '日本', enName: 'Japan' },
+    { code: 'KR', flag: '🇰🇷', zhName: '韓國', enName: 'South Korea' },
+    { code: 'US', flag: '🇺🇸', zhName: '美國', enName: 'United States' },
+    { code: 'CA', flag: '🇨🇦', zhName: '加拿大', enName: 'Canada' },
+    { code: 'GB', flag: '🇬🇧', zhName: '英國', enName: 'United Kingdom' },
+    { code: 'AU', flag: '🇦🇺', zhName: '澳洲', enName: 'Australia' },
+    { code: 'NZ', flag: '🇳🇿', zhName: '紐西蘭', enName: 'New Zealand' },
+    { code: 'FR', flag: '🇫🇷', zhName: '法國', enName: 'France' },
+    { code: 'DE', flag: '🇩🇪', zhName: '德國', enName: 'Germany' },
+    { code: 'ES', flag: '🇪🇸', zhName: '西班牙', enName: 'Spain' },
+    { code: 'IT', flag: '🇮🇹', zhName: '義大利', enName: 'Italy' },
+    { code: 'BR', flag: '🇧🇷', zhName: '巴西', enName: 'Brazil' },
+    { code: 'IN', flag: '🇮🇳', zhName: '印度', enName: 'India' },
+    { code: 'PH', flag: '🇵🇭', zhName: '菲律賓', enName: 'Philippines' },
+  ];
+
+  // If showing region settings, render sub-view
+  if (showRegionSettings) {
+    return (
+      <div className="min-h-screen bg-folio-black text-text-primary pb-20 animate-in slide-in-from-right duration-300">
+        <div className="fixed top-0 left-0 right-0 h-[var(--sa-top)] bg-folio-black z-[100] pointer-events-none" />
+        <header className="sticky top-[var(--sa-top)] z-30 bg-folio-black/80 backdrop-blur-xl p-6 flex items-center gap-6">
+          <button onClick={() => setShowRegionSettings(false)} className="text-text-desc hover:text-white transition-colors bg-white/5 p-3 rounded-full">
+            <ArrowLeft size={20} />
+          </button>
+          <h1 className="text-xl font-bold font-serif tracking-wide text-white">{t.profile.regionTitle}</h1>
+        </header>
+        <main className="max-w-md mx-auto p-6">
+          <div className="bg-folio-card border border-white/5 rounded-2xl overflow-hidden shadow-xl">
+            <div className="p-2 space-y-1">
+              {REGION_OPTIONS.map((opt) => (
+                <button
+                  key={opt.code}
+                  onClick={() => {
+                    setRegion(opt.code);
+                    setShowRegionSettings(false);
+                  }}
+                  className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors group rounded-xl"
+                >
+                  <span className="text-sm font-medium text-text-primary">
+                    {opt.flag} {language === 'zh-TW' ? opt.zhName : opt.enName}
+                  </span>
+                  {region === opt.code && (
+                    <div className="text-accent-gold">
+                      <Check size={18} />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   // If showing language settings, render sub-view
   if (showLanguageSettings) {
@@ -840,6 +910,15 @@ export default function ProfilePage() {
             label={t.profile.items.language}
             value={getLanguageLabel(language)}
             onClick={() => setShowLanguageSettings(true)}
+          />
+          <ProfileItem
+            icon={<Globe size={18} />}
+            label={t.profile.items.region}
+            value={(() => {
+              const opt = REGION_OPTIONS.find(o => o.code === region);
+              return opt ? `${opt.flag} ${language === 'zh-TW' ? opt.zhName : opt.enName}` : region;
+            })()}
+            onClick={() => setShowRegionSettings(true)}
           />
           <ProfileItem icon={<Layers size={18} />} label={t.profile.items.statistics} onClick={() => setShowStatisticsSettings(true)} />
           {!isAnonymous && (

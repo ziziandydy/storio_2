@@ -23,6 +23,19 @@ def get_language(accept_language: str = Header("zh-TW")) -> str:
         return "en-US"
     return "zh-TW"
 
+def get_region(x_region: str = Header("TW")) -> str:
+    """
+    Reads the X-Region header to determine the user's region.
+    Validates as 2-letter uppercase ISO 3166-1 code. Defaults to 'TW'.
+    """
+    if not x_region:
+        return "TW"
+    code = x_region.strip().upper()
+    if len(code) == 2 and code.isalpha():
+        return code
+    return "TW"
+
+
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     supabase: Client = Depends(get_supabase_client)

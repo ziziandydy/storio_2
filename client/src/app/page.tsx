@@ -17,6 +17,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase, getURL } from '@/lib/supabase';
 import { SplashScreen as NativeSplash } from '@capacitor/splash-screen';
 import { isNativePlatform, nativeAppleSignIn } from '@/lib/appleAuth';
+import { nativeGoogleSignIn } from '@/lib/googleAuth';
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
@@ -96,6 +97,11 @@ export default function Home() {
         if (error) throw error;
         // 登入成功：關閉 modal，讓 onAuthStateChange → page.tsx useEffect 自動接手
         // （useEffect 會偵測 profile_completed，決定是否重新開啟 profile 步驟）
+        setShowOnboarding(false);
+      } else if (provider === 'google' && isNativePlatform()) {
+        const { error, cancelled } = await nativeGoogleSignIn();
+        if (cancelled) return;
+        if (error) throw error;
         setShowOnboarding(false);
       } else {
         const { error } = await supabase.auth.signInWithOAuth({

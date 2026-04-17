@@ -12,18 +12,18 @@ class TrendingService:
     _mem_cache: Dict[str, dict] = {}
 
     @classmethod
-    async def get_trending(cls, type_key: str, fetch_func, language: str = "zh-TW") -> List[StoryBase]:
+    async def get_trending(cls, type_key: str, fetch_func, language: str = "zh-TW", region: str = "TW") -> List[StoryBase]:
         """
         Generic method to get trending items with L1 (Mem) and L2 (DB) caching.
         type_key: 'movie', 'series', 'book'
         fetch_func: Async function to fetch data from source if cache miss.
         language: 'zh-TW' or 'en-US'
+        region: ISO 3166-1 alpha-2 code (e.g. 'TW', 'HK', 'US')
         """
         today = datetime.date.today()
-        # Combine type and language for unique cache key (e.g. "movie_zh-TW")
-        # We store this combined key in the 'type' column of the DB to avoid schema migration
-        lang_type_key = f"{type_key}_{language}"
-        
+        # Combine type, language and region for unique cache key (e.g. "movie_zh-TW_TW")
+        lang_type_key = f"{type_key}_{language}_{region}"
+
         cache_key = f"{lang_type_key}_{today}"
 
         # 1. L1 Memory Cache

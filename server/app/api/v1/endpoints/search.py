@@ -5,7 +5,7 @@ from app.schemas.item import SearchResponse, StoryBase, ItemDetailResponse
 from app.schemas.search import AISearchRequest
 from app.services.search_service import SearchService
 from app.services.semantic_search_service import SemanticSearchService
-from app.api.deps import get_language
+from app.api.deps import get_language, get_region
 from app.core.limiter import limiter
 
 router = APIRouter()
@@ -15,30 +15,30 @@ HTTPX_TIMEOUT = httpx.Timeout(connect=5.0, read=15.0, write=5.0, pool=5.0)
 
 
 @router.get("/trending/movies", response_model=List[StoryBase])
-async def trending_movies(language: str = Depends(get_language)):
+async def trending_movies(language: str = Depends(get_language), region: str = Depends(get_region)):
     """
     Get trending movies (Top 20 from this week).
     """
     async with httpx.AsyncClient(timeout=HTTPX_TIMEOUT) as client:
-        return await SearchService.get_trending_movies(client, language)
+        return await SearchService.get_trending_movies(client, language, region)
 
 
 @router.get("/trending/series", response_model=List[StoryBase])
-async def trending_series(language: str = Depends(get_language)):
+async def trending_series(language: str = Depends(get_language), region: str = Depends(get_region)):
     """
     Get trending TV series (Top 20 from this week).
     """
     async with httpx.AsyncClient(timeout=HTTPX_TIMEOUT) as client:
-        return await SearchService.get_trending_series(client, language)
+        return await SearchService.get_trending_series(client, language, region)
 
 
 @router.get("/trending/books", response_model=List[StoryBase])
-async def trending_books(language: str = Depends(get_language)):
+async def trending_books(language: str = Depends(get_language), region: str = Depends(get_region)):
     """
     Get trending/recommended books (Top 20).
     """
     async with httpx.AsyncClient(timeout=HTTPX_TIMEOUT) as client:
-        return await SearchService.get_trending_books(client, language)
+        return await SearchService.get_trending_books(client, language, region)
 
 
 @router.get("/details/{media_type}/{external_id}", response_model=ItemDetailResponse)
@@ -64,12 +64,13 @@ async def search(
     request: Request,
     q: str = Query(..., min_length=1, max_length=200, description="Search query for movies or books"),
     page: int = 1,
-    language: str = Depends(get_language)
+    language: str = Depends(get_language),
+    region: str = Depends(get_region),
 ):
     """
     Search for movies and books (Standard). Rate limited: 30/min per IP.
     """
-    results = await SearchService.search_multi(query=q, language=language)
+    results = await SearchService.search_multi(query=q, language=language, region=region)
     return SearchResponse(results=results, page=page, total_results=len(results))
 
 
@@ -79,14 +80,15 @@ async def search_ai(
     request: Request,
     body: AISearchRequest,
     page: int = 1,
-    language: str = Depends(get_language)
+    language: str = Depends(get_language),
+    region: str = Depends(get_region),
 ):
     """
     Semantic Search using AI intent parsing. Rate limited: 10/min per IP.
     """
-    intent = await SemanticSearchService.parse_intent(body.query, body.media_type)
+    intent = await SemanticSearchService.parse_intent(body.query, body.media_type, language=language, region=region)
 
     async with httpx.AsyncClient(timeout=HTTPX_TIMEOUT) as client:
-        results = await SearchService.search_by_intent(client, intent, language)
+        results = await SearchService.search_by_intent(client, intent, language, region)
 
     return SearchResponse(results=results, page=1, total_results=len(results))

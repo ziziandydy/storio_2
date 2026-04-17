@@ -178,6 +178,7 @@ export const translations = {
         active: 'Active',
         privacy: 'Privacy & Safety',
         language: 'Language',
+        region: 'Region',
         notifications: 'Notifications',
         statistics: 'Statistics',
         share: 'Share Storio',
@@ -201,6 +202,7 @@ export const translations = {
       shareMessage: 'Welcome to Storio, collect the stories that moves you:',
       statsTitle: 'Statistics',
       langTitle: 'Language',
+      regionTitle: 'Region',
       privacyTitle: 'Privacy & Safety',
       widgets: {
         '7d': 'Last 7 Days',
@@ -441,6 +443,7 @@ export const translations = {
         active: '已啟用',
         privacy: '隱私與安全性',
         language: '語言',
+        region: '地區',
         notifications: '通知',
         statistics: '統計數據',
         share: '分享 Storio',
@@ -464,6 +467,7 @@ export const translations = {
       shareMessage: '歡迎來到 Storio，收藏打動你的故事：',
       statsTitle: '統計設定',
       langTitle: '語言設定',
+      regionTitle: '地區設定',
       privacyTitle: '隱私與安全性',
       widgets: {
         '7d': '過去 7 天',

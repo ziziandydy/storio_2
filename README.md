@@ -91,7 +91,8 @@ graph TD
 | Native Wrapper | Capacitor | Wraps the web app as a real iOS app with access to Share Sheet and Filesystem. |
 | Backend | FastAPI (Python) | Good fit for agent workflows and calling multiple external APIs. |
 | Database & Auth | Supabase (PostgreSQL) | Handles anonymous auth out of the box, which is key for the no-sign-up onboarding. |
-| Hosting | Vercel + Railway | Frontend on Vercel. Backend on Railway. |
+| Hosting | Vercel + Railway | Frontend on Vercel. Backend (FastAPI + Puppeteer service) on Railway. |
+| Share Image | Puppeteer (Railway microservice) | Server-side headless Chrome screenshots — the only reliable way to render CSS 3D, backdrop-filter, and CJK fonts across all platforms. |
 | Automation | n8n | Background data processing. |
 | Testing | Playwright (E2E), Pytest | |
 
@@ -121,13 +122,15 @@ Primary tools: **Gemini CLI** and **Claude Code CLI**.
 
 The share feature looked simple: pull a poster image, turn it into a share card, export as PNG.
 
-It turned out to be the hardest part of the project.
+It turned out to be the hardest part of the project — and required two complete architectural rewrites.
 
-TMDB poster images are hosted on a different domain. When `html-to-image` tried to draw them onto a canvas, the browser blocked the export because of cross-origin restrictions. On iOS and Safari, there were more problems: memory limits caused the image to fail at high resolution, the blurred background would disappear, and fonts would not load in time.
+**Round 1 — client-side canvas (`html-to-image`).** TMDB poster images are hosted on a different domain. When `html-to-image` tried to draw them onto a canvas, the browser blocked the export because of cross-origin restrictions. On iOS and Safari, there were more problems: memory limits caused the image to fail at high resolution, CSS `backdrop-filter` blur disappeared, and `preserve-3d` for the 3D book template was completely flattened. The workarounds (Next.js image proxy, pixel-ratio cap, font preloading) fixed the CORS issue but could not solve the WKWebView rendering limits.
 
-The fix required three changes at once: routing all external images through a Next.js proxy to add the right CORS headers, capping the pixel ratio at `1.5` on mobile to avoid memory overflow, and pre-loading fonts before the canvas render started.
+**Round 2 — server-side Puppeteer microservice.** The real fix was moving screenshot generation off the client entirely. I built a separate Node.js service running headless Chrome on Railway. The Next.js frontend has a dedicated `/share/render` page that accepts `window.__RENDER_DATA__` injection, renders the template with full CSS support, and signals `window.__RENDER_READY__ = true` once fonts are loaded. Puppeteer waits for that signal and takes the screenshot server-side — where `preserve-3d`, `backdrop-filter`, and CJK font subsetting all work correctly.
 
-The key was understanding why the browser was blocking each step, not just trying fixes until something worked.
+**The CJK font edge case.** Even after the Puppeteer migration, Chinese characters still rendered as □□□□ in some templates. The root cause: headless Chrome's unicode-range font subsetting does not trigger a woff2 download for a text node that has both `text-transform: uppercase` and a `font-family` inherited from a parent element (rather than set directly on the element). The fix was to set `font-serif` or `font-sans` directly on every `uppercase` text element that could contain CJK content.
+
+The key was treating each failure as a diagnostic signal, not a reason to try random fixes.
 
 ---
 
@@ -161,7 +164,18 @@ cp .env.local.example .env.local
 pnpm dev
 ```
 
-### 3. iOS
+### 3. Puppeteer Service (share image generation)
+
+```bash
+cd puppeteer-service
+npm install
+# Set ALLOWED_ORIGINS=http://localhost:3000 in .env
+node src/index.js
+```
+
+The service runs on port 3001 by default. Set `NEXT_PUBLIC_PUPPETEER_SERVICE_URL=http://localhost:3001` in `client/.env.local` to connect the frontend.
+
+### 4. iOS
 
 ```bash
 cd client
