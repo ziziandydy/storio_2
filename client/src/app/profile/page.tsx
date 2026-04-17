@@ -97,6 +97,7 @@ export default function ProfilePage() {
   const [showContactSettings, setShowContactSettings] = useState(false);
   const [showPrivacySettings, setShowPrivacySettings] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Dangerous Operation States
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -871,7 +872,7 @@ export default function ProfilePage() {
 
         {!isAnonymous && (
           <button
-            onClick={handleSignOut}
+            onClick={() => setShowLogoutModal(true)}
             className="w-full flex items-center justify-center gap-2 p-4 bg-red-950/20 border border-red-500/20 rounded-2xl text-red-500 font-bold text-sm hover:bg-red-900/30 transition-all active:scale-95"
           >
             <LogOut size={18} /> {t.common.logout}
@@ -879,6 +880,46 @@ export default function ProfilePage() {
         )}
 
       </main>
+
+      {/* Logout Confirmation Modal */}
+      <AnimatePresence>
+        {showLogoutModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowLogoutModal(false)}
+              className="absolute inset-0 bg-black/95 backdrop-blur-xl"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative w-full max-w-sm bg-folio-black border border-white/10 rounded-[32px] p-8 flex flex-col items-center gap-6"
+            >
+              <div className="w-14 h-14 rounded-full bg-red-950/30 border border-red-500/20 flex items-center justify-center text-accent-gold">
+                <LogOut size={28} />
+              </div>
+              <h2 className="text-xl font-bold text-white text-center">{t.common.logout_confirm_title}</h2>
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={() => setShowLogoutModal(false)}
+                  className="flex-1 py-3 border border-white/10 rounded-2xl text-white/60 text-sm font-medium"
+                >
+                  {t.common.cancel}
+                </button>
+                <button
+                  onClick={() => { setShowLogoutModal(false); handleSignOut(); }}
+                  className="flex-1 py-3 bg-red-950/30 border border-red-500/30 rounded-2xl text-red-400 text-sm font-bold"
+                >
+                  {t.common.logout_confirm_cta}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Login Modal */}
       <OnboardingModal
