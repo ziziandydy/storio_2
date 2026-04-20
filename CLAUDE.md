@@ -203,9 +203,10 @@ find-skills                         # 尋找新技能
     - 重新上傳同版本（TestFlight 拒絕時）：`npm run ios:build`
     - 手動指定版號（緊急情況）：`./scripts/bump-version.sh 1.x.x`
 
-17. **重新 build 並 sync**：
+17. **重新 build 並 sync（iOS 必須用 build:ios，不能用 build）**：
     ```bash
-    npm run build && npx cap sync ios
+    npm run build:ios   # ← iOS 專用！暫時移走 .env.local，改用 .env.production（Railway URL）
+    # ⚠️ 不可用 npm run build，會把本機 IP bake 進靜態檔案導致 iOS 無法連後端
     ```
 18. **Xcode Archive** — Product → Archive → Distribute App → App Store Connect → Upload
 
