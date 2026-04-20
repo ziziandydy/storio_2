@@ -15,7 +15,7 @@
     "release:dry": "standard-version --dry-run",
     "ios:sync": "./scripts/bump-version.sh --sync",
     "ios:build": "./scripts/bump-version.sh --build",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package || true"
   },
   "dependencies": {
     "@capacitor-community/apple-sign-in": "^7.1.0",
