@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.1](https://github.com/ziziandydy/storio_2/compare/v1.1.0...v1.1.1) (2026-04-20)
+
+
+### Bug 修復 (Bug Fixes)
+
+* patch-package 失敗不中斷 Vercel build（iOS patch 不適用於 web） ([c2e491c](https://github.com/ziziandydy/storio_2/commit/c2e491c2b4a54dc4877dc8b29cc544f6e9fae2ba))
+
 ### [0.1.5](https://github.com/ziziandydy/storio_2/compare/v0.1.4...v0.1.5) (2026-03-10)
 
 
