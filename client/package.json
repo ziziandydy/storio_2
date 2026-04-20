@@ -9,6 +9,12 @@
     "start": "next start -p 3010",
     "lint": "next lint",
     "release": "standard-version",
+    "release:minor": "standard-version --release-as minor",
+    "release:major": "standard-version --release-as major",
+    "release:patch": "standard-version --release-as patch",
+    "release:dry": "standard-version --dry-run",
+    "ios:sync": "./scripts/bump-version.sh --sync",
+    "ios:build": "./scripts/bump-version.sh --build",
     "postinstall": "patch-package"
   },
   "dependencies": {

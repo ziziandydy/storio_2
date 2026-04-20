@@ -1,0 +1,15 @@
+{
+  "types": [
+    { "type": "feat",     "section": "新功能 (Features)" },
+    { "type": "fix",      "section": "Bug 修復 (Bug Fixes)" },
+    { "type": "perf",     "section": "效能改善 (Performance)" },
+    { "type": "refactor", "section": "重構 (Refactoring)", "hidden": false },
+    { "type": "docs",     "section": "文件 (Docs)", "hidden": true },
+    { "type": "chore",    "section": "雜項 (Chores)", "hidden": true },
+    { "type": "test",     "section": "測試 (Tests)", "hidden": true },
+    { "type": "style",    "section": "樣式 (Style)", "hidden": true }
+  ],
+  "commitUrlFormat": "https://github.com/ziziandydy/storio_2/commit/{{hash}}",
+  "compareUrlFormat": "https://github.com/ziziandydy/storio_2/compare/{{previousTag}}...{{currentTag}}",
+  "releaseCommitMessageFormat": "chore(release): v{{currentTag}}"
+}

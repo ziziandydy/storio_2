@@ -187,13 +187,22 @@ find-skills                         # 尋找新技能
 15. **`openspec-archive-change`** — 歸檔變更
 
 ### iOS 發佈階段（每次上傳 TestFlight / App Store 前必跑）
-16. **版本號更新** — 使用 `client/scripts/bump-version.sh` 同步更新所有版本：
+
+> **版號規範：Semantic Versioning（`MAJOR.MINOR.PATCH`）**
+> - `fix:` commits → PATCH（1.1.0 → 1.1.1）
+> - `feat:` commits → MINOR（1.1.0 → 1.2.0）
+> - `feat!:` 或 `BREAKING CHANGE` → MAJOR（1.1.0 → 2.0.0）
+
+16. **版號更新（自動）**：
     ```bash
     cd client
-    ./scripts/bump-version.sh 1.x.x   # 指定新版本號（patch / minor / major）
-    ./scripts/bump-version.sh --build  # 同版本重新上傳時，只遞增 build number
+    npm run release:dry   # 預覽版號變化（不實際執行）
+    npm run release       # standard-version 自動算版號，更新 CHANGELOG，建立 git tag
+    npm run ios:sync      # 同步版號至 pbxproj，遞增 build number，commit
     ```
-    腳本會同時更新：`package.json`、`ios/App/App.xcodeproj/project.pbxproj`（兩處）
+    - 重新上傳同版本（TestFlight 拒絕時）：`npm run ios:build`
+    - 手動指定版號（緊急情況）：`./scripts/bump-version.sh 1.x.x`
+
 17. **重新 build 並 sync**：
     ```bash
     npm run build && npx cap sync ios
