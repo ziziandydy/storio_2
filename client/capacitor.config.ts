@@ -7,17 +7,23 @@ import { join } from 'path';
 // Release build: 移除此變數，Capacitor 改用 out/ 靜態檔
 let devUrl: string | undefined;
 let googleWebClientId: string | undefined;
+let googleIosClientId: string | undefined;
 try {
   const envLocal = readFileSync(join(__dirname, '.env.local'), 'utf8');
   const devMatch = envLocal.match(/^CAPACITOR_DEV_URL=(.+)$/m);
   if (devMatch) devUrl = devMatch[1].trim();
-  const googleMatch = envLocal.match(/^GOOGLE_WEB_CLIENT_ID=(.+)$/m);
-  if (googleMatch) googleWebClientId = googleMatch[1].trim();
+  const googleWebMatch = envLocal.match(/^GOOGLE_WEB_CLIENT_ID=(.+)$/m);
+  if (googleWebMatch) googleWebClientId = googleWebMatch[1].trim();
+  const googleIosMatch = envLocal.match(/^GOOGLE_IOS_CLIENT_ID=(.+)$/m);
+  if (googleIosMatch) googleIosClientId = googleIosMatch[1].trim();
 } catch {}
 
 // CI/CD（GitHub Actions）透過環境變數提供
 if (!googleWebClientId && process.env.GOOGLE_WEB_CLIENT_ID) {
   googleWebClientId = process.env.GOOGLE_WEB_CLIENT_ID;
+}
+if (!googleIosClientId && process.env.GOOGLE_IOS_CLIENT_ID) {
+  googleIosClientId = process.env.GOOGLE_IOS_CLIENT_ID;
 }
 
 const config: CapacitorConfig = {
@@ -33,6 +39,7 @@ const config: CapacitorConfig = {
   } : {}),
   plugins: {
     GoogleAuth: {
+      clientId: googleIosClientId ?? '',
       scopes: ['profile', 'email'],
       serverClientId: googleWebClientId ?? '',
       forceCodeForRefreshToken: true,
