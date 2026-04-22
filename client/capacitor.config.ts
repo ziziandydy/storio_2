@@ -2,29 +2,33 @@ import type { CapacitorConfig } from '@capacitor/cli';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-// 從 .env.local 讀取環境變數
-// Dev: 設定 CAPACITOR_DEV_URL 指向本機 dev server
-// Release build: 移除此變數，Capacitor 改用 out/ 靜態檔
-let devUrl: string | undefined;
-let googleWebClientId: string | undefined;
-let googleIosClientId: string | undefined;
-try {
-  const envLocal = readFileSync(join(__dirname, '.env.local'), 'utf8');
-  const devMatch = envLocal.match(/^CAPACITOR_DEV_URL=(.+)$/m);
-  if (devMatch) devUrl = devMatch[1].trim();
-  const googleWebMatch = envLocal.match(/^GOOGLE_WEB_CLIENT_ID=(.+)$/m);
-  if (googleWebMatch) googleWebClientId = googleWebMatch[1].trim();
-  const googleIosMatch = envLocal.match(/^GOOGLE_IOS_CLIENT_ID=(.+)$/m);
-  if (googleIosMatch) googleIosClientId = googleIosMatch[1].trim();
-} catch {}
+// 讀取指定 env 檔案中的某個 key
+function readEnvValue(filePath: string, key: string): string | undefined {
+  try {
+    const content = readFileSync(filePath, 'utf8');
+    const match = content.match(new RegExp(`^${key}=(.+)$`, 'm'));
+    return match ? match[1].trim() : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
-// CI/CD（GitHub Actions）透過環境變數提供
-if (!googleWebClientId && process.env.GOOGLE_WEB_CLIENT_ID) {
-  googleWebClientId = process.env.GOOGLE_WEB_CLIENT_ID;
-}
-if (!googleIosClientId && process.env.GOOGLE_IOS_CLIENT_ID) {
-  googleIosClientId = process.env.GOOGLE_IOS_CLIENT_ID;
-}
+const envLocal = join(__dirname, '.env.local');
+const envProduction = join(__dirname, '.env.production');
+
+// 優先順序：.env.local → .env.production → process.env（CI/CD）
+const devUrl =
+  readEnvValue(envLocal, 'CAPACITOR_DEV_URL');
+
+const googleIosClientId =
+  readEnvValue(envLocal, 'GOOGLE_IOS_CLIENT_ID') ??
+  readEnvValue(envProduction, 'GOOGLE_IOS_CLIENT_ID') ??
+  process.env.GOOGLE_IOS_CLIENT_ID;
+
+const googleWebClientId =
+  readEnvValue(envLocal, 'GOOGLE_WEB_CLIENT_ID') ??
+  readEnvValue(envProduction, 'GOOGLE_WEB_CLIENT_ID') ??
+  process.env.GOOGLE_WEB_CLIENT_ID;
 
 const config: CapacitorConfig = {
   appId: 'com.storio.app',

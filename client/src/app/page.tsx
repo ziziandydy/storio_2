@@ -18,10 +18,12 @@ import { supabase, getURL } from '@/lib/supabase';
 import { SplashScreen as NativeSplash } from '@capacitor/splash-screen';
 import { isNativePlatform, nativeAppleSignIn } from '@/lib/appleAuth';
 import { nativeGoogleSignIn } from '@/lib/googleAuth';
+import { useToast } from '@/components/ToastProvider';
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
   const { t } = useTranslation();
+  const { showToast } = useToast();
   const [scrollY, setScrollY] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
   const [showSplash, setShowSplash] = useState(false);
@@ -111,7 +113,9 @@ export default function Home() {
         if (error) throw error;
       }
     } catch (error) {
-      console.error('Login failed:', error);
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Login failed:', message);
+      showToast(`登入失敗：${message}`, 'error');
     }
   };
 

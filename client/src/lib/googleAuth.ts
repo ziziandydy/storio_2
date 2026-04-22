@@ -31,9 +31,13 @@ export async function nativeGoogleSignIn(): Promise<{ error: Error | null; cance
     const { error } = await supabase.auth.signInWithIdToken({
       provider: 'google',
       token: idToken,
+      access_token: googleUser?.authentication?.accessToken,
     });
 
-    if (error) return { error: new Error(error.message), cancelled: false };
+    if (error) {
+      console.error('[GoogleAuth] Supabase signInWithIdToken failed:', error.message, error.status);
+      return { error: new Error(error.message), cancelled: false };
+    }
     return { error: null, cancelled: false };
   } catch (err: unknown) {
     if (isGoogleCancelError(err)) {
