@@ -271,13 +271,13 @@ function MonthGrid({ month, storiesByDate, onDayClick, onShareClick, locale }: {
     : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   if (isFuture) {
-    return <div id={`month-${format(month, 'yyyy-MM')}`} className="h-[60vh] w-full scroll-mt-[calc(var(--sa-top)_+_8rem)]" />;
+    return <div id={`month-${format(month, 'yyyy-MM')}`} className="h-[60vh] w-full scroll-mt-[calc(var(--sa-top)_+_4rem)]" />;
   }
 
   return (
-    <div id={`month-${format(month, 'yyyy-MM')}`} className="scroll-mt-[calc(var(--sa-top)_+_8rem)]">
+    <div id={`month-${format(month, 'yyyy-MM')}`} className="scroll-mt-[calc(var(--sa-top)_+_4rem)]">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 px-2 sticky top-[calc(var(--sa-top)_+_5rem)] z-20 bg-folio-black/95 backdrop-blur py-2 border-b border-white/5">
+      <div className="flex items-center justify-between mb-4 px-2 sticky top-[calc(var(--sa-top)_+_4rem)] z-20 bg-folio-black/95 backdrop-blur py-2 border-b border-white/5">
         <h2 className="text-xl font-serif font-bold text-accent-gold capitalize">
           {format(month, 'MMMM yyyy', { locale })}
         </h2>
