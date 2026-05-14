@@ -38,6 +38,24 @@ export default function RateAndReflectForm({
     const NOTES_MAX = 300;
     const dateInputRef = useRef<HTMLInputElement>(null);
 
+    // 智慧斷句截斷：在 maxLen 範圍內找最後一個句尾符號，保證輸出為完整句子
+    const smartTruncate = (text: string, maxLen: number): string => {
+        if (text.length <= maxLen) return text;
+        const sub = text.slice(0, maxLen);
+        // 從截斷點往回找句尾標點（中英文皆支援）
+        const lastEnd = Math.max(
+            sub.lastIndexOf('.'),
+            sub.lastIndexOf('!'),
+            sub.lastIndexOf('?'),
+            sub.lastIndexOf('。'),
+            sub.lastIndexOf('！'),
+            sub.lastIndexOf('？')
+        );
+        // 找到的句尾位置要在後半段才有意義，否則 fallback hard cut
+        if (lastEnd > maxLen * 0.4) return text.slice(0, lastEnd + 1).trim();
+        return sub.trim();
+    };
+
     // AI States
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [loadingSuggestions, setLoadingSuggestions] = useState(false);
@@ -68,7 +86,7 @@ export default function RateAndReflectForm({
             });
             if (!res.ok) throw new Error('AI Service Unavailable');
             const data = await res.json();
-            setSuggestions((data.suggestions || []).map((s: string) => s.slice(0, 100)));
+            setSuggestions((data.suggestions || []).map((s: string) => smartTruncate(s, 150)));
         } catch (error) {
             console.error("AI Suggestion Error:", error);
             setSuggestions([]);
@@ -90,7 +108,7 @@ export default function RateAndReflectForm({
                 body: JSON.stringify({ content: notes })
             });
             const data = await res.json();
-            setRefinedProposal(data.refined_content ? data.refined_content.slice(0, 100) : null);
+            setRefinedProposal(data.refined_content ? smartTruncate(data.refined_content, 150) : null);
         } catch (error) {
             console.error(error);
         } finally {
@@ -117,17 +135,18 @@ export default function RateAndReflectForm({
                 <label className="text-[10px] uppercase font-bold tracking-[0.2em] text-text-desc pl-1">
                     {t.details.archivedAt || 'Archived At'}
                 </label>
-                <div
-                    className="relative w-full"
-                    onClick={() => {
-                        try {
-                            (dateInputRef.current as any)?.showPicker();
-                        } catch {
-                            dateInputRef.current?.click();
-                        }
-                    }}
-                >
-                    <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white font-mono tracking-wider flex items-center justify-between hover:border-accent-gold/50 transition-colors cursor-pointer select-none">
+                <div className="relative w-full">
+                    <div
+                        className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white font-mono tracking-wider flex items-center justify-between hover:border-accent-gold/50 transition-colors cursor-pointer select-none"
+                        onClick={() => {
+                            // Desktop: trigger showPicker explicitly; mobile touches the overlay input directly
+                            try {
+                                (dateInputRef.current as any)?.showPicker();
+                            } catch {
+                                // showPicker unsupported — mobile handles via overlay input touch
+                            }
+                        }}
+                    >
                         <span>
                             {new Date(date).toLocaleDateString('en-US', {
                                 year: 'numeric',
@@ -142,7 +161,7 @@ export default function RateAndReflectForm({
                         type="date"
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
-                        className="sr-only"
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     />
                 </div>
             </div>

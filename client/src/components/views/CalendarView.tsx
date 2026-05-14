@@ -75,19 +75,24 @@ export default function CalendarView({ stories }: CalendarViewProps) {
     });
   }, []);
 
-  // Initial scroll to Current Month
+  // Initial: prepend past months first, then scroll to current month after DOM updates
   useEffect(() => {
     const timer = setTimeout(() => {
-      const currentMonthId = `month-${format(new Date(), 'yyyy-MM')}`;
-      const element = document.getElementById(currentMonthId);
-      if (element) {
-        element.scrollIntoView({ behavior: 'instant', block: 'start' });
-      }
-      // 滾動完成後才開放 Observer 觸發 prepend，避免跳回頂部
-      isScrollReadyRef.current = true;
-      // topSentinel 在初始時已在 viewport 內，intersection 狀態不會改變，
-      // observer 不會自動觸發，需手動載入一次過去月份
+      // Step 1: prepend past months so they exist in DOM before we scroll
       loadMoreMonths('prev');
+
+      // Step 2: after React re-renders with new months, scroll to current month
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const currentMonthId = `month-${format(new Date(), 'yyyy-MM')}`;
+          const element = document.getElementById(currentMonthId);
+          if (element) {
+            element.scrollIntoView({ behavior: 'instant', block: 'start' });
+          }
+          // 開放 Observer 觸發後續 prepend
+          isScrollReadyRef.current = true;
+        });
+      });
     }, 300);
     return () => clearTimeout(timer);
   }, [loadMoreMonths]);

@@ -100,10 +100,11 @@ class GeminiService:
             return []
 
         lang_name = "Traditional Chinese (繁體中文)" if language == "zh-TW" else "English"
+        char_limit = "50 Chinese characters" if language == "zh-TW" else "120 English characters"
         context = f"Title: {title}\nSynopsis: {synopsis[:500] if synopsis else 'N/A'}"
-        
+
         system_prompt = f"""Role: insightful viewer/reader.
-        Task: Generate 3 short, insightful one-sentence reflection suggestions.
+        Task: Generate 3 short, insightful reflection suggestions.
         Language: {lang_name}."""
 
         user_prompt = f"""
@@ -111,9 +112,11 @@ class GeminiService:
         {context}
 
         Requirements:
-        1. Strictly one sentence each.
-        2. Specific to the work's themes/plot.
-        3. Tone: Personal, authentic.
+        1. Each suggestion MUST be a grammatically complete sentence.
+        2. MUST end with proper punctuation (. ! ? 。 ！ ？).
+        3. Keep each suggestion under {char_limit}.
+        4. Specific to the work's themes/plot.
+        5. Tone: Personal, authentic.
 
         Output ONLY a JSON Array of strings: ["s1", "s2", "s3"]
         """
@@ -170,20 +173,24 @@ class GeminiService:
             
             lang_name = "Traditional Chinese (繁體中文)" if language == "zh-TW" else "English"
 
+            char_limit = "50 Chinese characters" if language == "zh-TW" else "120 English characters"
+
             prompt = f"""
             Role: Expert Editor.
             Task: Refine the user's reflection text.
             Language: {lang_name}.
-            
+
             Goals:
             1. Make it more fluent, expressive, and insightful.
             2. Expand even short thoughts into meaningful sentences.
             3. Preserve original sentiment (positive/negative).
             4. MUST change the wording from the original.
-            
+            5. Output MUST be a complete sentence ending with proper punctuation (. ! ? 。 ！ ？).
+            6. Keep the output under {char_limit}.
+
             Original Text:
             {content}
-            
+
             Output ONLY the refined text. No markdown, no intro/outro.
             """
             
