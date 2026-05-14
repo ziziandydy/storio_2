@@ -85,9 +85,12 @@ export default function CalendarView({ stories }: CalendarViewProps) {
       }
       // 滾動完成後才開放 Observer 觸發 prepend，避免跳回頂部
       isScrollReadyRef.current = true;
+      // topSentinel 在初始時已在 viewport 內，intersection 狀態不會改變，
+      // observer 不會自動觸發，需手動載入一次過去月份
+      loadMoreMonths('prev');
     }, 300);
     return () => clearTimeout(timer);
-  }, []);
+  }, [loadMoreMonths]);
 
   // Intersection Observer
   useEffect(() => {
