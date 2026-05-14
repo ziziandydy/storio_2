@@ -47,3 +47,15 @@ create policy "Users can update their own collections" on collections for update
 -- Policy: Trending Cache
 drop policy if exists "Public can view trending cache" on trending_cache;
 create policy "Public can view trending cache" on trending_cache for select using (true);
+
+-- ============================================================
+-- Explicit GRANTs (required from Supabase May 30 / Oct 30 2026)
+-- Without these, PostgREST returns 42501 after the policy change.
+-- ============================================================
+
+-- collections: only authenticated users (anonymous Supabase auth also uses this role)
+grant select, insert, update, delete on public.collections to authenticated;
+
+-- trending_cache: readable by both authenticated and unauthenticated visitors
+grant select on public.trending_cache to authenticated;
+grant select on public.trending_cache to anon;

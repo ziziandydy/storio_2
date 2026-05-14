@@ -51,7 +51,7 @@ class CollectionRepository:
         return response.data
 
     def create_story(self, user_id: str, story: StoryCreate) -> StoryResponse:
-        data = story.model_dump()
+        data = story.model_dump(exclude={"force_add"})
         data["user_id"] = user_id
         
         # Convert datetime to string for JSON serialization
