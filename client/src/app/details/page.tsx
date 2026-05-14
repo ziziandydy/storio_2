@@ -55,7 +55,7 @@ function DetailsPageContent() {
     fetchDetails();
   }, [type, id, language]);
 
-  const handleAddToFolio = async (rating: number, notes: string, date?: string) => {
+  const handleAddToFolio = async (rating: number, notes: string, date?: string, forceAdd?: boolean) => {
     if (!item || !token) return;
 
     try {
@@ -69,7 +69,8 @@ function DetailsPageContent() {
           ...item,
           rating,
           notes,
-          created_at: date ? new Date(date).toISOString() : undefined
+          created_at: date ? new Date(date).toISOString() : undefined,
+          force_add: forceAdd ?? false
         })
       });
 

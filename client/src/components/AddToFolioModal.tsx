@@ -18,7 +18,7 @@ import { useToast } from '@/components/ToastProvider';
 interface AddToFolioModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (rating: number, notes: string, date?: string) => Promise<any>;
+  onSave: (rating: number, notes: string, date?: string, forceAdd?: boolean) => Promise<any>;
   onViewDetails: (id?: string) => void;
   title: string;
   external_id: string;
@@ -46,7 +46,7 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
   const handleSave = async (rating: number, notes: string, date?: string) => {
     setIsSubmitting(true);
     try {
-      const result = await onSave(rating, notes, date);
+      const result = await onSave(rating, notes, date, forceAdd);
 
       if (result && result.status === 'duplicate' && !forceAdd) {
         setShowMode('prompt');
@@ -208,7 +208,7 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
         onLogin={(provider) => {
           // We might want to close AddToFolioModal too, or trigger logic
           // To keep it simple, we redirect to login here or store auth attempt
-          window.location.href = `/login?provider=${provider}`;
+          window.location.href = `/auth?provider=${provider}`;
         }}
       />
     </AnimatePresence>

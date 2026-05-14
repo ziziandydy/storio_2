@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Loader2, Wand2, Save, X } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -35,11 +35,15 @@ export default function RateAndReflectForm({
     const { t } = useTranslation();
     const { language } = useSettingsStore();
 
+    const NOTES_MAX = 300;
+    const dateInputRef = useRef<HTMLInputElement>(null);
+
     // AI States
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [loadingSuggestions, setLoadingSuggestions] = useState(false);
     const [loadingRefine, setLoadingRefine] = useState(false);
     const [refinedProposal, setRefinedProposal] = useState<string | null>(null);
+    const [pendingSuggestion, setPendingSuggestion] = useState<string | null>(null);
 
     useEffect(() => {
         if (title) {
@@ -113,8 +117,17 @@ export default function RateAndReflectForm({
                 <label className="text-[10px] uppercase font-bold tracking-[0.2em] text-text-desc pl-1">
                     {t.details.archivedAt || 'Archived At'}
                 </label>
-                <div className="relative w-full">
-                    <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white font-mono tracking-wider flex items-center justify-between group-hover:border-accent-gold/50 transition-colors cursor-pointer">
+                <div
+                    className="relative w-full"
+                    onClick={() => {
+                        try {
+                            (dateInputRef.current as any)?.showPicker();
+                        } catch {
+                            dateInputRef.current?.click();
+                        }
+                    }}
+                >
+                    <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white font-mono tracking-wider flex items-center justify-between hover:border-accent-gold/50 transition-colors cursor-pointer select-none">
                         <span>
                             {new Date(date).toLocaleDateString('en-US', {
                                 year: 'numeric',
@@ -125,10 +138,11 @@ export default function RateAndReflectForm({
                         <span className="text-white/20">▼</span>
                     </div>
                     <input
+                        ref={dateInputRef}
                         type="date"
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        className="sr-only"
                     />
                 </div>
             </div>
@@ -178,25 +192,65 @@ export default function RateAndReflectForm({
                 </div>
 
                 <AnimatePresence>
-                    {suggestions.length > 0 && (
+                    {suggestions.length > 0 && !pendingSuggestion && (
                         <motion.div
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
-                            className="mb-3 flex flex-wrap gap-2 overflow-hidden"
+                            className="mb-3 flex flex-col gap-2"
                         >
                             {suggestions.slice(0, 3).map((s, i) => (
                                 <button
                                     key={i}
-                                    onClick={() => setNotes(prev => {
-                                        const newNotes = prev ? prev + "\n" + s : s;
-                                        return newNotes.slice(0, 100);
-                                    })}
+                                    onClick={() => {
+                                        if (notes.trim()) {
+                                            setPendingSuggestion(s);
+                                        } else {
+                                            setNotes(s.slice(0, NOTES_MAX));
+                                        }
+                                    }}
                                     className="text-[10px] text-left bg-white/5 hover:bg-accent-gold/20 border border-white/10 hover:border-accent-gold/50 rounded-lg px-3 py-2 text-text-secondary hover:text-white transition-all active:scale-95"
                                 >
                                     {s}
                                 </button>
                             ))}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                    {pendingSuggestion && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -6 }}
+                            className="mb-3 bg-white/5 border border-white/20 rounded-xl overflow-hidden"
+                        >
+                            <div className="px-4 py-2 border-b border-white/10 flex items-center justify-between">
+                                <span className="text-[9px] font-black uppercase tracking-widest text-text-desc">
+                                    {language === 'zh-TW' ? '取代現有內容？' : 'Replace existing text?'}
+                                </span>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setPendingSuggestion(null)}
+                                        className="text-[9px] font-bold uppercase px-2 py-1 text-text-desc hover:text-white transition-colors"
+                                    >
+                                        {t.common.cancel}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setNotes(pendingSuggestion.slice(0, NOTES_MAX));
+                                            setPendingSuggestion(null);
+                                        }}
+                                        className="text-[9px] font-bold uppercase px-2 py-1 bg-accent-gold text-folio-black rounded hover:bg-white transition-colors"
+                                    >
+                                        {language === 'zh-TW' ? '取代' : 'Replace'}
+                                    </button>
+                                </div>
+                            </div>
+                            <p className="px-4 py-3 text-[10px] text-text-secondary leading-relaxed">
+                                {pendingSuggestion}
+                            </p>
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -229,7 +283,7 @@ export default function RateAndReflectForm({
                                 </div>
                             </div>
                             <div className="p-4">
-                                <p className="text-sm text-gray-200 leading-relaxed italic">&quot;{refinedProposal}&quot;</p>
+                                <p className="text-sm text-gray-200 leading-relaxed italic break-words">&quot;{refinedProposal}&quot;</p>
                             </div>
                         </motion.div>
                     )}
@@ -238,14 +292,14 @@ export default function RateAndReflectForm({
                 <div className="relative h-full">
                     <textarea
                         value={notes}
-                        onChange={(e) => setNotes(e.target.value.slice(0, 100))}
-                        maxLength={100}
-                        placeholder={language === 'zh-TW' ? "記錄你的感悟... (限制 100 字內，可選填)" : "What resonated with you? (Max 100 chars, Optional)"}
+                        onChange={(e) => setNotes(e.target.value.slice(0, NOTES_MAX))}
+                        maxLength={NOTES_MAX}
+                        placeholder={language === 'zh-TW' ? "記錄你的感悟... (限制 300 字內，可選填)" : "What resonated with you? (Max 300 chars, Optional)"}
                         className="w-full h-48 bg-white/5 border border-white/10 rounded-xl p-4 pb-12 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-accent-gold/50 focus:bg-white/10 transition-all resize-none leading-relaxed font-roboto"
                     />
 
                     <div className="absolute bottom-3 left-3 text-[10px] font-mono text-white/30 tracking-widest">
-                        {notes.length} / 100
+                        {notes.length} / {NOTES_MAX}
                     </div>
 
                     <div className="absolute bottom-3 right-3 flex gap-2">

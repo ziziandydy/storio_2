@@ -102,19 +102,19 @@ class GeminiService:
         lang_name = "Traditional Chinese (繁體中文)" if language == "zh-TW" else "English"
         context = f"Title: {title}\nSynopsis: {synopsis[:500] if synopsis else 'N/A'}"
         
-        system_prompt = f"""Role: insightful viewer/reader. 
+        system_prompt = f"""Role: insightful viewer/reader.
         Task: Generate 3 short, insightful one-sentence reflection suggestions.
         Language: {lang_name}."""
-        
+
         user_prompt = f"""
         Generate 3 reflection suggestions for:
         {context}
-        
+
         Requirements:
         1. Strictly one sentence each.
         2. Specific to the work's themes/plot.
         3. Tone: Personal, authentic.
-        
+
         Output ONLY a JSON Array of strings: ["s1", "s2", "s3"]
         """
 

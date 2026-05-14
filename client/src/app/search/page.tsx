@@ -180,7 +180,7 @@ function SearchContent() {
     setIsAddModalOpen(true);
   };
 
-  const handleAddToFolio = async (rating: number, notes: string, date?: string) => {
+  const handleAddToFolio = async (rating: number, notes: string, date?: string, forceAdd?: boolean) => {
     if (!selectedStory || !token) return;
 
     try {
@@ -194,7 +194,8 @@ function SearchContent() {
           ...selectedStory,
           rating,
           notes,
-          created_at: date ? new Date(date).toISOString() : undefined
+          created_at: date ? new Date(date).toISOString() : undefined,
+          force_add: forceAdd ?? false
         })
       });
 
@@ -211,7 +212,7 @@ function SearchContent() {
         throw new Error(errorData.detail || 'Failed to add item');
       }
 
-      // Success handled by Modal
+      return await res.json();
     } catch (error: any) {
       throw error; // Propagate to Modal
     }

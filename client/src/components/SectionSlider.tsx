@@ -76,7 +76,7 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
     }
   };
 
-  const handleAddToFolio = async (rating: number, notes: string, date?: string) => {
+  const handleAddToFolio = async (rating: number, notes: string, date?: string, forceAdd?: boolean) => {
     if (!selectedStory || !token) {
       return { status: 'unauthorized' };
     }
@@ -92,7 +92,8 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
           ...selectedStory,
           rating,
           notes,
-          created_at: date ? new Date(date).toISOString() : undefined
+          created_at: date ? new Date(date).toISOString() : undefined,
+          force_add: forceAdd ?? false
         })
       });
 

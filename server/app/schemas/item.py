@@ -16,6 +16,7 @@ class StoryBase(BaseModel):
 
 class StoryCreate(StoryBase):
     created_at: Optional[datetime] = None
+    force_add: Optional[bool] = False
 
 class StoryInstance(BaseModel):
     id: UUID

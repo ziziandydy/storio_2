@@ -88,7 +88,14 @@ class CollectionService:
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Guest limit reached (10 items). Please register to collect more."
                 )
-            
+
+        # Check for duplicate unless user explicitly force-adding (re-watch)
+        if not story_in.force_add and self.repo.check_duplicate(user_id, story_in.external_id):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Story already in collection"
+            )
+
         return self.repo.create_story(user_id, story_in)
 
     def update_collection_item(self, user_id: str, story_id: UUID, story_update: dict) -> StoryResponse:
