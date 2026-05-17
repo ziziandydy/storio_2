@@ -316,6 +316,18 @@ export default function ProfilePage() {
     { id: 'trend30', label: t.profile.widgets.trend30 },
   ];
 
+  const APP_STORE_URL = 'https://apps.apple.com/app/id6761919955';
+  const APP_STORE_SCHEME = 'itms-apps://itunes.apple.com/app/id6761919955';
+
+  const handleRateApp = () => {
+    window.location.href = isNativePlatform() ? APP_STORE_SCHEME : APP_STORE_URL;
+  };
+
+  const handleCommentApp = () => {
+    const base = isNativePlatform() ? APP_STORE_SCHEME : APP_STORE_URL;
+    window.location.href = `${base}?action=write-review`;
+  };
+
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -932,7 +944,8 @@ export default function ProfilePage() {
 
         <ProfileSection title={t.profile.sections.community}>
           <ProfileItem icon={<Share2 size={18} />} label={t.profile.items.share} onClick={handleShare} />
-          <ProfileItem icon={<Star size={18} />} label={t.profile.items.rateApp} />
+          <ProfileItem icon={<Star size={18} />} label={t.profile.items.rateApp} onClick={handleRateApp} />
+          <ProfileItem icon={<MessageSquare size={18} />} label={t.profile.items.commentApp} onClick={handleCommentApp} />
           <ProfileItem icon={<Mail size={18} />} label={t.profile.items.contact} onClick={() => setShowContactSettings(true)} />
         </ProfileSection>
 
