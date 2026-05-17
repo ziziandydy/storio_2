@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/ziziandydy/storio_2/compare/v1.1.3...v1.2.0) (2026-05-17)
+
+
+### Bug 修復 (Bug Fixes)
+
+* 修復 Calendar scroll 順序、手機日期選擇器、AI 內容截斷問題 ([17a7e2a](https://github.com/ziziandydy/storio_2/commit/17a7e2aa3470816c29e4ebe48233189bd92747e3))
+* **calendar:** 修復 Calendar View 初始未自動載入過去月份的問題 ([550e7f2](https://github.com/ziziandydy/storio_2/commit/550e7f20f942bc30d70164d6e7aa2460f2540b82))
+* **calendar:** 修復月份 sticky header 與 nav bar 之間的縫隙 ([1475279](https://github.com/ziziandydy/storio_2/commit/1475279243d1a290a01190ddd447095b605b75cc))
+* **collection:** 修復 force_add 欄位被寫入 DB 導致新增失敗 ([279ddea](https://github.com/ziziandydy/storio_2/commit/279ddeaf43a4fb35050bc9c8139edf22c94544cb))
+* **collection:** 修復加入 Storio 流程多個 bug + 擴充心得上限 ([25e80fa](https://github.com/ziziandydy/storio_2/commit/25e80fa1a5bce34d33a0c485ce3289fcacbf9872))
+
+
+### 新功能 (Features)
+
+* **auth:** 完成 iOS native Google Sign-In ([6c212f1](https://github.com/ziziandydy/storio_2/commit/6c212f165ab59eb99cdfdc16e617a87106a74a5a))
+* **profile:** 新增 Rate App 與 Leave a Review 功能 ([e95cbc1](https://github.com/ziziandydy/storio_2/commit/e95cbc1fb7e2d385c70d7f8a052eb54768efcf42))
+
 ### [1.1.3](https://github.com/ziziandydy/storio_2/compare/v1.1.2...v1.1.3) (2026-04-22)
 
 ### [1.1.2](https://github.com/ziziandydy/storio_2/compare/v1.1.1...v1.1.2) (2026-04-21)
