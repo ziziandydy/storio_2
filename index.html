@@ -5,7 +5,114 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Storio — Collect stories in your folio</title>
     <meta name="description" content="A quiet, sophisticated digital Pensieve for curating your personal collection of movies, series, and books.">
-    
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://ziziandydy.github.io/storio_2/">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ziziandydy.github.io/storio_2/">
+    <meta property="og:title" content="Storio — Collect stories in your folio">
+    <meta property="og:description" content="A quiet, sophisticated sanctuary for curating your personal collection of movies, series, and books. Free personal media tracker for iPhone.">
+    <meta property="og:image" content="https://ziziandydy.github.io/storio_2/image/heroBackground_v2.jpg">
+    <meta property="og:site_name" content="Storio">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Storio — Collect stories in your folio">
+    <meta name="twitter:description" content="A quiet, sophisticated sanctuary for curating your personal collection of movies, series, and books.">
+    <meta name="twitter:image" content="https://ziziandydy.github.io/storio_2/image/heroBackground_v2.jpg">
+
+    <!-- SoftwareApplication Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": ["SoftwareApplication", "WebApplication"],
+      "name": "Storio",
+      "alternateName": "Storio - Collect stories in your Folio",
+      "description": "A free personal media tracker for iPhone. Collect, rate, and reflect on the movies, series, and books that shape who you are. Features AI-assisted reflection writing, cinematic share card templates, and a personal stats dashboard.",
+      "url": "https://storio.andismtu.com",
+      "sameAs": [
+        "https://apps.apple.com/app/id6761919955",
+        "https://ziziandydy.github.io/storio_2/"
+      ],
+      "applicationCategory": "EntertainmentApplication",
+      "operatingSystem": ["iOS 14.0+", "Web"],
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Anderson Tu",
+        "alternateName": "Chin Lun Tu",
+        "url": "https://andismtu.com"
+      },
+      "featureList": [
+        "Movie, TV series, and book tracking",
+        "Personal reflection writing with AI assistance",
+        "Instagram Story share card generation with 6 templates",
+        "TMDB and Google Books integration",
+        "Personal stats dashboard with customizable widgets",
+        "Memory Timeline — track rewatches and rereads separately",
+        "AI Search — find titles using natural language descriptions"
+      ],
+      "datePublished": "2026-04-16",
+      "softwareVersion": "1.2.0"
+    }
+    </script>
+
+    <!-- FAQPage Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How do I start adding movies or books to Storio?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Tap the + button on the home screen, search by title, and tap \"Add to Storio.\" Your collection syncs to your account automatically."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Will my data be lost if I switch devices?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Your collection is linked to your account (Apple ID, Google, or email). Sign in on any device to restore everything."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What should I do if the Storio app isn't working?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Try restarting the app first. If the issue persists, email us at andismtu@gmail.com with a description and your device model. We reply within 1–2 business days."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I use AI to write a reflection in Storio?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Open any item, tap \"Score & Reflect,\" write a few words, then tap the AI button. Storio will refine your reflection automatically (100-character limit)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I use AI Search in Storio?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "On the Explore page, tap the icon next to the search bar to switch to AI Search. Describe what you're looking for in natural language — like \"a slow-burn thriller set in Japan\" — and Storio will find matching titles."
+          }
+        }
+      ]
+    }
+    </script>
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -139,7 +246,7 @@
 
             <div class="flex flex-col items-center gap-8">
                 <div class="flex flex-col sm:flex-row gap-5 w-full max-w-lg justify-center mt-4">
-                    <a href="#" class="flex-1 px-8 py-4 bg-white text-folio-black font-black rounded-2xl hover:bg-accent-gold transition-all shadow-[0_20px_50px_rgba(255,255,255,0.1)] uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 group">
+                    <a href="https://apps.apple.com/app/id6761919955" target="_blank" rel="noopener" class="flex-1 px-8 py-4 bg-white text-folio-black font-black rounded-2xl hover:bg-accent-gold transition-all shadow-[0_20px_50px_rgba(255,255,255,0.1)] uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 group">
                         <span data-i18n="cta_mobile">Try on Mobile</span>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="group-hover:translate-y-[-2px] transition-transform"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 1.44S10.22 5 8 5a4.91 4.91 0 0 0-5 4.78c0 4.22 3 12.22 6 12.22 1.25 0 2.5-1.06 4-1.06Z"/><path d="M12 5a3 3 0 0 1 3-3"/></svg>
                     </a>
@@ -338,7 +445,7 @@
             <!-- Section Header -->
             <div class="text-center mb-12">
                 <p class="text-[9px] font-black uppercase tracking-[0.4em] text-white/30 mb-4" data-i18n="support_tag">Support & FAQ</p>
-                <p class="text-sm text-white/50 leading-relaxed" data-i18n="support_intro"></p>
+                <p class="text-sm text-white/50 leading-relaxed" data-i18n="support_intro">Have a question, found a bug, or want to share feedback? We're here to help.</p>
             </div>
 
             <!-- FAQ Accordion -->
@@ -346,51 +453,51 @@
 
                 <div class="border-t border-white/5">
                     <button onclick="toggleFaq(this)" class="w-full text-left py-5 flex justify-between items-center group">
-                        <span class="text-xs font-bold text-accent-gold tracking-wide" data-i18n="faq_q1"></span>
+                        <span class="text-xs font-bold text-accent-gold tracking-wide" data-i18n="faq_q1">How do I start adding movies or books?</span>
                         <span class="faq-arrow text-white/30 text-sm ml-4 flex-shrink-0">＋</span>
                     </button>
                     <div class="faq-body overflow-hidden" style="max-height:0;transition:max-height 0.35s ease;">
-                        <p class="text-xs text-white/40 leading-relaxed pb-5" data-i18n="faq_a1"></p>
+                        <p class="text-xs text-white/40 leading-relaxed pb-5" data-i18n="faq_a1">Tap the + button on the home screen, search by title, and tap "Add to Storio." Your collection syncs to your account automatically.</p>
                     </div>
                 </div>
 
                 <div class="border-t border-white/5">
                     <button onclick="toggleFaq(this)" class="w-full text-left py-5 flex justify-between items-center group">
-                        <span class="text-xs font-bold text-accent-gold tracking-wide" data-i18n="faq_q2"></span>
+                        <span class="text-xs font-bold text-accent-gold tracking-wide" data-i18n="faq_q2">Will my data be lost if I switch devices?</span>
                         <span class="faq-arrow text-white/30 text-sm ml-4 flex-shrink-0">＋</span>
                     </button>
                     <div class="faq-body overflow-hidden" style="max-height:0;transition:max-height 0.35s ease;">
-                        <p class="text-xs text-white/40 leading-relaxed pb-5" data-i18n="faq_a2"></p>
+                        <p class="text-xs text-white/40 leading-relaxed pb-5" data-i18n="faq_a2">No. Your collection is linked to your account (Apple ID, Google, or email). Sign in on any device to restore everything.</p>
                     </div>
                 </div>
 
                 <div class="border-t border-white/5">
                     <button onclick="toggleFaq(this)" class="w-full text-left py-5 flex justify-between items-center group">
-                        <span class="text-xs font-bold text-accent-gold tracking-wide" data-i18n="faq_q3"></span>
+                        <span class="text-xs font-bold text-accent-gold tracking-wide" data-i18n="faq_q3">What should I do if the app isn't working?</span>
                         <span class="faq-arrow text-white/30 text-sm ml-4 flex-shrink-0">＋</span>
                     </button>
                     <div class="faq-body overflow-hidden" style="max-height:0;transition:max-height 0.35s ease;">
-                        <p class="text-xs text-white/40 leading-relaxed pb-5" data-i18n="faq_a3"></p>
+                        <p class="text-xs text-white/40 leading-relaxed pb-5" data-i18n="faq_a3">Try restarting the app first. If the issue persists, email us at andismtu@gmail.com with a description and your device model.</p>
                     </div>
                 </div>
 
                 <div class="border-t border-white/5">
                     <button onclick="toggleFaq(this)" class="w-full text-left py-5 flex justify-between items-center group">
-                        <span class="text-xs font-bold text-accent-gold tracking-wide" data-i18n="faq_q4"></span>
+                        <span class="text-xs font-bold text-accent-gold tracking-wide" data-i18n="faq_q4">How do I use AI to write a reflection?</span>
                         <span class="faq-arrow text-white/30 text-sm ml-4 flex-shrink-0">＋</span>
                     </button>
                     <div class="faq-body overflow-hidden" style="max-height:0;transition:max-height 0.35s ease;">
-                        <p class="text-xs text-white/40 leading-relaxed pb-5" data-i18n="faq_a4"></p>
+                        <p class="text-xs text-white/40 leading-relaxed pb-5" data-i18n="faq_a4">Open any item, tap "Score &amp; Reflect," write a few words, then tap the ✦ AI button. Storio will refine your reflection automatically (100-character limit).</p>
                     </div>
                 </div>
 
                 <div class="border-t border-white/5 border-b border-b-white/5">
                     <button onclick="toggleFaq(this)" class="w-full text-left py-5 flex justify-between items-center group">
-                        <span class="text-xs font-bold text-accent-gold tracking-wide" data-i18n="faq_q5"></span>
+                        <span class="text-xs font-bold text-accent-gold tracking-wide" data-i18n="faq_q5">How do I use AI Search?</span>
                         <span class="faq-arrow text-white/30 text-sm ml-4 flex-shrink-0">＋</span>
                     </button>
                     <div class="faq-body overflow-hidden" style="max-height:0;transition:max-height 0.35s ease;">
-                        <p class="text-xs text-white/40 leading-relaxed pb-5" data-i18n="faq_a5"></p>
+                        <p class="text-xs text-white/40 leading-relaxed pb-5" data-i18n="faq_a5">On the Explore page, tap the ✦ icon next to the search bar to switch to AI Search. Describe what you're looking for in natural language — like "a slow-burn thriller set in Japan" — and Storio will find matching titles.</p>
                     </div>
                 </div>
 
@@ -403,7 +510,7 @@
                    class="inline-block border border-accent-gold/30 px-7 py-3 hover:bg-accent-gold/10 transition-colors">
                     <span class="text-accent-gold font-bold tracking-widest text-sm">andismtu@gmail.com</span>
                 </a>
-                <p class="text-[10px] text-white/20 mt-3 tracking-widest uppercase" data-i18n="support_reply"></p>
+                <p class="text-[10px] text-white/20 mt-3 tracking-widest uppercase" data-i18n="support_reply">Replies within 1–2 business days</p>
             </div>
         </div>
     </section>
