@@ -33,27 +33,22 @@ export default function MonthlyRecapTemplate({
 
     const currentDim = dimensions[aspectRatio];
 
-    // Core Safari Logic: Never append crossOrigin="anonymous" to pure local static assets.
-    // However, for ANY proxy (including /_next/image or /proxy/tmdb), we MUST append crossOrigin
-    // to allow html-to-image to bypass Safari's opaque cache and fetch the data securely.
+    // All external images (TMDB, Google Books, etc.) are routed through the backend proxy
+    // so Puppeteer headless Chrome can fetch them regardless of CORS policy.
     const getImageProps = (src: string) => {
         if (!src) return { src: '/image/defaultMoviePoster.svg' };
 
-        // Define items that DO NOT need crossOrigin
         const isDataUrl = src.startsWith('data:');
         const isBlobUrl = src.startsWith('blob:');
         const isLocalStatic = src.startsWith('/image/');
 
-        // Next.js Image Optimization API and custom Rewrites require crossOrigin to prevent Tainted Canvas
-        const needsCors = !(isDataUrl || isBlobUrl || isLocalStatic);
+        if (isDataUrl || isBlobUrl || isLocalStatic) {
+            return { src };
+        }
 
-        const props = {
-            src,
-            ...(needsCors ? { crossOrigin: 'anonymous' as const } : {})
-        };
-
-        console.log(`[ShareDebug] Monthly Image Props for ${src.substring(0, 30)}... -> needsCors: ${needsCors}, crossOrigin: ${props.crossOrigin || 'none'}`);
-        return props;
+        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010';
+        const proxied = `${backendUrl}/api/v1/proxy/image?url=${encodeURIComponent(src)}`;
+        return { src: proxied, crossOrigin: 'anonymous' as const };
     };
 
     // Stable logo path for the lifetime of this component instance

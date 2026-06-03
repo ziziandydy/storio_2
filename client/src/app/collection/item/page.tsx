@@ -80,7 +80,7 @@ function CollectionItemPageContent() {
     fetchItem();
   }, [id, token, authLoading, router]);
 
-  const handleUpdate = async (newRating: number, newNotes: string) => {
+  const handleUpdate = async (newRating: number, newNotes: string, date?: string) => {
     if (!token || !item) return;
 
     try {
@@ -92,7 +92,8 @@ function CollectionItemPageContent() {
         },
         body: JSON.stringify({
           notes: newNotes,
-          rating: newRating
+          rating: newRating,
+          ...(date ? { created_at: date } : {})
         })
       });
 
@@ -320,6 +321,7 @@ function CollectionItemPageContent() {
                 <RateAndReflectForm
                   initialRating={item.rating}
                   initialNotes={item.notes || ''}
+                  initialDate={item.created_at.split('T')[0]}
                   title={item.title}
                   onSave={handleUpdate}
                   onCancel={() => setIsEditing(false)}

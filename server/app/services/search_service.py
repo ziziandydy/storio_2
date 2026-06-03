@@ -639,5 +639,17 @@ class SearchService:
                     ))
             except Exception as e:
                 logger.error("Google Books discover failed: %s", e)
-                
+
+        # 語意搜尋結果為空時，fallback 到 fallback_query 關鍵字搜尋
+        if not results and intent.fallback_query:
+            logger.info("Semantic search returned 0 results, falling back to keyword: %s", intent.fallback_query)
+            if intent.media_type in ["movie", "tv"]:
+                results = await SearchService.search_tmdb(client, intent.fallback_query, language, region)
+                if intent.media_type == "tv":
+                    results = [r for r in results if r.media_type == "tv"]
+            elif intent.media_type == "book":
+                results = await SearchService.search_google_books(client, intent.fallback_query, language)
+            else:
+                results = await SearchService.search_multi(intent.fallback_query, language, region)
+
         return results

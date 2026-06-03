@@ -14,6 +14,7 @@ const DEFAULT_ORIGINS = [
   'https://storio.andismtu.com',
   'capacitor://localhost',
   'http://localhost:3000',
+  'http://localhost:3010',
 ];
 
 const allowedOrigins = [...new Set([...DEFAULT_ORIGINS, ...ALLOWED_ORIGINS])];

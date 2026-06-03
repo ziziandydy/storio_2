@@ -46,7 +46,8 @@ function SearchContent() {
   const touchStartX = useRef<number>(0);
 
   // Semantic Intent Detection (Auto Mode)
-  const isSemanticQuery = (q: string) => /怎麼|什麼|關於|想要|推薦|年代|哪部|哪一|有沒有|.*的.*/.test(q) || q.length > 12;
+  // 只有明確的描述性/意圖關鍵字才觸發 AI Search，長度不作為判斷依據（避免精確標題誤判）
+  const isSemanticQuery = (q: string) => /怎麼|什麼|關於|想要|推薦|年代|哪部|哪一|有沒有|類似|風格|氛圍|心情|感覺/.test(q);
   const isAutoSemantic = searchMode === 0 && isSemanticQuery(query);
   const actualSearchMode = searchMode === 0 ? (isAutoSemantic ? 1 : 2) : searchMode;
   const isAiSearch = searchMode === 1 || isAutoSemantic;
@@ -159,10 +160,30 @@ function SearchContent() {
           return;
         }
         const data = await res.json();
-        if (data.results) {
-          setResults(data.results);
+        const primaryResults = data.results ?? [];
+
+        // Keyword search 空結果時，自動 fallback 到 AI Search 尋找相似作品
+        if (primaryResults.length === 0 && !isAiSearch) {
+          const aiRes = await fetch(getApiUrl(`/api/v1/search/ai`), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept-Language': language,
+              'X-Region': region,
+            },
+            body: JSON.stringify({
+              query: debouncedQuery,
+              media_type: filter === 'movie' || filter === 'tv' ? filter : 'book'
+            })
+          });
+          if (aiRes.ok) {
+            const aiData = await aiRes.json();
+            setResults(aiData.results ?? []);
+          } else {
+            setResults([]);
+          }
         } else {
-          setResults([]);
+          setResults(primaryResults);
         }
       } catch (error) {
         console.error("Search failed:", error);
