@@ -1,6 +1,23 @@
 # Storio 專案待辦清單與未來優化 (Backlog & Future Improvements)
 
-最後更新：2026-04-17
+最後更新：2026-06-03
+
+---
+
+## 🎉 里程碑：v1.13.0 送審 App Store（2026-06-03）
+
+v1.13.0（build 13）修復三個 bug 後送審：編輯 Storio 日期無效、Monthly Recap 書籍圖片（Google Books CORS）、混合搜尋/AI Search 空結果。
+
+### ✅ 本版修復（v1.13.0）
+
+1. **編輯 Storio 日期無效**：`RateAndReflectForm` 補傳 `initialDate`，`handleUpdate` 傳遞 `created_at` 至 API，service 層允許更新 `created_at`。
+
+2. **Monthly Recap 書籍圖片（Google Books）無法渲染**：`MonthlyRecapTemplate` 外部圖片改走後端 proxy，修復 Puppeteer headless Chrome 的 CORS 限制。
+
+3. **混合搜尋 / AI Search 空結果**：
+   - 後端：語意搜尋（TMDB Discover / Google Books）空結果時 fallback 到 `fallback_query` 關鍵字搜尋
+   - 前端：移除 `isSemanticQuery` 的 `q.length > 12`（避免精確標題誤送 AI endpoint）
+   - 前端：keyword 搜尋空結果時自動 fallback 到 `/search/ai`
 
 ---
 
