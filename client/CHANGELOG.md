@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.13.0](https://github.com/ziziandydy/storio_2/compare/v1.2.0...v1.13.0) (2026-06-03)
+
+
+### 新功能 (Features)
+
+* **landing:** add GEO optimization — schema, OG tags, FAQ fallback, App Store CTA ([f091879](https://github.com/ziziandydy/storio_2/commit/f091879bbdad46972805d3e717b6645b4331a3a4))
+
+
+### Bug 修復 (Bug Fixes)
+
+* 修復編輯日期、Monthly Recap 書籍圖片、搜尋空結果三個 bug ([4c2b4e4](https://github.com/ziziandydy/storio_2/commit/4c2b4e4e6cd5d492d8cf7c9c6799ffa4896a9f0b))
+
 ## [1.2.0](https://github.com/ziziandydy/storio_2/compare/v1.1.3...v1.2.0) (2026-05-17)
 
 
