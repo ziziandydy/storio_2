@@ -121,6 +121,36 @@
     *   **整合設計**: 名稱、性別、生日直接顯示於主卡片底部（兩欄網格）。
     *   **微型圖示按鈕**: 編輯/儲存/取消按鈕移至卡片左/右上角，釋放底部空間。
 
+### 3.7 個人化通知 (Notifications) — v1.14.0
+
+**設計目標**：讓記錄行為成為習慣，在使用者最可能行動的時間點提醒，同時避免打擾感。
+
+#### 通知類型
+
+| 類型 | 觸發條件 | 核心內容 |
+|------|---------|---------|
+| **Log a story** | 距上次典藏 ≥ 3 天 | `「{name}，{N} 天沒有新典藏了 🎬」` |
+| **Folio reflection** | 14 天內有未評分收藏（7 天冷卻）或距上次心得 ≥ 7 天 | `「《{title}》給你什麼感悟？🌙」` |
+
+#### 核心機制
+
+- **App Open Reset**：每次 app 開啟時重新排程個人化通知，零後端需求
+- **行為學習時段**：靜默收集 app 開啟（weight 1）與記錄 Storio（weight 2）的時段，7 筆資料後自動計算最佳通知時間取代 fallback（21:00）
+- **智慧忽略偵測**：per-trigger 追蹤 `ignoredCount`，連續 3 次未回應自動停止該觸發路徑；使用者主動評分/記錄時重置
+- **每日上限 2 則**，深夜 00:00–08:00 blackout
+
+#### Permission 策略
+
+- **新用戶**：首筆 Storio 記錄後，下次開 app 顯示 Permission Primer 卡片（先說明好處再請求 iOS 權限）
+- **舊用戶升級**：新增 Storio 成功後，底部出現非阻斷式 Banner 引導
+- 兩種情境均有 dismiss 計數（最多 2 次），之後不再主動打擾
+
+#### 設定入口
+
+Profile > 設定 > Notifications（ON/OFF badge）→ 子頁面：主開關 + Log a story 開關 + Folio reflection 開關
+
+> **v1.14.0 限制**：排程時間與間隔天數為 hardcoded 參數，不開放使用者自行設定。所有參數集中於 `notification-config.ts`，v1.15.x 視需求開放 UI。
+
 ---
 
 ## 4. 技術架構 (Technical Architecture)
@@ -144,7 +174,7 @@
 ## 5. 待優化與未來規劃 (Roadmap)
 *   **Social Sharing UAT**: 驗證分享圖片在行動端之佈局與下載正確性 (Current Focus)。
 *   **Share Formats**: 支援不同比例的分享圖片 (4:5, 1:1)。
-*   **Notifications**: 實作推播通知客製化提醒用戶記錄。
+*   ~~**Notifications**: 實作推播通知客製化提醒用戶記錄。~~ → ✅ **v1.14.0 設計完成**，規格見 Section 3.7 與 `openspec/changes/local-notifications/`
 *   **Vision AI**: 支援影像辨識票根或截圖來快速加入 Memory。
 *   **New Category (Shows)**: 擴充對「展演 (Show)」類別的支援 (表演、劇場、演唱會)。
 *   ~~**PWA**: 實作 PWA 支援 (Next Step)。~~ (✅ 已完成，使用者可將網頁加入主畫面)
