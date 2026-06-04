@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Bell, BookMarked, BookOpen } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useToast } from '@/components/ToastProvider';
@@ -139,12 +139,20 @@ export default function NotificationsPage() {
           )}
         </div>
 
-        {/* 類型開關 */}
-        <div>
+        {/* 類型開關：主開關 ON 時才顯示 */}
+        <AnimatePresence initial={false}>
+        {notifEnabled && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.25, ease: 'easeInOut' }}
+          className="overflow-hidden"
+        >
           <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-text-desc mb-3 px-1">
             {np.whatToRemind}
           </p>
-          <div className={`bg-[#121212] border border-white/5 rounded-2xl overflow-hidden transition-opacity ${!notifEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
+          <div className="bg-[#121212] border border-white/5 rounded-2xl overflow-hidden">
 
             {/* Log a story */}
             <div className="p-5 flex items-center justify-between border-b border-white/5">
@@ -194,7 +202,9 @@ export default function NotificationsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </motion.div>
+        )}
+        </AnimatePresence>
       </main>
     </div>
   );
