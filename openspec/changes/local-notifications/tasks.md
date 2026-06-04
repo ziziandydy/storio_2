@@ -3,7 +3,7 @@
 - [x] 1.1 安裝 `@capacitor/local-notifications`：`cd client && npm install @capacitor/local-notifications`
 - [x] 1.2 `capacitor.config.ts` 加入 `LocalNotifications` plugin 設定（smallIcon、iconColor）
 - [x] 1.3 執行 `npx cap sync ios` 同步 plugin 至 Xcode
-- [ ] 1.4 Xcode `Info.plist` 加入 `NSUserNotificationUsageDescription`（中英文說明字串）
+- [x] 1.4 ~~Xcode `Info.plist` 加入 `NSUserNotificationUsageDescription`~~ → **不需要**。經查證 iOS local notifications 透過 `UNUserNotificationCenter.requestAuthorization()` 動態請求權限（已由 `checkAndRequestPermission()` 處理），系統對話框文字由 iOS 提供。`NSUserNotificationUsageDescription` 為 macOS key，iOS 不讀取；plugin README 僅要求 Android 加 manifest 權限。
 
 ## 2. 通知參數文件（notification-config.ts）
 

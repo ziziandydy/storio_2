@@ -27,7 +27,7 @@
 
 ## Impact
 
-- **新增依賴**：`@capacitor/local-notifications`（iOS 需加入 Info.plist 通知權限說明）
+- **新增依賴**：`@capacitor/local-notifications`（iOS 透過 `UNUserNotificationCenter` 動態請求權限，無需 Info.plist usage description）
 - **新增檔案**：
   - `client/src/lib/notification-config.ts`（參數文件）
   - `client/src/lib/notifications.ts`（核心邏輯：排程、行為學習、忽略偵測）
@@ -41,5 +41,5 @@
   - `client/src/i18n/locales.ts`（通知相關 i18n 字串）
   - `client/src/app/layout.tsx`（App Open Reset + recordEngagement 整合）
   - `client/src/components/AddToFolioModal.tsx`（recordEngagement + Banner 觸發）
-- **iOS**：Xcode 加入 `NSUserNotificationUsageDescription`、cap sync
+- **iOS**：cap sync、deployment target 升至 15.0（plugin 需求）。通知權限由程式碼動態請求，無需 Info.plist 設定
 - **無後端異動**：完全 client-side，不觸及 FastAPI 或 Supabase schema
