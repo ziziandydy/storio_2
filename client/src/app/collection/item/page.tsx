@@ -16,6 +16,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useSettingsStore } from '@/store/settingsStore';
 import { Share2 } from 'lucide-react';
+import { resetIgnoredCount } from '@/lib/notifications';
+import { isNativePlatform } from '@/lib/appleAuth';
 
 interface CollectionItem {
   id: string;
@@ -102,6 +104,10 @@ function CollectionItemPageContent() {
         setItem(updated);
         setIsEditing(false);
         showToast(t.common.confirm);
+        // 通知：評分行為重置 folio_reflection ignoredCount
+        if (isNativePlatform() && newRating > 0) {
+          resetIgnoredCount('folio_reflection');
+        }
       }
     } catch (error) {
       console.error("Failed to save memory:", error);

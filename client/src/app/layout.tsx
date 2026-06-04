@@ -3,6 +3,7 @@ import { Inter, Roboto, Noto_Sans_TC } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ToastProvider";
 import { RenderServiceWarmup } from "@/components/RenderServiceWarmup";
+import AppOpenReset from "@/components/AppOpenReset";
 
 const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
 const roboto = Roboto({
@@ -49,6 +50,7 @@ export default function RootLayout({
       <body className={`${inter.variable} ${roboto.variable} ${notoSansTC.variable} font-sans pt-[var(--sa-top)] pb-[var(--sa-bottom)] bg-folio-black min-h-screen`}>
         <ToastProvider>
           <RenderServiceWarmup />
+          <AppOpenReset />
           {children}
         </ToastProvider>
       </body>

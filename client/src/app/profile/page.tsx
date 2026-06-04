@@ -78,7 +78,8 @@ const ProfileItem = ({ icon, label, value, onClick, danger = false, toggle = fal
 export default function ProfilePage() {
   const router = useRouter();
   const { user, loading, signOut, updateProfile, token } = useAuth();
-  const { language, region, notificationsEnabled, setLanguage, setRegion, toggleNotifications } = useSettingsStore();
+  const { language, region, notificationsEnabled, setLanguage, setRegion, toggleNotifications,
+    notifEnabled, notifPrimerSeen } = useSettingsStore();
   const { t } = useTranslation();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -917,6 +918,21 @@ export default function ProfilePage() {
         </ProfileSection>
 
         <ProfileSection title={t.profile.sections.settings}>
+          <ProfileItem
+            icon={<Bell size={18} />}
+            label={t.profile.items.notifications}
+            value={
+              <div className="flex items-center gap-2">
+                {!notifPrimerSeen && (
+                  <span className="text-[9px] font-black uppercase tracking-widest bg-accent-gold text-folio-black px-1.5 py-0.5 rounded-full">NEW</span>
+                )}
+                <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${notifEnabled ? 'bg-accent-gold/20 text-accent-gold' : 'bg-white/10 text-text-desc'}`}>
+                  {notifEnabled ? 'ON' : 'OFF'}
+                </span>
+              </div>
+            }
+            onClick={() => router.push('/profile/notifications')}
+          />
           <ProfileItem
             icon={<Globe size={18} />}
             label={t.profile.items.language}
