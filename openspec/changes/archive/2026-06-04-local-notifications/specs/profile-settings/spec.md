@@ -1,31 +1,39 @@
 ## MODIFIED Requirements
 
-### Requirement: Settings Display
+### Requirement: Profile Settings Options
 
-The system SHALL display the Notifications row in the Profile settings section.
-The Notifications row SHALL show the current ON/OFF master toggle state as a badge.
-Tapping the Notifications row SHALL navigate to the Notifications sub-page.
+The system SHALL display standard settings and community options in the Profile page. The system SHALL display a Notifications row in the Settings section (the previous restriction against showing Notifications is lifted), but MUST NOT display features that are still incomplete (such as Security & Privacy).
+The Notifications row SHALL show the current ON/OFF master toggle state as a badge, and SHALL display a "NEW" badge until the user first visits the Notifications sub-page.
+The system SHALL also display a "重新觀看引導 / View Onboarding" option that allows the user to replay the feature guide at any time.
 
-The Notifications restriction from the previous spec is lifted.
-The system SHALL continue to NOT display Security & Privacy (still incomplete).
+#### Scenario: Viewing Account Section
+- **WHEN** the user views the "Account & Sync" section of the Profile page
+- **THEN** they see the "Cloud Backup" status.
+- **AND** they DO NOT see the "Security & Privacy" item.
 
-#### Scenario: Settings section includes Notifications row
-
-WHEN the user views the Profile page
-THEN they SHALL see a "Notifications" row in the PREFERENCE section
-AND the row SHALL display an "ON" or "OFF" badge reflecting the master notification toggle state
+#### Scenario: Viewing Settings Section
+- **WHEN** the user views the "Settings" section of the Profile page
+- **THEN** they see "Notifications" (with an ON/OFF badge), "Language", and "Statistics".
 
 #### Scenario: Notifications row shows NEW badge after app update
-
-WHEN the user upgrades to v1.14.0 for the first time
-AND has never opened the Notifications sub-page
-THEN the Notifications row SHALL display a "NEW" badge alongside the ON/OFF badge
-AND the badge SHALL disappear after the user visits the sub-page once
+- **WHEN** the user upgrades to v1.14.0 for the first time
+- **AND** has never opened the Notifications sub-page
+- **THEN** the Notifications row displays a "NEW" badge alongside the ON/OFF badge
+- **AND** the badge disappears after the user visits the sub-page once
 
 #### Scenario: Navigate to Notifications sub-page
+- **WHEN** the user taps the Notifications row
+- **THEN** the system navigates to the Notifications sub-page at `/profile/notifications`
 
-WHEN the user taps the Notifications row
-THEN the system SHALL navigate to the Notifications sub-page at `/profile/notifications`
+#### Scenario: Viewing Community Section
+- **WHEN** the user views the "Community & Support" section
+- **THEN** they see "Share Storio", "Rate on App Store", and the new "Contact Us" item.
+- **AND** they DO NOT see standalone "Suggest a Feature" or "Report a Bug" items.
+
+#### Scenario: Replaying Onboarding from Profile
+- **WHEN** the user taps "重新觀看引導 / View Onboarding" in the Profile page
+- **THEN** the system displays the `OnboardingGuideModal`
+- **AND** upon closing, `storio_onboarding_seen` remains `true` in `localStorage`
 
 ---
 
@@ -68,7 +76,7 @@ AND Log a story 通知不受影響
 
 ### Requirement: Permission Primer 底部卡片
 
-Permission Primer 為可向下滑關閉的底部卡片（非全屏 modal），顯示於首頁上方。
+系統 SHALL 以可向下滑關閉的底部卡片（非全屏 modal）顯示 Permission Primer，於符合觸發條件時呈現於首頁。
 
 #### Scenario: Primer 觸發條件
 
@@ -87,7 +95,7 @@ THEN 系統 SHALL NOT 顯示 Permission Primer
 
 ### Requirement: 舊用戶升級後 Banner
 
-非阻斷式 Banner（高度約 56px）顯示於首頁畫面底部，不遮蓋主要內容。
+系統 SHALL 以非阻斷式 Banner（高度約 56px）顯示於首頁畫面底部，不遮蓋主要內容，於既有用戶新增 Storio 後呈現。
 
 #### Scenario: Banner 觸發
 
