@@ -87,3 +87,30 @@
 - [ ] **訪客權限驗證**
     - [ ] 以訪客身份 (Guest) 進入 `/profile`。
     - [ ] 預期：隱私與安全性入口應被隱藏。
+## 8. 本機通知 (Local Notifications, v1.14.0)
+
+> 測試環境：iOS 模擬器 / 真機（Web 不觸發通知）。已透過 ios-webkit-debug-proxy + CDP 自動化驗證。
+
+- [x] **權限請求 (Permission)**
+    - [x] Profile > Notifications 開啟主開關 → iOS 系統權限對話框出現。
+    - [x] 對話框文字由系統提供（無需 Info.plist usage description）。
+    - [ ] 拒絕後再開 → 顯示「前往設定」引導 Toast，主開關維持 OFF（web 已驗證；真機需實際 deny）。
+- [x] **設定 UI**
+    - [x] 主開關 OFF 時，下方 Log a story / Folio reflection 細項隱藏。
+    - [x] 主開關 ON 時，細項以動畫滑出，兩開關預設皆 ON。
+    - [x] Profile 主頁 Notifications row 顯示 ON/OFF badge；升級後顯示 NEW badge。
+- [x] **通知排程 (Scheduling)**
+    - [x] 記錄一筆 Storio（評分但未寫心得）→ 重開 app → `getPending()` 含 Folio reflection 通知。
+    - [x] 通知內容個人化：「《{標題}》給你什麼感悟？🌙」。
+    - [x] engagement < 7 筆 → 排程於 fallback 時間（20:00 / 21:00）。
+    - [x] 每日最多 2 則，深夜 00:00–08:00 不排程。
+- [x] **智慧忽略 (Smart Ignore)**
+    - [x] folio_reflection ignoredCount 達 3 → `getPending()` 回空，不再排程。
+    - [x] 評分任一作品 → ignoredCount 重置為 0，恢復排程。
+    - [x] 關閉類型開關 → 該類型不排程。
+- [x] **權限引導卡片**
+    - [x] 新用戶記錄首筆 Storio 後 → 下次開 app 顯示 Permission Primer。
+    - [x] Primer dismiss × 2 → 不再自動顯示。
+    - [x] 舊用戶新增 Storio → 顯示升級 Banner。
+- [x] **i18n**
+    - [x] 語系切換 en-US → 通知文字英文化（標題作為資料保留原文）。
