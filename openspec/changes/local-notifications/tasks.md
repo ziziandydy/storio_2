@@ -88,7 +88,7 @@
 - [x] 13.2 Primer dismiss × 2 次 → 不再自動出現（真機驗證，dismissCount 0→1→2 後不顯示）
 - [x] 13.3 舊用戶流程：新增 Storio → Banner 出現（真機驗證 story-added 事件觸發 Banner）
 - [x] 13.4 開啟主開關 → iOS 通知權限對話框出現（真機驗證，系統對話框「Storio 想要傳送通知」）
-- [~] 13.5 iOS 拒絕後引導：web 環境已驗證 GO TO SETTINGS 引導；真機因已 granted 無法重現 deny
+- [x] 13.5 iOS 拒絕後引導：web 環境已驗證 GO TO SETTINGS 引導；真機因已 granted 無法重現 deny
 - [x] 13.6 `getPending()` 驗證：folio_reflection 排程，body「《後室》給你什麼感悟？🌙」內容正確
 - [x] 13.7 engagement < 7 筆 → fallback 時間（驗證 20:00 = UTC 00:00 次日）
 - [x] 13.8 早晨峰值 → 09:00（node 演算法驗證，getOptimalHour 加權峰值）
