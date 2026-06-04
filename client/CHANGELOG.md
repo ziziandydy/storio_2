@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.14.0](https://github.com/ziziandydy/storio_2/compare/v1.13.0...v1.14.0) (2026-06-04)
+
+
+### 新功能 (Features)
+
+* **notifications:** 實作本機通知功能（v1.14.0） ([40b5b5a](https://github.com/ziziandydy/storio_2/commit/40b5b5a410fa00efb6f466cab52eca287e5422f2))
+
+
+### Bug 修復 (Bug Fixes)
+
+* **notifications:** 主開關關閉時隱藏類型細項，打開後才滑出現 ([8ad5ff6](https://github.com/ziziandydy/storio_2/commit/8ad5ff6bc6f7ad2e8611526be5ecb354afd1fb3a))
+* **notifications:** 修復模擬器測試發現的 2 個 bug + 完成驗收 ([1bbb74c](https://github.com/ziziandydy/storio_2/commit/1bbb74ceed70fcb831e9cb1422ffdd4a9827f972))
+
 ## [1.13.0](https://github.com/ziziandydy/storio_2/compare/v1.2.0...v1.13.0) (2026-06-03)
 
 
