@@ -158,9 +158,15 @@ find-skills                         # 尋找新技能
 ## 測試規範
 
 - 遵循 **TDD**（先寫測試再實作）
-- **後端**: Pytest — `server/tests/`
-- **前端/E2E**: Playwright
-- 禁止為了讓測試通過而 mock 資料庫（使用真實 Supabase 連線）
+- **後端**: Pytest — `server/tests/`（36 tests）
+- **前端/E2E**: Playwright — `client/tests/`（目前未進 CI，落後較多版本）
+- 原則上禁止為了讓測試通過而 mock 資料庫；惟**現有後端測試實際以 mock（MagicMock/AsyncMock）為主**，與此原則有落差，待後續釐清是否導入測試用 Supabase 專案。
+
+### CI（發版安全網）
+
+- `.github/workflows/backend-tests.yml`：push 到 main 或 PR 且 `server/**` 變更時，自動跑後端 pytest。
+- 後端測試用 **dummy env** 執行（測試全 mock，不連真實 Supabase）。詳見 `docs/DEV_SETUP.md` §5。
+- **規則**：後端 CI 綠才發版。完整鏈路：改 code → CI 綠 → `npm run release` → `ios:sync` → `build:ios` → Archive → 送審。
 
 ---
 

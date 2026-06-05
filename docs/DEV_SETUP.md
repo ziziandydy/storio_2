@@ -160,3 +160,50 @@ curl -X POST http://localhost:4000/render \
 - **Puppeteer Service**: `http://localhost:4000`（本地開發）
 - **Database**: Supabase PostgreSQL (Table: `collections`, `users` ... etc)
 - **Auth**: Supabase Anonymous Auth
+
+---
+
+## 5. 測試與 CI (Testing & CI)
+
+### 後端測試 (Backend pytest)
+
+```bash
+cd server
+python3 -m pytest -q          # 全套 36 tests，約 12-16 秒
+```
+
+**現有測試以 mock（MagicMock/AsyncMock）為主，不連真實 Supabase**，因此本地與 CI 皆可用 dummy 憑證執行：
+
+```bash
+# 模擬 CI 環境（乾淨 env + dummy 憑證）
+cd server
+env -i PATH="$PATH" \
+  SUPABASE_URL="https://dummy.supabase.co" \
+  SUPABASE_ANON_KEY="dummy-anon-key" \
+  SUPABASE_SERVICE_KEY="dummy-service-key" \
+  TMDB_API_KEY="dummy-tmdb-key" \
+  python3 -m pytest -q
+```
+
+> ⚠️ `app.main` 在 import 時會做 startup validation，缺 `SUPABASE_URL / SUPABASE_ANON_KEY / TMDB_API_KEY` 會直接 RuntimeError。CI 提供 dummy 值讓 app 啟動，測試全程 mock 不發真實請求。
+
+### GitHub Actions CI
+
+`.github/workflows/backend-tests.yml` 在以下時機自動跑後端測試：
+- **push 到 main**（且 `server/**` 有變更）
+- **任何 PR**（且 `server/**` 有變更）
+
+**規則**：後端測試綠才能放心 merge / 發版。這是發版安全網的第一層。
+
+### 前端 E2E (Playwright)
+
+`client/tests/*.spec.ts` 存在但目前**未進 CI**（落後較多版本，需先補課）。手動跑：
+
+```bash
+cd client
+npx playwright test    # 需先啟動 dev server（port 3010）+ 後端
+```
+
+### 與 iOS 發布流程的關係
+
+完整鏈路：**改 code → 後端 CI 綠（自動）→ `npm run release` → `ios:sync` → `build:ios` → Xcode Archive → 送審**。CI 是 code 變更後、發版前的自動檢查點。

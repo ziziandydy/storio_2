@@ -32,6 +32,7 @@ def test_add_story_success(service, mock_repo):
     )
 
     mock_repo.count_user_stories.return_value = 5
+    mock_repo.check_duplicate.return_value = False  # 無重複收藏
     mock_repo.create_story.return_value = expected_response
 
     # Act

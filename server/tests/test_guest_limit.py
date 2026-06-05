@@ -34,10 +34,11 @@ def test_guest_limit_not_reached():
     # Arrange
     mock_repo = MagicMock()
     mock_repo.count_user_stories.return_value = 9
-    
+    mock_repo.check_duplicate.return_value = False  # 無重複收藏
+
     service = CollectionService()
     service.repo = mock_repo
-    
+
     user_id = "test_user"
     story_in = StoryCreate(
         title="Dune 2",
@@ -45,7 +46,7 @@ def test_guest_limit_not_reached():
         external_id="123",
         source="tmdb"
     )
-    
+
     # Act
     service.add_story(user_id, story_in, is_anonymous=True)
     
