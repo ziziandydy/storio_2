@@ -8,6 +8,7 @@ import {
   Loader2
 } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import RateAndReflectForm from './RateAndReflectForm';
 import GuestLimitModal from './GuestLimitModal';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -36,6 +37,7 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
   const [forceAdd, setForceAdd] = useState(false);
   const { t } = useTranslation();
   const { showToast } = useToast();
+  const router = useRouter();
 
   // Reset mode when modal opens
   useEffect(() => {
@@ -121,7 +123,8 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
                   </button>
                   <button
                     onClick={() => {
-                      window.location.href = '/collection';
+                      onClose();
+                      router.push('/collection');
                     }}
                     className="py-4 bg-accent-gold text-folio-black rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white transition-all flex items-center justify-center gap-2"
                   >
@@ -216,9 +219,9 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
         isOpen={showGuestLimit}
         onClose={() => setShowGuestLimit(false)}
         onLogin={(provider) => {
-          // We might want to close AddToFolioModal too, or trigger logic
-          // To keep it simple, we redirect to login here or store auth attempt
-          window.location.href = `/auth?provider=${provider}`;
+          // 改用 SPA 導航（Capacitor 靜態 export 下 window.location.href 內部路由會失效回退首頁）
+          onClose();
+          router.push(`/auth?provider=${provider}`);
         }}
       />
     </AnimatePresence>
