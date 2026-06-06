@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, date
 from uuid import UUID
 
 class StoryBase(BaseModel):
@@ -16,6 +16,7 @@ class StoryBase(BaseModel):
 
 class StoryCreate(StoryBase):
     created_at: Optional[datetime] = None
+    archived_date: Optional[date] = None  # 使用者選定的收藏日（純日期，無時區）
     force_add: Optional[bool] = False
 
 class StoryInstance(BaseModel):
@@ -30,6 +31,7 @@ class StoryResponse(StoryBase):
     user_id: UUID
     viewing_number: Optional[int] = 1
     created_at: datetime
+    archived_date: Optional[date] = None  # 純日期收藏日（回填前可能為 null）
     # related_instances: List[StoryInstance] = []
 
     class Config:

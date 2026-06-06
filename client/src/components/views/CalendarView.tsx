@@ -19,6 +19,7 @@ import { X, Stamp, Share2 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Story } from '@/types';
+import { getArchivedDate } from '@/lib/dateUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '@/hooks/useTranslation';
 import MonthlyRecapModal from '@/components/MonthlyRecapModal';
@@ -47,7 +48,7 @@ export default function CalendarView({ stories }: CalendarViewProps) {
   const storiesByDate = useMemo(() => {
     const groups: Record<string, Story[]> = {};
     stories.forEach(story => {
-      const dateKey = format(parseISO(story.created_at), 'yyyy-MM-dd');
+      const dateKey = getArchivedDate(story as any); // archived_date 已是 'YYYY-MM-DD'，不經 UTC 解析
       if (!groups[dateKey]) groups[dateKey] = [];
       groups[dateKey].push(story);
     });
@@ -138,7 +139,7 @@ export default function CalendarView({ stories }: CalendarViewProps) {
 
   // Helper to get all stories for a specific month
   const getMonthStories = (month: Date) => {
-    return stories.filter(s => isSameMonth(parseISO(s.created_at), month))
+    return stories.filter(s => isSameMonth(parseISO(getArchivedDate(s as any)), month))
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   };
 

@@ -99,7 +99,7 @@ class CollectionService:
         return self.repo.create_story(user_id, story_in)
 
     def update_collection_item(self, user_id: str, story_id: UUID, story_update: dict) -> StoryResponse:
-        allowed_updates = {k: v for k, v in story_update.items() if k in ["rating", "notes", "created_at"]}
+        allowed_updates = {k: v for k, v in story_update.items() if k in ["rating", "notes", "created_at", "archived_date"]}
         updated_story = self.repo.update_story(user_id, story_id, allowed_updates)
         if not updated_story:
             raise HTTPException(status_code=404, detail="Collection item not found")

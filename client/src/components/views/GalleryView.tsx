@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Stamp, Calendar, Feather } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
+import { getArchivedDate, parseLocalDate } from '@/lib/dateUtils';
 
 interface GalleryViewProps {
   stories: Story[];
@@ -97,7 +98,7 @@ export default function GalleryView({ stories }: GalleryViewProps) {
                 <div className={`absolute top-3 left-3 z-20 transition-opacity duration-300 ${index === selectedIndex ? 'opacity-100' : 'opacity-0'}`}>
                   <div className="bg-black/60 backdrop-blur-md border border-white/10 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg shadow-lg uppercase tracking-wider flex items-center gap-1.5">
                     <Calendar size={12} className="text-accent-gold" />
-                    {new Date(story.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    {parseLocalDate(getArchivedDate(story as any)).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </div>
                 </div>
 

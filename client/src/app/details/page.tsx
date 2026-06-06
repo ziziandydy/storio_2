@@ -69,7 +69,7 @@ function DetailsPageContent() {
           ...item,
           rating,
           notes,
-          created_at: date ? new Date(date).toISOString() : undefined,
+          archived_date: date || undefined,  // 純日期收藏日（不經 UTC 轉換）
           force_add: forceAdd ?? false
         })
       });

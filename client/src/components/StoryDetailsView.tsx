@@ -12,6 +12,7 @@ import { ItemDetail } from '@/types';
 import { useToast } from '@/components/ToastProvider';
 import ShareModal from '@/components/ShareModal';
 import MemoryCardTemplate from '@/components/share/MemoryCardTemplate';
+import { getArchivedDate, parseLocalDate } from '@/lib/dateUtils';
 
 interface StoryDetailsViewProps {
   item: ItemDetail;
@@ -348,7 +349,7 @@ export default function StoryDetailsView({ item, showAddButton = true, onAddClic
                       <span className="text-xs uppercase tracking-widest font-black text-white">{t.profile.title}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-[10px] text-text-desc font-bold opacity-50">{new Date(item.created_at).toLocaleDateString()}</span>
+                      <span className="text-[10px] text-text-desc font-bold opacity-50">{parseLocalDate(getArchivedDate(item as any)).toLocaleDateString()}</span>
                       <button
                         onClick={() => setIsShareModalOpen(true)}
                         className="p-2 rounded-full bg-white/5 text-accent-gold hover:bg-accent-gold hover:text-folio-black transition-all hover:scale-110 active:scale-95 shadow-xl"

@@ -54,10 +54,15 @@ class CollectionRepository:
         data = story.model_dump(exclude={"force_add"})
         data["user_id"] = user_id
         
-        # Convert datetime to string for JSON serialization
+        # Convert datetime/date to string for JSON serialization
         if data.get("created_at"):
             data["created_at"] = data["created_at"].isoformat()
-        
+        if data.get("archived_date"):
+            data["archived_date"] = data["archived_date"].isoformat()
+        else:
+            # 無 archived_date 時不送欄位，避免 migration 未跑時 insert 失敗
+            data.pop("archived_date", None)
+
         # Map to DB schema constraints
         data = self._map_to_db(data)
         

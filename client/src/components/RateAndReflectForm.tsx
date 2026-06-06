@@ -6,6 +6,7 @@ import { Star, Loader2, Wand2, Save, X } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useSettingsStore } from '@/store/settingsStore';
 import { getApiUrl } from '@/lib/api';
+import { localToday, parseLocalDate } from '@/lib/dateUtils';
 
 interface RateAndReflectFormProps {
     initialRating?: number;
@@ -30,7 +31,7 @@ export default function RateAndReflectForm({
 }: RateAndReflectFormProps) {
     const [rating, setRating] = useState(initialRating);
     const [notes, setNotes] = useState(initialNotes);
-    const [date, setDate] = useState(initialDate || new Date().toISOString().split('T')[0]);
+    const [date, setDate] = useState(initialDate || localToday());
     const [hoverRating, setHoverRating] = useState(0);
     const { t } = useTranslation();
     const { language } = useSettingsStore();
@@ -148,7 +149,7 @@ export default function RateAndReflectForm({
                         }}
                     >
                         <span>
-                            {new Date(date).toLocaleDateString('en-US', {
+                            {parseLocalDate(date).toLocaleDateString('en-US', {
                                 year: 'numeric',
                                 month: 'short',
                                 day: '2-digit'

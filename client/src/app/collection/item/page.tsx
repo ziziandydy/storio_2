@@ -18,6 +18,7 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { Share2 } from 'lucide-react';
 import { resetIgnoredCount } from '@/lib/notifications';
 import { isNativePlatform } from '@/lib/appleAuth';
+import { getArchivedDate, formatArchivedDate } from '@/lib/dateUtils';
 
 interface CollectionItem {
   id: string;
@@ -29,6 +30,7 @@ interface CollectionItem {
   rating: number;
   notes?: string;
   created_at: string;
+  archived_date?: string | null;
   viewing_number: number;
   year?: number;
 }
@@ -39,7 +41,7 @@ function CollectionItemPageContent() {
   const router = useRouter();
   const { token, loading: authLoading } = useAuth();
   const { showToast } = useToast();
-  const { t, formatDate } = useTranslation();
+  const { t, formatDate, locale } = useTranslation();
   const { language } = useSettingsStore();
 
   const [item, setItem] = useState<CollectionItem | null>(null);
@@ -95,7 +97,7 @@ function CollectionItemPageContent() {
         body: JSON.stringify({
           notes: newNotes,
           rating: newRating,
-          ...(date ? { created_at: date } : {})
+          ...(date ? { archived_date: date } : {})
         })
       });
 
@@ -255,7 +257,7 @@ function CollectionItemPageContent() {
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-text-desc">Archived On</span>
                   <span className="text-sm font-bold text-white">
-                    {formatDate(item.created_at)}
+                    {formatArchivedDate(getArchivedDate(item), locale)}
                   </span>
                 </div>
               </div>
@@ -310,7 +312,7 @@ function CollectionItemPageContent() {
                           )}
                         </div>
                         <div className="text-[10px] text-text-desc font-mono">
-                          {formatDate(inst.created_at)}
+                          {formatArchivedDate(getArchivedDate(inst), locale)}
                         </div>
                       </Link>
                     );
@@ -327,7 +329,7 @@ function CollectionItemPageContent() {
                 <RateAndReflectForm
                   initialRating={item.rating}
                   initialNotes={item.notes || ''}
-                  initialDate={item.created_at.split('T')[0]}
+                  initialDate={getArchivedDate(item)}
                   title={item.title}
                   onSave={handleUpdate}
                   onCancel={() => setIsEditing(false)}
