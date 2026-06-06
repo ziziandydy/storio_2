@@ -11,9 +11,10 @@ import { NOTIFICATION_CONFIG } from '@/lib/notification-config';
 
 interface Props {
   visible: boolean;
+  onComplete?: () => void;
 }
 
-export default function NotificationPrimerCard({ visible }: Props) {
+export default function NotificationPrimerCard({ visible, onComplete }: Props) {
   const { t } = useTranslation();
   const { token } = useAuth();
   const { showToast } = useToast();
@@ -43,7 +44,10 @@ export default function NotificationPrimerCard({ visible }: Props) {
         );
         await reschedule(state);
       }
+      // 成功授予 → 通知 parent 關閉卡片
+      onComplete?.();
     } else {
+      // 拒絕 → 顯示引導，卡片保留（不呼叫 onComplete）
       setNotifPermissionDenied(true);
       showToast(np.permissionDeniedToast);
     }

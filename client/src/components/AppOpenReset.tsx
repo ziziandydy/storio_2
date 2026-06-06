@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { App } from '@capacitor/app';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import { useAuth } from '@/hooks/useAuth';
 import { useSettingsStore } from '@/store/settingsStore';
 import { notificationManager } from '@/lib/notifications';
@@ -18,6 +20,7 @@ export default function AppOpenReset() {
     notifEnabled, notifLogStory, notifFolioReflection,
     language, notifPrimerDismissCount, notifPrimerLastDismissedAt,
     notifPrimerSeen, dismissPrimer,
+    setNotifEnabled, setNotifPermissionDenied,
   } = useSettingsStore();
 
   const [showPrimer, setShowPrimer] = useState(false);
@@ -94,6 +97,35 @@ export default function AppOpenReset() {
     return unsubscribe;
   }, [notifPrimerSeen, notifEnabled, notifPrimerDismissCount, notifPrimerLastDismissedAt]);
 
+  // App 回前台：重新檢查權限，若使用者在系統設定開啟通知，自動同步狀態
+  useEffect(() => {
+    if (!isNativePlatform()) return;
+
+    const handle = App.addListener('appStateChange', async ({ isActive }) => {
+      if (!isActive) return;
+      try {
+        const { display } = await LocalNotifications.checkPermissions();
+        if (display === 'granted' && !notifEnabled) {
+          setNotifEnabled(true);
+          setNotifPermissionDenied(false);
+          setShowPrimer(false);
+          if (token) {
+            const resolvedLang = language === 'system' ? 'zh-TW' : language as 'zh-TW' | 'en-US';
+            const state = await notificationManager.fetchNotificationState(
+              token, '', resolvedLang, true, notifLogStory, notifFolioReflection
+            );
+            await notificationManager.reschedule(state);
+          }
+        }
+      } catch {
+        // checkPermissions 失敗時靜默略過
+      }
+    });
+
+    return () => { handle.then(h => h.remove()); };
+  }, [notifEnabled, token, language, notifLogStory, notifFolioReflection,
+    setNotifEnabled, setNotifPermissionDenied]);
+
   const handleBannerDismiss = () => {
     setShowBanner(false);
     dismissPrimer();
@@ -101,7 +133,7 @@ export default function AppOpenReset() {
 
   return (
     <>
-      <NotificationPrimerCard visible={showPrimer} />
+      <NotificationPrimerCard visible={showPrimer} onComplete={() => setShowPrimer(false)} />
       <NotificationBanner visible={showBanner} onDismiss={handleBannerDismiss} />
     </>
   );
