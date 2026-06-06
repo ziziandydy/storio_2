@@ -57,6 +57,9 @@ class CollectionRepository:
         # Convert datetime/date to string for JSON serialization
         if data.get("created_at"):
             data["created_at"] = data["created_at"].isoformat()
+        else:
+            # 無 created_at 時不送欄位，讓 DB 用 default now()（避免覆蓋成 null）
+            data.pop("created_at", None)
         if data.get("archived_date"):
             data["archived_date"] = data["archived_date"].isoformat()
         else:
