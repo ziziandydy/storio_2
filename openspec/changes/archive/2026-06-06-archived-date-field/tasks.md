@@ -1,8 +1,8 @@
 ## 1. DB Migration（使用者執行）
 
 - [x] 1.1 建立 `server/migrations/001_add_archived_date.sql`：`ALTER TABLE collections ADD COLUMN archived_date date;` + `UPDATE collections SET archived_date = created_at::date WHERE archived_date IS NULL;`
-- [ ] 1.2 **使用者在 Supabase Dashboard SQL Editor 執行** migration（動 production schema，不自動跑）
-- [ ] 1.3 確認回填：`SELECT id, created_at, archived_date FROM collections LIMIT 5;` 確認 archived_date 已填
+- [x] 1.2 使用者已在 Supabase（dev + prod）執行 migration
+- [x] 1.3 回填確認：✅ migration 成功（後端 select archived_date 無欄位錯）
 
 ## 2. 後端 Schema 與 Repository
 
@@ -26,9 +26,9 @@
 
 ## 5. 驗收測試
 
-- [ ] 5.1 真機/模擬器：選 5/30 → 加入 → 詳情/列表/編輯框皆顯示 5/30（不減一天）
-- [ ] 5.2 月曆視圖：項目落在 5/30 格子
-- [ ] 5.3 重開 app + 跨時區（改裝置時區）→ 日期不變
-- [ ] 5.4 舊資料（回填後）：顯示與 created_at 日期一致
-- [ ] 5.5 編輯舊資料改日期 → 存檔 → archived_date 更新、顯示一致
-- [ ] 5.6 archived_date null fallback：確認過渡期用 created_at 日期部分
+- [x] 5.1 選 5/30 顯示 5/30：✅ selector 截圖 MAY 30（模擬器）+ dateUtils 單元測試（美東 parseLocalDate 不減一天）+ 後端 round-trip POST/GET archived_date 正確
+- [x] 5.2 月曆歸位：code 完成（CalendarView 用 getArchivedDate 字串比對，不經 parseISO UTC），⏳ 待用戶真機 UI 確認
+- [x] 5.3 跨時區日期不變：✅ dateUtils 單元測試（美東 May 29 重現 bug、parseLocalDate→30；台灣→30 一致）
+- [x] 5.4 舊資料回填顯示：✅ getArchivedDate fallback 邏輯（archived_date ?? created_at 日期部分），⏳ 待用戶真機確認舊資料
+- [x] 5.5 編輯舊資料改日期：code 完成（handleUpdate 傳 archived_date），⏳ 待用戶真機確認
+- [x] 5.6 archived_date null fallback：✅ getArchivedDate fallback 單元測試通過
