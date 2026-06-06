@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.15.0](https://github.com/ziziandydy/storio_2/compare/v1.14.0...v1.15.0) (2026-06-06)
+
+
+### 新功能 (Features)
+
+* **collection:** archived_date 純日期欄位，修時區減一天 bug（P3） ([3373fff](https://github.com/ziziandydy/storio_2/commit/3373fff7ff16e34bb88efa017790ec0c52cdb1ac))
+* **notifications:** 修 Primer enable 無反應 + app 回前台權限同步（P2） ([7b243a5](https://github.com/ziziandydy/storio_2/commit/7b243a5df5dfc5a2467535df02947400dd60284c))
+
+
+### Bug 修復 (Bug Fixes)
+
+* **collection:** created_at 為 None 時 pop，避免覆蓋 DB default 成 null ([ba3723f](https://github.com/ziziandydy/storio_2/commit/ba3723f9e758a085541b555070eecafe24ecd263))
+* **nav:** AddToFolioModal 內部導航改 router.push（修 Capacitor 跳首頁 bug） ([bf31198](https://github.com/ziziandydy/storio_2/commit/bf31198d4e9e308ffe0b84e1849c995f56e7256f))
+
 ## [1.14.0](https://github.com/ziziandydy/storio_2/compare/v1.13.0...v1.14.0) (2026-06-04)
 
 
