@@ -1,6 +1,22 @@
 # Storio 專案待辦清單與未來優化 (Backlog & Future Improvements)
 
-最後更新：2026-06-03
+最後更新：2026-06-07
+
+---
+
+## 🎉 里程碑：v1.15.0（2026-06-07 真機驗證通過）
+
+v1.14.0 上線後真機回報的三個 bug 修復 + 後端測試 CI，已完成並真機驗證。
+
+### ✅ 本批完成
+
+1. **後端測試 CI（P0）**：`.github/workflows/backend-tests.yml`，push/PR 觸發 pytest（dummy env，36 tests）。發版安全網第一層。
+2. **導航 bug（P1）**：`AddToFolioModal` 內部導航 `window.location.href` → Next `router.push`，修 Capacitor 靜態 export 下「Go to my Storio 跳首頁」。
+3. **通知 Primer polish（P2）**：Primer enable 成功後 `onComplete` 關卡片；`@capacitor/app` `appStateChange` 在 app 回前台重新檢查權限自動同步（修 13.5「deny→系統設定開→回 app 無反應」閉環）。OpenSpec 歸檔。
+4. **時區修復（P3）**：方案 C 拆欄位——collections 新增 `archived_date` (date) 純日期欄位，`created_at` 收斂為建立時間。前端 `dateUtils` 全程無時區偏移。修「選 30 顯示 29」（負時區）。含 Supabase migration（dev+prod 已執行）。OpenSpec 歸檔。
+5. **額外抓到**：`created_at` 為 None 覆蓋 DB default 成 null 的回歸（模擬器驗證時發現，上線前修掉）。
+
+**版號**：v1.15.0（build 15）。OpenSpec specs 新增 `collection-date-model`、更新 `local-notifications`。
 
 ---
 
