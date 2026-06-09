@@ -1,24 +1,26 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { SplashScreen as NativeSplash } from '@capacitor/splash-screen';
 
 export default function SplashScreen({ onComplete }: { onComplete?: () => void }) {
   const [isVisible, setIsVisible] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    // Hide native splash screen as soon as our web splash is ready
     NativeSplash.hide().catch(console.error);
 
-    // Video length seems to be around 3-4 seconds based on typical splashes.
-    // We set a timeout to fade it out. 
-    // Ideally we listen to 'onended' event of video, but timeout is smoother for UI transitions.
-    // Video is approx 4s. We want fade out to start at 2.5s and last 2s.
-    // Total time until unmount = 4.5s
+    // iOS WKWebView: React's muted prop doesn't always set the DOM property,
+    // which blocks autoplay. Set muted imperatively and call play() explicitly.
+    const video = videoRef.current;
+    if (video) {
+      video.muted = true;
+      video.play().catch(() => {});
+    }
+
     const timer = setTimeout(() => {
       setIsVisible(false);
-      // Wait for exit animation (2.0s) to finish before unmounting from parent
       setTimeout(() => {
         if (onComplete) onComplete();
       }, 2000);
@@ -35,12 +37,12 @@ export default function SplashScreen({ onComplete }: { onComplete?: () => void }
           transition={{ duration: 2.0, ease: "easeInOut" }}
         >
           <video
+            ref={videoRef}
             src="/video/splash.mp4"
             autoPlay
             muted
             playsInline
             className="w-full max-w-md object-contain"
-            // Ensure it covers screen on mobile but contains on desktop
             style={{ maxHeight: '80vh' }}
           />
         </motion.div>

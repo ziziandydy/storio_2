@@ -15,7 +15,7 @@ import NotificationBanner from '@/components/NotificationBanner';
 const LAST_SCHEDULED_KEY = 'storio_notif_last_scheduled';
 
 export default function AppOpenReset() {
-  const { token, loading: authLoading } = useAuth();
+  const { user, token, loading: authLoading } = useAuth();
   const {
     notifEnabled, notifLogStory, notifFolioReflection,
     language, notifPrimerDismissCount, notifPrimerLastDismissedAt,
@@ -40,8 +40,12 @@ export default function AppOpenReset() {
 
       // 2. 讀取用戶狀態（一律讀，用於 Primer 與排程判斷）
       const resolvedLang = language === 'system' ? 'zh-TW' : language as 'zh-TW' | 'en-US';
+      const username = user?.user_metadata?.display_name
+        || user?.user_metadata?.full_name
+        || user?.user_metadata?.name
+        || '';
       const state = await notificationManager.fetchNotificationState(
-        token, '', resolvedLang, notifEnabled, notifLogStory, notifFolioReflection
+        token, username, resolvedLang, notifEnabled, notifLogStory, notifFolioReflection
       );
 
       // 3. 排程通知（主開關開啟且今天尚未排程）
