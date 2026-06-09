@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.15.1](https://github.com/ziziandydy/storio_2/compare/v1.15.0...v1.15.1) (2026-06-09)
+
+
+### Bug 修復 (Bug Fixes)
+
+* **ios:** video autoplay + notification username ([1735200](https://github.com/ziziandydy/storio_2/commit/173520047991ccf36154cdddd938e8bfa4aec22c))
+
 ## [1.15.0](https://github.com/ziziandydy/storio_2/compare/v1.14.0...v1.15.0) (2026-06-06)
 
 
