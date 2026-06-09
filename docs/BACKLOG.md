@@ -1,6 +1,19 @@
 # Storio 專案待辦清單與未來優化 (Backlog & Future Improvements)
 
-最後更新：2026-06-07
+最後更新：2026-06-09
+
+---
+
+## 🎉 里程碑：v1.15.1（2026-06-09 送審 App Store）
+
+真機回報兩個潛伏 bug（splash autoplay + 通知用戶名），build 17 已送審。
+
+### ✅ 本批完成
+
+1. **Splash 影片不自動播放**：`SplashScreen.tsx` 加 `videoRef`，在 `useEffect` 強制設 `video.muted = true` 並呼叫 `video.play()`。根因：React `muted` prop 只設 HTML attribute，不設 DOM property，iOS WKWebView autoplay 判斷 DOM property，故自動播放被擋（並出現播放鍵）。
+2. **通知文字缺少用戶名稱**：`AppOpenReset.tsx` 從 `useAuth()` 取 `user`，讀 `user_metadata.display_name`（fallback `full_name` → `name` → `''`）傳給 `fetchNotificationState`。根因：第二個參數一直是空字串 `''`。
+
+**版號**：v1.15.1（build 17）。
 
 ---
 
