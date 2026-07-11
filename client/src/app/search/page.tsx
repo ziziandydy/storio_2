@@ -45,12 +45,9 @@ function SearchContent() {
   const searchMode = searchModeIndex % 3 as 0 | 1 | 2; // Actual mode for logic (0: Auto, 1: AI, 2: Keyword)
   const touchStartX = useRef<number>(0);
 
-  // Semantic Intent Detection (Auto Mode)
-  // 只有明確的描述性/意圖關鍵字才觸發 AI Search，長度不作為判斷依據（避免精確標題誤判）
-  const isSemanticQuery = (q: string) => /怎麼|什麼|關於|想要|推薦|年代|哪部|哪一|有沒有|類似|風格|氛圍|心情|感覺/.test(q);
-  const isAutoSemantic = searchMode === 0 && isSemanticQuery(query);
-  const actualSearchMode = searchMode === 0 ? (isAutoSemantic ? 1 : 2) : searchMode;
-  const isAiSearch = searchMode === 1 || isAutoSemantic;
+  // Auto 模式（searchMode === 0）一律先跑 keyword 搜尋，
+  // 結果經當前分頁過濾後為空時才 fallback 到 AI（見 fetch effect）
+  const isAiSearch = searchMode === 1;
   const { token, loading: authLoading } = useAuth();
   const { showToast } = useToast();
   const { t } = useTranslation();
@@ -162,8 +159,15 @@ function SearchContent() {
         const data = await res.json();
         const primaryResults = data.results ?? [];
 
-        // Keyword search 空結果時，自動 fallback 到 AI Search 尋找相似作品
-        if (primaryResults.length === 0 && !isAiSearch) {
+        // Auto 模式：keyword 結果依當前分頁過濾後為空時，才 fallback 到 AI Search
+        // （Keyword 模式不 fallback，空結果就顯示 No Results）
+        const visibleResults = primaryResults.filter((item: StoryResult) =>
+          filter === 'book'
+            ? item.media_type === 'book'
+            : item.media_type === 'movie' || item.media_type === 'tv'
+        );
+
+        if (visibleResults.length === 0 && searchMode === 0) {
           const aiRes = await fetch(getApiUrl(`/api/v1/search/ai`), {
             method: 'POST',
             headers: {
