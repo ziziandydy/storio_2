@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, Suspense, useRef } from 'react';
-import { Search, Loader2, ArrowLeft, Bookmark, Film, BookOpen, Ticket, X, ArrowUp, Sparkles } from 'lucide-react';
+import { Loader2, ArrowLeft, Film, BookOpen, Ticket, X, ArrowUp } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
