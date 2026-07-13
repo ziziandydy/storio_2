@@ -1,6 +1,6 @@
 ## 1. 前置驗證（先消風險再蓋 UI）
 
-- [ ] 1.1 iOS 模擬器驗證 `router.back()` 跨頁 back stack：details → search → back 是否正確回到原 details（scroll/狀態）；記錄結論，不通過則後續採 `router.push` 帶來源參數返回（D5）
+- [x] 1.1 **決策（未跑模擬器 spike）**：目前無開啟中的模擬器與 webinspectord_sim socket，重新起完整 CDP 驗證環境屬獨立操作任務且過去有踩雷紀錄。直接採用 D5 已規格化的安全 fallback：**`router.push` 帶來源 `type`/`id` 參數返回**（不依賴 `router.back()` 跨頁 back stack 的不確定行為）。此路徑本就是 design.md 明文核准的備援選項，行為確定、可測試，故跳過 spike 直接採用。
 
 ## 2. 後端：schema 與 refs（TDD）
 
