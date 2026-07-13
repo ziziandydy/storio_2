@@ -42,6 +42,15 @@ function SearchContent() {
   const [loading, setLoading] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
   const [filter, setFilter] = useState<'movie' | 'book' | 'tv'>(initialFilter);
+  // 精準參數（chips 帶入）：只在初次掛載讀 URL 一次；之後只由 handleSubmit 同步清除，
+  // 不即時讀 searchParams——避免 router.replace 的 transition 提交時序與 setDebouncedQuery
+  // 不同步，造成「改字重搜」時 fetch 仍夾帶舊參數且不會自我修正的 race condition。
+  const [preciseParams, setPreciseParams] = useState(() => ({
+    pid: searchParams.get('pid'),
+    cid: searchParams.get('cid'),
+    gid: searchParams.get('gid'),
+    author: searchParams.get('author'),
+  }));
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [searchModeIndex, setSearchModeIndex] = useState<number>(3); // Start at middle block: 0, 1, 2, [3, 4, 5], 6, 7, 8
@@ -99,6 +108,7 @@ function SearchContent() {
     const currentVal = inputRef.current?.value || '';
     setQuery(currentVal);
     setDebouncedQuery(currentVal);
+    setPreciseParams({ pid: null, cid: null, gid: null, author: null });
 
     const params = new URLSearchParams(searchParams.toString());
     if (currentVal) params.set('q', currentVal);
@@ -134,11 +144,9 @@ function SearchContent() {
         return;
       }
 
-      // 精準參數（來自 details 頁 chips 點擊）：存在時一律走標準搜尋、不觸發 AI fallback
-      const pid = searchParams.get('pid');
-      const cid = searchParams.get('cid');
-      const gid = searchParams.get('gid');
-      const author = searchParams.get('author');
+      // 精準參數（來自 details 頁 chips 點擊）：讀本地 state 而非即時 searchParams，
+      // 避免 router.replace 清除 URL 參數的 transition 提交時序落後於 debouncedQuery 更新
+      const { pid, cid, gid, author } = preciseParams;
       const hasPreciseParams = !!(pid || cid || gid || author);
 
       setLoading(true);
