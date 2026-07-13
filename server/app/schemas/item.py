@@ -59,6 +59,11 @@ class StreamingProvider(BaseModel):
     logo_path: str
     type: str # 'flatrate', 'rent', 'buy'
 
+class EntityRef(BaseModel):
+    """TMDB entity 參照（人物/公司/類型），供 discover 精準查詢使用（add-person-search）。"""
+    id: int
+    name: str
+
 class ItemDetailResponse(StoryBase):
     overview: Optional[str] = None
     synopsis: Optional[str] = None
@@ -88,6 +93,11 @@ class ItemDetailResponse(StoryBase):
     runtime: Optional[str] = None
     public_rating: Optional[float] = None
     backdrop_path: Optional[str] = None
+    # Entity refs（additive，TMDB numeric ID，供精準 discover 查詢用；不影響既有字串欄位）
+    cast_refs: List[EntityRef] = []
+    director_refs: List[EntityRef] = []
+    genre_refs: List[EntityRef] = []
+    company_refs: List[EntityRef] = []
 
 class StoryCheckResponse(BaseModel):
     exists: bool

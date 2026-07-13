@@ -8,7 +8,7 @@ from typing import List, Optional
 logger = logging.getLogger(__name__)
 
 _HTTPX_TIMEOUT = httpx.Timeout(connect=5.0, read=15.0, write=5.0, pool=5.0)
-from app.schemas.item import StoryBase, ItemDetailResponse, Review, MediaAsset
+from app.schemas.item import StoryBase, ItemDetailResponse, Review, MediaAsset, EntityRef
 from app.core.config import settings
 from app.services.ai_recommendation_service import AIRecommendationService
 from app.services.trending_service import TrendingService
@@ -131,22 +131,31 @@ class SearchService:
             subtype = "tv" if is_tv else "movie"
 
             # Cast & Crew
-            cast_list = [person.get("name") for person in data.get("credits", {}).get("cast", [])[:5]]
-            directors = [person.get("name") for person in data.get("credits", {}).get("crew", []) if person.get("job") == "Director"]
+            top_cast = data.get("credits", {}).get("cast", [])[:5]
+            cast_list = [person.get("name") for person in top_cast]
+            cast_refs = [EntityRef(id=person.get("id"), name=person.get("name")) for person in top_cast]
+
+            crew_directors = [person for person in data.get("credits", {}).get("crew", []) if person.get("job") == "Director"]
+            directors = [person.get("name") for person in crew_directors]
+            director_refs = [EntityRef(id=person.get("id"), name=person.get("name")) for person in crew_directors]
             # For TV, creators usually
             if subtype == 'tv':
-                directors.extend([person.get("name") for person in data.get("created_by", [])])
+                created_by = data.get("created_by", [])
+                directors.extend([person.get("name") for person in created_by])
+                director_refs.extend([EntityRef(id=person.get("id"), name=person.get("name")) for person in created_by])
 
             # Details
             origin_country = data.get("origin_country", [])
             if not origin_country and data.get("production_countries"):
                 origin_country = [c.get("iso_3166_1") for c in data.get("production_countries")]
-            
+
             country_str = origin_country[0] if origin_country else None
-            
+
             original_lang = data.get("original_language")
             spoken_langs = [l.get("english_name") or l.get("name") for l in data.get("spoken_languages", [])]
             production_companies = [c.get("name") for c in data.get("production_companies", [])]
+            company_refs = [EntityRef(id=c.get("id"), name=c.get("name")) for c in data.get("production_companies", [])]
+            genre_refs = [EntityRef(id=g.get("id"), name=g.get("name")) for g in data.get("genres", [])]
 
             # Streaming Providers
             streaming_providers = []
@@ -244,7 +253,11 @@ class SearchService:
                 genres=[g.get("name") for g in data.get("genres", [])],
                 public_rating=data.get("vote_average"),
                 top_reviews=reviews,
-                reviews=reviews
+                reviews=reviews,
+                cast_refs=cast_refs,
+                director_refs=director_refs,
+                genre_refs=genre_refs,
+                company_refs=company_refs
             )
         except Exception as e:
             logger.error("TMDB detail fetch failed: %s", e)

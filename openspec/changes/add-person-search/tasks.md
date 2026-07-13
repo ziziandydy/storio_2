@@ -4,10 +4,10 @@
 
 ## 2. 後端：schema 與 refs（TDD）
 
-- [ ] 2.1 撰寫 `ItemDetailResponse` refs 欄位測試：details 回傳含 `cast_refs`/`director_refs`/`genre_refs`/`company_refs`（`{id,name}`），且既有字串欄位內容不變
-- [ ] 2.2 `server/app/schemas/item.py` 新增 `EntityRef` model 與四個 `*_refs` 欄位（additive，預設空陣列）
-- [ ] 2.3 `_fetch_tmdb_details` 保留 TMDB ID：組 cast/directors/genres/production_companies 時同步填入 `*_refs`（directors 含 TV created_by）
-- [ ] 2.4 跑測試綠 + 確認書籍 details 不受影響（authors 維持字串陣列）
+- [x] 2.1 撰寫 `ItemDetailResponse` refs 欄位測試：details 回傳含 `cast_refs`/`director_refs`/`genre_refs`/`company_refs`（`{id,name}`），且既有字串欄位內容不變
+- [x] 2.2 `server/app/schemas/item.py` 新增 `EntityRef` model 與四個 `*_refs` 欄位（additive，預設空陣列）
+- [x] 2.3 `_fetch_tmdb_details` 保留 TMDB ID：組 cast/directors/genres/production_companies 時同步填入 `*_refs`（directors 含 TV created_by）
+- [x] 2.4 跑測試綠 + 確認書籍 details 不受影響（authors 維持字串陣列）
 
 ## 3. 後端：標準搜尋擴充——人名偵測 + 精準參數（TDD）
 
