@@ -21,18 +21,18 @@
 
 ## 4. 前端：details 頁 chips
 
-- [ ] 4.1 `StoryDetailsView.tsx`：cast pills 與 genre pills 加 onClick，讀 `*_refs` 導向 `/search?q=<名稱>&pid=...`（或 `gid`；名稱 `encodeURIComponent`；影視帶 Movies/Series 分頁、書籍帶 Books 分頁）
-- [ ] 4.2 directors/creators 由 `join(', ')` 純文字重寫為 chip 元素列
-- [ ] 4.3 Studio 區塊由單一 `production_companies[0]` 擴充為完整清單 chips（`cid`）
-- [ ] 4.4 書籍 authors 變為可點 chips（`q=<作者>&author=<作者>`）
-- [ ] 4.5 `*_refs` 缺失時（舊快取/例外）chips 降級為不可點純顯示，不壞版
+- [x] 4.1 `StoryDetailsView.tsx`：cast pills 與 genre pills 加 onClick，讀 `*_refs` 導向 `/search?q=<名稱>&pid=...`（或 `gid`；名稱 `encodeURIComponent`；影視帶 Movies/Series 分頁、書籍帶 Books 分頁）
+- [x] 4.2 directors/creators 由 `join(', ')` 純文字重寫為 chip 元素列
+- [x] 4.3 Studio 區塊由單一 `production_companies[0]` 擴充為完整清單 chips（`cid`）
+- [x] 4.4 書籍 authors 變為可點 chips（`q=<作者>&author=<作者>`）
+- [x] 4.5 `*_refs` 缺失時（舊快取/例外）chips 降級為不可點純顯示，不壞版
 
 ## 5. 前端：搜尋頁參數透傳
 
-- [ ] 5.1 `search/page.tsx` 解析 `pid`/`cid`/`gid`/`author`：進頁以 `q` 填入輸入框並直接載入結果；fetch 時透傳精準參數
-- [ ] 5.2 帶精準參數時空結果顯示既有 No Results，確認無 `/search/ai` 請求；使用者修改文字重新送出時清除精準參數（回歸自由搜尋）
-- [ ] 5.3 返回動線依 1.1 結論實作（back 或 push），驗證回到原 details 頁正常渲染
-- [ ] 5.4 `npm run lint && npx tsc --noEmit` 乾淨
+- [x] 5.1 `search/page.tsx` 解析 `pid`/`cid`/`gid`/`author`：進頁以 `q` 填入輸入框並直接載入結果；fetch 時透傳精準參數
+- [x] 5.2 帶精準參數時空結果顯示既有 No Results，確認無 `/search/ai` 請求；使用者修改文字重新送出時清除精準參數（回歸自由搜尋）
+- [x] 5.3 返回動線依 1.1 結論實作（back 或 push），驗證回到原 details 頁正常渲染
+- [x] 5.4 `npm run lint && npx tsc --noEmit` 乾淨
 
 ## 6. 驗證與收尾
 

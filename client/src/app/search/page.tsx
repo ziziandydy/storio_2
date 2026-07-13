@@ -31,6 +31,9 @@ function SearchContent() {
   // Initialize state from URL params
   const initialQuery = searchParams.get('q') || '';
   const initialFilter = (searchParams.get('filter') as 'movie' | 'book' | 'tv') || 'movie';
+  // 來源頁參數（從 details 頁 chips 點擊進入時帶入）：讓返回鈕導回來源 details 頁而非首頁
+  const fromType = searchParams.get('from_type');
+  const fromId = searchParams.get('from_id');
 
   // We use uncontrolled input for the search field to avoid CJK composition issues
   // query state is still used for triggering the search via debouncedQuery
@@ -102,6 +105,13 @@ function SearchContent() {
     else params.delete('q');
     params.set('filter', filter);
 
+    // 使用者手動修改查詢並重新送出：清除 chips 帶入的精準參數，回歸自由搜尋
+    params.delete('pid');
+    params.delete('cid');
+    params.delete('gid');
+    params.delete('author');
+    // from_type/from_id 不要刪除——返回動線在同一次頁面停留期間應持續有效，即使使用者中途改字重搜。
+
     router.replace(`/search?${params.toString()}`, { scroll: false });
   };
 
@@ -124,10 +134,17 @@ function SearchContent() {
         return;
       }
 
+      // 精準參數（來自 details 頁 chips 點擊）：存在時一律走標準搜尋、不觸發 AI fallback
+      const pid = searchParams.get('pid');
+      const cid = searchParams.get('cid');
+      const gid = searchParams.get('gid');
+      const author = searchParams.get('author');
+      const hasPreciseParams = !!(pid || cid || gid || author);
+
       setLoading(true);
       try {
         let res;
-        if (isAiSearch) {
+        if (isAiSearch && !hasPreciseParams) {
           // AI Search Endpoint
           res = await fetch(getApiUrl(`/api/v1/search/ai`), {
             method: 'POST',
@@ -142,8 +159,13 @@ function SearchContent() {
             })
           });
         } else {
-          // Standard Search Endpoint
-          res = await fetch(getApiUrl(`/api/v1/search/?q=${encodeURIComponent(debouncedQuery)}`), {
+          // Standard Search Endpoint（含精準參數透傳）
+          const params = new URLSearchParams({ q: debouncedQuery });
+          if (pid) params.set('pid', pid);
+          if (cid) params.set('cid', cid);
+          if (gid) params.set('gid', gid);
+          if (author) params.set('author', author);
+          res = await fetch(getApiUrl(`/api/v1/search/?${params.toString()}`), {
             headers: {
               'Accept-Language': language,
               'X-Region': region,
@@ -167,7 +189,7 @@ function SearchContent() {
             : item.media_type === 'movie' || item.media_type === 'tv'
         );
 
-        if (visibleResults.length === 0 && searchMode === 0) {
+        if (visibleResults.length === 0 && searchMode === 0 && !hasPreciseParams) {
           const aiRes = await fetch(getApiUrl(`/api/v1/search/ai`), {
             method: 'POST',
             headers: {
@@ -199,6 +221,15 @@ function SearchContent() {
 
     fetchResults();
   }, [debouncedQuery]);
+
+  // 返回動線：有來源 details 頁參數時導回該頁，否則維持原本「回首頁」行為
+  const handleBackNav = () => {
+    if (fromType && fromId) {
+      router.push(`/details?type=${encodeURIComponent(fromType)}&id=${encodeURIComponent(fromId)}`);
+    } else {
+      router.push('/');
+    }
+  };
 
   const openAddModal = (item: StoryResult) => {
     setSelectedStory(item);
@@ -283,9 +314,9 @@ function SearchContent() {
       <div className="fixed top-0 left-0 right-0 h-[var(--sa-top)] bg-folio-black z-[100] pointer-events-none" />
       {/* Top Header - Minimal Back Button */}
       <header className="fixed top-[var(--sa-top)] left-0 right-0 z-30 p-6 flex justify-between items-center bg-gradient-to-b from-folio-black/90 to-transparent pointer-events-none">
-        <Link href="/" className="pointer-events-auto text-text-desc hover:text-white transition-colors bg-white/5 p-3 rounded-full backdrop-blur-md border border-white/5 hover:bg-white/10">
+        <button onClick={handleBackNav} className="pointer-events-auto text-text-desc hover:text-white transition-colors bg-white/5 p-3 rounded-full backdrop-blur-md border border-white/5 hover:bg-white/10">
           <ArrowLeft size={20} />
-        </Link>
+        </button>
         <Link href="/collection" className="pointer-events-auto text-[10px] font-bold tracking-[0.2em] uppercase text-text-desc hover:text-accent-gold transition-colors bg-white/5 px-4 py-2 rounded-full backdrop-blur-md border border-white/5 hover:bg-white/10">
           {t.home.myFolio}
         </Link>

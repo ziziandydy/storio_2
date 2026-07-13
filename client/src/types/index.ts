@@ -20,6 +20,11 @@ export interface StreamingProvider {
   type: 'flatrate' | 'rent' | 'buy';
 }
 
+export interface EntityRef {
+  id: number;
+  name: string;
+}
+
 export interface ItemDetail {
   id?: string;
   title: string;
@@ -54,6 +59,12 @@ export interface ItemDetail {
   subtitle?: string;
   page_count?: number;
   publisher?: string;
+
+  // Person/Studio/Genre 精準搜尋用 refs（與對應字串陣列同順序 index-aligned）
+  cast_refs?: EntityRef[];
+  director_refs?: EntityRef[];
+  genre_refs?: EntityRef[];
+  company_refs?: EntityRef[];
 
   streaming_providers?: StreamingProvider[];
   related_media?: {

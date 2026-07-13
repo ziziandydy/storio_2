@@ -7,6 +7,7 @@ import {
   ChevronRight, Info, Play, Copy
 } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { ItemDetail } from '@/types';
 import { useToast } from '@/components/ToastProvider';
@@ -23,6 +24,7 @@ interface StoryDetailsViewProps {
 
 export default function StoryDetailsView({ item, showAddButton = true, onAddClick, onBack }: StoryDetailsViewProps) {
   const { t } = useTranslation();
+  const router = useRouter();
   const { showToast } = useToast();
   const [isExpanded, setIsExpanded] = React.useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = React.useState(false);
@@ -52,6 +54,37 @@ export default function StoryDetailsView({ item, showAddButton = true, onAddClic
       navigator.clipboard.writeText(item.isbn);
       showToast("ISBN Copied", "success");
     }
+  };
+
+  // 導向 Explore 搜尋頁：q 為顯示名稱，精準參數視 refs 是否存在決定是否附加。
+  // from_type/from_id 讓搜尋頁的返回鈕能導回本頁（不依賴瀏覽器 back stack）。
+  const goToEntitySearch = (name: string, params: Record<string, string> = {}) => {
+    const sp = new URLSearchParams();
+    sp.set('q', name);
+    Object.entries(params).forEach(([k, v]) => sp.set(k, v));
+    sp.set('filter', item.media_type === 'book' ? 'book' : 'movie');
+    sp.set('from_type', item.media_type);
+    sp.set('from_id', item.external_id);
+    router.push(`/search?${sp.toString()}`);
+  };
+
+  const goToPersonSearch = (name: string, id?: number) => {
+    if (item.media_type === 'book') {
+      goToEntitySearch(name, { author: name });
+    } else if (id) {
+      goToEntitySearch(name, { pid: String(id) });
+    }
+    // id 缺失且非書籍：不可點（B4/B5/B3 的 JSX 已用 disabled/無 onClick 擋掉，這裡是防禦）
+  };
+
+  const goToCompanySearch = (name: string, id?: number) => {
+    if (!id) return;
+    goToEntitySearch(name, { cid: String(id) });
+  };
+
+  const goToGenreSearch = (name: string, id?: number) => {
+    if (!id) return;
+    goToEntitySearch(name, { gid: String(id) });
   };
 
   const streamProviders = item.streaming_providers?.filter(p => p.type === 'flatrate') || [];
@@ -121,11 +154,19 @@ export default function StoryDetailsView({ item, showAddButton = true, onAddClic
           {/* Genres Row */}
           {item.genres && item.genres.length > 0 && (
             <div className="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide">
-              {item.genres.map(genre => (
-                <span key={genre} className="whitespace-nowrap px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[10px] font-bold uppercase tracking-wider text-text-secondary">
-                  {genre}
-                </span>
-              ))}
+              {item.genres.map((genre, i) => {
+                const ref = item.genre_refs?.[i];
+                const clickable = !!ref;
+                return (
+                  <span
+                    key={genre + i}
+                    onClick={clickable ? () => goToGenreSearch(genre, ref!.id) : undefined}
+                    className={`whitespace-nowrap px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[10px] font-bold uppercase tracking-wider text-text-secondary ${clickable ? 'cursor-pointer hover:bg-white/10 hover:border-accent-gold/40 transition-colors' : ''}`}
+                  >
+                    {genre}
+                  </span>
+                );
+              })}
             </div>
           )}
 
@@ -133,7 +174,22 @@ export default function StoryDetailsView({ item, showAddButton = true, onAddClic
             {showCreators.length > 0 && (
               <div className="flex flex-col gap-1">
                 <span className="text-[10px] uppercase tracking-widest text-text-desc font-bold opacity-50">{creatorLabel}</span>
-                <span className="text-white text-base">{showCreators.join(', ')}</span>
+                <div className="flex flex-wrap gap-2">
+                  {showCreators.map((name, i) => {
+                    const isBook = item.media_type === 'book';
+                    const ref = isBook ? undefined : item.director_refs?.[i];
+                    const clickable = isBook || !!ref;
+                    return (
+                      <span
+                        key={name + i}
+                        onClick={clickable ? () => goToPersonSearch(name, ref?.id) : undefined}
+                        className={`text-white text-base ${clickable ? 'cursor-pointer hover:text-accent-gold transition-colors' : ''}`}
+                      >
+                        {name}{i < showCreators.length - 1 ? '、' : ''}
+                      </span>
+                    );
+                  })}
+                </div>
               </div>
             )}
             {item.year && (
@@ -190,12 +246,29 @@ export default function StoryDetailsView({ item, showAddButton = true, onAddClic
               )}
 
               {/* Shared: Studio / Publisher */}
-              {(item.production_companies?.length ?? 0) > 0 || item.publisher ? (
+              {(item.production_companies?.length ?? 0) > 0 ? (
+                <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex flex-col justify-center overflow-hidden col-span-2 md:col-span-1">
+                  <span className="text-[9px] text-text-desc uppercase tracking-widest mb-2">{t.details.studio}</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {item.production_companies!.map((name, i) => {
+                      const ref = item.company_refs?.[i];
+                      const clickable = !!ref;
+                      return (
+                        <span
+                          key={name + i}
+                          onClick={clickable ? () => goToCompanySearch(name, ref!.id) : undefined}
+                          className={`px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-[10px] font-bold text-white/90 ${clickable ? 'cursor-pointer hover:bg-white/10 hover:border-accent-gold/40 transition-colors' : ''}`}
+                        >
+                          {name}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : item.publisher ? (
                 <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex flex-col justify-center overflow-hidden">
-                  <span className="text-[9px] text-text-desc uppercase tracking-widest mb-1">{item.media_type === 'book' ? t.details.publisher : t.details.studio}</span>
-                  <span className="text-white font-bold truncate block w-full" title={item.publisher || item.production_companies?.[0]}>
-                    {item.publisher || item.production_companies?.[0]}
-                  </span>
+                  <span className="text-[9px] text-text-desc uppercase tracking-widest mb-1">{t.details.publisher}</span>
+                  <span className="text-white font-bold truncate block w-full" title={item.publisher}>{item.publisher}</span>
                 </div>
               ) : null}
 
@@ -279,11 +352,19 @@ export default function StoryDetailsView({ item, showAddButton = true, onAddClic
                   {t.details.cast}
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {item.cast.map((person, i) => (
-                    <span key={i} className="px-4 py-2 bg-white/5 border border-white/5 rounded-full text-sm text-text-primary hover:bg-white/10 transition-colors">
-                      {person}
-                    </span>
-                  ))}
+                  {item.cast.map((person, i) => {
+                    const ref = item.cast_refs?.[i];
+                    const clickable = !!ref;
+                    return (
+                      <span
+                        key={i}
+                        onClick={clickable ? () => goToPersonSearch(person, ref!.id) : undefined}
+                        className={`px-4 py-2 bg-white/5 border border-white/5 rounded-full text-sm text-text-primary transition-colors ${clickable ? 'cursor-pointer hover:bg-white/10 hover:border-accent-gold/40' : 'hover:bg-white/10'}`}
+                      >
+                        {person}
+                      </span>
+                    );
+                  })}
                 </div>
               </section>
             )}
