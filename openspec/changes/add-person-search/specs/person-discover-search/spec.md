@@ -24,7 +24,11 @@ The details API（`GET /api/v1/search/details/{media_type}/{external_id}`）SHAL
 
 #### Scenario: 輸入為一般標題不誤判
 - **WHEN** 使用者輸入某作品標題且標題命中有結果
-- **THEN** 回傳標題搜尋結果，不因 multi 含人物而切換為人物作品
+- **THEN** 回傳標題搜尋結果，不因 multi 含人物而切換為人物作品（「標題命中優先」規則**僅適用自由輸入**）
+
+#### Scenario: chip 點擊不受標題命中優先影響
+- **WHEN** 使用者點擊的人名 chip 恰好也是某作品標題（如《Amélie》），請求帶 `pid`
+- **THEN** 一律以人物查詢（`with_people`）回傳該人作品，完全跳過偵測與標題搜尋
 
 ### Requirement: Precise Entity Query Parameters
 標準搜尋 SHALL 支援選用參數 `pid`（TMDB person ID）、`cid`（company ID）、`gid`（genre ID）、`author`（作者名稱）：任一存在時 MUST 跳過人名偵測，直接執行對應查詢（`with_people`/`with_companies`/`with_genres`/`inauthor:`）。`cid`/`gid` 不支援書籍（book 範疇忽略或回空）。schema MUST 新增 `with_people`、`with_companies` discover 欄位。
