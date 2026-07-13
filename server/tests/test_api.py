@@ -30,8 +30,9 @@ def test_search_endpoint(mock_search):
     assert len(data["results"]) == 2
     assert data["results"][0]["title"] == "Integration Test Movie"
     
-    # Verify the mock was called correctly（search endpoint 後來新增 region 參數，預設 TW）
-    mock_search.assert_called_once_with(query="Test", language="zh-TW", region="TW")
+    # Verify the mock was called correctly（search endpoint 後來新增 region 參數，預設 TW；
+    # Group 3 再新增 pid/cid/gid/author 精準查詢參數，endpoint 一律透傳，預設皆為 None）
+    mock_search.assert_called_once_with(query="Test", language="zh-TW", region="TW", pid=None, cid=None, gid=None, author=None)
 
 def test_search_validation_empty():
     # FastAPI should handle validation (min_length=1)

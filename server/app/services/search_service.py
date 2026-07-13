@@ -481,27 +481,90 @@ class SearchService:
             return None
 
     @staticmethod
-    async def search_tmdb(client: httpx.AsyncClient, query: str, language: str = "zh-TW", region: str = "TW") -> List[StoryBase]:
+    async def search_tmdb(client: httpx.AsyncClient, query: str, language: str = "zh-TW", region: str = "TW",
+                           pid: Optional[int] = None, cid: Optional[int] = None, gid: Optional[int] = None) -> List[StoryBase]:
+        # 精準參數優先：帶 pid/cid/gid 任一時，跳過搜尋與人名偵測，直接查 discover
+        if pid or cid or gid:
+            return await SearchService._discover_tmdb(client, language, region, with_people=pid, with_companies=cid, with_genres=gid)
+
         headers = {}
         params = {"query": query, "language": language, "region": region}
         if settings.TMDB_ACCESS_TOKEN: headers["Authorization"] = f"Bearer {settings.TMDB_ACCESS_TOKEN}"
         elif settings.TMDB_API_KEY: params["api_key"] = settings.TMDB_API_KEY
         else: return []
-        
+
         try:
-            # Search both movies and TV shows
-            movie_task = client.get(f"{SearchService.BASE_URL_TMDB}/search/movie", params=params, headers=headers)
-            tv_task = client.get(f"{SearchService.BASE_URL_TMDB}/search/tv", params=params, headers=headers)
-            
+            # TMDB 沒有通用模式：改打 search/multi，一次涵蓋 movie/tv/person
+            response = await client.get(f"{SearchService.BASE_URL_TMDB}/search/multi", params=params, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+            raw_results = data.get("results", [])
+
+            # 篩出標題命中（movie/tv），無海報過濾
+            title_results = []
+            for item in raw_results:
+                media_type = item.get("media_type")
+                if media_type == "movie":
+                    poster = f"https://image.tmdb.org/t/p/w500{item['poster_path']}" if item.get('poster_path') else None
+                    title_results.append(StoryBase(
+                        title=item.get("title", "Unknown"),
+                        media_type="movie",
+                        year=SearchService._extract_year(item.get("release_date")),
+                        external_id=str(item.get("id")),
+                        poster_path=poster,
+                        source="tmdb"
+                    ))
+                elif media_type == "tv":
+                    poster = f"https://image.tmdb.org/t/p/w500{item['poster_path']}" if item.get('poster_path') else None
+                    title_results.append(StoryBase(
+                        title=item.get("name", "Unknown"),
+                        media_type="tv",
+                        year=SearchService._extract_year(item.get("first_air_date")),
+                        external_id=str(item.get("id")),
+                        poster_path=poster,
+                        source="tmdb"
+                    ))
+
+            # 標題命中優先，不做人物 fallback
+            if title_results:
+                return title_results
+
+            # 標題無命中：若首位結果是人物，轉查其完整作品清單（discover）
+            if raw_results and raw_results[0].get("media_type") == "person":
+                person_id = raw_results[0].get("id")
+                return await SearchService._discover_tmdb(client, language, region, with_people=person_id)
+
+            return []
+        except Exception as e:
+            logger.error("TMDB search failed: %s", e)
+            return []
+
+    @staticmethod
+    async def _discover_tmdb(client: httpx.AsyncClient, language: str = "zh-TW", region: str = "TW",
+                              with_people: Optional[int] = None, with_companies: Optional[int] = None,
+                              with_genres: Optional[int] = None) -> List[StoryBase]:
+        """依人物/公司/類型 ID 精準查詢 TMDB discover（movie + tv 並行），完整作品清單用。"""
+        headers = {}
+        params = {"language": language, "region": region, "sort_by": "popularity.desc"}
+        if with_people: params["with_people"] = with_people
+        if with_companies: params["with_companies"] = with_companies
+        if with_genres: params["with_genres"] = with_genres
+        if settings.TMDB_ACCESS_TOKEN: headers["Authorization"] = f"Bearer {settings.TMDB_ACCESS_TOKEN}"
+        elif settings.TMDB_API_KEY: params["api_key"] = settings.TMDB_API_KEY
+        else: return []
+
+        try:
+            movie_task = client.get(f"{SearchService.BASE_URL_TMDB}/discover/movie", params=params, headers=headers)
+            tv_task = client.get(f"{SearchService.BASE_URL_TMDB}/discover/tv", params=params, headers=headers)
+
             responses = await asyncio.gather(movie_task, tv_task)
-            
+
             results = []
-            
-            # Process Movie Results
+
+            # movie 與 tv 各取前 10 筆（TMDB 已依 popularity 排序，直接合併，不跨型別重排）
             movie_data = responses[0].json()
             for item in movie_data.get("results", [])[:10]:
                 poster = f"https://image.tmdb.org/t/p/w500{item['poster_path']}" if item.get('poster_path') else None
-                if not poster: continue
                 results.append(StoryBase(
                     title=item.get("title", "Unknown"),
                     media_type="movie",
@@ -510,12 +573,10 @@ class SearchService:
                     poster_path=poster,
                     source="tmdb"
                 ))
-            
-            # Process TV Results
+
             tv_data = responses[1].json()
             for item in tv_data.get("results", [])[:10]:
                 poster = f"https://image.tmdb.org/t/p/w500{item['poster_path']}" if item.get('poster_path') else None
-                if not poster: continue
                 results.append(StoryBase(
                     title=item.get("name", "Unknown"),
                     media_type="tv",
@@ -524,10 +585,10 @@ class SearchService:
                     poster_path=poster,
                     source="tmdb"
                 ))
-            
+
             return results
         except Exception as e:
-            logger.error("TMDB search failed: %s", e)
+            logger.error("TMDB discover fetch failed: %s", e)
             return []
 
     @staticmethod
@@ -557,11 +618,37 @@ class SearchService:
             return []
 
     @staticmethod
-    async def search_multi(query: str, language: str = "zh-TW", region: str = "TW") -> List[StoryBase]:
+    async def search_google_books_by_author(client: httpx.AsyncClient, author: str, language: str = "zh-TW") -> List[StoryBase]:
+        """依作者名稱精準查詢 Google Books（details chip 用），重用 inauthor: 語法。"""
+        return await SearchService.search_google_books(client, f"inauthor:{author}", language)
+
+    @staticmethod
+    async def search_google_books_with_author_boost(client: httpx.AsyncClient, query: str, language: str = "zh-TW") -> List[StoryBase]:
+        """自由輸入路徑用：free-text 與 inauthor 結果並行查詢，合併後依 external_id 去重。"""
+        freetext_task = SearchService.search_google_books(client, query, language)
+        author_task = SearchService.search_google_books_by_author(client, query, language)
+        freetext, author_hits = await asyncio.gather(freetext_task, author_task)
+        seen_ids = {r.external_id for r in freetext}
+        merged = freetext + [r for r in author_hits if r.external_id not in seen_ids]
+        return merged
+
+    @staticmethod
+    async def search_multi(query: str, language: str = "zh-TW", region: str = "TW",
+                            pid: Optional[int] = None, cid: Optional[int] = None,
+                            gid: Optional[int] = None, author: Optional[str] = None) -> List[StoryBase]:
         if not query: return []
         async with httpx.AsyncClient(timeout=_HTTPX_TIMEOUT) as client:
+            if author:
+                # 書籍精準查詢：只查 inauthor，跳過 TMDB（author 與 pid/cid/gid 同時存在時，
+                # author 優先——實務上 chip 只會帶其中一種，這是防禦性的明確順序）
+                return await SearchService.search_google_books_by_author(client, author, language)
+            if pid or cid or gid:
+                # TMDB 精準查詢：只查 discover，跳過 Google Books（cid/gid 對書籍「回空」的
+                # 規格要求，由此處直接不查 Google Books 自然滿足）
+                return await SearchService.search_tmdb(client, query, language, region, pid=pid, cid=cid, gid=gid)
+            # 自由輸入：TMDB（含人名偵測）與 Google Books（含 inauthor 合併）並行
             tmdb_task = SearchService.search_tmdb(client, query, language, region)
-            gbooks_task = SearchService.search_google_books(client, query, language)
+            gbooks_task = SearchService.search_google_books_with_author_boost(client, query, language)
             results_tmdb, results_gbooks = await asyncio.gather(tmdb_task, gbooks_task)
             return results_tmdb + results_gbooks
 

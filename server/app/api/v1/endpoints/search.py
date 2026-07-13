@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 import httpx
 from fastapi import APIRouter, Query, HTTPException, Depends, Request
 from app.schemas.item import SearchResponse, StoryBase, ItemDetailResponse
@@ -64,13 +64,19 @@ async def search(
     request: Request,
     q: str = Query(..., min_length=1, max_length=200, description="Search query for movies or books"),
     page: int = 1,
+    pid: Optional[int] = Query(None, description="TMDB person ID，精準查詢（details chip 用）"),
+    cid: Optional[int] = Query(None, description="TMDB company ID"),
+    gid: Optional[int] = Query(None, description="TMDB genre ID"),
+    author: Optional[str] = Query(None, description="Google Books 作者名稱，精準查詢"),
     language: str = Depends(get_language),
     region: str = Depends(get_region),
 ):
     """
     Search for movies and books (Standard). Rate limited: 30/min per IP.
+    支援人名自動偵測（自由輸入命中人物時自動查其完整作品清單）與精準參數
+    （pid/cid/gid/author，供 details 頁 chips 零歧義查詢）。
     """
-    results = await SearchService.search_multi(query=q, language=language, region=region)
+    results = await SearchService.search_multi(query=q, language=language, region=region, pid=pid, cid=cid, gid=gid, author=author)
     return SearchResponse(results=results, page=page, total_results=len(results))
 
 

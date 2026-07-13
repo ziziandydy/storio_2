@@ -10,6 +10,8 @@ class TMDBDiscoverParams(BaseModel):
     with_keywords: Optional[str] = None
     with_cast: Optional[str] = None
     with_crew: Optional[str] = None
+    with_people: Optional[str] = None
+    with_companies: Optional[str] = None
     primary_release_year: Optional[int] = None
     sort_by: Optional[str] = Field(default="popularity.desc")
 
