@@ -499,42 +499,38 @@ class SearchService:
             response.raise_for_status()
             data = response.json()
             raw_results = data.get("results", [])
+            if not raw_results:
+                return []
 
-            # 篩出標題命中（movie/tv），無海報過濾
-            title_results = []
-            for item in raw_results:
-                media_type = item.get("media_type")
-                if media_type == "movie":
-                    poster = f"https://image.tmdb.org/t/p/w500{item['poster_path']}" if item.get('poster_path') else None
-                    title_results.append(StoryBase(
-                        title=item.get("title", "Unknown"),
-                        media_type="movie",
-                        year=SearchService._extract_year(item.get("release_date")),
-                        external_id=str(item.get("id")),
-                        poster_path=poster,
-                        source="tmdb"
-                    ))
-                elif media_type == "tv":
-                    poster = f"https://image.tmdb.org/t/p/w500{item['poster_path']}" if item.get('poster_path') else None
-                    title_results.append(StoryBase(
-                        title=item.get("name", "Unknown"),
-                        media_type="tv",
-                        year=SearchService._extract_year(item.get("first_air_date")),
-                        external_id=str(item.get("id")),
-                        poster_path=poster,
-                        source="tmdb"
-                    ))
-
-            # 標題命中優先，不做人物 fallback
-            if title_results:
-                return title_results
-
-            # 標題無命中：若首位結果是人物，轉查其完整作品清單（discover）
-            if raw_results and raw_results[0].get("media_type") == "person":
+            # 先看首位結果（TMDB 依相關度排序）：是人物就直接轉 discover，
+            # 不管清單裡其他位置是否混入低相關度的同名紀錄片/花絮標題
+            # （這是 2026-07 QA 實測發現的 bug：舊邏輯「清單裡有任何標題命中就優先」
+            #  會被「Inside Christopher Nolan's Oppenheimer」這類低相關紀錄片誤導）
+            if raw_results[0].get("media_type") == "person":
                 person_id = raw_results[0].get("id")
                 return await SearchService._discover_tmdb(client, language, region, with_people=person_id)
 
-            return []
+            # 首位非人物：視為標題搜尋，篩出 movie/tv 命中（比照既有 search_tmdb 慣例，含海報過濾）
+            title_results = []
+            for item in raw_results:
+                media_type = item.get("media_type")
+                if media_type not in ("movie", "tv"):
+                    continue
+                poster = f"https://image.tmdb.org/t/p/w500{item['poster_path']}" if item.get('poster_path') else None
+                if not poster:
+                    continue
+                title = item.get("title") if media_type == "movie" else item.get("name")
+                date_field = "release_date" if media_type == "movie" else "first_air_date"
+                title_results.append(StoryBase(
+                    title=title or "Unknown",
+                    media_type=media_type,
+                    year=SearchService._extract_year(item.get(date_field)),
+                    external_id=str(item.get("id")),
+                    poster_path=poster,
+                    source="tmdb"
+                ))
+
+            return title_results
         except Exception as e:
             logger.error("TMDB search failed: %s", e)
             return []

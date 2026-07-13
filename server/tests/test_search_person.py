@@ -71,6 +71,55 @@ async def test_search_tmdb_person_detection_falls_back_to_discover():
     assert any("discover/tv" in u for u in called_urls)
 
 
+# --- 測試 1b：人名偵測不被清單中混雜的低相關度同名標題誤導（迴歸測試）---
+#
+# 真實案例（2026-07 QA 實測）：查詢「Christopher Nolan」時，TMDB search/multi
+# 回應 results[0] 是本尊（person），但清單後面混入幾部低相關度、片名剛好含
+# 該人名的紀錄片/花絮（例如「Inside Christopher Nolan's Oppenheimer」）。
+# 舊邏輯「清單裡任何位置有 movie/tv 命中就優先回傳標題」會被這些混雜項目
+# 誤導，回傳幾部冷門紀錄片而非該人物的完整作品清單。
+# 新邏輯應只看 results[0] 的 media_type：是人物就直接轉 discover，忽略清單
+# 其他位置混雜的同名標題。
+
+@pytest.mark.asyncio
+async def test_search_tmdb_person_first_ignores_mixed_low_relevance_titles():
+    mock_client = make_routed_client({
+        "search/multi": {
+            "results": [
+                {"id": 525, "media_type": "person", "name": "Christopher Nolan", "popularity": 7.77},
+                {"id": 901, "media_type": "movie", "title": "Inside Christopher Nolan's Oppenheimer",
+                 "release_date": "2023-11-01", "poster_path": "/doc1.jpg", "popularity": 0.59},
+                {"id": 902, "media_type": "movie", "title": "The Christopher Nolan Experience",
+                 "release_date": "2015-06-01", "poster_path": "/doc2.jpg", "popularity": 0.15},
+                {"id": 903, "media_type": "movie", "title": "Untitled Christopher Nolan Horror Film",
+                 "release_date": None, "poster_path": None, "popularity": 0.15},
+            ]
+        },
+        "discover/movie": {
+            "results": [
+                {"id": 27205, "title": "Inception", "release_date": "2010-07-16", "poster_path": "/inception.jpg"}
+            ]
+        },
+        "discover/tv": {"results": []},
+    })
+
+    results = await SearchService.search_tmdb(mock_client, "Christopher Nolan")
+
+    # 應回傳人物 discover 結果，不是清單中混雜的那幾部低相關度紀錄片
+    assert len(results) == 1
+    assert results[0].title == "Inception"
+    assert results[0].media_type == "movie"
+    titles = [r.title for r in results]
+    assert "Inside Christopher Nolan's Oppenheimer" not in titles
+    assert "The Christopher Nolan Experience" not in titles
+    assert "Untitled Christopher Nolan Horror Film" not in titles
+
+    called_urls = [call.args[0] if call.args else call.kwargs.get("url") for call in mock_client.get.call_args_list]
+    assert any("search/multi" in u for u in called_urls)
+    assert any("discover/movie" in u for u in called_urls)
+    assert any("discover/tv" in u for u in called_urls)
+
+
 # --- 測試 2：標題命中優先 ---
 
 @pytest.mark.asyncio
