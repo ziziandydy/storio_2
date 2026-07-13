@@ -11,13 +11,13 @@
 
 ## 3. 後端：標準搜尋擴充——人名偵測 + 精準參數（TDD）
 
-- [ ] 3.1 `server/app/schemas/search.py`：`TMDBDiscoverParams` 新增 `with_people`、`with_companies` 欄位
-- [ ] 3.2 撰寫測試：影視查詢改走 `search/multi` 後標題搜尋行為不回歸（鎖住既有 `test_search_endpoint` 行為）
-- [ ] 3.3 撰寫測試：人名偵測——multi 首位為 person 且標題命中為 0/極少 → `discover with_people` 回作品；輸入標題有命中則不切換；全程無 LLM 呼叫
-- [ ] 3.4 撰寫測試：精準參數 `pid`/`cid`/`gid` → 直接 discover；`author` → `inauthor:`；`cid`/`gid` 對 book 忽略；帶參數時跳過偵測
-- [ ] 3.5 Service 層實作：`search_multi` 影視側改用 TMDB `search/multi` + 人名偵測切換；書籍側 free-text 與 `inauthor:` 合併去重；精準參數分流（重用 discover 組參與 `search_google_books` 邏輯）
-- [ ] 3.6 Controller：`GET /search/` 接受選用參數 `pid`/`cid`/`gid`/`author` 並透傳 service（沿用既有 30/min limiter）
-- [ ] 3.7 全套 pytest 綠
+- [x] 3.1 `server/app/schemas/search.py`：`TMDBDiscoverParams` 新增 `with_people`、`with_companies` 欄位
+- [x] 3.2 撰寫測試：影視查詢改走 `search/multi` 後標題搜尋行為不回歸（鎖住既有 `test_search_endpoint` 行為）
+- [x] 3.3 撰寫測試：人名偵測——multi 首位為 person 且標題命中為 0/極少 → `discover with_people` 回作品；輸入標題有命中則不切換；全程無 LLM 呼叫
+- [x] 3.4 撰寫測試：精準參數 `pid`/`cid`/`gid` → 直接 discover；`author` → `inauthor:`；`cid`/`gid` 對 book 忽略；帶參數時跳過偵測
+- [x] 3.5 Service 層實作：`search_multi` 影視側改用 TMDB `search/multi` + 人名偵測切換；書籍側 free-text 與 `inauthor:` 合併去重；精準參數分流（重用 discover 組參與 `search_google_books` 邏輯）
+- [x] 3.6 Controller：`GET /search/` 接受選用參數 `pid`/`cid`/`gid`/`author` 並透傳 service（沿用既有 30/min limiter）
+- [x] 3.7 全套 pytest 綠（43 passed, 2 skipped — 隔離 .env 驗證）
 
 ## 4. 前端：details 頁 chips
 
