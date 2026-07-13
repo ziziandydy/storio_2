@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.16.0](https://github.com/ziziandydy/storio_2/compare/v1.15.1...v1.16.0) (2026-07-13)
+
+
+### 重構 (Refactoring)
+
+* **search:** Auto 模式改為 keyword-first，AI fallback 收斂至 Auto 並以過濾後結果判空 ([f5377f2](https://github.com/ziziandydy/storio_2/commit/f5377f226047b70dbb4f90285f0c5ce9685e5e81))
+
+
+### 新功能 (Features)
+
+* **search:** 標準搜尋支援人名自動偵測 + TMDB/Google Books 精準參數查詢 ([4e5fa08](https://github.com/ziziandydy/storio_2/commit/4e5fa08cd892cf3f41344c1dabaa12b63ebe4589))
+* **search:** details 頁人物/類型 chips 化 + 搜尋頁精準參數透傳與返回動線 ([5b130e0](https://github.com/ziziandydy/storio_2/commit/5b130e0b6390d3c5294f89309beec6c501ef4c5d))
+* **search:** details response additive 補上 TMDB entity ID refs ([36229ad](https://github.com/ziziandydy/storio_2/commit/36229ad6bd5c548310c55305ecd2bac7a2dcbbed))
+
+
+### Bug 修復 (Bug Fixes)
+
+* **search:** 人名偵測改依 search/multi 首位結果判斷，修正被低相關度同名標題誤導的 bug ([3a163e7](https://github.com/ziziandydy/storio_2/commit/3a163e78c31499408ae08b7e504c85639b9f4861))
+* **search:** 精準參數改用本地 state 避免 router.replace transition race condition ([29b6678](https://github.com/ziziandydy/storio_2/commit/29b6678897fd3f2182c5c9d14236dea84963e3f3))
+
 ### [1.15.1](https://github.com/ziziandydy/storio_2/compare/v1.15.0...v1.15.1) (2026-06-09)
 
 
