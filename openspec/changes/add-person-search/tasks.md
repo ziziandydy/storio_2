@@ -36,7 +36,7 @@
 
 ## 6. 驗證與收尾
 
-- [ ] 6.1 gstack headless browser 過 DoD 案例：演員/導演/Studio/類型/作者 chips、Explore 手動輸入人名（中英文各一）必出作品、媒體範疇隔離、中文編碼、返回、精準參數空結果無 AI、標題搜尋不回歸
-- [ ] 6.2 回歸確認：details 頁既有顯示無變化（新舊欄位並存）、既有搜尋三模式（Auto/AI/Keyword）行為不變
+- [x] 6.1 gstack headless browser 過 DoD 案例（13 案例，報告：`.superpowers/sdd/task-group6-qa-report.md`）：11 PASS，2 PASS_WITH_CONCERN（案例⑩⑪外部服務既有特性，非本次改動引入，不修）；**發現真實 bug（案例⑧）**：Explore 手動輸入知名人物英文名（如 Christopher Nolan）因 TMDB search/multi 混入低相關度同名紀錄片標題，誤判為標題命中而不觸發人物 discover——已修復（commit `3a163e7`，改為優先看 `results[0]` 是否為人物），並以真實 API 重新驗證通過（curl 確認回傳《奧本海默》《星際效應》等真實作品）
+- [x] 6.2 回歸確認：details 頁既有顯示無變化（案例⑫ PASS）、既有搜尋三模式行為不變（案例⑬ PASS，AI 模式語意非決定性為既有特性非回歸）
 - [ ] 6.3 CI 綠後更新 `docs/BACKLOG.md` 與 `docs/StorioWiki.md`（搜尋擴充與 chips 動線）
 - [ ] 6.4 openspec archive change（specs merge 回 openspec/specs/）

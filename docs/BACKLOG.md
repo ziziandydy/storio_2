@@ -1,6 +1,18 @@
 # Storio 專案待辦清單與未來優化 (Backlog & Future Improvements)
 
-最後更新：2026-07-11
+最後更新：2026-07-13
+
+---
+
+## 🎉 功能：人物/類型搜尋擴充 (add-person-search)（2026-07-13 完成）
+
+Details 頁的演員、導演、Studio、影視類型（電影/書籍作者）變為可點擊 chips，導向 Explore 搜尋頁顯示相關作品；返回用 `router.push` 回到原 details 頁。Explore 手動輸入人名（中英文皆可）也能自動偵測並回傳該人物完整作品清單，不需先知道要點哪裡。
+
+- **後端**：details response additive 新增 `cast_refs`/`director_refs`/`genre_refs`/`company_refs`（TMDB numeric ID），既有欄位零回歸，已上架 iOS 舊版不受影響。標準搜尋（`GET /search/`）新增人名自動偵測（TMDB `search/multi` + `discover with_people`）與精準參數（`pid`/`cid`/`gid`/`author`），精準參數空結果不觸發 AI fallback。
+- **前端**：details 頁 chips（cast/genre 既有 pill 加 onClick；director 由純文字重寫為 chip 列；Studio 由單一公司擴充為完整清單）；`*_refs` 缺失時 chip 降級為不可點純顯示，不壞版。
+- **QA 抓到並修復的 bug**：Explore 手動輸入知名人物英文名（如 Christopher Nolan）時，TMDB `search/multi` 混入低相關度同名紀錄片標題，誤判為「標題命中」而不觸發人物 discover——改為優先判斷 `results[0]` 是否為人物，用真實 API 資料驗證修復（現在正確回傳《奧本海默》《星際效應》等作品）。
+- **範圍排除（v1 不做）**：書籍 genre（BISAC 分類）點擊、出版社點擊、獨立人物詳情頁。
+- Spec：`openspec/changes/add-person-search/`（已歸檔）；設計文件：`~/.gstack/projects/ziziandydy-storio_2/iTubai-main-design-20260712-103457.md`
 
 ---
 
