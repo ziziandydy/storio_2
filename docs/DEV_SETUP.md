@@ -105,6 +105,42 @@ kill -9 <PID>
 **原因**: 當後端發生嚴重的 500/503 內部伺服器錯誤時（例如 DB Constraint Error 或連線中斷），FastAPI 的錯誤處理**不會帶有 CORS Header**，瀏覽器因此誤判為「CORS 錯誤」。前端看到 CORS 錯誤，但真正的問題出在後端。
 **解決**: 檢查 `backend.log` 找出真正的 500/503 來源；或隨意存檔一次後端程式碼觸發 Hot Reload 清除卡死狀態。若換了 Wi-Fi 導致 IP 變動，依照 **Section 2** 更新兩個 env 檔的 IP，然後重啟服務。
 
+### Q6: `DEV_CORS_ORIGIN` 已設在 `server/.env`，仍出現 `Disallowed CORS origin`
+**現象**: `server/.env` 的 `DEV_CORS_ORIGIN` 已正確設為區網 IP，OPTIONS preflight 仍回 `400 Disallowed CORS origin`。
+**原因**: `server/app/main.py` 用 `os.getenv("DEV_CORS_ORIGIN", "")` 讀取，這只讀「shell process 實際的環境變數」，不會像 `pydantic-settings`（`config.py` 定義的欄位）那樣自動載入 `.env` 檔案內容。若啟動 uvicorn 時沒有把 `.env` 的值 export 到 process env，這個變數在 runtime 永遠是空字串。
+**解決**: 啟動後端前手動 export：
+```bash
+export DEV_CORS_ORIGIN="http://<你的區網IP>:3010"
+```
+或在啟動指令前加：
+```bash
+(export DEV_CORS_ORIGIN="http://<你的區網IP>:3010" && cd server && nohup python3 -u -m uvicorn app.main:app --host 0.0.0.0 --reload --port 8010 > ../backend.log 2>&1 < /dev/null &)
+```
+
+### Q7: iOS 模擬器 WKWebView 內 `fetch()` 對 http 連線回傳 `TypeError: Load failed`
+**現象**: Capacitor iOS App 在模擬器上執行，`window.location` 的頁面本身能載入（`capacitor.config.ts` 的 `server.cleartext: true` 讓主頁面可用 http），但 JS 內對其他 host:port（如本機後端 `http://<IP>:8010`）發出的 `fetch()`/`XMLHttpRequest` 一律失敗，`catch` 到 `TypeError: Load failed`。
+**原因**: iOS 預設 App Transport Security (ATS) 要求所有網路連線走 HTTPS；`cleartext: true` 只影響 Capacitor WebView 載入**主頁面**的行為，不會放寬 Info.plist 層級的 ATS 限制，任意 http fetch 仍被系統擋下。
+**解決（僅限本機模擬器測試，正式 build 前必須還原）**: 暫時在 `client/ios/App/App/Info.plist` 加入：
+```xml
+<key>NSAppTransportSecurity</key>
+<dict>
+    <key>NSAllowsArbitraryLoads</key>
+    <true/>
+</dict>
+```
+重新 build 並安裝到模擬器後即可正常 fetch。**測試完成後務必 `git checkout -- client/ios/App/App/Info.plist` 還原**，避免這個放寬 ATS 的設定被誤帶進正式送審的 build（Apple Review 可能因此拒絕，且無此需求時也不應保留寬鬆的安全性設定）。
+
+### Q8: iOS 模擬器手動驗證方法（無 idb，靠 CDP 自動化）
+**情境**: 需要在模擬器上驗證某個功能真的能跑（而非只靠 headless browser QA），但 `idb-companion` 已從 brew 移除，沒有原生點擊工具。
+**做法**：
+1. 依 Section 2 設定 `.env.local` 的 `CAPACITOR_DEV_URL` 指向本機 dev server，`npx cap sync ios`。
+2. `xcodebuild -workspace ios/App/App.xcworkspace -scheme App -sdk iphonesimulator -destination "id=<UDID>" -derivedDataPath build build` 建置（比透過 Xcode GUI 快，且可從指令列驅動）。
+3. `xcrun simctl install <UDID> build/Build/Products/Debug-iphonesimulator/App.app && xcrun simctl launch <UDID> com.storio.app`。
+4. 找 WKWebView inspector socket：`lsof -U | grep webinspectord_sim`，啟動 proxy：`ios_webkit_debug_proxy -s "unix:<socket路徑>" -c null:9221,:9222-9230`。
+5. `curl http://localhost:9222/json` 取得 `page/N`（每次 App 重啟編號可能變動，需重新查）；WebKit 用的是 **multi-target protocol**，實際目標 ID 需在連上該 ws 後監聽 `Target.targetCreated` 事件取得（常見為 `page-8`），指令要包在 `Target.sendMessageToTarget` 裡，不是 Chrome flat CDP。
+6. 用 `Runtime.evaluate` 執行 JS 驗證頁面狀態、模擬點擊（`querySelector(...).click()`）、檢查 `location.href`。**注意**：`awaitPromise: true` 在這個 legacy protocol 下不可靠，非同步結果改用「存進 `window.__xxx` 變數 → `setTimeout` 後再讀」的模式。
+7. **建置產物 `client/ios/App/build/` 不會被 git 追蹤，但會讓後續 `cap sync` 的 `pod install`（內部跑 `xcodebuild clean`）報錯**（`Could not delete build because it was not created by the build system`）——測試完 `rm -rf client/ios/App/build` 即可解除。
+
 ---
 
 ## 5. Puppeteer Service 本地開發

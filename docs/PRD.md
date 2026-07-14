@@ -1,6 +1,6 @@
 # Storio 2 產品需求文件 (PRD) - v5.2
 
-**最後更新日期**: 2026-02-23
+**最後更新日期**: 2026-07-14
 **版本狀態**: Production Candidate
 **核心概念**: "Collect stories in your folio."
 
@@ -77,6 +77,11 @@
 ### 3.3 搜尋與探索 (Search)
 *   **Bottom-Focused Design**: 搜尋框與過濾器固定於底部，手動觸發搜尋以優化 CJK 輸入體驗。
 *   **API 整合**: 整合 TMDB 與 Google Books API。
+*   **三模式搜尋（Auto / AI Search / Keyword Match）**：底部橫向滑動輪播切換，每種模式有獨立視覺語彙（Auto 金色呼吸邊框、AI Search 漸層動態邊框、Keyword 灰框）。
+    *   **Auto（預設）**：Keyword-first——一律先跑標準關鍵字搜尋；結果依當前分頁（Movies/Series vs Books）過濾後為空，才自動 fallback 至 AI 語意搜尋。輸入知名人物姓名（中英文皆可）時，後端自動偵測並回傳該人物完整作品清單，不需額外操作。
+    *   **AI Search**：直接以自然語言描述劇情、氛圍、年代等模糊需求，呼叫 LLM 解析意圖後查詢 TMDB Discover / Google Books。
+    *   **Keyword Match**：純關鍵字比對，空結果即顯示 No Results，不觸發 AI fallback（與 Auto 模式行為區隔）。
+*   **人物/類型探索 (v1.16.0)**：詳情頁的演員、導演、Studio、影視類型（電影/影集），以及書籍作者，皆為可點擊 chips，點擊後導向 Explore 搜尋頁並自動帶入該名稱與精準查詢參數（TMDB person/company/genre ID 或作者名），結果不經 AI，直接顯示該人物/公司/類型的完整作品清單；搜尋頁提供「返回」導回原詳情頁。範圍排除：書籍分類（BISAC）點擊、出版社點擊、獨立人物詳情頁（v2 視需求評估）。
 
 ### 3.4 詳情頁 (Details)
 *   **Backdrop-First Design**: 頂部大面積背景海報，文字資訊位於海報下方黑色區塊 (包含支援 TMDB/Google Books 之 Community Rating)。
