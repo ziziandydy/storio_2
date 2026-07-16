@@ -4,11 +4,11 @@
 
 ---
 
-## 🎉 里程碑：v1.16.0（2026-07-14 送審 App Store）
+## 🎉 里程碑：v1.16.0（2026-07-16 App Store 已上架）
 
 人物/類型搜尋擴充 (add-person-search) 上線，build 18。真機前先跑過 iOS 模擬器 CDP 驗證（見下方功能說明），確認搜尋 chip 跳轉與 push-based 返回動線在真實 WKWebView 下行為正確。
 
-**版號**：v1.16.0（build 18）。送審前已通過：後端 CI 綠、`npm run build:ios` production build 乾淨、iOS 模擬器手動驗證核心動線。
+**版號**：v1.16.0（build 18）。送審前已通過：後端 CI 綠、`npm run build:ios` production build 乾淨、iOS 模擬器手動驗證核心動線。2026-07-14 送審，2026-07-16 審核通過並成功發佈。
 
 ---
 

@@ -2,7 +2,9 @@
 
 **Tester Role**: Guest User (Anonymous)
 **Environment**: Local Development
-**Date**: 2026-02-15
+**Date**: 2026-02-15（首次撰寫；後續驗證進度見各節備註，最後更新 2026-07-16）
+
+> ⚠️ **文件狀態**：本文件記錄早期手動 UAT 流程（Section 1-6 為 v2.1 前功能，均已通過並沿用至今）。v1.13.0 之後的版本改以 `/qa`（gstack headless browser）+ iOS 模擬器 CDP 驗證為主，詳見各版本 BACKLOG 里程碑條目與 `docs/DEV_SETUP.md`。過時或已由後續版本取代的項目以刪除線標記，不刪除原文。
 
 ## 1. 搜尋功能 (Search)
 - [x] **進入搜尋頁面**
@@ -70,23 +72,26 @@
     - [x] 點擊舊紀錄可跳轉至該次心得。
 
 ## 7. 隱私與安全性 (Privacy & Safety)
-- [ ] **進入隱私設定**
-    - [ ] 以已登入用戶身份進入 `/profile`。
-    - [ ] 預期：看到 "Privacy & Safety" (隱私與安全性) 入口。
-- [ ] **清除所有資料 (Clear Data)**
-    - [ ] 點擊 "Clear All Data"。
-    - [ ] 預期：彈出確認 Modal，要求輸入 "CLEAR DATA"。
-    - [ ] 輸入錯誤字串，確認按鈕維持 Disabled。
-    - [ ] 輸入正確字串並確認。
-    - [ ] 預期：館藏清空，帳號維持登入狀態。
-- [ ] **刪除帳號 (Delete Account)**
-    - [ ] 點擊 "Delete Account"。
-    - [ ] 預期：彈出確認 Modal，要求輸入 "DELETE ACCOUNT"。
-    - [ ] 輸入正確字串並確認。
-    - [ ] 預期：帳號登出，導回首頁，資料庫中該用戶資料與帳號均已移除。
-- [ ] **訪客權限驗證**
-    - [ ] 以訪客身份 (Guest) 進入 `/profile`。
-    - [ ] 預期：隱私與安全性入口應被隱藏。
+
+> ✅ **已於 2026-04-10 完成 UAT 驗證**（`add-account-deletion` Tasks 4.1~4.3，見 BACKLOG「帳號刪除 UAT 測試」條目）。以下項目原為未勾選狀態，現依驗證結果補勾。
+
+- [x] **進入隱私設定**
+    - [x] 以已登入用戶身份進入 `/profile`。
+    - [x] 預期：看到 "Privacy & Safety" (隱私與安全性) 入口。
+- [x] **清除所有資料 (Clear Data)**
+    - [x] 點擊 "Clear All Data"。
+    - [x] 預期：彈出確認 Modal，要求輸入 "CLEAR DATA"。
+    - [x] 輸入錯誤字串，確認按鈕維持 Disabled。
+    - [x] 輸入正確字串並確認。
+    - [x] 預期：館藏清空，帳號維持登入狀態。
+- [x] **刪除帳號 (Delete Account)**
+    - [x] 點擊 "Delete Account"。
+    - [x] 預期：彈出確認 Modal，要求輸入 "DELETE ACCOUNT"。
+    - [x] 輸入正確字串並確認。
+    - [x] 預期：帳號登出，導回首頁，資料庫中該用戶資料與帳號均已移除。
+- [x] **訪客權限驗證**
+    - [x] 以訪客身份 (Guest) 進入 `/profile`。
+    - [x] 預期：隱私與安全性入口應被隱藏。
 ## 8. 本機通知 (Local Notifications, v1.14.0)
 
 > 測試環境：iOS 模擬器 / 真機（Web 不觸發通知）。已透過 ios-webkit-debug-proxy + CDP 自動化驗證。
@@ -114,3 +119,11 @@
     - [x] 舊用戶新增 Storio → 顯示升級 Banner。
 - [x] **i18n**
     - [x] 語系切換 en-US → 通知文字英文化（標題作為資料保留原文）。
+
+## 9. 人物/類型搜尋擴充 (add-person-search, v1.16.0)
+
+> ✅ 已於 2026-07-13 完成 QA（headless browser）與 2026-07-14 iOS 模擬器 CDP 驗證，2026-07-16 通過 Apple 審核上架。詳細測試記錄見 BACKLOG「add-person-search」條目，不在此重複列點。
+
+- [x] Details 頁 cast/director/genre/studio chips 可點擊，導向 Explore 搜尋頁顯示相關作品。
+- [x] Explore 手動輸入人名（中英文）可自動偵測並回傳該人物完整作品清單。
+- [x] 點擊 chip 進入搜尋結果後按返回鍵，正確回到原 details 頁（`router.push`，已於模擬器真實 WKWebView 環境驗證）。

@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "你是一個 JSON 輸出機器。只能輸出純 JSON，不得有任何說明文字、換行前綴、markdown、或思考過程。\n\n分析以下用戶訊息，從三個規則中選一個，輸出對應的 JSON：\n\n規則一（開發任務）：訊息明確要求實作功能、修改功能、修復 bug、UI 變更。\n輸出：{\"hookSpecificOutput\": {\"hookEventName\": \"UserPromptSubmit\", \"additionalContext\": \"[流程提醒] 這是開發任務。必須依照 CLAUDE.md「新功能開發流程」執行，禁止跳步：1) superpowers:brainstorming 2) wireframe-prototyping（若有UI） 3) openspec-propose 4) superpowers:writing-plans 5) superpowers:using-git-worktrees 6) superpowers:test-driven-development 7) openspec-apply-change 8) superpowers:verification-before-completion 9) superpowers:requesting-code-review 10) openspec-archive-change\"}}\n\n規則二（放行）：諮詢、討論、規劃、需求探索、確認方向、App 上架、進度確認、環境檢查、設定檢查、文案撰寫、純問答、解釋概念、查看檔案、列出待辦、審視架構、給建議。\n輸出：{}\n\n規則三（阻斷）：訊息無意義、語意不完整、亂碼、測試字串、單純打招呼但無任何問題。\n輸出：{\"decision\": \"block\", \"reason\": \"訊息過於簡短或無意義，請補充說明你想做什麼。\"}\n\n判斷範例：\n- 「怎麼實作 Google Sign-In？」→ 規則二 → {}\n- 「幫我加入 Google Sign-In 功能」→ 規則一 → {\"hookSpecificOutput\": {...}}\n- 「asdfghjkl」→ 規則三 → {\"decision\": \"block\", ...}\n- 「這個功能的架構怎麼設計比較好？」→ 規則二 → {}\n- 「修復登入頁面的 bug」→ 規則一 → {\"hookSpecificOutput\": {...}}\n\n當你不確定是規則一還是規則二時，選規則二（放行）。\n\n用戶訊息：$ARGUMENTS",
+            "statusMessage": "確認開發流程..."
+          }
+        ]
+      }
+    ]
+  }
+}
