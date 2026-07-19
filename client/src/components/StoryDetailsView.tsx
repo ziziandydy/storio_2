@@ -110,15 +110,18 @@ export default function StoryDetailsView({ item, showAddButton = true, onAddClic
           <div className="absolute inset-0 bg-gradient-to-r from-folio-black/40 via-transparent to-transparent z-10" />
         </div>
 
-        {/* Header Overlay — pt 加入 safe-area-inset-top 確保返回鍵不被動態島遮擋 */}
-        <header className="relative z-30 px-6 pb-6 flex justify-between items-center max-w-container-max mx-auto" style={{ paddingTop: 'calc(var(--sa-top) + 1.5rem)' }}>
-          <button
-            onClick={onBack}
-            className="group flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-white hover:text-folio-black transition-all"
-          >
-            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-            <span className="text-xs font-bold uppercase tracking-widest">{t.common.back}</span>
-          </button>
+        {/* Header Overlay — fixed 釘住返回鍵：相對 viewport 定位，不吃 body 的全域 safe-area padding
+            （避免 sa-top 疊加兩次），捲動時也不會消失。pointer-events 模式同 Explore header。 */}
+        <header className="fixed top-0 inset-x-0 z-30 px-6 pb-6 pointer-events-none" style={{ paddingTop: 'calc(var(--sa-top) + 1.5rem)' }}>
+          <div className="max-w-container-max mx-auto flex justify-between items-center">
+            <button
+              onClick={onBack}
+              className="pointer-events-auto group flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-white hover:text-folio-black transition-all"
+            >
+              <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+              <span className="text-xs font-bold uppercase tracking-widest">{t.common.back}</span>
+            </button>
+          </div>
         </header>
       </div>
 

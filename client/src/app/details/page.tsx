@@ -119,12 +119,16 @@ function DetailsPageContent() {
 
   return (
     <>
-      <StoryDetailsView
-        item={item}
-        onAddClick={() => setIsAddModalOpen(true)}
-        showAddButton={true}
-        onBack={() => router.back()}
-      />
+      {/* 負 margin 抵銷 body 的全域 pt-[var(--sa-top)]，讓 60vh backdrop 墊到狀態列後方
+          （Backdrop-First 沉浸式）。館藏 Details modal 是 fixed 容器不吃 body padding，不需此處理。 */}
+      <div style={{ marginTop: 'calc(var(--sa-top) * -1)' }}>
+        <StoryDetailsView
+          item={item}
+          onAddClick={() => setIsAddModalOpen(true)}
+          showAddButton={true}
+          onBack={() => router.back()}
+        />
+      </div>
 
       {/* Add Modal */}
       <AddToFolioModal
