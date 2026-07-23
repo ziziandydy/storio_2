@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Storio — Collect stories in your folio</title>
+    <title>Storio - Collect stories in your folio</title>
     <meta name="description" content="A quiet, sophisticated digital Pensieve for curating your personal collection of movies, series, and books.">
 
     <!-- Canonical -->
@@ -12,14 +12,14 @@
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://ziziandydy.github.io/storio_2/">
-    <meta property="og:title" content="Storio — Collect stories in your folio">
+    <meta property="og:title" content="Storio - Collect stories in your folio">
     <meta property="og:description" content="A quiet, sophisticated sanctuary for curating your personal collection of movies, series, and books. Free personal media tracker for iPhone.">
     <meta property="og:image" content="https://ziziandydy.github.io/storio_2/image/heroBackground_v2.jpg">
     <meta property="og:site_name" content="Storio">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Storio — Collect stories in your folio">
+    <meta name="twitter:title" content="Storio - Collect stories in your folio">
     <meta name="twitter:description" content="A quiet, sophisticated sanctuary for curating your personal collection of movies, series, and books.">
     <meta name="twitter:image" content="https://ziziandydy.github.io/storio_2/image/heroBackground_v2.jpg">
 
@@ -55,11 +55,11 @@
         "Instagram Story share card generation with 6 templates",
         "TMDB and Google Books integration",
         "Personal stats dashboard with customizable widgets",
-        "Memory Timeline — track rewatches and rereads separately",
-        "AI Search — find titles using natural language descriptions"
+        "Memory Timeline: track rewatches and rereads separately",
+        "AI Search: find titles using natural language descriptions"
       ],
       "datePublished": "2026-04-16",
-      "softwareVersion": "1.2.0"
+      "softwareVersion": "1.16.0"
     }
     </script>
 
@@ -90,7 +90,7 @@
           "name": "What should I do if the Storio app isn't working?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Try restarting the app first. If the issue persists, email us at andismtu@gmail.com with a description and your device model. We reply within 1–2 business days."
+            "text": "Try restarting the app first. If the issue persists, email us at andismtu@gmail.com with a description and your device model. We reply within 1-2 business days."
           }
         },
         {
@@ -106,7 +106,7 @@
           "name": "How do I use AI Search in Storio?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "On the Explore page, tap the icon next to the search bar to switch to AI Search. Describe what you're looking for in natural language — like \"a slow-burn thriller set in Japan\" — and Storio will find matching titles."
+            "text": "On the Explore page, tap the icon next to the search bar to switch to AI Search. Describe what you're looking for in natural language, like \"a slow-burn thriller set in Japan\", and Storio will find matching titles."
           }
         }
       ]
@@ -148,20 +148,50 @@
         .gold-glow {
             text-shadow: 0 0 40px rgba(197, 160, 89, 0.2);
         }
-        /* "Golden Snitch" Mouse Following Glow */
+        /* 「金探子」光暈：外層定位（JS 跟隨或 CSS 巡遊）、中層垂直巡遊、內層呼吸 */
         .snitch-glow {
             position: fixed;
             top: 0;
             left: 0;
+            pointer-events: none;
+            z-index: 1;
+            will-change: transform;
+        }
+        .snitch-core {
             width: 400px;
             height: 400px;
             background: radial-gradient(circle, rgba(197, 160, 89, 0.3) 0%, transparent 75%);
             border-radius: 50%;
-            pointer-events: none;
-            z-index: 1;
-            transform: translate(-50%, -50%);
-            will-change: left, top;
             filter: blur(15px);
+            transform: translate(-50%, -50%);
+            animation: snitch-breathe 4.5s ease-in-out infinite;
+        }
+        @keyframes snitch-breathe {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+            50%      { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+        }
+        /* 觸控裝置：雙軸異頻巡遊。X 47s / Y 70s 互質，組合路徑約 55 分鐘才重複，
+           緩降到底後回升時水平位置已不同，不會原路折返 */
+        @media (pointer: coarse) {
+            .snitch-glow { animation: snitch-x 47s ease-in-out infinite alternate; }
+            .snitch-y    { animation: snitch-y 70s ease-in-out infinite alternate; }
+        }
+        @keyframes snitch-x {
+            0%   { transform: translateX(24vw); }
+            22%  { transform: translateX(70vw); }
+            41%  { transform: translateX(36vw); }
+            63%  { transform: translateX(82vw); }
+            80%  { transform: translateX(14vw); }
+            100% { transform: translateX(55vw); }
+        }
+        @keyframes snitch-y {
+            0%   { transform: translateY(8vh); }
+            100% { transform: translateY(92vh); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .snitch-glow { display: none; }
+            .page-unfold, .floating { animation: none; }
+            .reveal { opacity: 1; transform: none; filter: none; transition: none; }
         }
         /* Intro "Opening" Animation */
         .page-unfold {
@@ -193,6 +223,30 @@
             background: rgba(18, 18, 18, 0.4);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.03);
+            --mx: -999px;
+            --my: -999px;
+        }
+        /* 聚光燈：光暈掃過卡片時，內部亮起光斑 */
+        .glass-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(320px circle at var(--mx) var(--my), rgba(197, 160, 89, 0.16), transparent 65%);
+            pointer-events: none;
+        }
+        /* 聚光燈：邊框流光，沿游標位置照亮描邊 */
+        .glass-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: radial-gradient(320px circle at var(--mx) var(--my), rgba(197, 160, 89, 0.8), transparent 70%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            pointer-events: none;
         }
         .nav-blur {
             backdrop-filter: blur(20px);
@@ -206,7 +260,7 @@
 </head>
 <body class="bg-folio-black font-sans selection:bg-accent-gold/30">
 
-    <div id="snitch" class="snitch-glow"></div>
+    <div id="snitch" class="snitch-glow"><div class="snitch-y"><div class="snitch-core"></div></div></div>
 
     <!-- Navigation -->
     <nav class="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex justify-between items-center nav-blur border-b border-white/5 transition-all duration-500">
@@ -219,13 +273,13 @@
                 <span id="lang-text">EN</span>
             </button>
             <a href="https://storio.andismtu.com/" target="_blank" class="px-5 py-2 bg-accent-gold text-folio-black rounded-full text-[10px] font-black uppercase tracking-widest transition-all hover:bg-white hover:scale-105 active:scale-95 flex items-center gap-2 group shadow-lg shadow-accent-gold/20" data-i18n="nav_explore">
-                Explore Storio
+                Open Storio
             </a>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <section class="relative min-h-screen flex flex-col items-center justify-center pt-20 px-6 overflow-hidden page-unfold">
+    <section class="relative min-h-[100dvh] flex flex-col items-center justify-center pt-20 px-6 overflow-hidden page-unfold">
         <div class="absolute inset-0 z-0 opacity-20 pointer-events-none border-folio-outline border-b">
             <img src="image/heroBackground_v2.jpg" alt="Background" class="w-full h-full object-cover scale-110">
             <div class="absolute inset-0 bg-gradient-to-b from-folio-black via-folio-black/60 to-folio-black"></div>
@@ -233,13 +287,13 @@
 
         <div class="relative z-10 max-w-5xl w-full text-center space-y-10">
             <div class="space-y-6">
-                <span class="inline-block px-4 py-1.5 bg-accent-gold/10 border border-accent-gold/20 rounded-full text-[9px] font-black uppercase tracking-[0.3em] text-accent-gold mb-2" data-i18n="hero_tag">
+                <span class="inline-block px-4 py-1.5 bg-accent-gold/10 border border-accent-gold/20 rounded-full text-[10px] font-black uppercase tracking-[0.3em] text-accent-gold mb-2" data-i18n="hero_tag">
                     Digital Pensieve & Folio
                 </span>
                 <h1 class="text-5xl md:text-7xl lg:text-8xl font-black font-serif tracking-tighter leading-[1.1] gold-glow" data-i18n="hero_title">
                     Collect stories in your <br/><span class="italic text-accent-gold">folio.</span>
                 </h1>
-                <p class="text-base md:text-xl text-white/50 font-light tracking-wide max-w-2xl mx-auto leading-relaxed" data-i18n="hero_desc">
+                <p class="text-base md:text-xl text-white/60 font-light tracking-wide max-w-2xl mx-auto leading-relaxed" data-i18n="hero_desc">
                     A quiet, sophisticated sanctuary for curating your personal collection of movies, series, and books.
                 </p>
             </div>
@@ -247,11 +301,11 @@
             <div class="flex flex-col items-center gap-8">
                 <div class="flex flex-col sm:flex-row gap-5 w-full max-w-lg justify-center mt-4">
                     <a href="https://apps.apple.com/app/id6761919955" target="_blank" rel="noopener" class="flex-1 px-8 py-4 bg-white text-folio-black font-black rounded-2xl hover:bg-accent-gold transition-all shadow-[0_20px_50px_rgba(255,255,255,0.1)] uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 group">
-                        <span data-i18n="cta_mobile">Try on Mobile</span>
+                        <span data-i18n="cta_mobile">Get the iOS App</span>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="group-hover:translate-y-[-2px] transition-transform"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 1.44S10.22 5 8 5a4.91 4.91 0 0 0-5 4.78c0 4.22 3 12.22 6 12.22 1.25 0 2.5-1.06 4-1.06Z"/><path d="M12 5a3 3 0 0 1 3-3"/></svg>
                     </a>
                     <a href="https://storio.andismtu.com/" target="_blank" class="flex-1 px-8 py-4 bg-white/5 text-white font-black rounded-2xl border border-white/10 hover:bg-white/10 transition-all uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3">
-                        <span data-i18n="cta_web">Try on Web</span>
+                        <span data-i18n="cta_web">Open Storio</span>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
                     </a>
                 </div>
@@ -267,23 +321,22 @@
     <section class="py-40 px-6 relative bg-folio-black overflow-hidden border-y border-white/5">
         <div class="max-w-4xl mx-auto space-y-16 reveal">
             <div class="text-center space-y-8 text-balance">
-                <h2 class="text-accent-gold text-[10px] font-black uppercase tracking-[0.5em]" data-i18n="vision_tag">The Vision</h2>
                 <h3 class="text-4xl md:text-6xl font-black font-serif leading-tight" data-i18n="vision_title">Not a database. <br/><span class="italic text-accent-gold">A Pensieve.</span></h3>
                 <p class="text-lg md:text-2xl text-white/60 font-light tracking-wide max-w-3xl mx-auto leading-relaxed" data-i18n="vision_copy">
-                    In Storio, every entry is a memory card — not a row in a spreadsheet. Your folio holds your relationship with each story: when you encountered it, what you felt, and how your perspective shifted when you returned years later.
+                    In Storio, every entry is a memory card, not a row in a spreadsheet. Your folio holds your relationship with each story: when you encountered it, what you felt, and how your perspective shifted when you returned years later.
                 </p>
             </div>
             
-            <div class="flex flex-col sm:flex-row justify-center items-center gap-12 text-white/20">
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-12 text-white/45">
                 <div class="flex flex-col items-center gap-3">
                     <div class="w-12 h-12 rounded-full bg-[#0d0d0d] border border-white/10 flex items-center justify-center">
                         <div class="w-4 h-4 rounded-sm bg-[#0d0d0d] border border-white/20"></div>
                     </div>
-                    <span class="text-[8px] font-black tracking-widest uppercase">Folio Black #0d0d0d</span>
+                    <span class="text-[10px] font-black tracking-widest uppercase">Folio Black #0d0d0d</span>
                 </div>
                 <div class="flex flex-col items-center gap-3">
                     <div class="w-12 h-12 rounded-full bg-[#c5a059] border border-white/10"></div>
-                    <span class="text-[8px] font-black tracking-widest uppercase text-accent-gold/60">Storio Gold #c5a059</span>
+                    <span class="text-[10px] font-black tracking-widest uppercase text-accent-gold/60">Storio Gold #c5a059</span>
                 </div>
             </div>
         </div>
@@ -293,7 +346,6 @@
     <section class="py-40 px-6 bg-folio-black">
         <div class="max-w-6xl mx-auto space-y-24">
             <div class="text-center space-y-6 reveal">
-                <h2 class="text-accent-gold text-[10px] font-black uppercase tracking-[0.4em]" data-i18n="feat_tag">Core Experience</h2>
                 <h3 class="text-4xl md:text-6xl font-black font-serif" data-i18n="feat_title">Designed for Immersion.</h3>
             </div>
 
@@ -305,7 +357,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M2 12h20"/><path d="m4.93 4.93 14.14 14.14"/><path d="m4.93 19.07 14.14-14.14"/></svg>
                         </div>
                         <h4 class="text-2xl font-black font-serif" data-i18n="feat_1_title">Memory Timeline</h4>
-                        <p class="text-white/40 leading-relaxed text-sm" data-i18n="feat_1_desc">Locate your favorite works instantly with smart search. Every rewatch or reread creates a new, distinct memory card—capturing how your perspective evolves over time.</p>
+                        <p class="text-white/55 leading-relaxed text-sm" data-i18n="feat_1_desc">Locate your favorite works instantly with smart search. Every rewatch or reread creates a new, distinct memory card, capturing how your perspective evolves over time.</p>
                     </div>
                 </div>
 
@@ -316,7 +368,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
                         </div>
                         <h4 class="text-2xl font-black font-serif" data-i18n="feat_2_title">Visual Templates</h4>
-                        <p class="text-white/40 leading-relaxed text-sm" data-i18n="feat_2_desc">Export your reflections as cinematic tickets, 3D hardcover books, or elegant desk flat-lays for sharing.</p>
+                        <p class="text-white/55 leading-relaxed text-sm" data-i18n="feat_2_desc">Export your reflections as cinematic tickets, 3D hardcover books, or elegant desk flat-lays for sharing.</p>
                     </div>
                 </div>
 
@@ -327,7 +379,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8"/><path d="M8 13h6"/></svg>
                         </div>
                         <h4 class="text-2xl font-black font-serif" data-i18n="feat_3_title">AI Assisted Inscription</h4>
-                        <p class="text-white/40 leading-relaxed text-sm" data-i18n="feat_3_desc">Capture your thoughts effortlessly. Rate your experience and let AI help you find the right words or refine your reflections.</p>
+                        <p class="text-white/55 leading-relaxed text-sm" data-i18n="feat_3_desc">Capture your thoughts effortlessly. Rate your experience and let AI help you find the right words or refine your reflections.</p>
                     </div>
                 </div>
 
@@ -338,7 +390,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
                         </div>
                         <h4 class="text-2xl font-black font-serif" data-i18n="feat_4_title">Stats Dashboard</h4>
-                        <p class="text-white/40 leading-relaxed text-sm" data-i18n="feat_4_desc">Visualize your cultural habits with customizable widgets—from 7-day trends to yearly summaries.</p>
+                        <p class="text-white/55 leading-relaxed text-sm" data-i18n="feat_4_desc">Visualize your cultural habits with customizable widgets, from 7-day trends to yearly summaries.</p>
                     </div>
                 </div>
             </div>
@@ -356,7 +408,7 @@
                         Storio was built entirely through <strong>pure vibe coding and AI tools</strong>. Prior to this project, I had zero coding experience. 
                     </p>
                     <p data-i18n="about_desc_2">
-                        I am currently transitioning from a Data PM to a Build PM. This journey represents a holistic approach to building software—where I drove everything from product definition and UX decisions to the actual full-stack implementation.
+                        I am currently transitioning from a Data PM to a Build PM. This journey represents a holistic approach to building software: I drove everything from product definition and UX decisions to the actual full-stack implementation.
                     </p>
                     <p data-i18n="about_desc_3">
                         It's a proof of concept that with modern AI tools, product visionaries can bring their complete ideas to life without being blocked by traditional engineering constraints.
@@ -372,7 +424,7 @@
             <div class="text-center space-y-6 reveal">
                 <h2 class="text-accent-gold text-[10px] font-black uppercase tracking-[0.4em]" data-i18n="team_tag">Meet the Curators</h2>
                 <h3 class="text-4xl md:text-6xl font-black font-serif" data-i18n="team_title">The Core Team.</h3>
-                <p class="text-[10px] text-white/30 tracking-[0.2em] font-black uppercase italic" data-i18n="team_disclaimer">(Playfully managed by Me & my AI companions)</p>
+                <p class="text-[10px] text-white/50 tracking-[0.2em] font-black uppercase italic" data-i18n="team_disclaimer">(Playfully managed by Me & my AI companions)</p>
             </div>
 
             <div class="flex flex-wrap justify-center gap-12 reveal">
@@ -383,7 +435,7 @@
                     </div>
                     <div class="text-center">
                         <h5 class="text-sm font-bold text-white">Obenai</h5>
-                        <p class="text-[9px] uppercase tracking-widest text-accent-gold/60 font-black">the Visionary</p>
+                        <p class="text-[10px] uppercase tracking-widest text-accent-gold/80 font-black">the Visionary</p>
                     </div>
                 </div>
                 <div class="flex flex-col items-center space-y-4 group">
@@ -392,7 +444,7 @@
                     </div>
                     <div class="text-center">
                         <h5 class="text-sm font-bold text-white">Claudini</h5>
-                        <p class="text-[9px] uppercase tracking-widest text-accent-gold/60 font-black">the Builder</p>
+                        <p class="text-[10px] uppercase tracking-widest text-accent-gold/80 font-black">the Builder</p>
                     </div>
                 </div>
                 <div class="flex flex-col items-center space-y-4 group">
@@ -401,7 +453,7 @@
                     </div>
                     <div class="text-center">
                         <h5 class="text-sm font-bold text-white">Cio</h5>
-                        <p class="text-[9px] uppercase tracking-widest text-accent-gold/60 font-black">the Day Dreamer</p>
+                        <p class="text-[10px] uppercase tracking-widest text-accent-gold/80 font-black">the Day Dreamer</p>
                     </div>
                 </div>
                 <div class="flex flex-col items-center space-y-4 group">
@@ -410,7 +462,7 @@
                     </div>
                     <div class="text-center">
                         <h5 class="text-sm font-bold text-white">Gwoky</h5>
-                        <p class="text-[9px] uppercase tracking-widest text-accent-gold/60 font-black">the Time Keeper</p>
+                        <p class="text-[10px] uppercase tracking-widest text-accent-gold/80 font-black">the Time Keeper</p>
                     </div>
                 </div>
                 <div class="flex flex-col items-center space-y-4 group">
@@ -419,7 +471,7 @@
                     </div>
                     <div class="text-center">
                         <h5 class="text-sm font-bold text-white">Mei</h5>
-                        <p class="text-[9px] uppercase tracking-widest text-accent-gold/60 font-black">the Force</p>
+                        <p class="text-[10px] uppercase tracking-widest text-accent-gold/80 font-black">the Force</p>
                     </div>
                 </div>
             </div>
@@ -430,10 +482,10 @@
     <section class="py-48 px-6 text-center reveal border-t border-white/5">
         <div class="max-w-2xl mx-auto space-y-12">
             <h3 class="text-5xl md:text-7xl font-black font-serif" data-i18n="final_title">Begin your collection.</h3>
-            <p class="text-white/30 tracking-[0.3em] uppercase text-[10px] font-bold" data-i18n="final_tag">Free to try. Pure immersion.</p>
+            <p class="text-white/50 tracking-[0.3em] uppercase text-[10px] font-bold" data-i18n="final_tag">Free to try. Pure immersion.</p>
             <div class="flex justify-center">
                 <a href="https://storio.andismtu.com/" target="_blank" class="px-12 py-6 bg-accent-gold text-folio-black font-black rounded-[24px] hover:bg-white transition-all uppercase text-sm tracking-[0.2em] shadow-2xl shadow-accent-gold/30 active:scale-95" data-i18n="final_cta">
-                    OPEN YOUR STORIO
+                    Open Storio
                 </a>
             </div>
         </div>
@@ -444,8 +496,8 @@
         <div class="max-w-2xl mx-auto px-6">
             <!-- Section Header -->
             <div class="text-center mb-12">
-                <p class="text-[9px] font-black uppercase tracking-[0.4em] text-white/30 mb-4" data-i18n="support_tag">Support & FAQ</p>
-                <p class="text-sm text-white/50 leading-relaxed" data-i18n="support_intro">Have a question, found a bug, or want to share feedback? We're here to help.</p>
+                <h2 class="text-2xl font-black font-serif text-white mb-4" data-i18n="support_tag">Support & FAQ</h2>
+                <p class="text-sm text-white/60 leading-relaxed" data-i18n="support_intro">Have a question, found a bug, or want to share feedback? We're here to help.</p>
             </div>
 
             <!-- FAQ Accordion -->
@@ -457,7 +509,7 @@
                         <span class="faq-arrow text-white/30 text-sm ml-4 flex-shrink-0">＋</span>
                     </button>
                     <div class="faq-body overflow-hidden" style="max-height:0;transition:max-height 0.35s ease;">
-                        <p class="text-xs text-white/40 leading-relaxed pb-5" data-i18n="faq_a1">Tap the + button on the home screen, search by title, and tap "Add to Storio." Your collection syncs to your account automatically.</p>
+                        <p class="text-xs text-white/55 leading-relaxed pb-5" data-i18n="faq_a1">Tap the + button on the home screen, search by title, and tap "Add to Storio." Your collection syncs to your account automatically.</p>
                     </div>
                 </div>
 
@@ -467,7 +519,7 @@
                         <span class="faq-arrow text-white/30 text-sm ml-4 flex-shrink-0">＋</span>
                     </button>
                     <div class="faq-body overflow-hidden" style="max-height:0;transition:max-height 0.35s ease;">
-                        <p class="text-xs text-white/40 leading-relaxed pb-5" data-i18n="faq_a2">No. Your collection is linked to your account (Apple ID, Google, or email). Sign in on any device to restore everything.</p>
+                        <p class="text-xs text-white/55 leading-relaxed pb-5" data-i18n="faq_a2">No. Your collection is linked to your account (Apple ID, Google, or email). Sign in on any device to restore everything.</p>
                     </div>
                 </div>
 
@@ -477,7 +529,7 @@
                         <span class="faq-arrow text-white/30 text-sm ml-4 flex-shrink-0">＋</span>
                     </button>
                     <div class="faq-body overflow-hidden" style="max-height:0;transition:max-height 0.35s ease;">
-                        <p class="text-xs text-white/40 leading-relaxed pb-5" data-i18n="faq_a3">Try restarting the app first. If the issue persists, email us at andismtu@gmail.com with a description and your device model.</p>
+                        <p class="text-xs text-white/55 leading-relaxed pb-5" data-i18n="faq_a3">Try restarting the app first. If the issue persists, email us at andismtu@gmail.com with a description and your device model.</p>
                     </div>
                 </div>
 
@@ -487,7 +539,7 @@
                         <span class="faq-arrow text-white/30 text-sm ml-4 flex-shrink-0">＋</span>
                     </button>
                     <div class="faq-body overflow-hidden" style="max-height:0;transition:max-height 0.35s ease;">
-                        <p class="text-xs text-white/40 leading-relaxed pb-5" data-i18n="faq_a4">Open any item, tap "Score &amp; Reflect," write a few words, then tap the ✦ AI button. Storio will refine your reflection automatically (100-character limit).</p>
+                        <p class="text-xs text-white/55 leading-relaxed pb-5" data-i18n="faq_a4">Open any item, tap "Score &amp; Reflect," write a few words, then tap the ✦ AI button. Storio will refine your reflection automatically (100-character limit).</p>
                     </div>
                 </div>
 
@@ -497,7 +549,7 @@
                         <span class="faq-arrow text-white/30 text-sm ml-4 flex-shrink-0">＋</span>
                     </button>
                     <div class="faq-body overflow-hidden" style="max-height:0;transition:max-height 0.35s ease;">
-                        <p class="text-xs text-white/40 leading-relaxed pb-5" data-i18n="faq_a5">On the Explore page, tap the ✦ icon next to the search bar to switch to AI Search. Describe what you're looking for in natural language — like "a slow-burn thriller set in Japan" — and Storio will find matching titles.</p>
+                        <p class="text-xs text-white/55 leading-relaxed pb-5" data-i18n="faq_a5">On the Explore page, tap the ✦ icon next to the search bar to switch to AI Search. Describe what you're looking for in natural language, like "a slow-burn thriller set in Japan", and Storio will find matching titles.</p>
                     </div>
                 </div>
 
@@ -505,12 +557,12 @@
 
             <!-- Contact CTA -->
             <div class="text-center">
-                <p class="text-xs text-white/30 mb-4 tracking-wide" data-i18n="support_cta">Still need help?</p>
+                <p class="text-xs text-white/50 mb-4 tracking-wide" data-i18n="support_cta">Still need help?</p>
                 <a href="mailto:andismtu@gmail.com"
                    class="inline-block border border-accent-gold/30 px-7 py-3 hover:bg-accent-gold/10 transition-colors">
                     <span class="text-accent-gold font-bold tracking-widest text-sm">andismtu@gmail.com</span>
                 </a>
-                <p class="text-[10px] text-white/20 mt-3 tracking-widest uppercase" data-i18n="support_reply">Replies within 1–2 business days</p>
+                <p class="text-[10px] text-white/40 mt-3 tracking-widest uppercase" data-i18n="support_reply">Replies within 1-2 business days</p>
             </div>
         </div>
     </section>
@@ -521,12 +573,12 @@
             <div class="flex flex-col items-center space-y-4">
                 <div class="flex items-center gap-3">
                     <img src="image/logo/logo.png" alt="Storio" class="w-6 h-6 grayscale opacity-30">
-                    <span class="text-sm font-black tracking-[0.4em] uppercase text-white/30 italic">Storio</span>
+                    <span class="text-sm font-black tracking-[0.4em] uppercase text-white/45 italic">Storio</span>
                 </div>
-                <p class="text-[10px] text-white/20 tracking-[0.2em] font-bold uppercase text-center">Anderson Tu & Storio Team • All rights reserved</p>
+                <p class="text-[10px] text-white/40 tracking-[0.2em] font-bold uppercase text-center">Anderson Tu & Storio Team • All rights reserved</p>
             </div>
             
-            <div class="flex flex-wrap justify-center gap-8 text-[9px] font-black uppercase tracking-[0.3em] text-white/30">
+            <div class="flex flex-wrap justify-center gap-8 text-[10px] font-black uppercase tracking-[0.3em] text-white/45">
                 <a href="https://andismtu.com" target="_blank" class="hover:text-accent-gold transition-colors">Personal Site</a>
                 <a href="https://github.com/ziziandydy" target="_blank" class="hover:text-accent-gold transition-colors">GitHub</a>
                 <a href="mailto:andismtu@gmail.com" class="hover:text-accent-gold transition-colors">Contact Us</a>
@@ -538,15 +590,15 @@
         const translations = {
             'zh-TW': {
                 lang_code: 'EN',
-                nav_explore: '探索 Storio',
+                nav_explore: '開啟 Storio',
                 hero_tag: '數位儲思盆 與 個人典藏室',
                 hero_title: '收藏打動你的<br/><span class="italic text-accent-gold">故事。</span>',
                 hero_desc: '一個靜謐、精緻的個人空間，用於紀錄你心愛的電影、影集與書籍。',
-                cta_mobile: '手機版體驗',
-                cta_web: '網頁版體驗',
+                cta_mobile: '下載 iOS App',
+                cta_web: '開啟 Storio',
                 vision_tag: '核心願景',
                 vision_title: '不是資料庫。<br/><span class="italic text-accent-gold">是儲思盆。</span>',
-                vision_copy: '在 Storio，每一筆紀錄都是一張記憶卡——而非試算表中的一行。館藏保存了你與每個故事間的連結：你何時遇見它、當時的感受，以及多年後重溫時心境的轉變。',
+                vision_copy: '在 Storio，每一筆紀錄都是一張記憶卡，而非試算表中的一行。館藏保存了你與每個故事間的連結：你何時遇見它、當時的感受，以及多年後重溫時心境的轉變。',
                 feat_tag: '核心體驗',
                 feat_title: '為沉浸而生。',
                 feat_1_title: '記憶時間軸',
@@ -560,24 +612,24 @@
                 about_tag: '開發背後的故事',
                 about_title: '從 Data PM 到 Build PM。',
                 about_desc_1: 'Storio 是一個完全透過 <strong>Vibe Coding 與 AI 工具</strong> 所打造出來的產品。在開啟這個專案之前，我完全沒有程式開發背景。',
-                about_desc_2: '目前我正在從 Data PM 轉型為 Build PM。這段旅程代表了一種全方位的軟體開發方法——從產品定義、UX 決策到完整的全端實作，皆由我獨立驅動。',
+                about_desc_2: '目前我正在從 Data PM 轉型為 Build PM。這段旅程代表了一種全方位的軟體開發方法：從產品定義、UX 決策到完整的全端實作，皆由我獨立驅動。',
                 about_desc_3: '這是一個實證：透過現代 AI 工具，產品願景家可以親手將完整創意帶入現實，不再受限於傳統的技術門檻。',
                 team_tag: '與策展人見面',
                 team_title: '核心團隊。',
                 team_disclaimer: '(這是一個我與 AI 夥伴們共同編織的趣味團隊)',
                 final_tag: '完全免費體驗。極致沉浸。',
                 final_title: '開始你的館藏之旅。',
-                final_cta: '開啟我的 STORIO',
+                final_cta: '開啟 Storio',
                 support_tag: 'Support & FAQ',
                 support_intro: '有任何問題、Bug 回報或功能建議，我們隨時在這裡。',
                 support_cta: 'Still need help?',
-                support_reply: '通常在 1–2 個工作天內回覆',
+                support_reply: '通常在 1-2 個工作天內回覆',
                 faq_q1: '如何開始典藏電影或書籍？',
                 faq_a1: '點擊首頁的「+」按鈕，搜尋片名或書名，點「加入」即可典藏，資料自動同步至帳號。',
                 faq_q2: '我的資料會不會遺失？',
                 faq_a2: '不會。典藏資料綁定帳號（Apple ID / Google / Email），換機後登入即可還原所有內容。',
                 faq_q3: 'App 遇到問題怎麼辦？',
-                faq_a3: '請先重啟 App。若問題持續，請寄信至 andismtu@gmail.com，說明問題與裝置型號，我們通常在 1–2 個工作天內回覆。',
+                faq_a3: '請先重啟 App。若問題持續，請寄信至 andismtu@gmail.com，說明問題與裝置型號，我們通常在 1-2 個工作天內回覆。',
                 faq_q4: 'AI 寫心得如何使用？',
                 faq_a4: '進入任一典藏項目，點「評分與心得」，輸入幾個關鍵詞後點擊 ✦ AI 潤飾按鈕，Storio 會自動擴寫成完整心得（100 字限制）。',
                 faq_q5: 'AI 搜尋如何使用？',
@@ -585,25 +637,25 @@
             },
             'en': {
                 lang_code: 'TW',
-                nav_explore: 'Explore Storio',
+                nav_explore: 'Open Storio',
                 hero_tag: 'Digital Pensieve & Folio',
                 hero_title: 'Collect stories in your <br/><span class="italic text-accent-gold">folio.</span>',
                 hero_desc: 'A quiet, sophisticated sanctuary for curating your personal collection of movies, series, and books.',
-                cta_mobile: 'Try on Mobile',
-                cta_web: 'Try on Web',
+                cta_mobile: 'Get the iOS App',
+                cta_web: 'Open Storio',
                 vision_tag: 'The Vision',
                 vision_title: 'Not a database. <br/><span class="italic text-accent-gold">A Pensieve.</span>',
-                vision_copy: 'In Storio, every entry is a memory card — not a row in a spreadsheet. Your folio holds your relationship with each story: when you encountered it, what you felt, and how your perspective shifted when you returned years later.',
+                vision_copy: 'In Storio, every entry is a memory card, not a row in a spreadsheet. Your folio holds your relationship with each story: when you encountered it, what you felt, and how your perspective shifted when you returned years later.',
                 feat_tag: 'Core Experience',
                 feat_title: 'Designed for Immersion.',
                 feat_1_title: 'Memory Timeline',
-                feat_1_desc: 'Locate your favorite works instantly with smart search. Every rewatch or reread creates a new, distinct memory card—capturing how your perspective evolves over time.',
+                feat_1_desc: 'Locate your favorite works instantly with smart search. Every rewatch or reread creates a new, distinct memory card, capturing how your perspective evolves over time.',
                 feat_2_title: 'Visual Templates',
                 feat_2_desc: 'Export your reflections as cinematic tickets, 3D hardcover books, or elegant desk flat-lays for sharing.',
                 feat_3_title: 'AI Assisted Inscription',
                 feat_3_desc: 'Capture your thoughts effortlessly. Rate your experience and let AI help you find the right words or refine your reflections.',
                 feat_4_title: 'Stats Dashboard',
-                feat_4_desc: 'Visualize your cultural habits with customizable widgets—from 7-day trends to yearly summaries.',
+                feat_4_desc: 'Visualize your cultural habits with customizable widgets, from 7-day trends to yearly summaries.',
                 about_tag: 'The Story Behind',
                 about_title: 'From Data PM to Build PM.',
                 about_desc_1: 'Storio was built entirely through <strong>pure vibe coding and AI tools</strong>. Prior to this project, I had zero coding experience.',
@@ -614,11 +666,11 @@
                 team_disclaimer: '(Playfully managed by Me & my AI companions)',
                 final_tag: 'Free to try. Pure immersion.',
                 final_title: 'Begin your collection.',
-                final_cta: 'OPEN YOUR STORIO',
+                final_cta: 'Open Storio',
                 support_tag: 'Support & FAQ',
                 support_intro: 'Have a question, found a bug, or want to share feedback? We\'re here to help.',
                 support_cta: 'Still need help?',
-                support_reply: 'Replies within 1–2 business days',
+                support_reply: 'Replies within 1-2 business days',
                 faq_q1: 'How do I start adding movies or books?',
                 faq_a1: 'Tap the + button on the home screen, search by title, and tap "Add to Storio." Your collection syncs to your account automatically.',
                 faq_q2: 'Will my data be lost if I switch devices?',
@@ -628,7 +680,7 @@
                 faq_q4: 'How do I use AI to write a reflection?',
                 faq_a4: 'Open any item, tap "Score & Reflect," write a few words, then tap the ✦ AI button. Storio will refine your reflection automatically (100-character limit).',
                 faq_q5: 'How do I use AI Search?',
-                faq_a5: 'On the Explore page, tap the ✦ icon next to the search bar to switch to AI Search. Describe what you\'re looking for in natural language — like "a slow-burn thriller set in Japan" — and Storio will find matching titles.'
+                faq_a5: 'On the Explore page, tap the ✦ icon next to the search bar to switch to AI Search. Describe what you\'re looking for in natural language, like "a slow-burn thriller set in Japan", and Storio will find matching titles.'
             }
         };
 
@@ -671,30 +723,44 @@
         if (savedLang) currentLang = savedLang;
         updateUI();
 
-        // "Golden Snitch" Mouse Follow Logic
+        // 「金探子」光暈：桌機跟隨（到位即休眠）＋聚光燈卡片；觸控巡遊與減少動態由 CSS 接手
         const snitch = document.getElementById('snitch');
-        let mouseX = window.innerWidth / 2;
-        let mouseY = window.innerHeight / 2;
-        let snitchX = mouseX;
-        let snitchY = mouseY;
+        const finePointer = matchMedia('(pointer: fine)').matches;
+        const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-        document.addEventListener('mousemove', e => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-        });
+        if (reduceMotion) {
+            snitch.remove();
+        } else if (finePointer) {
+            const spotCards = document.querySelectorAll('.glass-card');
+            let mouseX = window.innerWidth / 2;
+            let mouseY = window.innerHeight / 2;
+            let snitchX = mouseX;
+            let snitchY = mouseY;
+            let rafId = null;
 
-        function animateSnitch() {
-            // Lerp for smooth delay effect
-            const lerpFactor = 0.05; // Adjust this for more/less delay
-            snitchX += (mouseX - snitchX) * lerpFactor;
-            snitchY += (mouseY - snitchY) * lerpFactor;
+            function animateSnitch() {
+                const lerpFactor = 0.05;
+                snitchX += (mouseX - snitchX) * lerpFactor;
+                snitchY += (mouseY - snitchY) * lerpFactor;
+                snitch.style.transform = `translate(${snitchX}px, ${snitchY}px)`;
+                if (Math.abs(mouseX - snitchX) > 0.5 || Math.abs(mouseY - snitchY) > 0.5) {
+                    rafId = requestAnimationFrame(animateSnitch);
+                } else {
+                    rafId = null;   // 光暈到位 → 休眠，滑鼠再動才喚醒
+                }
+            }
 
-            snitch.style.left = snitchX + 'px';
-            snitch.style.top = snitchY + 'px';
-
-            requestAnimationFrame(animateSnitch);
+            document.addEventListener('mousemove', e => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                if (rafId === null) rafId = requestAnimationFrame(animateSnitch);
+                for (const card of spotCards) {
+                    const r = card.getBoundingClientRect();
+                    card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+                    card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+                }
+            });
         }
-        animateSnitch();
 
         // Reveal Animation on Scroll
         const revealObserver = new IntersectionObserver((entries) => {
