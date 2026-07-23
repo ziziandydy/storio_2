@@ -1,0 +1,12 @@
+{
+  "name": "storio-landing",
+  "private": true,
+  "description": "Build pipeline for the standalone GitHub Pages landing page (index.html). Independent from client/.",
+  "scripts": {
+    "build:css": "tailwindcss -i ./src/tailwind-input.css -o ./css/tailwind.css --minify",
+    "watch:css": "tailwindcss -i ./src/tailwind-input.css -o ./css/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.3.0"
+  }
+}

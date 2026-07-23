@@ -113,32 +113,17 @@
     }
     </script>
 
+    <!-- Hero 背景圖：優先載入，改善 LCP -->
+    <link rel="preload" as="image" href="image/heroBackground_v2.jpg" fetchpriority="high">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&display=swap" rel="stylesheet">
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'folio-black': '#0d0d0d',
-                        'accent-gold': '#c5a059',
-                        'card-surface': '#121212',
-                        'folio-outline': '#2a2a2a',
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        serif: ['Playfair Display', 'serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    
+
+    <!-- Tailwind CSS：預編譯靜態 CSS（取代 CDN JIT script，減少 render-blocking 與執行期編譯） -->
+    <link rel="stylesheet" href="css/tailwind.css">
+
     <style>
         body {
             background-color: #0d0d0d;
@@ -263,9 +248,15 @@
             mask-composite: exclude;
             pointer-events: none;
         }
-        .nav-blur {
-            backdrop-filter: blur(20px);
-            background: rgba(13, 13, 13, 0.6);
+        /* Nav：預設完全透明無邊線；捲出 hero 後才淡入極輕毛玻璃，仍無邊線 */
+        nav {
+            backdrop-filter: blur(0px);
+            background: rgba(13, 13, 13, 0);
+            transition: background-color 0.5s ease, backdrop-filter 0.5s ease;
+        }
+        nav.nav-scrolled {
+            backdrop-filter: blur(16px);
+            background: rgba(13, 13, 13, 0.45);
         }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #0d0d0d; }
@@ -278,7 +269,7 @@
     <div id="snitch" class="snitch-glow"><div class="snitch-y"><div class="snitch-core"></div></div></div>
 
     <!-- Navigation -->
-    <nav class="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex justify-between items-center nav-blur border-b border-white/5 transition-all duration-500">
+    <nav class="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex justify-between items-center">
         <div class="flex items-center gap-3">
             <img src="image/logo/logo.png" alt="Storio" class="w-8 h-8 rounded-lg shadow-lg border border-white/10">
             <span class="text-sm font-black tracking-[0.3em] uppercase text-white/90 hidden sm:inline-block">Storio</span>
@@ -292,12 +283,14 @@
             </a>
         </div>
     </nav>
+    <!-- Nav 捲動感知的觀測哨兵：離開視口即代表已捲出 hero 頂端 -->
+    <div id="nav-sentinel" class="absolute top-0 h-16 w-px pointer-events-none"></div>
 
     <!-- Hero Section -->
     <section class="relative min-h-[100dvh] flex flex-col items-center justify-center pt-20 px-6 overflow-hidden page-unfold">
         <div class="absolute inset-0 z-0 opacity-30 pointer-events-none border-folio-outline border-b overflow-hidden">
             <!-- h-[140%] + object-top：裁掉圖片下半部內嵌的 STORIO 文字，避免與 H1 疊字 -->
-            <img src="image/heroBackground_v2.jpg" alt="" class="w-full h-[140%] object-cover object-top scale-110">
+            <img src="image/heroBackground_v2.jpg" alt="" fetchpriority="high" class="w-full h-[140%] object-cover object-top scale-110">
             <div class="absolute inset-0 bg-gradient-to-b from-folio-black/80 via-folio-black/40 to-folio-black"></div>
         </div>
 
@@ -877,6 +870,16 @@
                 }
             });
         }
+
+        // Nav：離開 hero 頂端後淡入極輕毛玻璃（二元切換，非連續 scroll 運算）
+        const navEl = document.querySelector('nav');
+        const navSentinel = document.getElementById('nav-sentinel');
+        const navObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                navEl.classList.toggle('nav-scrolled', !entry.isIntersecting);
+            });
+        }, { threshold: 0 });
+        navObserver.observe(navSentinel);
 
         // Reveal Animation on Scroll
         const revealObserver = new IntersectionObserver((entries) => {
