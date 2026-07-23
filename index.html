@@ -234,6 +234,21 @@
             background: radial-gradient(320px circle at var(--mx) var(--my), rgba(197, 160, 89, 0.16), transparent 65%);
             pointer-events: none;
         }
+        /* Features 示意 vignette：手刻 UI 示意（非截圖），App 改版時直接改 HTML 即可 */
+        .cal-day {
+            aspect-ratio: 1 / 1;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.03);
+            font-size: 8px;
+            color: rgba(255, 255, 255, 0.3);
+            padding: 3px 0 0 5px;
+        }
+        .cal-poster {
+            aspect-ratio: 1 / 1;
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+        }
         /* 聚光燈：邊框流光，沿游標位置照亮描邊 */
         .glass-card::after {
             content: "";
@@ -350,48 +365,146 @@
                 <h3 class="text-4xl md:text-6xl font-black font-serif" data-i18n="feat_title">Designed for Immersion.</h3>
             </div>
 
-            <div class="grid sm:grid-cols-2 gap-8 reveal">
-                <!-- F1: Memory Timeline -->
-                <div class="group p-12 glass-card rounded-[48px] hover:bg-white/5 transition-all duration-700 border-white/5 hover:border-accent-gold/20 relative overflow-hidden">
-                    <div class="relative z-10 space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 reveal">
+                <!-- F1: Memory Timeline（大格：文左圖右） -->
+                <div class="group glass-card rounded-[48px] hover:bg-white/5 transition-all duration-700 border-white/5 hover:border-accent-gold/20 relative overflow-hidden lg:col-span-7 flex flex-col lg:flex-row">
+                    <div class="relative z-10 space-y-6 p-10 lg:p-12 lg:w-1/2">
                         <div class="w-14 h-14 bg-accent-gold/10 rounded-2xl flex items-center justify-center text-accent-gold group-hover:scale-110 transition-transform duration-500 shadow-xl shadow-accent-gold/5">
                             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M2 12h20"/><path d="m4.93 4.93 14.14 14.14"/><path d="m4.93 19.07 14.14-14.14"/></svg>
                         </div>
                         <h4 class="text-2xl font-black font-serif" data-i18n="feat_1_title">Memory Timeline</h4>
                         <p class="text-white/55 leading-relaxed text-sm" data-i18n="feat_1_desc">Locate your favorite works instantly with smart search. Every rewatch or reread creates a new, distinct memory card, capturing how your perspective evolves over time.</p>
                     </div>
+                    <div class="relative z-10 px-10 lg:pl-0 lg:pr-10 lg:w-1/2 flex items-end justify-center">
+                        <!-- 示意 UI（示意資料，非截圖）：日曆記憶時間軸 -->
+                        <div aria-hidden="true" class="w-full max-w-[300px] h-[300px] lg:h-[360px] rounded-t-[28px] border border-white/10 border-b-0 shadow-2xl shadow-black/60 bg-[#0a0a0a] overflow-hidden p-5 space-y-3">
+                            <div class="flex items-baseline justify-between">
+                                <span class="font-serif italic text-accent-gold text-lg">March 2026</span>
+                                <span class="text-[8px] tracking-[0.2em] text-white/40 uppercase font-black">15 Stories</span>
+                            </div>
+                            <div class="grid grid-cols-7 gap-1.5 text-center text-[7px] tracking-widest text-white/30 uppercase">
+                                <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                            </div>
+                            <div class="grid grid-cols-7 gap-1.5">
+                                <div class="cal-day">1</div><div class="cal-day">2</div><div class="cal-day">3</div>
+                                <div class="cal-poster bg-gradient-to-br from-accent-gold/50 via-stone-800 to-black"><span class="absolute bottom-0.5 right-1 text-[7px] font-black text-accent-gold">×6</span></div>
+                                <div class="cal-day">5</div><div class="cal-day">6</div><div class="cal-day">7</div>
+                                <div class="cal-day">8</div><div class="cal-day">9</div>
+                                <div class="cal-poster bg-gradient-to-br from-white/25 to-slate-900"></div>
+                                <div class="cal-day">11</div><div class="cal-day">12</div>
+                                <div class="cal-poster bg-gradient-to-br from-accent-gold/25 to-stone-900"></div>
+                                <div class="cal-day">14</div>
+                                <div class="cal-day">15</div><div class="cal-day">16</div><div class="cal-day">17</div><div class="cal-day">18</div><div class="cal-day">19</div><div class="cal-day">20</div><div class="cal-day">21</div>
+                                <div class="cal-day">22</div><div class="cal-day">23</div>
+                                <div class="cal-poster bg-gradient-to-br from-white/15 via-stone-800 to-black"></div>
+                                <div class="cal-day">25</div><div class="cal-day">26</div><div class="cal-day">27</div><div class="cal-day">28</div>
+                                <div class="cal-day">29</div><div class="cal-day">30</div><div class="cal-day">31</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- F2: Visual Templates -->
-                <div class="group p-12 glass-card rounded-[48px] hover:bg-white/5 transition-all duration-700 border-white/5 hover:border-accent-gold/20 relative overflow-hidden">
-                    <div class="relative z-10 space-y-6">
+                <!-- F2: Visual Templates（小格：直排） -->
+                <div class="group glass-card rounded-[48px] hover:bg-white/5 transition-all duration-700 border-white/5 hover:border-accent-gold/20 relative overflow-hidden lg:col-span-5 flex flex-col">
+                    <div class="relative z-10 space-y-6 p-10 lg:p-12 pb-6">
                         <div class="w-14 h-14 bg-accent-gold/10 rounded-2xl flex items-center justify-center text-accent-gold group-hover:scale-110 transition-transform duration-500 shadow-xl shadow-accent-gold/5">
                             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
                         </div>
                         <h4 class="text-2xl font-black font-serif" data-i18n="feat_2_title">Visual Templates</h4>
                         <p class="text-white/55 leading-relaxed text-sm" data-i18n="feat_2_desc">Export your reflections as cinematic tickets, 3D hardcover books, or elegant desk flat-lays for sharing.</p>
                     </div>
+                    <div class="relative z-10 px-10 mt-auto flex justify-center">
+                        <!-- 示意 UI（示意資料，非截圖）：模板選單＋電影票根預覽 -->
+                        <div aria-hidden="true" class="w-full max-w-[300px] h-[260px] rounded-t-[28px] border border-white/10 border-b-0 shadow-2xl shadow-black/60 bg-[#0a0a0a] overflow-hidden p-5 space-y-4">
+                            <div class="flex flex-wrap gap-1.5">
+                                <span class="px-3 py-1 rounded-full border border-accent-gold bg-accent-gold/10 text-accent-gold text-[8px] font-black uppercase tracking-widest">Ticket</span>
+                                <span class="px-3 py-1 rounded-full border border-white/10 text-white/40 text-[8px] font-black uppercase tracking-widest">Default</span>
+                                <span class="px-3 py-1 rounded-full border border-white/10 text-white/40 text-[8px] font-black uppercase tracking-widest">Pure</span>
+                                <span class="px-3 py-1 rounded-full border border-white/10 text-white/40 text-[8px] font-black uppercase tracking-widest">Retro TV</span>
+                            </div>
+                            <div class="-rotate-2 translate-y-1 rounded-2xl border border-accent-gold/25 bg-gradient-to-b from-[#17130c] to-[#0d0d0d] p-4 space-y-3 shadow-xl shadow-black/50">
+                                <p class="text-center text-[7px] tracking-[0.3em] text-accent-gold/80 font-black uppercase">Movie Memory</p>
+                                <div class="h-16 rounded-lg bg-gradient-to-br from-accent-gold/30 via-stone-800 to-black"></div>
+                                <div class="border-t border-dashed border-white/15 pt-3 space-y-1">
+                                    <p class="font-serif font-bold text-white text-sm text-center">Dune: Part Three</p>
+                                    <p class="text-center text-accent-gold text-[10px] tracking-[0.2em]">★★★★★★★★★<span class="text-white/20">☆</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- F3: AI Assisted Inscription -->
-                <div class="group p-12 glass-card rounded-[48px] hover:bg-white/5 transition-all duration-700 border-white/5 hover:border-accent-gold/20 relative overflow-hidden">
-                    <div class="relative z-10 space-y-6">
+                <!-- F3: AI Assisted Inscription（小格：直排） -->
+                <div class="group glass-card rounded-[48px] hover:bg-white/5 transition-all duration-700 border-white/5 hover:border-accent-gold/20 relative overflow-hidden lg:col-span-5 flex flex-col">
+                    <div class="relative z-10 space-y-6 p-10 lg:p-12 pb-6">
                         <div class="w-14 h-14 bg-accent-gold/10 rounded-2xl flex items-center justify-center text-accent-gold group-hover:scale-110 transition-transform duration-500 shadow-xl shadow-accent-gold/5">
                             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8"/><path d="M8 13h6"/></svg>
                         </div>
                         <h4 class="text-2xl font-black font-serif" data-i18n="feat_3_title">AI Assisted Inscription</h4>
                         <p class="text-white/55 leading-relaxed text-sm" data-i18n="feat_3_desc">Capture your thoughts effortlessly. Rate your experience and let AI help you find the right words or refine your reflections.</p>
                     </div>
+                    <div class="relative z-10 px-10 mt-auto flex justify-center">
+                        <!-- 示意 UI（示意資料，非截圖）：評分＋AI 心得表單 -->
+                        <div aria-hidden="true" class="w-full max-w-[300px] h-[260px] rounded-t-[28px] border border-white/10 border-b-0 shadow-2xl shadow-black/60 bg-[#0a0a0a] overflow-hidden p-5 space-y-3">
+                            <p class="text-[8px] tracking-[0.25em] text-white/40 font-black uppercase">Your Rating</p>
+                            <p class="text-accent-gold text-sm tracking-[0.15em]">★★★★★★★★<span class="text-white/15">★★</span><span class="text-white/60 text-[10px] ml-2 font-black">8</span></p>
+                            <div class="flex items-center justify-between">
+                                <p class="text-[8px] tracking-[0.25em] text-white/40 font-black uppercase">Your Reflection</p>
+                                <p class="text-[8px] text-accent-gold font-black tracking-widest">✦ AI</p>
+                            </div>
+                            <div class="rounded-xl border border-white/10 bg-white/[0.03] p-3 pb-6 relative">
+                                <p class="text-[10px] text-white/70 leading-relaxed" data-i18n="feat_3_sample">宿命的沙丘在終章收束，Paul 的每個抉擇都令人屏息。</p>
+                                <p class="absolute bottom-2 right-3 text-[7px] text-white/30 font-mono">23 / 100</p>
+                            </div>
+                            <div class="rounded-full bg-accent-gold text-folio-black text-center py-2 text-[8px] font-black uppercase tracking-[0.2em]">✦ Refine with AI</div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- F4: Dynamic Insights -->
-                <div class="group p-12 glass-card rounded-[48px] hover:bg-white/5 transition-all duration-700 border-white/5 hover:border-accent-gold/20 relative overflow-hidden">
-                    <div class="relative z-10 space-y-6">
+                <!-- F4: Stats Dashboard（大格：圖左文右） -->
+                <div class="group glass-card rounded-[48px] hover:bg-white/5 transition-all duration-700 border-white/5 hover:border-accent-gold/20 relative overflow-hidden lg:col-span-7 flex flex-col lg:flex-row-reverse">
+                    <div class="relative z-10 space-y-6 p-10 lg:p-12 lg:w-1/2">
                         <div class="w-14 h-14 bg-accent-gold/10 rounded-2xl flex items-center justify-center text-accent-gold group-hover:scale-110 transition-transform duration-500 shadow-xl shadow-accent-gold/5">
                             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
                         </div>
                         <h4 class="text-2xl font-black font-serif" data-i18n="feat_4_title">Stats Dashboard</h4>
                         <p class="text-white/55 leading-relaxed text-sm" data-i18n="feat_4_desc">Visualize your cultural habits with customizable widgets, from 7-day trends to yearly summaries.</p>
+                    </div>
+                    <div class="relative z-10 px-10 lg:pr-0 lg:pl-10 lg:w-1/2 flex items-end justify-center">
+                        <!-- 示意 UI（示意資料，非截圖）：首頁統計 widgets -->
+                        <div aria-hidden="true" class="w-full max-w-[300px] h-[300px] lg:h-[360px] rounded-t-[28px] border border-white/10 border-b-0 shadow-2xl shadow-black/60 bg-[#0a0a0a] overflow-hidden p-5 space-y-3">
+                            <div class="flex items-baseline justify-between">
+                                <span class="text-[8px] tracking-[0.25em] text-white/40 font-black uppercase">This Month</span>
+                                <span class="font-serif italic text-accent-gold text-sm">March 2026</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-1">
+                                    <p class="text-2xl font-black text-white">15</p>
+                                    <p class="text-[7px] tracking-[0.2em] text-white/40 uppercase font-black">Stories</p>
+                                </div>
+                                <div class="rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-1">
+                                    <p class="text-2xl font-black text-accent-gold">×6</p>
+                                    <p class="text-[7px] tracking-[0.2em] text-white/40 uppercase font-black">Rewatches</p>
+                                </div>
+                            </div>
+                            <div class="rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-2">
+                                <p class="text-[7px] tracking-[0.2em] text-white/40 uppercase font-black">7-Day Trend</p>
+                                <div class="flex items-end gap-1.5 h-14">
+                                    <div class="flex-1 rounded-sm bg-accent-gold/25 h-[30%]"></div>
+                                    <div class="flex-1 rounded-sm bg-accent-gold/35 h-[55%]"></div>
+                                    <div class="flex-1 rounded-sm bg-accent-gold/30 h-[40%]"></div>
+                                    <div class="flex-1 rounded-sm bg-accent-gold/50 h-[70%]"></div>
+                                    <div class="flex-1 rounded-sm bg-accent-gold/40 h-[50%]"></div>
+                                    <div class="flex-1 rounded-sm bg-accent-gold h-full"></div>
+                                    <div class="flex-1 rounded-sm bg-accent-gold/60 h-[80%]"></div>
+                                </div>
+                            </div>
+                            <div class="flex gap-1.5 flex-wrap">
+                                <span class="px-2.5 py-1 rounded-full border border-white/10 text-white/50 text-[8px] font-black uppercase tracking-widest">3 Series</span>
+                                <span class="px-2.5 py-1 rounded-full border border-white/10 text-white/50 text-[8px] font-black uppercase tracking-widest">2 Movies</span>
+                                <span class="px-2.5 py-1 rounded-full border border-white/10 text-white/50 text-[8px] font-black uppercase tracking-widest">1 Book</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -608,6 +721,7 @@
                 feat_2_desc: '將你的心得匯出成擬真電影票根、3D 精裝書櫃或優雅的桌面平拍，讓分享也充滿美感。',
                 feat_3_title: 'AI 共筆心得',
                 feat_3_desc: '輕鬆捕捉感悟。留下你的個人評分，並透過 AI 輔助快速生成心得或潤飾文字，讓每一筆紀錄都優雅精煉。',
+                feat_3_sample: '宿命的沙丘在終章收束，Paul 的每個抉擇都令人屏息。',
                 feat_4_title: '數據統計面板',
                 feat_4_desc: '視覺化你的閱聽習慣。透過可自訂的組件，隨時檢視從 7 天趨勢到年度總結的個人館藏數據。',
                 about_tag: '開發背後的故事',
@@ -655,6 +769,7 @@
                 feat_2_desc: 'Export your reflections as cinematic tickets, 3D hardcover books, or elegant desk flat-lays for sharing.',
                 feat_3_title: 'AI Assisted Inscription',
                 feat_3_desc: 'Capture your thoughts effortlessly. Rate your experience and let AI help you find the right words or refine your reflections.',
+                feat_3_sample: 'The dunes of fate converge at last. Every choice Paul makes left me breathless.',
                 feat_4_title: 'Stats Dashboard',
                 feat_4_desc: 'Visualize your cultural habits with customizable widgets, from 7-day trends to yearly summaries.',
                 about_tag: 'The Story Behind',
