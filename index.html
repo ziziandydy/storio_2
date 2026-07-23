@@ -280,9 +280,10 @@
 
     <!-- Hero Section -->
     <section class="relative min-h-[100dvh] flex flex-col items-center justify-center pt-20 px-6 overflow-hidden page-unfold">
-        <div class="absolute inset-0 z-0 opacity-20 pointer-events-none border-folio-outline border-b">
-            <img src="image/heroBackground_v2.jpg" alt="Background" class="w-full h-full object-cover scale-110">
-            <div class="absolute inset-0 bg-gradient-to-b from-folio-black via-folio-black/60 to-folio-black"></div>
+        <div class="absolute inset-0 z-0 opacity-30 pointer-events-none border-folio-outline border-b overflow-hidden">
+            <!-- h-[140%] + object-top：裁掉圖片下半部內嵌的 STORIO 文字，避免與 H1 疊字 -->
+            <img src="image/heroBackground_v2.jpg" alt="" class="w-full h-[140%] object-cover object-top scale-110">
+            <div class="absolute inset-0 bg-gradient-to-b from-folio-black/80 via-folio-black/40 to-folio-black"></div>
         </div>
 
         <div class="relative z-10 max-w-5xl w-full text-center space-y-10">
