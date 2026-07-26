@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.16.1](https://github.com/ziziandydy/storio_2/compare/v1.16.0...v1.16.1) (2026-07-26)
+
+
+### Bug 修復 (Bug Fixes)
+
+* **details:** back 鍵改 fixed 定位，修正 safe-area 疊加與捲動消失 ([0b5a53b](https://github.com/ziziandydy/storio_2/commit/0b5a53b91b8bff6dd1e1ce5d36483902f1530189))
+* **share:** 修復書籍分享破圖、快取過期消失、RetroTV 比例問題 ([7b1f4f7](https://github.com/ziziandydy/storio_2/commit/7b1f4f744a761e1eb014fe7d4413b14d8d03563d))
+
 ## [1.16.0](https://github.com/ziziandydy/storio_2/compare/v1.15.1...v1.16.0) (2026-07-13)
 
 
