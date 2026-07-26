@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
-import { getRenderServiceHealth } from '@/lib/share-api';
+import { getRenderServiceHealth, blobToBase64 } from '@/lib/share-api';
 import { useProgressiveRenderQueue } from '@/hooks/useProgressiveRenderQueue';
 import type { RenderPayload, RenderSettings } from '@/lib/share-api';
 import type { TemplateId } from '@/hooks/useProgressiveRenderQueue';
@@ -187,11 +187,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
 
     try {
       if (Capacitor.isNativePlatform()) {
-        const arrayBuffer = await blob.arrayBuffer();
-        const bytes = new Uint8Array(arrayBuffer);
-        let binary = '';
-        bytes.forEach((b) => (binary += String.fromCharCode(b)));
-        const base64Data = btoa(binary);
+        const base64Data = await blobToBase64(blob);
         const fileNameWithExt = `${fileName}_${Date.now()}.png`;
         const savedFile = await Filesystem.writeFile({
           path: fileNameWithExt,
@@ -249,6 +245,13 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
 
   const currentCacheEntry = getCacheEntry(selectedTemplate);
   const isCurrentTemplateReady = !!currentCacheEntry;
+
+  // Cache 過期後（放置超過 TTL）重新排入 queue，補回 PNG cache，
+  // 避免使用者停留過久後按分享/下載時 cache 是空的且沒有任何回應。
+  useEffect(() => {
+    if (!isOpen || serviceStatus !== 'ready' || isCurrentTemplateReady) return;
+    prioritize(selectedTemplate);
+  }, [isOpen, serviceStatus, isCurrentTemplateReady, selectedTemplate, prioritize]);
 
   return (
     <AnimatePresence>
@@ -340,7 +343,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                         <img
                           src={currentCacheEntry!.objectUrl}
                           alt={monthName}
-                          style={{ display: 'block' }}
+                          className="block w-auto h-auto max-w-[85vw] max-h-[65vh] object-contain"
                         />
                       )}
 

@@ -141,6 +141,34 @@ export DEV_CORS_ORIGIN="http://<你的區網IP>:3010"
 6. 用 `Runtime.evaluate` 執行 JS 驗證頁面狀態、模擬點擊（`querySelector(...).click()`）、檢查 `location.href`。**注意**：`awaitPromise: true` 在這個 legacy protocol 下不可靠，非同步結果改用「存進 `window.__xxx` 變數 → `setTimeout` 後再讀」的模式。
 7. **建置產物 `client/ios/App/build/` 不會被 git 追蹤，但會讓後續 `cap sync` 的 `pod install`（內部跑 `xcodebuild clean`）報錯**（`Could not delete build because it was not created by the build system`）——測試完 `rm -rf client/ios/App/build` 即可解除。
 
+### Q9: iOS **實體裝置**手動驗證方法（跟 Q8 的差異）
+
+**情境**：要在真的 iPhone（非模擬器）上驗證功能，流程大致同 Q8，但裝置探測、安裝、inspector 連線方式不同，且會遇到模擬器沒有的網路/CORS 眉角。
+
+**做法**：
+1. 同 Q8 步驟 1 設定 `.env.local`（`CAPACITOR_DEV_URL` + `NEXT_PUBLIC_PUPPETEER_SERVICE_URL` 都指向區網 IP，見上方 Puppeteer Service 章節的警告），啟動 backend 時也要 `export DEV_CORS_ORIGIN="http://<區網IP>:3010"`（見 Q6），puppeteer-service 啟動要帶 `ALLOWED_ORIGINS`。
+2. 找裝置：`xcrun devicectl list devices`（比 `xcrun xctrace list devices` 準，後者對已配對但當下離線的裝置常誤報 offline）。也可用 `idevice_id -l`（來自 `libimobiledevice`，`brew install libimobiledevice`）確認裝置有被 `usbmuxd` 看到。
+3. 查目標 destination id：`xcodebuild -workspace ios/App/App.xcworkspace -scheme App -showdestinations | grep "platform:iOS"`。
+4. 建置：`xcodebuild -workspace ios/App/App.xcworkspace -scheme App -sdk iphoneos -destination "id=<UDID>" -derivedDataPath build build`（需要專案已設定好 `DEVELOPMENT_TEAM` / signing，簽署身份與 provisioning profile 錯誤會在這步報錯）。
+5. 安裝 + 啟動改用 `devicectl`（不是 `simctl`）：
+   ```bash
+   xcrun devicectl device install app --device <coredevice-UUID> build/Build/Products/Debug-iphoneos/App.app
+   xcrun devicectl device process launch --device <coredevice-UUID> com.storio.app
+   ```
+   這裡的 `<coredevice-UUID>` 是 `devicectl list devices` 顯示的識別碼，跟 `xctrace`/`idevice_id` 的 UDID 格式不同，兩種 ID 都要留意別搞混。
+6. **手機端要手動打開 Web Inspector**（設定 → Safari → 進階 → 網頁檢閱器），否則 `ios_webkit_debug_proxy` 連線會直接 SSL/broken pipe 失敗。打開後需要重新 `launch` 一次 App，WebView 才會註冊給 inspector。
+7. 連 proxy：`ios_webkit_debug_proxy -c <UDID>:9222`（這裡用 Q8 xctrace 格式的 UDID，不是 devicectl 的）。之後同 Q8 步驟 5-6，用 `Target.sendMessageToTarget` legacy protocol 操作——`client/scripts/ios-cdp-debug.py` 已經包好這個協議，直接用：
+   ```bash
+   python3 client/scripts/ios-cdp-debug.py eval "location.href"
+   python3 client/scripts/ios-cdp-debug.py watch 10   # 監看 10 秒 console
+   ```
+8. **暫時放寬 ATS**（同 Q7）通常也需要，因為 App 要連本機 backend（`:8010`）跟 puppeteer-service（`:4000`），測完務必 `git checkout -- client/ios/App/App/Info.plist` 還原。
+
+**除錯血淚教訓**：
+- `fetch()` 失敗顯示「無法找到指定主機名稱的伺服器」不一定代表真的斷網或 DNS 掛掉——先用 `<img>` 標籤載入同一個網址測試，若圖片載得出來，代表網路是通的，問題出在 `fetch()` 本身的 CORS 檢查（換 `{mode:'no-cors'}` 測試可以確認：no-cors 成功但一般 fetch 失敗 = CORS 問題；no-cors 也失敗 = 真的連不上，可能是那個網域本身有問題，用 `nslookup <hostname>` 在 Mac 上確認）。
+- 曾經因為這樣誤判「手機沒網路」，後來用 `nslookup` 才發現是 `.env.local` 指的 Supabase 開發專案因為 Free Tier 閒置太久被自動暫停（DNS 直接查不到該子網域），跟網路或 CORS 都無關——真正的原因要看 `client/.env.local` 跟 `client/.env.production` 指的是不是同一個 Supabase 專案，兩邊 project ref 不一致時本機測試會連到一個可能隨時被暫停的獨立開發專案。
+- `xcrun devicectl device install/launch` 偶爾會跟 CDP 的 WebSocket 連線衝突導致 `ConnectionRefusedError`，通常是暫時性的，重試一次 `websocket.create_connection` 即可，不用重開 proxy。
+
 ---
 
 ## 5. Puppeteer Service 本地開發
@@ -158,6 +186,12 @@ FRONTEND_URL=http://localhost:3010 npm start
 
 > **⚠️ 常見錯誤**：忘記設 `FRONTEND_URL` 會導致 Puppeteer 嘗試連接 `localhost:3000`（不存在），
 > `POST /render` 會回傳 504 timeout。
+
+> **⚠️ 真機 / 模擬器測試（`CAPACITOR_DEV_URL` 指向區網 IP）時的常見錯誤**：`puppeteer-service` 的 CORS 白名單（`ALLOWED_ORIGINS`）預設只有 `localhost:3010`，不包含區網 IP。若 App 是用 `http://192.168.x.x:3010` 這種區網位址載入（真機測試必經），前端呼叫 `/render` 會被 CORS 擋掉並回傳 500（瀏覽器 console 會看到 `Origin http://192.168.x.x:3010 is not allowed by Access-Control-Allow-Origin`）。**解法**：啟動時多帶一個環境變數：
+> ```bash
+> FRONTEND_URL=http://localhost:3010 ALLOWED_ORIGINS=http://192.168.x.x:3010 npm start
+> ```
+> 把 `192.168.x.x` 換成當下的區網 IP（`ipconfig getifaddr en0`），跟 `client/.env.local` 的 `CAPACITOR_DEV_URL` 用同一個 IP。
 
 ### 連帶的 `.env.local` 設定
 

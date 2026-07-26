@@ -94,7 +94,12 @@ export default function MonthlyRecapTemplate({
             }
         });
 
-        const calendarCells = Array.from({ length: 42 }, (_, i) => {
+        // 依實際週數計算格數（4-6 週）。格子改用 gridTemplateRows: 1fr 撐滿容器高度，
+        // 而非 aspect-square（後者由欄寬決定高度，跟容器裡的 flex-1 剩餘空間無關，
+        // 週數變少只會讓底部空白變大，不會讓格子填滿）
+        const weeksNeeded = Math.ceil((startDay + daysInMonth) / 7);
+        const totalCells = weeksNeeded * 7;
+        const calendarCells = Array.from({ length: totalCells }, (_, i) => {
             const dayNumber = i - startDay + 1;
             const isCurrentMonth = dayNumber > 0 && dayNumber <= daysInMonth;
             const dayItems = isCurrentMonth ? (itemsByDay[dayNumber] || []) : [];
@@ -122,15 +127,18 @@ export default function MonthlyRecapTemplate({
                     ))}
                 </div>
 
-                <div className="grid grid-cols-7 gap-1.5 flex-1 mb-6 relative z-20">
+                <div
+                    className="grid grid-cols-7 gap-1.5 flex-1 mb-6 relative z-20"
+                    style={{ gridTemplateRows: `repeat(${weeksNeeded}, 1fr)` }}
+                >
                     {calendarCells.map((cell, i) => {
                         if (!cell.isCurrentMonth) {
-                            return <div key={i} className="aspect-square rounded flex-shrink-0 bg-transparent"></div>;
+                            return <div key={i} className="rounded bg-transparent"></div>;
                         }
 
                         const count = cell.dayItems.length;
                         return (
-                            <div key={i} className={`aspect-square relative rounded flex-shrink-0 transition-all duration-300 overflow-hidden ${count > 0 ? 'bg-white/10 ring-1 ring-white/20' : 'bg-transparent ring-1 ring-white/5'}`}>
+                            <div key={i} className={`relative rounded transition-all duration-300 overflow-hidden ${count > 0 ? 'bg-white/10 ring-1 ring-white/20' : 'bg-transparent ring-1 ring-white/5'}`}>
                                 <span className={`absolute top-1 left-1.5 text-[8px] font-bold z-20 ${count > 0 ? 'text-white drop-shadow-md' : 'text-white/40'}`}>
                                     {cell.dayNumber}
                                 </span>
@@ -188,11 +196,27 @@ export default function MonthlyRecapTemplate({
     // T2: Collage Template
     // ==========================
     if (selectedTemplate === 'collage') {
-        const count = items.length || 1;
-        let cols = 3;
-        let rows = Math.ceil(count / cols);
-        if (count <= 4) cols = 2;
-        if (count === 1) cols = 1;
+        // 封頂 24 張（一般使用者一個月最多的合理收藏量），避免無上限壓爆版面
+        const cappedItems = items.slice(0, 24);
+        const count = cappedItems.length;
+
+        // 1-9 張用查表挑能整除的版面，減少留白斷格；10 張以上固定 4 欄讓照片維持
+        // 合理大小（欄數再多會太窄），改讓列數變多撐出「相框牆」式的密集馬賽克感，
+        // 此時偶爾 1-3 格留白露背景在視覺上已不明顯
+        const gridDimsByCount: Record<number, { cols: number; rows: number }> = {
+            1: { cols: 1, rows: 1 },
+            2: { cols: 2, rows: 1 },
+            3: { cols: 3, rows: 1 },
+            4: { cols: 2, rows: 2 },
+            5: { cols: 3, rows: 2 },
+            6: { cols: 3, rows: 2 },
+            7: { cols: 4, rows: 2 },
+            8: { cols: 4, rows: 2 },
+            9: { cols: 3, rows: 3 },
+        };
+        const { cols, rows } = count <= 9
+            ? (gridDimsByCount[count] || { cols: 3, rows: Math.ceil(count / 3) })
+            : { cols: 4, rows: Math.ceil(count / 4) };
 
         return (
             <div style={currentDim} className="bg-[#121212] p-8 relative flex flex-col justify-between overflow-hidden">
@@ -214,23 +238,27 @@ export default function MonthlyRecapTemplate({
                 </div>
 
                 <div className="flex-1 flex flex-col justify-center min-h-0 relative z-10">
-                    <div
-                        className="grid gap-3 auto-rows-fr h-full"
-                        style={{
-                            gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-                            gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`
-                        }}
-                    >
-                        {items.map((item, i) => (
-                            <div key={i} className="relative w-full h-full bg-[#f8f8f8] p-1.5 sm:p-2 shadow-[0_15px_30px_rgba(0,0,0,0.9)] border-[3px] border-[#1a1a1a]">
-                                <img {...getImageProps(item.poster_url)} id={`img-collage-${i}`} className="absolute inset-0 w-full h-full object-cover shadow-[inset_0_2px_10px_rgba(0,0,0,0.3)]" />
-                            </div>
-                        ))}
-                    </div>
+                    {count === 0 ? (
+                        <p className="text-center text-sm font-bold text-white/50 uppercase tracking-widest">No stories yet</p>
+                    ) : (
+                        <div
+                            className="grid gap-3 auto-rows-fr h-full"
+                            style={{
+                                gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+                                gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`
+                            }}
+                        >
+                            {cappedItems.map((item, i) => (
+                                <div key={i} className="relative w-full h-full bg-[#f8f8f8] p-1.5 sm:p-2 shadow-[0_15px_30px_rgba(0,0,0,0.9)] border-[3px] border-[#1a1a1a]">
+                                    <img {...getImageProps(item.poster_url)} id={`img-collage-${i}`} className="absolute inset-0 w-full h-full object-cover shadow-[inset_0_2px_10px_rgba(0,0,0,0.3)]" />
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 <div className="mt-6 mb-2 flex justify-start items-end relative z-20">
-                    <div className="text-xl font-bold font-serif text-white tracking-wider drop-shadow-md opacity-80">{statsString}</div>
+                    <div className="text-xl font-bold font-sans text-white tracking-wider drop-shadow-md opacity-80">{statsString}</div>
                 </div>
             </div>
         )
@@ -240,13 +268,120 @@ export default function MonthlyRecapTemplate({
     // T3: Waterfall Template
     // ==========================
     if (selectedTemplate === 'waterfall') {
-        let displayItems = [...items];
-        if (displayItems.length > 0 && displayItems.length < 9) {
-            while (displayItems.length < 9) {
-                displayItems = [...displayItems, ...items];
+        // 封頂 24 張，並用輪流分配（而非重複貼上真實項目）平均鋪到三欄，
+        // 避免月收藏數 < 24 時同樣的海報被規律性重複，讓分享圖看起來像灌水
+        const cappedItems = items.slice(0, 24);
+        const count = cappedItems.length;
+        const totalHeightPx = parseInt(currentDim.height, 10);
+        const totalWidthPx = parseInt(currentDim.width, 10);
+
+        // 筆數太少（≤4）撐不出三欄錯落的瀑布感，會變成畫面大片留白、幾張小圖孤零零
+        // 飄在正中央——改用置中大圖呈現，比較有「精選展示」的質感。用固定尺寸容器
+        // + object-cover（而非 w-auto 讓瀏覽器依來源圖片原始比例算寬度），避免遇到
+        // 非直式比例的圖（例如預設佔位圖）把畫面左右撐爆
+        if (count <= 4) {
+            const HERO_GAP = 16;
+            const HERO_ASPECT = 1.5; // 海報約 2:3
+            const TOP_RESERVED = 70; // 留給右上角 logo 的安全區
+            const BOTTOM_RESERVED = 130; // 留給左下角資訊卡的安全區，避免圖片壓上去
+
+            // 4 筆排成一整排會太窄太扁；改用 2x2 錯落排列，跟三欄瀑布版一樣有層次感
+            const heroGridByCount: Record<number, { cols: number; rows: number }> = {
+                1: { cols: 1, rows: 1 },
+                2: { cols: 2, rows: 1 },
+                3: { cols: 3, rows: 1 },
+                4: { cols: 2, rows: 2 },
+            };
+            const { cols, rows } = heroGridByCount[count] || { cols: Math.max(count, 1), rows: 1 };
+
+            const availableWidth = totalWidthPx - 80 - HERO_GAP * (cols - 1);
+            const availableHeight = totalHeightPx - TOP_RESERVED - BOTTOM_RESERVED - HERO_GAP * (rows - 1);
+            let heroWidth = availableWidth / cols;
+            let heroHeight = heroWidth * HERO_ASPECT;
+            if (heroHeight * rows > availableHeight) {
+                heroHeight = availableHeight / rows;
+                heroWidth = heroHeight / HERO_ASPECT;
             }
+
+            return (
+                <div style={currentDim} className="bg-folio-black relative flex overflow-hidden">
+                    <div className="absolute inset-0 z-0">
+                        <div className="absolute inset-0 bg-folio-black opacity-80 z-10" />
+                        {latestPosterUrl && (
+                            <img {...getImageProps(latestPosterUrl)} className="absolute inset-0 w-full h-full object-cover opacity-40 blur-2xl scale-110" />
+                        )}
+                    </div>
+
+                    <div
+                        className="absolute z-10 grid justify-center content-center"
+                        style={{
+                            top: TOP_RESERVED,
+                            bottom: BOTTOM_RESERVED,
+                            left: 0,
+                            right: 0,
+                            gridTemplateColumns: `repeat(${cols}, ${heroWidth}px)`,
+                            gridTemplateRows: `repeat(${rows}, ${heroHeight}px)`,
+                            gap: HERO_GAP,
+                        }}
+                    >
+                        {count === 0 ? (
+                            <p className="text-center text-sm font-bold text-white/50 uppercase tracking-widest">No stories yet</p>
+                        ) : (
+                            cappedItems.map((item, i) => (
+                                <div
+                                    key={i}
+                                    className={`relative overflow-hidden rounded-2xl shadow-2xl border-2 border-white/20 ${i % 2 === 1 ? '-translate-y-3' : ''}`}
+                                >
+                                    <img
+                                        {...getImageProps(item.poster_url)}
+                                        id={`img-wf-hero-${i}`}
+                                        className="absolute inset-0 w-full h-full object-cover"
+                                    />
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    <div className="absolute bottom-6 left-6 z-20 bg-black/60 backdrop-blur-xl p-4 rounded-2xl border border-accent-gold/20 shadow-2xl">
+                        <h2 className="text-2xl font-black font-sans uppercase text-accent-gold mb-1">{monthShort}</h2>
+                        <p className="text-[10px] font-bold text-white uppercase tracking-wider">{statsString}</p>
+                    </div>
+
+                    <div className="absolute top-6 right-6 z-20 flex items-center gap-1.5 opacity-90 drop-shadow-md bg-black/40 backdrop-blur p-2 rounded-lg">
+                        <img {...getImageProps(LOGO_PATH)} className="w-4 h-4" />
+                        <span className="text-[10px] font-black tracking-[0.3em] uppercase text-accent-gold">Storio</span>
+                    </div>
+                </div>
+            );
         }
-        displayItems = displayItems.slice(0, 9);
+
+        // 三欄原本用海報原始比例（h-auto）自然撐開，張數一多（開放到 24 張）會把
+        // 欄位撐到超出畫面高度，被 overflow-hidden 裁掉看不到，或壓到左下角資訊卡。
+        // 改成依實際欄位張數動態算出每張的固定高度（用 object-cover 裁切），縮到
+        // 低於「還看得出縮圖」的門檻時，只保留最近新增的項目（實測 80px 在密集
+        // 馬賽克感下仍可辨識，比照 Collage 24 張時的格子大小）。
+        // 用瀏覽器實測量過：中間欄位有 translate-y-6（+24px 下移），資訊卡從
+        // bottom-6(24px) 起、卡片本身高度約 85px，兩者相加要留 109px + 中欄下移
+        // 24px，再抓一點緩衝，才不會讓最後一排圖片壓到資訊卡
+        const GAP = 12; // 對應 gap-3/gap-4，簡化統一以 12px 計算
+        const MIN_IMG_HEIGHT = 80;
+        const BOTTOM_SAFETY = 143; // 109(資訊卡) + 24(中欄額外下移) + 10(緩衝)
+        const availableColHeight = totalHeightPx - BOTTOM_SAFETY;
+
+        let finalItems = cappedItems;
+        let maxColCount = Math.ceil(finalItems.length / 3);
+        let imgHeightPx = Math.floor((availableColHeight - GAP * (maxColCount - 1)) / maxColCount);
+
+        if (imgHeightPx < MIN_IMG_HEIGHT) {
+            const maxPerCol = Math.max(1, Math.floor((availableColHeight + GAP) / (MIN_IMG_HEIGHT + GAP)));
+            finalItems = cappedItems.slice(-maxPerCol * 3);
+            maxColCount = Math.ceil(finalItems.length / 3);
+            imgHeightPx = MIN_IMG_HEIGHT;
+        }
+
+        const waterfallCols: any[][] = [[], [], []];
+        finalItems.forEach((item, i) => waterfallCols[i % 3].push(item));
+        const imgStyle = { height: imgHeightPx };
 
         return (
             <div style={currentDim} className="bg-folio-black relative flex overflow-hidden">
@@ -260,20 +395,20 @@ export default function MonthlyRecapTemplate({
 
                 <div className="absolute inset-0 grid grid-cols-[4fr_5fr_4fr] gap-3 z-10 -mx-6">
                     <div className="flex flex-col gap-3 transform -translate-y-6">
-                        {displayItems.slice(0, 3).map((item, i) => (
-                            <img key={i} {...getImageProps(item.poster_url)} id={`img-wf-0-${i}`} className="w-full h-auto object-cover rounded-xl opacity-80" />
+                        {waterfallCols[0].map((item, i) => (
+                            <img key={i} {...getImageProps(item.poster_url)} id={`img-wf-0-${i}`} style={imgStyle} className="w-full object-cover rounded-xl opacity-80" />
                         ))}
                     </div>
 
                     <div className="flex flex-col gap-4 transform translate-y-6 shadow-2xl">
-                        {displayItems.slice(3, 6).map((item, i) => (
-                            <img key={i} {...getImageProps(item.poster_url)} id={`img-wf-1-${i}`} className="w-full h-auto object-cover rounded-xl border-2 border-white/20" />
+                        {waterfallCols[1].map((item, i) => (
+                            <img key={i} {...getImageProps(item.poster_url)} id={`img-wf-1-${i}`} style={imgStyle} className="w-full object-cover rounded-xl border-2 border-white/20" />
                         ))}
                     </div>
 
                     <div className="flex flex-col gap-3 transform -translate-y-12">
-                        {displayItems.slice(6, 9).map((item, i) => (
-                            <img key={i} {...getImageProps(item.poster_url)} id={`img-wf-2-${i}`} className="w-full h-auto object-cover rounded-xl opacity-80" />
+                        {waterfallCols[2].map((item, i) => (
+                            <img key={i} {...getImageProps(item.poster_url)} id={`img-wf-2-${i}`} style={imgStyle} className="w-full object-cover rounded-xl opacity-80" />
                         ))}
                     </div>
                 </div>
@@ -295,13 +430,46 @@ export default function MonthlyRecapTemplate({
     // T4: Shelf Template
     // ==========================
     if (selectedTemplate === 'shelf') {
-        const stack = items; // Only one single stack now
+        // 依實際可視高度動態縮放書背厚度，避免收藏一多疊出畫面外被裁切消失
+        // 實測用瀏覽器量過：吊牌是 `top-[-110px]` 掛在書堆頂端「上方」，這段淨空
+        // 也要扣掉，不然書堆一疊高，吊牌會先被 overflow-hidden 從畫面上緣裁掉；
+        // 吊牌本身還有 rotate(-8deg)，旋轉後外接框比 110px 原始高度再高約 10px，
+        // 實測外接框約 120px，這裡多抓一點安全邊界避免邊緣貼齊
+        const totalHeightPx = parseInt(currentDim.height, 10);
+        const TAG_CLEARANCE = 145;
+        const availableStackHeight = totalHeightPx - 96 - TAG_CLEARANCE; // 扣除底部 pb-24 + 吊牌淨空
+        const MIN_SCALE = 0.45; // 書背最小縮放比例，避免縮到看不出書名
+
+        const naturalTotal = items.reduce((sum, item) => sum + (item.media_type === 'book' ? 48 : 36), 0);
+        let scale = 1;
+        let stack = items;
+
+        if (naturalTotal > availableStackHeight && naturalTotal > 0) {
+            scale = Math.max(availableStackHeight / naturalTotal, MIN_SCALE);
+            if (naturalTotal * scale > availableStackHeight) {
+                // 縮到最小比例仍放不下：只保留最近新增的項目，優先保留使用者近期收藏
+                const avgSpine = naturalTotal / items.length;
+                const maxCount = Math.max(1, Math.floor(availableStackHeight / (avgSpine * scale)));
+                stack = items.slice(-maxCount);
+            }
+        }
+
+        // 收藏極多、書堆疊到接近上限時，吊牌會被推得很高，可能跟月份標題重疊。
+        // 用瀏覽器實測：吊牌旋轉後的外接框頂端 ≈ boardTop - 116px，標題文字底部 ≈ 110px，
+        // 抓門檻 120px 當緩衝；只有在真的可能重疊時才把標題往右挪，正常情況維持置中不變
+        const displayedTotal = stack.reduce((sum, item) => sum + (item.media_type === 'book' ? 48 : 36), 0) * scale;
+        const boardTopEstimate = totalHeightPx - 96 - displayedTotal;
+        const tagTopEstimate = boardTopEstimate - 116;
+        const tagOverlapsTitle = tagTopEstimate < 120;
 
         return (
             <div style={currentDim} className="bg-[#241710] relative flex flex-col items-center overflow-hidden font-serif">
                 <div className="absolute inset-0 bg-gradient-to-b from-[#3a2518] to-[#120a06] z-0 opacity-80" />
 
-                <div className="absolute top-10 z-10 w-full text-center">
+                <div
+                    className="absolute top-10 z-10 text-center"
+                    style={tagOverlapsTitle ? { left: 150, right: 16 } : { left: 0, right: 0 }}
+                >
                     <h1 className="text-[48px] font-black font-serif text-accent-gold drop-shadow-lg tracking-tight uppercase">{monthShort}</h1>
                 </div>
 
@@ -336,7 +504,7 @@ export default function MonthlyRecapTemplate({
 
                                 // Make items 2.5x larger compared to before
                                 const w = isBook ? 320 - (idx % 3) * 12 : 300;
-                                const h = isBook ? 48 : 36;
+                                const h = (isBook ? 48 : 36) * scale;
 
                                 return (
                                     <div

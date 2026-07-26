@@ -46,29 +46,26 @@ export default function MemoryCardTemplate({
 
     const currentDim = dimensions[aspectRatio];
 
-    // Core Safari Logic: Never append crossOrigin="anonymous" to pure local static assets.
-    // However, for ANY proxy (including /_next/image or /proxy/tmdb), we MUST append crossOrigin
-    // to allow html-to-image to bypass Safari's opaque cache and fetch the data securely.
+    // All external images (TMDB, Google Books, etc.) are routed through the backend proxy
+    // so Puppeteer headless Chrome can fetch them regardless of the source host's CORS policy.
+    // A raw external URL with crossOrigin="anonymous" fails to load entirely when that host
+    // doesn't send Access-Control-Allow-Origin (e.g. Google Books covers) - proxying first
+    // makes the image same-origin-with-CORS, which is what crossOrigin actually needs.
     const getImageProps = (src: string) => {
         if (!src) return { src: '/image/defaultMoviePoster.svg' };
 
-        // Define items that DO NOT need crossOrigin
         const isDataUrl = src.startsWith('data:');
         const isBlobUrl = src.startsWith('blob:');
         const isLocalStatic = src.startsWith('/image/');
-        const isProxyUrl = src.startsWith('/proxy/'); // Added proxy bypass
+        const isProxyUrl = src.startsWith('/proxy/');
 
-        // Next.js Image Optimization API and custom Rewrites require crossOrigin to prevent Tainted Canvas
-        // BUT our local rewrites (/proxy/...) are technically same-origin to the browser, so we should NOT use anonymous.
-        const needsCors = !(isDataUrl || isBlobUrl || isLocalStatic || isProxyUrl);
+        if (isDataUrl || isBlobUrl || isLocalStatic || isProxyUrl) {
+            return { src };
+        }
 
-        const props = {
-            src,
-            ...(needsCors ? { crossOrigin: 'anonymous' as const } : {})
-        };
-
-        console.log(`[ShareDebug] Image Props for ${src.substring(0, 30)}... -> needsCors: ${needsCors}, crossOrigin: ${props.crossOrigin || 'none'}`);
-        return props;
+        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010';
+        const proxied = `${backendUrl}/api/v1/proxy/image?url=${encodeURIComponent(src)}`;
+        return { src: proxied, crossOrigin: 'anonymous' as const };
     };
 
     const LOGO_PATH = '/image/logo/logo.png';
@@ -145,14 +142,14 @@ export default function MemoryCardTemplate({
         const displayType = type === 'tv' ? 'TV Series' : type;
 
         return (
-            <div style={currentDim} className="bg-[#1a1a1a] flex flex-col items-center justify-center p-8 overflow-hidden relative font-mono">
+            <div style={currentDim} className="bg-[#1a1a1a] flex flex-col items-center justify-center p-6 overflow-hidden relative font-mono">
                 {/* Background Pattern */}
                 <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
 
                 {/* TV Frame */}
-                <div className="relative z-10 bg-[#2b2b2b] p-4 pb-6 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.8)] border-4 border-[#3a3a3a] w-full max-w-[340px] flex flex-col items-center">
+                <div className="relative z-10 bg-[#2b2b2b] p-3 pb-5 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.8)] border-4 border-[#3a3a3a] w-full max-w-[380px] flex flex-col items-center">
                     {/* Screen */}
-                    <div className="relative w-full aspect-square bg-black rounded-[20px] overflow-hidden border-4 border-black shadow-inner">
+                    <div className="relative w-full aspect-[4/5] bg-black rounded-[20px] overflow-hidden border-4 border-black shadow-inner">
                         <img
                             {...getImageProps(posterPath)}
                             alt={title}
@@ -184,7 +181,7 @@ export default function MemoryCardTemplate({
                 </div>
 
                 {/* Info Overlay */}
-                <div className="mt-8 text-center space-y-4 z-10 w-full max-w-[300px] flex flex-col items-center">
+                <div className="mt-6 text-center space-y-4 z-10 w-full max-w-[300px] flex flex-col items-center">
                     {showTitle && <h2 className="text-xl font-bold font-sans text-white tracking-tight uppercase line-clamp-2 w-full">{title}</h2>}
 
                     {showRating && rating > 0 && (
@@ -662,11 +659,11 @@ export default function MemoryCardTemplate({
                     </div>
                 )}
 
-                {showReflection && (
+                {showReflection && reflection && (
                     <div className="w-full">
                         <div className="relative p-4 bg-black/30 border border-white/5 rounded-xl backdrop-blur-md">
                             <p className="text-xs font-medium text-white/90 leading-relaxed text-center italic line-clamp-3">
-                                &quot;{reflection || "A story preserved in the folio."}&quot;
+                                &quot;{reflection}&quot;
                             </p>
                         </div>
                     </div>

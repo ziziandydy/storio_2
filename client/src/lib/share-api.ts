@@ -45,6 +45,24 @@ export async function getRenderServiceHealth(): Promise<boolean> {
 }
 
 /**
+ * 將 Blob 轉為純 base64 字串（不含 data: URL 前綴），供 Capacitor Filesystem.writeFile 使用。
+ * 用 FileReader.readAsDataURL 而非逐 byte 迴圈 + String.fromCharCode 累加字串——
+ * 後者在圖片內容較大（例如提高 deviceScaleFactor 後的真實海報截圖，可能達 1-3MB）
+ * 時會在 iOS WKWebView 的 JS 執行緒上造成明顯卡頓。
+ */
+export function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      resolve(dataUrl.split(',')[1] ?? '');
+    };
+    reader.onerror = () => reject(reader.error ?? new Error('讀取圖片資料失敗'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+/**
  * 計算 settings 的 hash，用於 cache key 生成
  * settings 變更時 hash 變化，自動 miss cache
  */

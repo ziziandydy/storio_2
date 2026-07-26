@@ -19,8 +19,12 @@ function getCachedRender(key: string): CacheEntry | null {
   const entry = renderCache.get(key);
   if (!entry) return null;
   if (Date.now() > entry.expiresAt) {
-    URL.revokeObjectURL(entry.objectUrl);
-    renderCache.delete(key);
+    // Stale - report as a miss so the queue re-renders a fresh copy, but do NOT
+    // revoke the objectUrl here: this lookup runs during render (e.g. ShareModal's
+    // currentCacheEntry), and the URL may still be the one a live <img> is showing.
+    // Revoking it here would blank out an image the user is actively looking at.
+    // The entry is only actually revoked once setCachedRender() overwrites this key
+    // with a fresh render, or cleanup()/invalidateCache() runs on modal close.
     return null;
   }
   return entry;

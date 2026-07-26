@@ -82,7 +82,8 @@ app.post('/render', async (req, res) => {
     page = await b.newPage();
 
     // 初始 viewport：寬度固定 400px（模板寬度），高度先給足夠空間
-    await page.setViewport({ width: 400, height: 800 });
+    // deviceScaleFactor: 2 讓截圖以 2x 解析度輸出，避免小字/縮圖在分享時糊掉
+    await page.setViewport({ width: 400, height: 800, deviceScaleFactor: 2 });
 
     // 導航至 /share/render 頁面
     const renderUrl = `${FRONTEND_URL}/share/render`;
