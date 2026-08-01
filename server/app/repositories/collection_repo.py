@@ -192,33 +192,52 @@ class CollectionRepository:
             logging.error(f"Error parsing month {month}: {e}")
             return {"items": [], "summary": {"movie": 0, "book": 0, "tv": 0}}
             
+        start_date_str = start_date.strftime('%Y-%m-%d')
+        end_date_str = end_date.strftime('%Y-%m-%d')
         start_iso = start_date.isoformat() + "Z"
         end_iso = end_date.isoformat() + "Z"
         logging.info(f"Querying monthly stats for {user_id} between {start_iso} and {end_iso}")
-        
-        response = self.table.select("id, external_id, title, media_type, subtype, poster_path, created_at").eq("user_id", user_id).gte("created_at", start_iso).lte("created_at", end_iso).order("created_at", desc=False).execute()
+
+        # 以使用者可自訂的 archived_date（date 型別，無時區）為主要篩選欄位，
+        # 與 calendar view（dateUtils.getArchivedDate）行為一致；archived_date 為 null
+        # 的舊資料（migration 前建立、未回填）才 fallback 用 created_at 判斷月份。
+        # 否則使用者在 8/1 新增一筆 archived_date=7/31 的收藏，會因為 created_at 落在
+        # 8 月而在查詢七月時被漏掉，即使 calendar view 正確顯示在 7/31。
+        or_filter = (
+            f"and(archived_date.gte.{start_date_str},archived_date.lte.{end_date_str}),"
+            f"and(archived_date.is.null,created_at.gte.{start_iso},created_at.lte.{end_iso})"
+        )
+
+        response = self.table.select(
+            "id, external_id, title, media_type, subtype, poster_path, created_at, archived_date"
+        ).eq("user_id", user_id).or_(or_filter).execute()
         logging.info(f"Found {len(response.data)} items.")
-        
+
         items = []
         summary = {"movie": 0, "book": 0, "tv": 0}
-        
+
         for row in response.data:
             mapped_row = self._map_from_db(row)
             m_type = mapped_row.get("media_type")
-            
+
             if m_type in summary:
                 summary[m_type] += 1
-                
+
+            # 顯示/分組用的有效日期：優先用 archived_date，缺值才退回 created_at
+            effective_date = mapped_row.get("archived_date") or mapped_row.get("created_at")
+
             items.append({
                 "id": str(mapped_row["id"]),
                 "external_id": mapped_row.get("external_id"),
                 "title": mapped_row.get("title"),
                 "media_type": m_type,
                 "poster_url": mapped_row.get("poster_path"),
-                "created_at": mapped_row.get("created_at"),
-                "dominant_color": None 
+                "created_at": effective_date,
+                "dominant_color": None
             })
-            
+
+        items.sort(key=lambda x: x["created_at"] or "")
+
         return {
             "summary": summary,
             "items": items

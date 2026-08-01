@@ -96,3 +96,79 @@ def test_get_collection_stats_raises_when_created_at_malformed(mock_supabase):
     result = repo.get_collection_stats("user-123")
     assert isinstance(result, dict)
     assert result["last_30_days"] >= 0
+
+
+# --- Monthly Recap 依 archived_date 篩選（修復 8/1 新增 archived_date=7/31 資料未出現在七月回顧的 bug）---
+
+def test_get_monthly_stats_filters_by_archived_date_not_created_at(mock_supabase):
+    """查詢月份時應以 archived_date 為主要篩選欄位，而非只看 created_at。
+
+    重現情境：使用者在 8/1 新增一筆收藏，archived_date 選 7/31（created_at 卻是 8/1），
+    查詢 2026-07 時這筆資料必須被撈回來（因為 archived_date 落在七月）。
+    """
+    mock_table = MagicMock()
+    mock_supabase.table.return_value = mock_table
+    mock_response = MagicMock()
+    mock_response.data = [
+        {
+            "id": "item-1",
+            "external_id": "1",
+            "title": "Archived Late July",
+            "media_type": "movie",
+            "subtype": "movie",
+            "poster_path": None,
+            "created_at": "2026-08-01T09:00:00Z",   # 實際建立時間在八月
+            "archived_date": "2026-07-31",           # 使用者選定的收藏日在七月
+        },
+    ]
+    mock_table.select.return_value.eq.return_value.or_.return_value.execute.return_value = mock_response
+
+    repo = CollectionRepository()
+    result = repo.get_monthly_stats("user-123", "2026-07")
+
+    # 查詢條件必須用 or_() 同時涵蓋 archived_date 範圍（而非單純 created_at 範圍），
+    # 否則這筆 archived_date=7/31 / created_at=8/1 的資料查七月時會被漏掉。
+    or_call_args = mock_table.select.return_value.eq.return_value.or_.call_args[0][0]
+    assert "archived_date.gte.2026-07-01" in or_call_args
+    assert "archived_date.lte.2026-07-31" in or_call_args
+
+    assert len(result["items"]) == 1
+    assert result["summary"]["movie"] == 1
+
+
+def test_get_monthly_stats_item_date_prefers_archived_date_over_created_at(mock_supabase):
+    """回傳項目的日期欄位（用於 Monthly Recap 模板內的月曆格排版）應優先反映 archived_date，
+    否則即使查詢正確撈到資料，Calendar Recap 模板仍會把該筆錯誤放到 8/1 而非 7/31。"""
+    mock_table = MagicMock()
+    mock_supabase.table.return_value = mock_table
+    mock_response = MagicMock()
+    mock_response.data = [
+        {
+            "id": "item-1",
+            "external_id": "1",
+            "title": "Archived Late July",
+            "media_type": "movie",
+            "subtype": "movie",
+            "poster_path": None,
+            "created_at": "2026-08-01T09:00:00Z",
+            "archived_date": "2026-07-31",
+        },
+        {
+            "id": "item-2",
+            "external_id": "2",
+            "title": "Legacy Item Without Archived Date",
+            "media_type": "book",
+            "subtype": None,
+            "poster_path": None,
+            "created_at": "2026-07-15T09:00:00Z",
+            "archived_date": None,
+        },
+    ]
+    mock_table.select.return_value.eq.return_value.or_.return_value.execute.return_value = mock_response
+
+    repo = CollectionRepository()
+    result = repo.get_monthly_stats("user-123", "2026-07")
+
+    by_id = {item["id"]: item for item in result["items"]}
+    assert by_id["item-1"]["created_at"] == "2026-07-31"
+    assert by_id["item-2"]["created_at"] == "2026-07-15T09:00:00Z"
