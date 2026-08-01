@@ -22,6 +22,7 @@ import { getApiUrl } from '@/lib/api';
 import { getTitleKeyByCount, TitleTranslationKey } from '@/utils/leveling';
 import packageJson from '../../../package.json';
 import { motion, AnimatePresence } from 'framer-motion';
+import { App } from '@capacitor/app';
 
 interface ProfileSectionProps {
   title: string;
@@ -113,6 +114,17 @@ export default function ProfilePage() {
 
   // Leveling State
   const [collectionCount, setCollectionCount] = useState(0);
+
+  // App Version State — 原生環境讀取 CFBundleShortVersionString，避免 web bundle 版號字串與實際 native binary 不同步
+  const [appVersion, setAppVersion] = useState(packageJson.version);
+
+  useEffect(() => {
+    if (isNativePlatform()) {
+      App.getInfo()
+        .then((info) => setAppVersion(info.version))
+        .catch(() => { });
+    }
+  }, []);
 
   useEffect(() => {
     if (user && !isEditing) {
@@ -355,8 +367,7 @@ export default function ProfilePage() {
     
     // 獲取簡單的系統與版本資訊
     const osInfo = typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown';
-    const appVersion = packageJson.version || 'Unknown';
-    const body = `\n\n\n---\nApp Version: ${appVersion}\nSystem Info: ${osInfo}`;
+    const body = `\n\n\n---\nApp Version: ${appVersion || 'Unknown'}\nSystem Info: ${osInfo}`;
     
     window.location.href = `mailto:andismtu@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
@@ -973,7 +984,7 @@ export default function ProfilePage() {
           <ProfileItem icon={<Shield size={18} />} label={t.profile.items.privacyPolicy} onClick={() => router.push('/privacy')} />
           <div className="p-4 text-center">
             <span className="text-[10px] text-text-desc font-bold tracking-[0.3em] uppercase opacity-40">
-              Version {packageJson.version}
+              Version {appVersion}
             </span>
           </div>
         </ProfileSection>
