@@ -17,6 +17,7 @@ class StoryBase(BaseModel):
 class StoryCreate(StoryBase):
     created_at: Optional[datetime] = None
     archived_date: Optional[date] = None  # 使用者選定的收藏日（純日期，無時區）
+    seasons: Optional[List[int]] = None  # 使用者勾選涵蓋的季數（僅 tv 有意義）
     force_add: Optional[bool] = False
 
 class StoryInstance(BaseModel):
@@ -25,6 +26,7 @@ class StoryInstance(BaseModel):
     rating: int
     notes: Optional[str] = None
     viewing_number: int = 1
+    seasons: Optional[List[int]] = None
 
 class StoryResponse(StoryBase):
     id: UUID
@@ -32,6 +34,7 @@ class StoryResponse(StoryBase):
     viewing_number: Optional[int] = 1
     created_at: datetime
     archived_date: Optional[date] = None  # 純日期收藏日（回填前可能為 null）
+    seasons: Optional[List[int]] = None
     # related_instances: List[StoryInstance] = []
 
     class Config:
@@ -63,6 +66,14 @@ class EntityRef(BaseModel):
     """TMDB entity 參照（人物/公司/類型），供 discover 精準查詢使用（add-person-search）。"""
     id: int
     name: str
+
+class SeasonInfo(BaseModel):
+    """TMDB 季別資訊（即時拉取，不落地存 DB）。"""
+    season_number: int
+    name: str
+    air_date: Optional[str] = None
+    episode_count: Optional[int] = None
+    vote_average: Optional[float] = None
 
 class ItemDetailResponse(StoryBase):
     overview: Optional[str] = None
@@ -98,6 +109,7 @@ class ItemDetailResponse(StoryBase):
     director_refs: List[EntityRef] = []
     genre_refs: List[EntityRef] = []
     company_refs: List[EntityRef] = []
+    seasons: List[SeasonInfo] = []
 
 class StoryCheckResponse(BaseModel):
     exists: bool
