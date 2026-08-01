@@ -22,22 +22,30 @@ import { emitStoryAdded } from '@/lib/notification-events';
 interface AddToFolioModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (rating: number, notes: string, date?: string, forceAdd?: boolean) => Promise<any>;
+  onSave: (rating: number, notes: string, date?: string, forceAdd?: boolean, seasons?: number[]) => Promise<any>;
   onViewDetails: (id?: string) => void;
   title: string;
   external_id: string;
   overview?: string; // Add overview prop
+  media_type?: 'movie' | 'book' | 'tv';
+  seasons?: { season_number: number; name: string }[];
 }
 
-export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails, title, external_id, overview }: AddToFolioModalProps) {
-  const [mode, setShowMode] = useState<'add' | 'prompt' | 'view_existing' | 'success'>('add');
+export default function AddToFolioModal({
+  isOpen, onClose, onSave, onViewDetails, title, external_id, overview, media_type, seasons,
+}: AddToFolioModalProps) {
+  const [mode, setShowMode] = useState<'add' | 'prompt' | 'season_pick' | 'view_existing' | 'success'>('add');
   const [showGuestLimit, setShowGuestLimit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newlyCreatedId, setNewlyCreatedId] = useState<string | undefined>(undefined);
   const [forceAdd, setForceAdd] = useState(false);
+  const [selectedSeasons, setSelectedSeasons] = useState<number[]>([]);
+  const [existingSeasons, setExistingSeasons] = useState<number[]>([]);
   const { t } = useTranslation();
   const { showToast } = useToast();
   const router = useRouter();
+
+  const hasSeasonPicker = media_type === 'tv' && !!seasons && seasons.length > 0;
 
   // Reset mode when modal opens
   useEffect(() => {
@@ -45,16 +53,23 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
       setShowMode('add');
       setNewlyCreatedId(undefined);
       setForceAdd(false);
+      setSelectedSeasons([]);
+      setExistingSeasons([]);
     }
   }, [isOpen]);
 
   const handleSave = async (rating: number, notes: string, date?: string) => {
     setIsSubmitting(true);
     try {
-      const result = await onSave(rating, notes, date, forceAdd);
+      const result = await onSave(rating, notes, date, forceAdd, hasSeasonPicker ? selectedSeasons : undefined);
 
       if (result && result.status === 'duplicate' && !forceAdd) {
-        setShowMode('prompt');
+        if (hasSeasonPicker) {
+          setExistingSeasons(result.existingSeasons || []);
+          setShowMode('season_pick');
+        } else {
+          setShowMode('prompt');
+        }
         return;
       }
 
@@ -173,6 +188,63 @@ export default function AddToFolioModal({ isOpen, onClose, onSave, onViewDetails
                     {t.common.cancel}
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* Season Pick State: 分季收藏 */}
+            {mode === 'season_pick' && (
+              <div className="p-10 flex flex-col items-center text-center gap-6">
+                <div className="w-20 h-20 bg-accent-gold/20 rounded-full flex items-center justify-center text-accent-gold">
+                  <History size={40} />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-2 font-serif">Already in your Folio</h2>
+                  <p className="text-text-desc text-sm leading-relaxed">
+                    這筆要記錄 <span className="text-white font-bold">&quot;{title}&quot;</span> 的哪幾季？
+                  </p>
+                </div>
+                <div className="grid grid-cols-3 gap-2 w-full max-h-48 overflow-y-auto">
+                  {seasons?.map((s) => {
+                    const isSelected = selectedSeasons.includes(s.season_number);
+                    const isOverlap = existingSeasons.includes(s.season_number);
+                    return (
+                      <button
+                        key={s.season_number}
+                        onClick={() => {
+                          if (isOverlap && !isSelected) {
+                            const confirmed = window.confirm(`S${s.season_number} 已經在另一筆記錄中，確定要重複記錄嗎？`);
+                            if (!confirmed) return;
+                          }
+                          setSelectedSeasons((prev) =>
+                            isSelected ? prev.filter((n) => n !== s.season_number) : [...prev, s.season_number]
+                          );
+                        }}
+                        className={`py-2 rounded-xl text-xs font-bold border transition-all ${
+                          isSelected
+                            ? 'bg-accent-gold text-folio-black border-accent-gold'
+                            : isOverlap
+                            ? 'bg-white/5 text-text-desc border-dashed border-white/20'
+                            : 'bg-white/5 text-white border-white/10 hover:bg-white/10'
+                        }`}
+                      >
+                        S{s.season_number}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  disabled={selectedSeasons.length === 0}
+                  onClick={() => {
+                    setForceAdd(true);
+                    setShowMode('add');
+                  }}
+                  className="w-full py-4 bg-accent-gold text-folio-black rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  Continue
+                </button>
+                <button onClick={onClose} className="text-text-desc text-xs underline">
+                  Cancel
+                </button>
               </div>
             )}
 

@@ -55,7 +55,7 @@ function DetailsPageContent() {
     fetchDetails();
   }, [type, id, language]);
 
-  const handleAddToFolio = async (rating: number, notes: string, date?: string, forceAdd?: boolean) => {
+  const handleAddToFolio = async (rating: number, notes: string, date?: string, forceAdd?: boolean, selectedSeasons?: number[]) => {
     if (!item || !token) return;
 
     try {
@@ -70,12 +70,25 @@ function DetailsPageContent() {
           rating,
           notes,
           archived_date: date || undefined,  // 純日期收藏日（不經 UTC 轉換）
-          force_add: forceAdd ?? false
+          force_add: forceAdd ?? false,
+          seasons: selectedSeasons ?? null,  // 覆蓋 ...item 展開帶入的 SeasonInfo[]，改成使用者勾選的季數編號
         })
       });
 
       if (res.status === 409) {
-        return { status: 'duplicate' };
+        let existingSeasons: number[] = [];
+        try {
+          const checkRes = await fetch(getApiUrl(`/api/v1/collection/check/${item.external_id}`), {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (checkRes.ok) {
+            const checkData = await checkRes.json();
+            existingSeasons = (checkData.instances || []).flatMap((inst: any) => inst.seasons || []);
+          }
+        } catch (checkError) {
+          console.error("Failed to fetch existing seasons:", checkError);
+        }
+        return { status: 'duplicate', existingSeasons };
       }
 
       if (res.status === 403) {
@@ -142,6 +155,8 @@ function DetailsPageContent() {
         }}
         title={item.title}
         external_id={item.external_id}
+        media_type={item.media_type}
+        seasons={item.seasons}
       />
     </>
   );
