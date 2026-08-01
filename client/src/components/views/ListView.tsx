@@ -4,6 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Story } from '@/types';
 import StoryCard from '@/components/StoryCard';
+import { groupStoriesByShow } from '@/lib/collectionGrouping';
 
 interface ListViewProps {
   stories: Story[];
@@ -11,11 +12,12 @@ interface ListViewProps {
 
 export default function ListView({ stories }: ListViewProps) {
   const router = useRouter();
+  const groups = groupStoriesByShow(stories);
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 auto-rows-fr">
-      {stories.map((story, index) => {
-        // Create a Bento-like pattern: 
+      {groups.map(({ representative: story, instances }, index) => {
+        // Create a Bento-like pattern:
         // 1st item is large (2x2)
         // 5th item is wide (2x1)
         // 8th item is tall (1x2)
@@ -31,21 +33,27 @@ export default function ListView({ stories }: ListViewProps) {
         }
 
         return (
-          <div key={story.id} className={`${spanClasses} group bg-folio-card border border-folio-outline rounded-xl overflow-hidden hover:bg-folio-card-hover transition-all flex flex-col h-full shadow-lg relative`}>
-            <StoryCard
-              external_id={story.external_id}
-              title={story.title}
-              type={story.media_type}
-              subtype={story.subtype}
-              year={story.year}
-              source={story.source}
-              posterUrl={story.poster_path}
-              rating={story.rating}
-              notes={story.notes}
-              addedAt={story.created_at}
-              viewingNumber={story.viewingNumber}
-              onViewDetails={() => router.push(`/collection/item?id=${story.id}`)}
-            />
+          <div key={story.id} className={`${spanClasses} relative`}>
+            {instances.length > 1 && (
+              <div className="absolute inset-0 translate-x-1.5 translate-y-1.5 bg-folio-card border border-folio-outline rounded-xl -z-10" />
+            )}
+            <div className="group bg-folio-card border border-folio-outline rounded-xl overflow-hidden hover:bg-folio-card-hover transition-all flex flex-col h-full shadow-lg relative">
+              <StoryCard
+                external_id={story.external_id}
+                title={story.title}
+                type={story.media_type}
+                subtype={story.subtype}
+                year={story.year}
+                source={story.source}
+                posterUrl={story.poster_path}
+                rating={story.rating}
+                notes={story.notes}
+                addedAt={story.created_at}
+                viewingNumber={story.viewingNumber}
+                stackCount={instances.length}
+                onViewDetails={() => router.push(`/collection/item?id=${story.id}`)}
+              />
+            </div>
           </div>
         );
       })}
