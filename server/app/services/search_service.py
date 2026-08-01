@@ -157,6 +157,21 @@ class SearchService:
             company_refs = [EntityRef(id=c.get("id"), name=c.get("name")) for c in data.get("production_companies", [])]
             genre_refs = [EntityRef(id=g.get("id"), name=g.get("name")) for g in data.get("genres", [])]
 
+            # Seasons（僅 TV；排除 season_number 0 = Specials，即時拉取不落地存 DB）
+            from app.schemas.item import SeasonInfo
+            seasons_list = []
+            if subtype == 'tv':
+                for s in data.get("seasons", []):
+                    if s.get("season_number") == 0:
+                        continue
+                    seasons_list.append(SeasonInfo(
+                        season_number=s.get("season_number"),
+                        name=s.get("name") or f"Season {s.get('season_number')}",
+                        air_date=s.get("air_date"),
+                        episode_count=s.get("episode_count"),
+                        vote_average=s.get("vote_average"),
+                    ))
+
             # Streaming Providers
             streaming_providers = []
             if "watch/providers" in data and "results" in data["watch/providers"]:
@@ -257,7 +272,8 @@ class SearchService:
                 cast_refs=cast_refs,
                 director_refs=director_refs,
                 genre_refs=genre_refs,
-                company_refs=company_refs
+                company_refs=company_refs,
+                seasons=seasons_list
             )
         except Exception as e:
             logger.error("TMDB detail fetch failed: %s", e)

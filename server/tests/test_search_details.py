@@ -80,6 +80,11 @@ MOCK_TMDB_TV_DETAIL = {
     "videos": {"results": []},
     "images": {"backdrops": [], "posters": []},
     "watch/providers": {"results": {}},
+    "seasons": [
+        {"season_number": 0, "name": "Specials", "air_date": None, "episode_count": 15, "vote_average": 0},
+        {"season_number": 1, "name": "Season 1", "air_date": "2011-04-17", "episode_count": 10, "vote_average": 8.4},
+        {"season_number": 2, "name": "Season 2", "air_date": "2012-04-01", "episode_count": 10, "vote_average": 8.6},
+    ],
 }
 
 # --- Mock Google Books Detail Response ---
@@ -189,3 +194,27 @@ async def test_book_details_authors_stay_plain_strings_no_refs():
     assert result.director_refs == []
     assert result.genre_refs == []
     assert result.company_refs == []
+
+
+@pytest.mark.asyncio
+async def test_tv_details_include_seasons_excluding_specials():
+    mock_client = _mock_client(MOCK_TMDB_TV_DETAIL)
+
+    result = await SearchService.get_item_details(mock_client, "tv", "1399")
+
+    assert result is not None
+    # season_number = 0（Specials）應被排除
+    assert [s.season_number for s in result.seasons] == [1, 2]
+    assert result.seasons[0].name == "Season 1"
+    assert result.seasons[0].episode_count == 10
+    assert result.seasons[0].vote_average == 8.4
+
+
+@pytest.mark.asyncio
+async def test_movie_details_seasons_always_empty():
+    mock_client = _mock_client(MOCK_TMDB_MOVIE_DETAIL)
+
+    result = await SearchService.get_item_details(mock_client, "movie", "438631")
+
+    assert result is not None
+    assert result.seasons == []
