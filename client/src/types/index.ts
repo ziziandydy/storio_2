@@ -11,6 +11,8 @@ export interface Story {
   rating: number;
   notes?: string;
   created_at: string;
+  archived_date?: string | null;
+  seasons?: number[] | null;
   viewingNumber?: number;
 }
 
@@ -23,6 +25,14 @@ export interface StreamingProvider {
 export interface EntityRef {
   id: number;
   name: string;
+}
+
+export interface SeasonInfo {
+  season_number: number;
+  name: string;
+  air_date?: string | null;
+  episode_count?: number;
+  vote_average?: number;
 }
 
 export interface ItemDetail {
@@ -65,6 +75,7 @@ export interface ItemDetail {
   director_refs?: EntityRef[];
   genre_refs?: EntityRef[];
   company_refs?: EntityRef[];
+  seasons?: SeasonInfo[];
 
   streaming_providers?: StreamingProvider[];
   related_media?: {
