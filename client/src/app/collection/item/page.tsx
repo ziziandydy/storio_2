@@ -32,7 +32,39 @@ interface CollectionItem {
   created_at: string;
   archived_date?: string | null;
   viewing_number: number;
+  seasons?: number[] | null;
+  related_instances?: SiblingInstance[];
   year?: number;
+}
+
+interface SiblingInstance {
+  id: string;
+  created_at: string;
+  rating: number;
+  notes?: string;
+  viewing_number: number;
+  seasons?: number[] | null;
+}
+
+function formatSeasonLabel(seasons: number[] | null | undefined, fallbackViewingNumber: number): string {
+  if (!seasons || seasons.length === 0) {
+    return `第 ${fallbackViewingNumber} 次`;
+  }
+  const sorted = [...seasons].sort((a, b) => a - b);
+  const ranges: string[] = [];
+  let start = sorted[0];
+  let prev = sorted[0];
+
+  for (let i = 1; i <= sorted.length; i++) {
+    const current = sorted[i];
+    if (current !== prev + 1) {
+      ranges.push(start === prev ? `S${start}` : `S${start}-S${prev}`);
+      start = current;
+    }
+    prev = current;
+  }
+
+  return ranges.join(', ');
 }
 
 function CollectionItemPageContent() {
@@ -285,11 +317,11 @@ function CollectionItemPageContent() {
             </header>
 
             {/* Past Memories Section */}
-            {(item as any).related_instances && (item as any).related_instances.length > 1 && (
+            {((item.related_instances && item.related_instances.length > 1) || item.media_type === 'tv') && (
               <div className="space-y-4">
                 <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-desc opacity-60">Memory Timeline</h3>
                 <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
-                  {((item as any).related_instances as any[]).map((inst) => {
+                  {(item.related_instances || []).map((inst) => {
                     const isCurrent = inst.id === item.id;
                     return (
                       <Link
@@ -303,7 +335,7 @@ function CollectionItemPageContent() {
                         <div className="flex justify-between items-start mb-2">
                           <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${isCurrent ? 'bg-accent-gold text-black' : 'bg-white/10 text-text-desc'
                             }`}>
-                            {getOrdinal(inst.viewing_number)} View
+                            {item.media_type === 'tv' ? formatSeasonLabel(inst.seasons, inst.viewing_number) : `${getOrdinal(inst.viewing_number)} View`}
                           </span>
                           {inst.rating > 0 && (
                             <div className="flex items-center gap-1 text-[10px] font-bold text-accent-gold">
@@ -317,6 +349,14 @@ function CollectionItemPageContent() {
                       </Link>
                     );
                   })}
+                  {item.media_type === 'tv' && (
+                    <button
+                      onClick={() => router.push(`/details?type=${item.media_type}&id=${item.external_id}`)}
+                      className="flex-none w-40 p-4 rounded-xl border border-dashed border-accent-gold/40 text-accent-gold hover:border-accent-gold hover:bg-accent-gold/5 transition-all flex flex-col items-center justify-center gap-1"
+                    >
+                      <span className="text-[9px] font-black uppercase tracking-widest">+ 新一季</span>
+                    </button>
+                  )}
                 </div>
               </div>
             )}
