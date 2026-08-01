@@ -347,6 +347,31 @@ export default function StoryDetailsView({ item, showAddButton = true, onAddClic
               </section>
             )}
 
+            {/* Seasons Section（僅 tv，TMDB 即時資料，純展示） */}
+            {item.media_type === 'tv' && item.seasons && item.seasons.length > 0 && (
+              <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
+                <h3 className="text-xs uppercase tracking-[0.3em] text-text-desc font-bold mb-6 flex items-center gap-3">
+                  <Tv size={16} className="text-accent-gold" />
+                  本劇季數資訊
+                </h3>
+                <div className="space-y-2">
+                  {item.seasons.map((season) => (
+                    <div
+                      key={season.season_number}
+                      className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06] text-xs"
+                    >
+                      <span className="text-white font-semibold">S{season.season_number}</span>
+                      <span className="text-text-desc text-[10px]">
+                        {season.air_date ? season.air_date.slice(0, 4) : '—'}
+                        {season.episode_count ? ` · ${season.episode_count} 集` : ''}
+                        {season.vote_average ? ` · ★${season.vote_average.toFixed(1)}` : ''}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* Cast Section */}
             {item.cast && item.cast.length > 0 && (
               <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
