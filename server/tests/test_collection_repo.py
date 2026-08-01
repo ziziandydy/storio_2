@@ -98,6 +98,61 @@ def test_get_collection_stats_raises_when_created_at_malformed(mock_supabase):
     assert result["last_30_days"] >= 0
 
 
+# --- 分季收藏：seasons 欄位讀寫（design doc: 2026-08-01-seasons-design.md）---
+
+def test_create_story_persists_seasons(mock_supabase):
+    user_id = str(uuid4())
+    mock_table = MagicMock()
+    mock_supabase.table.return_value = mock_table
+    mock_insert = MagicMock()
+    mock_table.insert.return_value = mock_insert
+    mock_response = MagicMock()
+    mock_response.data = [{
+        "id": str(uuid4()),
+        "user_id": user_id,
+        "title": "One Piece",
+        "media_type": "tv",
+        "external_id": "37854",
+        "source": "tmdb",
+        "created_at": "2026-07-30T00:00:00Z",
+        "rating": 0,
+        "seasons": [4, 5, 6],
+    }]
+    mock_insert.execute.return_value = mock_response
+
+    repo = CollectionRepository()
+    story_in = StoryCreate(
+        title="One Piece", media_type="tv", external_id="37854",
+        source="tmdb", seasons=[4, 5, 6],
+    )
+
+    result = repo.create_story(user_id, story_in)
+
+    insert_call_args = mock_table.insert.call_args[0][0]
+    assert insert_call_args["seasons"] == [4, 5, 6]
+    assert result.seasons == [4, 5, 6]
+
+
+def test_get_instances_by_external_id_selects_seasons(mock_supabase):
+    user_id = str(uuid4())
+    mock_table = MagicMock()
+    mock_supabase.table.return_value = mock_table
+    mock_response = MagicMock()
+    mock_response.data = [
+        {"id": str(uuid4()), "created_at": "2026-07-15T00:00:00Z", "rating": 4, "notes": "S1-S3", "seasons": [1, 2, 3]},
+        {"id": str(uuid4()), "created_at": "2026-07-30T00:00:00Z", "rating": 5, "notes": "S4-S6", "seasons": [4, 5, 6]},
+    ]
+    mock_table.select.return_value.eq.return_value.eq.return_value.order.return_value.execute.return_value = mock_response
+
+    repo = CollectionRepository()
+    instances = repo.get_instances_by_external_id(user_id, "37854")
+
+    select_arg = mock_table.select.call_args[0][0]
+    assert "seasons" in select_arg
+    assert instances[0]["seasons"] == [1, 2, 3]
+    assert instances[1]["seasons"] == [4, 5, 6]
+
+
 # --- Monthly Recap 依 archived_date 篩選（修復 8/1 新增 archived_date=7/31 資料未出現在七月回顧的 bug）---
 
 def test_get_monthly_stats_filters_by_archived_date_not_created_at(mock_supabase):

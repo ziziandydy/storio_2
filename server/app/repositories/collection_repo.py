@@ -47,7 +47,7 @@ class CollectionRepository:
         return len(response.data) > 0
 
     def get_instances_by_external_id(self, user_id: str, external_id: str) -> List[dict]:
-        response = self.table.select("id, created_at, rating, notes").eq("user_id", user_id).eq("external_id", external_id).order("created_at", desc=True).execute()
+        response = self.table.select("id, created_at, rating, notes, seasons").eq("user_id", user_id).eq("external_id", external_id).order("created_at", desc=True).execute()
         return response.data
 
     def create_story(self, user_id: str, story: StoryCreate) -> StoryResponse:
