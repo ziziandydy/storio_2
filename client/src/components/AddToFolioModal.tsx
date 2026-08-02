@@ -71,6 +71,7 @@ export default function AddToFolioModal({
           setExistingSeasons(result.existingSeasons || []);
           setIsDuplicateFlow(true);
           setShowMode('season_pick');
+          showToast('這部作品已經收藏過了，請確認季數後繼續', 'success');
         } else {
           setShowMode('prompt');
         }
