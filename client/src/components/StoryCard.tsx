@@ -17,14 +17,13 @@ interface StoryCardProps {
   notes?: string;
   addedAt?: string;
   viewingNumber?: number;
-  stackCount?: number;
   onAdd?: () => void;
   onViewDetails?: () => void;
 }
 
 const StoryCard: React.FC<StoryCardProps> = ({
   title, type, subtype, year, external_id, posterUrl, source,
-  rating, notes, addedAt, viewingNumber, stackCount,
+  rating, notes, addedAt, viewingNumber,
   onAdd, onViewDetails
 }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -90,23 +89,17 @@ const StoryCard: React.FC<StoryCardProps> = ({
         )}
       </div>
 
-      {/* Top-Right Indicators: Missing Metadata Hint + Stack Count Badge */}
-      <div className="absolute top-3 right-3 z-20 flex flex-col items-end gap-2">
-        {addedAt && isMissingNotes && (
+      {/* Missing Metadata Hints (Now Top-Right and LARGER) */}
+      {addedAt && isMissingNotes && (
+        <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5">
           <div className="relative group/hint">
             <div className="p-2 bg-black/60 backdrop-blur-md rounded-full border border-accent-gold/40 text-accent-gold animate-pulse shadow-lg">
               <Feather size={18} strokeWidth={2.5} />
             </div>
             <span className="absolute top-full right-0 mt-2 text-[8px] font-black text-accent-gold uppercase tracking-widest opacity-0 group-hover/hint:opacity-100 transition-opacity bg-black/80 px-2 py-1 rounded backdrop-blur-sm whitespace-nowrap pointer-events-none border border-accent-gold/20">{t.common.inscribe}</span>
           </div>
-        )}
-
-        {stackCount && stackCount > 1 && (
-          <div className="bg-black/70 border border-accent-gold text-accent-gold text-[10px] font-bold px-2 py-0.5 rounded-full">
-            {stackCount}
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Main Image Container */}
       <div className="relative w-full h-full min-h-[180px]">

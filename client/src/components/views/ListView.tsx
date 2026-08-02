@@ -50,7 +50,6 @@ export default function ListView({ stories }: ListViewProps) {
                 notes={story.notes}
                 addedAt={story.created_at}
                 viewingNumber={story.viewingNumber}
-                stackCount={instances.length}
                 onViewDetails={() => router.push(`/collection/item?id=${story.id}`)}
               />
             </div>
