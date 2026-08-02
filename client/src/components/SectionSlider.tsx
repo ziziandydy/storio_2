@@ -11,10 +11,11 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { getApiUrl } from '@/lib/api';
 import confetti from 'canvas-confetti';
 import { useToast } from '@/components/ToastProvider';
+import { ItemDetail } from '@/types';
 
 interface StoryData {
   title: string;
-  media_type: 'movie' | 'book';
+  media_type: 'movie' | 'book' | 'tv';
   subtype?: string;
   year?: number;
   external_id: string;
@@ -39,11 +40,29 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
 
   // Add To Folio Modal State
   const [selectedStory, setSelectedStory] = useState<StoryData | null>(null);
+  const [selectedDetail, setSelectedDetail] = useState<ItemDetail | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isPreparingAdd, setIsPreparingAdd] = useState(false);
 
-  const openAddModal = (item: StoryData) => {
+  // 先抓完整詳情（含 TMDB 季數）才開 modal，避免 modal 開啟後 hasSeasonPicker
+  // 才變 true 導致 AddToFolioModal 內部 mode 中途跳動。抓取失敗時優雅降級：
+  // 仍開 modal，只是沒有季數勾選（退回既有行為，不擋加入功能）。
+  const openAddModal = async (item: StoryData) => {
     setSelectedStory(item);
-    setIsAddModalOpen(true);
+    setSelectedDetail(null);
+    setIsPreparingAdd(true);
+    try {
+      const res = await fetch(getApiUrl(`/api/v1/details/${item.media_type}/${item.external_id}`));
+      if (res.ok) {
+        const detail = await res.json();
+        setSelectedDetail(detail);
+      }
+    } catch (error) {
+      console.error('Failed to fetch details before add:', error);
+    } finally {
+      setIsPreparingAdd(false);
+      setIsAddModalOpen(true);
+    }
   };
 
   useEffect(() => {
@@ -76,7 +95,7 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
     }
   };
 
-  const handleAddToFolio = async (rating: number, notes: string, date?: string, forceAdd?: boolean) => {
+  const handleAddToFolio = async (rating: number, notes: string, date?: string, forceAdd?: boolean, selectedSeasons?: number[]) => {
     if (!selectedStory || !token) {
       return { status: 'unauthorized' };
     }
@@ -93,12 +112,25 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
           rating,
           notes,
           archived_date: date || undefined,  // 純日期收藏日（不經 UTC 轉換）
-          force_add: forceAdd ?? false
+          force_add: forceAdd ?? false,
+          seasons: selectedSeasons ?? null,
         })
       });
 
       if (res.status === 409) {
-        return { status: 'duplicate' };
+        let existingSeasons: number[] = [];
+        try {
+          const checkRes = await fetch(getApiUrl(`/api/v1/collection/check/${selectedStory.external_id}`), {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (checkRes.ok) {
+            const checkData = await checkRes.json();
+            existingSeasons = (checkData.instances || []).flatMap((inst: any) => inst.seasons || []);
+          }
+        } catch (checkError) {
+          console.error("Failed to fetch existing seasons:", checkError);
+        }
+        return { status: 'duplicate', existingSeasons };
       }
 
       if (!res.ok) {
@@ -205,6 +237,8 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
           }}
           title={selectedStory.title}
           external_id={selectedStory.external_id}
+          media_type={selectedStory.media_type}
+          seasons={selectedDetail?.seasons}
         />
       )}
     </section>
