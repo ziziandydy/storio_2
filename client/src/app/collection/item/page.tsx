@@ -326,7 +326,7 @@ function CollectionItemPageContent() {
                     return (
                       <Link
                         key={inst.id}
-                        href={`/collection/${inst.id}`}
+                        href={`/collection/item?id=${inst.id}`}
                         className={`flex-none w-40 p-4 rounded-xl border transition-all group ${isCurrent
                           ? 'bg-accent-gold/10 border-accent-gold cursor-default'
                           : 'bg-[#121212] border-white/5 hover:border-white/20 hover:bg-white/5'
