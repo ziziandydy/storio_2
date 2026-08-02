@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.17.0](https://github.com/ziziandydy/storio_2/compare/v1.16.1...v1.17.0) (2026-08-02)
+
+
+### 新功能 (Features)
+
+* **add-modal:** 新增 TV 作品季數勾選步驟，支援分季收藏 ([2285e94](https://github.com/ziziandydy/storio_2/commit/2285e94fe0b0213bc4333c9804820aeec94d3981))
+* **collection:** 新增依作品分組＋依 archived_date 排序的純函式 ([52e80dc](https://github.com/ziziandydy/storio_2/commit/52e80dc1ec540e5cc641f0afc8afe775a78d5664))
+* **collection:** 詳情頁 Memory Timeline 改用季數標籤 + 新一季入口 ([7b6be4b](https://github.com/ziziandydy/storio_2/commit/7b6be4be9bb97a40741ab31647bb56e9fef4dd4f))
+* **collection:** Grid View 依作品分組成疊層卡片 ([6c71371](https://github.com/ziziandydy/storio_2/commit/6c713712187aba8dc7d9038cfc53d50471296b6f))
+* **db:** 新增 collections.seasons 欄位（分季收藏） ([b07f348](https://github.com/ziziandydy/storio_2/commit/b07f3488b8c13c895f6656b279464792ef3da6b1))
+* **details:** 新增本劇季數資訊區塊（TMDB 即時資料） ([6087d6d](https://github.com/ziziandydy/storio_2/commit/6087d6da21b3b8823e386201d44d31b5ab284961))
+* **details:** TMDB 季數資料映射到 ItemDetailResponse.seasons ([09eaa59](https://github.com/ziziandydy/storio_2/commit/09eaa5990b89691ce52670bdff5b8ee0f7b6e16e))
+* **repo:** get_instances_by_external_id 回傳 seasons 欄位 ([0cf95d2](https://github.com/ziziandydy/storio_2/commit/0cf95d28f3c29b8b7583b224e0a14c1451f32d3a))
+* **schema:** 新增 SeasonInfo model 與 seasons 欄位（分季收藏） ([78b639d](https://github.com/ziziandydy/storio_2/commit/78b639d3f524eda0355ed8d98b35df9b14d42635))
+
+
+### Bug 修復 (Bug Fixes)
+
+* **add-modal:** 重複收藏退回季數勾選畫面時補上提示訊息 ([0543437](https://github.com/ziziandydy/storio_2/commit/054343704440b3eecca88d09d610cae3ae9600a9))
+* **add-modal:** 補上 search 頁與首頁熱門輪播的季數勾選入口 ([df590c0](https://github.com/ziziandydy/storio_2/commit/df590c0fbf2f2747e42cd514d946615014f795d7))
+* **add-modal:** TV 作品第一次收藏也能勾選季數，不再限定重複收藏才出現 ([d3ca364](https://github.com/ziziandydy/storio_2/commit/d3ca364f1ca01dbc41a8311fc443d39b4103c982))
+* **collection:** 修復 related_instances 序列化被過濾、seasons 未傳遞兩個既有 bug ([0b00549](https://github.com/ziziandydy/storio_2/commit/0b005496de5cbbc150dfe3e5244ecfdc996d8f73))
+* **collection:** 移除 Grid 疊層卡片重複的數字徽章 ([535677e](https://github.com/ziziandydy/storio_2/commit/535677eec01732b30dda1a5535672fc8e5bf9a91))
+* **collection:** Memory Timeline 連結修正為 /collection/item?id=，避免 404 ([ec4ba96](https://github.com/ziziandydy/storio_2/commit/ec4ba96449c6b5837a4ee69c5ba714e107906265))
+* **profile:** 版號改用 App.getInfo() runtime 讀取，避免與 web bundle 脫鉤 ([4baf9f4](https://github.com/ziziandydy/storio_2/commit/4baf9f40b05898284f23a9fe967e4277df14f3f3))
+* **share:** 移除分享圖片載入畫面的「冷啟動」技術術語 ([075a100](https://github.com/ziziandydy/storio_2/commit/075a1000c9d353686e640b21ed4a7802faa75588))
+* **share:** Monthly Recap 改用 archived_date 篩選月份，修復新增資料未出現在回顧的 bug ([5f78c24](https://github.com/ziziandydy/storio_2/commit/5f78c24c7a24de02cfc3eb665d91f23c83ced339))
+
 ### [1.16.1](https://github.com/ziziandydy/storio_2/compare/v1.16.0...v1.16.1) (2026-07-26)
 
 
