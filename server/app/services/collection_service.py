@@ -59,7 +59,8 @@ class CollectionService:
                     created_at=inst['created_at'],
                     rating=inst['rating'],
                     notes=inst.get('notes'),
-                    viewing_number=view_num
+                    viewing_number=view_num,
+                    seasons=inst.get('seasons')
                 )
                 related_list.append(inst_obj)
             

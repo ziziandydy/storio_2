@@ -35,7 +35,7 @@ class StoryResponse(StoryBase):
     created_at: datetime
     archived_date: Optional[date] = None  # 純日期收藏日（回填前可能為 null）
     seasons: Optional[List[int]] = None
-    # related_instances: List[StoryInstance] = []
+    related_instances: List[StoryInstance] = []
 
     class Config:
         from_attributes = True
