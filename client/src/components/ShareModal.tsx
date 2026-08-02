@@ -311,7 +311,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
                 <Loader2 className="animate-spin text-accent-gold" size={36} />
                 <p className="text-sm text-white/70">圖片服務準備中...</p>
                 {serviceStatus === 'cold' && (
-                  <p className="text-xs text-white/40">冷啟動中，請稍候（最多 60 秒）</p>
+                  <p className="text-xs text-white/40">請稍候，最多需要 60 秒</p>
                 )}
               </div>
             )}
