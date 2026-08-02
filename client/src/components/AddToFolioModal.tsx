@@ -41,22 +41,25 @@ export default function AddToFolioModal({
   const [forceAdd, setForceAdd] = useState(false);
   const [selectedSeasons, setSelectedSeasons] = useState<number[]>([]);
   const [existingSeasons, setExistingSeasons] = useState<number[]>([]);
+  const [isDuplicateFlow, setIsDuplicateFlow] = useState(false);
   const { t } = useTranslation();
   const { showToast } = useToast();
   const router = useRouter();
 
   const hasSeasonPicker = media_type === 'tv' && !!seasons && seasons.length > 0;
 
-  // Reset mode when modal opens
+  // Reset mode when modal opens。TV 作品一律先進季數勾選（不限重複收藏才出現），
+  // 讓「這是第一次收藏這部劇」也能指定看了哪幾季，而不是只有重複收藏時才問。
   useEffect(() => {
     if (isOpen) {
-      setShowMode('add');
+      setShowMode(hasSeasonPicker ? 'season_pick' : 'add');
       setNewlyCreatedId(undefined);
       setForceAdd(false);
       setSelectedSeasons([]);
       setExistingSeasons([]);
+      setIsDuplicateFlow(false);
     }
-  }, [isOpen]);
+  }, [isOpen, hasSeasonPicker]);
 
   const handleSave = async (rating: number, notes: string, date?: string) => {
     setIsSubmitting(true);
@@ -66,6 +69,7 @@ export default function AddToFolioModal({
       if (result && result.status === 'duplicate' && !forceAdd) {
         if (hasSeasonPicker) {
           setExistingSeasons(result.existingSeasons || []);
+          setIsDuplicateFlow(true);
           setShowMode('season_pick');
         } else {
           setShowMode('prompt');
@@ -191,16 +195,22 @@ export default function AddToFolioModal({
               </div>
             )}
 
-            {/* Season Pick State: 分季收藏 */}
+            {/* Season Pick State: 分季收藏（TV 一律先問，重複收藏時額外顯示已涵蓋季數警示） */}
             {mode === 'season_pick' && (
               <div className="p-10 flex flex-col items-center text-center gap-6">
                 <div className="w-20 h-20 bg-accent-gold/20 rounded-full flex items-center justify-center text-accent-gold">
                   <History size={40} />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white mb-2 font-serif">Already in your Folio</h2>
+                  <h2 className="text-2xl font-bold text-white mb-2 font-serif">
+                    {isDuplicateFlow ? 'Already in your Folio' : title}
+                  </h2>
                   <p className="text-text-desc text-sm leading-relaxed">
-                    這筆要記錄 <span className="text-white font-bold">&quot;{title}&quot;</span> 的哪幾季？
+                    {isDuplicateFlow ? (
+                      <>這筆要記錄 <span className="text-white font-bold">&quot;{title}&quot;</span> 的哪幾季？</>
+                    ) : (
+                      '這次收藏，你看了哪幾季？'
+                    )}
                   </p>
                 </div>
                 <div className="grid grid-cols-3 gap-2 w-full max-h-48 overflow-y-auto">
@@ -235,7 +245,7 @@ export default function AddToFolioModal({
                 <button
                   disabled={selectedSeasons.length === 0}
                   onClick={() => {
-                    setForceAdd(true);
+                    if (isDuplicateFlow) setForceAdd(true);
                     setShowMode('add');
                   }}
                   className="w-full py-4 bg-accent-gold text-folio-black rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
