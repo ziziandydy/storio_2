@@ -24,7 +24,7 @@ export default function NotificationPrimerCard({ visible, onComplete }: Props) {
     setNotifEnabled,
     setNotifPermissionDenied,
     notifPrimerDismissCount,
-    notifLogStory,
+    notifComeBack,
     notifFolioReflection,
     language,
   } = useSettingsStore();
@@ -40,7 +40,7 @@ export default function NotificationPrimerCard({ visible, onComplete }: Props) {
       if (token) {
         const resolvedLang = language === 'system' ? 'zh-TW' : language as 'zh-TW' | 'en-US';
         const state = await fetchNotificationState(
-          token, '', resolvedLang, true, notifLogStory, notifFolioReflection
+          token, '', resolvedLang, true, notifComeBack, notifFolioReflection
         );
         await reschedule(state);
       }

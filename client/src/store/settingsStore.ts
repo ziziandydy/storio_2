@@ -10,7 +10,7 @@ interface SettingsState {
 
   // 通知開關
   notifEnabled: boolean;
-  notifLogStory: boolean;
+  notifComeBack: boolean;
   notifFolioReflection: boolean;
   notifPermissionDenied: boolean;
 
@@ -25,7 +25,7 @@ interface SettingsState {
   toggleNotifications: () => void;
   setTheme: (theme: 'dark' | 'light') => void;
   setNotifEnabled: (enabled: boolean) => void;
-  setNotifLogStory: (enabled: boolean) => void;
+  setNotifComeBack: (enabled: boolean) => void;
   setNotifFolioReflection: (enabled: boolean) => void;
   setNotifPermissionDenied: (denied: boolean) => void;
   dismissPrimer: () => void;
@@ -41,7 +41,7 @@ export const useSettingsStore = create<SettingsState>()(
       theme: 'dark',
 
       notifEnabled: false,
-      notifLogStory: true,
+      notifComeBack: true,
       notifFolioReflection: true,
       notifPermissionDenied: false,
 
@@ -54,7 +54,7 @@ export const useSettingsStore = create<SettingsState>()(
       toggleNotifications: () => set((state) => ({ notificationsEnabled: !state.notificationsEnabled })),
       setTheme: (theme) => set({ theme }),
       setNotifEnabled: (enabled) => set({ notifEnabled: enabled }),
-      setNotifLogStory: (enabled) => set({ notifLogStory: enabled }),
+      setNotifComeBack: (enabled) => set({ notifComeBack: enabled }),
       setNotifFolioReflection: (enabled) => set({ notifFolioReflection: enabled }),
       setNotifPermissionDenied: (denied) => set({ notifPermissionDenied: denied }),
       dismissPrimer: () => set((state) => ({
