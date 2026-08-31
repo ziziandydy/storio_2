@@ -148,6 +148,35 @@ export async function checkAndRequestPermission(): Promise<boolean> {
   }
 }
 
+// ─── Interpolate ──────────────────────────────────────────────────────────
+
+export interface InterpolateVars {
+  username: string;
+  collectionCount: number;
+  lastTitle: string | null;
+}
+
+/**
+ * 將文案模板中的 {username}/{collectionCount}/{lastTitle} 代入實際值。
+ * {username} 為空時移除開頭的「{username}，」/「{username}, 」前綴（含標點與空白）。
+ * 模板需要 {lastTitle} 但值不存在時回傳 null，呼叫端應排除該變體。
+ */
+export function interpolate(template: string, vars: InterpolateVars): string | null {
+  if (template.includes('{lastTitle}') && !vars.lastTitle) return null;
+
+  let result = template;
+  if (!vars.username) {
+    result = result.replace(/^\{username\}[，,]\s*/, '');
+  } else {
+    result = result.replace(/\{username\}/g, vars.username);
+  }
+  result = result.replace(/\{collectionCount\}/g, String(vars.collectionCount));
+  if (vars.lastTitle) {
+    result = result.replace(/\{lastTitle\}/g, vars.lastTitle);
+  }
+  return result;
+}
+
 // ─── Notification Content ────────────────────────────────────────────────────
 
 function mediaEmoji(type: 'movie' | 'book' | 'tv' | null): string {
