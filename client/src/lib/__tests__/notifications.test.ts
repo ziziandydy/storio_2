@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { interpolate, getOptimalHour, applyBlackout } from '@/lib/notifications';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { interpolate, getOptimalHour, applyBlackout, fetchNotificationState } from '@/lib/notifications';
 import { CHURN_TIERS, CHURN_MESSAGE_VARIANTS } from '@/lib/notification-config';
 
 describe('interpolate', () => {
@@ -101,5 +101,54 @@ describe('applyBlackout', () => {
     expect(applyBlackout(8)).toBe(8);
     expect(applyBlackout(21)).toBe(21);
     expect(applyBlackout(23)).toBe(23);
+  });
+});
+
+describe('fetchNotificationState', () => {
+  const originalFetch = global.fetch;
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it('API 回傳空陣列時回傳 defaultState（不含 lastMediaType/daysSinceLastLog 欄位）', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ groups: [] }),
+    }) as any;
+
+    const state = await fetchNotificationState('token', 'Tina', 'zh-TW', true, true, true);
+
+    expect(state).toEqual({
+      username: 'Tina',
+      lastTitle: null,
+      collectionCount: 0,
+      hasUnratedItemsWithin14Days: false,
+      daysSinceLastReflection: 0,
+      language: 'zh-TW',
+      notifEnabled: true,
+      notifComeBack: true,
+      notifFolioReflection: true,
+    });
+  });
+
+  it('有收藏資料時正確計算 collectionCount 與 lastTitle', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        groups: [{
+          instances: [
+            { title: '進擊的巨人', media_type: 'tv', created_at: new Date().toISOString(), rating: 5, notes: '' },
+            { title: '花束般的戀愛', media_type: 'movie', created_at: new Date(Date.now() - 86400000).toISOString(), rating: 0, notes: '' },
+          ],
+        }],
+      }),
+    }) as any;
+
+    const state = await fetchNotificationState('token', 'Tina', 'zh-TW', true, true, true);
+
+    expect(state.collectionCount).toBe(2);
+    expect(state.lastTitle).toBe('進擊的巨人');
+    expect(state.hasUnratedItemsWithin14Days).toBe(true);
   });
 });

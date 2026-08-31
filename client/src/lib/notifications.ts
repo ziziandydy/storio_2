@@ -10,14 +10,12 @@ import { getApiUrl } from './api';
 export interface NotificationState {
   username: string;
   lastTitle: string | null;
-  lastMediaType: 'movie' | 'book' | 'tv' | null;
-  daysSinceLastLog: number;
   collectionCount: number;
   hasUnratedItemsWithin14Days: boolean;
   daysSinceLastReflection: number;
   language: 'zh-TW' | 'en-US';
   notifEnabled: boolean;
-  notifLogStory: boolean;
+  notifComeBack: boolean;
   notifFolioReflection: boolean;
 }
 
@@ -381,21 +379,19 @@ export async function fetchNotificationState(
   username: string,
   language: 'zh-TW' | 'en-US',
   notifEnabled: boolean,
-  notifLogStory: boolean,
+  notifComeBack: boolean,
   notifFolioReflection: boolean,
 ): Promise<NotificationState> {
   const today = Date.now();
   const defaultState: NotificationState = {
     username,
     lastTitle: null,
-    lastMediaType: null,
-    daysSinceLastLog: 0,
     collectionCount: 0,
     hasUnratedItemsWithin14Days: false,
     daysSinceLastReflection: 0,
     language,
     notifEnabled,
-    notifLogStory,
+    notifComeBack,
     notifFolioReflection,
   };
 
@@ -422,9 +418,6 @@ export async function fetchNotificationState(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
     const latest = sorted[0];
-    const daysSinceLastLog = Math.floor(
-      (today - new Date(latest.created_at).getTime()) / 86400000
-    );
 
     // 未評分 14 天內
     const window14 = today - NOTIFICATION_CONFIG.UNRATED_RECENT_WINDOW_DAYS * 86400000;
@@ -441,8 +434,6 @@ export async function fetchNotificationState(
     return {
       ...defaultState,
       lastTitle: latest.title,
-      lastMediaType: latest.media_type,
-      daysSinceLastLog,
       collectionCount: items.length,
       hasUnratedItemsWithin14Days: hasUnrated,
       daysSinceLastReflection,
