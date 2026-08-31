@@ -8,6 +8,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useToast } from '@/components/ToastProvider';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserStore } from '@/store/userStore';
 import { Capacitor } from '@capacitor/core';
 import { checkAndRequestPermission, cancelAll, reschedule, fetchNotificationState } from '@/lib/notifications';
 import { isNativePlatform } from '@/lib/appleAuth';
@@ -16,7 +17,7 @@ export default function NotificationsPage() {
   const router = useRouter();
   const { t } = useTranslation();
   const settingsLanguage = useSettingsStore(s => s.language);
-  const { token } = useAuth();
+  useAuth();
   const { showToast } = useToast();
   const {
     notifEnabled, setNotifEnabled,
@@ -51,11 +52,13 @@ export default function NotificationsPage() {
       if (granted) {
         setNotifEnabled(true);
         setNotifPermissionDenied(false);
-        // 立即排程
-        if (token) {
+        // 立即排程：直接讀 store 最新值，避免 token 在 checkAndRequestPermission()
+        // 等待期間才就緒時，closure 捕捉到的舊值（null）導致排程被跳過
+        const currentToken = useUserStore.getState().token;
+        if (currentToken) {
           const resolvedLang = settingsLanguage === 'system' ? 'zh-TW' : settingsLanguage as 'zh-TW' | 'en-US';
           const state = await fetchNotificationState(
-            token, '', resolvedLang, true, notifComeBack, notifFolioReflection
+            currentToken, '', resolvedLang, true, notifComeBack, notifFolioReflection
           );
           await reschedule(state);
         }
