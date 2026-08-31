@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { interpolate } from '@/lib/notifications';
+import { CHURN_TIERS, CHURN_MESSAGE_VARIANTS } from '@/lib/notification-config';
 
 describe('interpolate', () => {
   it('替換 {username}（有值時）', () => {
@@ -63,5 +64,18 @@ describe('interpolate', () => {
       lastTitle: null,
     });
     expect(result).toBe('這兩天有看了什麼新的書籍、電影或影集嗎？📚🎬🍿');
+  });
+});
+
+describe('CHURN_TIERS / CHURN_MESSAGE_VARIANTS', () => {
+  it('共有 7 層，天數遞增且符合規格', () => {
+    expect(CHURN_TIERS.map(t => t.days)).toEqual([3, 7, 14, 30, 60, 90, 180]);
+  });
+
+  it('每層在 zh-TW 與 en-US 都恰好有 2 則變體', () => {
+    for (const tier of CHURN_TIERS) {
+      expect(CHURN_MESSAGE_VARIANTS['zh-TW'][tier.key]).toHaveLength(2);
+      expect(CHURN_MESSAGE_VARIANTS['en-US'][tier.key]).toHaveLength(2);
+    }
   });
 });
