@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { interpolate } from '@/lib/notifications';
+import { interpolate, getOptimalHour, applyBlackout } from '@/lib/notifications';
 import { CHURN_TIERS, CHURN_MESSAGE_VARIANTS } from '@/lib/notification-config';
 
 describe('interpolate', () => {
@@ -77,5 +77,29 @@ describe('CHURN_TIERS / CHURN_MESSAGE_VARIANTS', () => {
       expect(CHURN_MESSAGE_VARIANTS['zh-TW'][tier.key]).toHaveLength(2);
       expect(CHURN_MESSAGE_VARIANTS['en-US'][tier.key]).toHaveLength(2);
     }
+  });
+});
+
+describe('getOptimalHour', () => {
+  it('type 為 come_back 時，資料不足回傳 fallback hour', () => {
+    expect(getOptimalHour('come_back')).toBe(21);
+  });
+
+  it('type 為 folio_reflection 時，資料不足回傳 fallback hour', () => {
+    expect(getOptimalHour('folio_reflection')).toBe(20);
+  });
+});
+
+describe('applyBlackout', () => {
+  it('落在 00:00–07:59 的小時，推延到 BLACKOUT_END_HOUR (8)', () => {
+    expect(applyBlackout(0)).toBe(8);
+    expect(applyBlackout(3)).toBe(8);
+    expect(applyBlackout(7)).toBe(8);
+  });
+
+  it('落在 08:00–23:59 的小時，原樣回傳', () => {
+    expect(applyBlackout(8)).toBe(8);
+    expect(applyBlackout(21)).toBe(21);
+    expect(applyBlackout(23)).toBe(23);
   });
 });

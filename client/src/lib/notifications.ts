@@ -62,9 +62,9 @@ export function recordEngagement(weight: number): void {
  * 根據 engagement history 計算最佳排程小時。
  * 資料不足時返回 fallback。
  */
-export function getOptimalHour(type: 'log_story' | 'folio_reflection'): number {
-  const fallback = type === 'log_story'
-    ? NOTIFICATION_CONFIG.LOG_STORY_FALLBACK_HOUR
+export function getOptimalHour(type: 'come_back' | 'folio_reflection'): number {
+  const fallback = type === 'come_back'
+    ? NOTIFICATION_CONFIG.COME_BACK_FALLBACK_HOUR
     : NOTIFICATION_CONFIG.FOLIO_REFLECTION_FALLBACK_HOUR;
 
   try {
@@ -234,7 +234,19 @@ function nextScheduleDate(hour: number, minute: number): Date {
   return target;
 }
 
-function applyBlackout(hour: number): number {
+/**
+ * 計算「距現在 daysFromNow 天後」的目標日期，套用指定時分。
+ * 與 nextScheduleDate 不同：不判斷「今天是否已過」，永遠是未來日期
+ * （churn-rescue 階梯的 daysFromNow 恆 ≥ 3，不會發生同日情況）。
+ */
+function futureScheduleDate(daysFromNow: number, hour: number, minute: number): Date {
+  const target = new Date();
+  target.setDate(target.getDate() + daysFromNow);
+  target.setHours(hour, minute, 0, 0);
+  return target;
+}
+
+export function applyBlackout(hour: number): number {
   const { BLACKOUT_START_HOUR, BLACKOUT_END_HOUR } = NOTIFICATION_CONFIG;
   if (hour >= BLACKOUT_START_HOUR && hour < BLACKOUT_END_HOUR) {
     return BLACKOUT_END_HOUR;
