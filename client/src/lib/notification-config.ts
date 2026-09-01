@@ -9,23 +9,16 @@
 
 export const NOTIFICATION_CONFIG = {
 
-  // ─── Log a story 觸發條件 ───────────────────────────────────────────────
-
-  /**
-   * 距上次新增典藏超過此天數才排程 Log a story 通知。
-   * 調整影響：天數越小越積極，天數越大越寬鬆。
-   * 未來 UI key：settingsStore.notifLogStoryIntervalDays
-   */
-  LOG_STORY_INTERVAL_DAYS: 3,
+  // ─── Come back（churn-rescue 階梯）觸發條件 ─────────────────────────────
 
   /**
    * 行為學習資料不足時的 fallback 排程小時（24h）。
-   * 未來 UI key：settingsStore.notifLogStoryHour
+   * 未來 UI key：settingsStore.notifComeBackHour
    */
-  LOG_STORY_FALLBACK_HOUR: 21,
+  COME_BACK_FALLBACK_HOUR: 21,
 
-  /** Log a story fallback 排程分鐘。 */
-  LOG_STORY_FALLBACK_MINUTE: 0,
+  /** Come back fallback 排程分鐘。 */
+  COME_BACK_FALLBACK_MINUTE: 0,
 
   // ─── Folio reflection 觸發條件 ──────────────────────────────────────────
 
@@ -59,19 +52,20 @@ export const NOTIFICATION_CONFIG = {
    */
   UNRATED_COOLDOWN_DAYS: 7,
 
-  // ─── 智慧忽略偵測 ───────────────────────────────────────────────────────
+  // ─── 智慧忽略偵測（僅 Folio reflection 使用）────────────────────────────
 
   /**
-   * 某觸發路徑連續收到通知但使用者未行動的次數上限。
-   * 達到後自動停止該觸發路徑，直到使用者主動行動（評分/記錄）重置。
-   * 調整影響：數字越小越快放棄，越大越堅持提醒。
+   * Folio reflection 連續收到通知但使用者未行動的次數上限。
+   * 達到後自動停止該觸發路徑，直到使用者主動行動（評分）重置。
+   * churn-rescue 階梯不套用此機制（180 天本身即為停損點）。
    */
   IGNORE_THRESHOLD: 3,
 
   // ─── 每日上限與 Blackout ────────────────────────────────────────────────
 
   /**
-   * 每日最多排程的通知數。超過時依優先順序（Log a story > Folio reflection）截斷。
+   * 每日最多排程的通知數。churn-rescue 階梯分散在不同未來日期，
+   * 與 Folio reflection 同日撞期機率低，本版本不做跨日期強制截斷。
    */
   MAX_PER_DAY: 2,
 
@@ -142,27 +136,87 @@ export const NOTIFICATION_CONFIG = {
 
 } as const;
 
-// ─── 通知訊息變體（Message Variants） ──────────────────────────────────────
+// ─── Churn-Rescue 階梯（Come back 通知類型） ────────────────────────────────
+
+export type ChurnTierKey = 'day3' | 'day7' | 'day14' | 'day30' | 'day60' | 'day90' | 'day180';
 
 /**
- * Fallback 輪播訊息。當個人化條件不足時隨機選一條。
- * 中英文各 6 條，依 settingsStore.language 選擇。
+ * churn-rescue 召回階梯：距上次開啟 app 達到對應天數時各自排程一則通知。
+ * 180 天發完即停止，不循環（使用者視為已流失）。
  */
-export const MESSAGE_VARIANTS = {
-  'zh-TW': [
-    '今天是記錄新故事的好時機 📚',
-    '你的 Folio 在等待新的故事',
-    '花 30 秒，讓記憶留下來',
-    '最近有看到什麼值得典藏的嗎？',
-    '記錄才能讓故事真正屬於你 ✨',
-    '今晚，為你的 Folio 添一筆',
-  ],
-  'en-US': [
-    'Time to capture a new story 📚',
-    'Your Folio is waiting for its next chapter',
-    '30 seconds to preserve a memory',
-    'Seen anything worth archiving lately?',
-    'Stories are only yours when you collect them ✨',
-    'Tonight, add a story to your Folio',
-  ],
-} as const;
+export const CHURN_TIERS: ReadonlyArray<{ days: number; key: ChurnTierKey }> = [
+  { days: 3, key: 'day3' },
+  { days: 7, key: 'day7' },
+  { days: 14, key: 'day14' },
+  { days: 30, key: 'day30' },
+  { days: 60, key: 'day60' },
+  { days: 90, key: 'day90' },
+  { days: 180, key: 'day180' },
+];
+
+/**
+ * 每層 2 則輪播文案，天數越大語氣越重。內容為定案文案，逐字使用，不可任意改寫。
+ * {username}/{collectionCount}/{lastTitle} 由 interpolate() 於排程時代入。
+ */
+export const CHURN_MESSAGE_VARIANTS: Record<'zh-TW' | 'en-US', Record<ChurnTierKey, string[]>> = {
+  'zh-TW': {
+    day3: [
+      '這兩天有看了什麼新的書籍、電影或影集嗎？📚🎬🍿',
+      '追了新劇還是看了新片？別忘了回來記一筆 📖',
+    ],
+    day7: [
+      '{username}，已經一週沒有更新Storio了，該來紀錄一下了吧',
+      '一週過去了，你的書單片單是不是偷偷變長卻沒告訴我？',
+    ],
+    day14: [
+      '還記得我嗎？已經兩週沒來Storio逛逛囉🙇‍♂️🙇‍♀️🙇',
+      '{username}，兩週不見，你的Storio有點想你了',
+    ],
+    day30: [
+      '你已典藏了{collectionCount}個故事，但這個月是0個🫣',
+      '{username}，一整個月零紀錄，是我做錯了什麼嗎？',
+    ],
+    day60: [
+      '已經過兩個月了，就算是權力遊戲也該追完8季了吧',
+      '兩個月沒消息，該不會是在忙著追新劇沒空理我吧',
+    ],
+    day90: [
+      '我們都沉澱了三個月，我想你應該有遇到很不錯的故事吧，該跟我說說了吧',
+      '三個月了，我還留著你上次收藏的《{lastTitle}》，你呢？',
+    ],
+    day180: [
+      '都過半年了還不來找我，所以愛真的會消失對嗎🥹🥹',
+      '半年沒你的消息，我開始練習忘記你了（開玩笑的，快回來）🥹',
+    ],
+  },
+  'en-US': {
+    day3: [
+      'Watched anything new these past two days? 📚🎬🍿',
+      'New show or movie lately? Come tell me about it 📖',
+    ],
+    day7: [
+      "{username}, it's been a week since your last update — time to log something?",
+      "A week's gone by... did your watchlist quietly get longer without me?",
+    ],
+    day14: [
+      'Remember me? It\'s been two weeks since you stopped by 🙇‍♂️🙇‍♀️',
+      "{username}, two weeks of silence. Storio's been missing you",
+    ],
+    day30: [
+      "You've collected {collectionCount} stories — but zero this month 🫣",
+      "{username}, a whole month with nothing logged... did I do something wrong?",
+    ],
+    day60: [
+      "Two months now. Even Game of Thrones has 8 seasons — you'd have finished it by now",
+      'Two months of silence. Busy binging something you haven\'t told me about?',
+    ],
+    day90: [
+      "Three months of quiet. I bet you've found a story worth telling me about",
+      'Three months in — I still remember your last pick, {lastTitle}. Do you?',
+    ],
+    day180: [
+      'Half a year and you still haven\'t come back. Does love really fade? 🥹🥹',
+      "Six months of silence. I'm starting to forget what you look like (kidding — come back) 🥹",
+    ],
+  },
+};

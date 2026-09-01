@@ -17,7 +17,7 @@ const LAST_SCHEDULED_KEY = 'storio_notif_last_scheduled';
 export default function AppOpenReset() {
   const { user, token, loading: authLoading } = useAuth();
   const {
-    notifEnabled, notifLogStory, notifFolioReflection,
+    notifEnabled, notifComeBack, notifFolioReflection,
     language, notifPrimerDismissCount, notifPrimerLastDismissedAt,
     notifPrimerSeen, dismissPrimer,
     setNotifEnabled, setNotifPermissionDenied,
@@ -45,7 +45,7 @@ export default function AppOpenReset() {
         || user?.user_metadata?.name
         || '';
       const state = await notificationManager.fetchNotificationState(
-        token, username, resolvedLang, notifEnabled, notifLogStory, notifFolioReflection
+        token, username, resolvedLang, notifEnabled, notifComeBack, notifFolioReflection
       );
 
       // 3. 排程通知（主開關開啟且今天尚未排程）
@@ -76,7 +76,7 @@ export default function AppOpenReset() {
     };
 
     run().catch(() => {});
-  }, [authLoading, token, notifEnabled, notifLogStory, notifFolioReflection, language,
+  }, [authLoading, token, notifEnabled, notifComeBack, notifFolioReflection, language,
     notifPrimerDismissCount, notifPrimerLastDismissedAt, notifPrimerSeen]);
 
   // 舊用戶升級 Banner：新增 Storio 成功時觸發
@@ -116,7 +116,7 @@ export default function AppOpenReset() {
           if (token) {
             const resolvedLang = language === 'system' ? 'zh-TW' : language as 'zh-TW' | 'en-US';
             const state = await notificationManager.fetchNotificationState(
-              token, '', resolvedLang, true, notifLogStory, notifFolioReflection
+              token, '', resolvedLang, true, notifComeBack, notifFolioReflection
             );
             await notificationManager.reschedule(state);
           }
@@ -127,7 +127,7 @@ export default function AppOpenReset() {
     });
 
     return () => { handle.then(h => h.remove()); };
-  }, [notifEnabled, token, language, notifLogStory, notifFolioReflection,
+  }, [notifEnabled, token, language, notifComeBack, notifFolioReflection,
     setNotifEnabled, setNotifPermissionDenied]);
 
   const handleBannerDismiss = () => {

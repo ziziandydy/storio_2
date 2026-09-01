@@ -8,6 +8,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useToast } from '@/components/ToastProvider';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserStore } from '@/store/userStore';
 import { Capacitor } from '@capacitor/core';
 import { checkAndRequestPermission, cancelAll, reschedule, fetchNotificationState } from '@/lib/notifications';
 import { isNativePlatform } from '@/lib/appleAuth';
@@ -16,11 +17,11 @@ export default function NotificationsPage() {
   const router = useRouter();
   const { t } = useTranslation();
   const settingsLanguage = useSettingsStore(s => s.language);
-  const { token } = useAuth();
+  useAuth();
   const { showToast } = useToast();
   const {
     notifEnabled, setNotifEnabled,
-    notifLogStory, setNotifLogStory,
+    notifComeBack, setNotifComeBack,
     notifFolioReflection, setNotifFolioReflection,
     notifPermissionDenied, setNotifPermissionDenied,
     markPrimerSeen,
@@ -51,11 +52,13 @@ export default function NotificationsPage() {
       if (granted) {
         setNotifEnabled(true);
         setNotifPermissionDenied(false);
-        // 立即排程
-        if (token) {
+        // 立即排程：直接讀 store 最新值，避免 token 在 checkAndRequestPermission()
+        // 等待期間才就緒時，closure 捕捉到的舊值（null）導致排程被跳過
+        const currentToken = useUserStore.getState().token;
+        if (currentToken) {
           const resolvedLang = settingsLanguage === 'system' ? 'zh-TW' : settingsLanguage as 'zh-TW' | 'en-US';
           const state = await fetchNotificationState(
-            token, '', resolvedLang, true, notifLogStory, notifFolioReflection
+            currentToken, '', resolvedLang, true, notifComeBack, notifFolioReflection
           );
           await reschedule(state);
         }
@@ -154,7 +157,7 @@ export default function NotificationsPage() {
           </p>
           <div className="bg-[#121212] border border-white/5 rounded-2xl overflow-hidden">
 
-            {/* Log a story */}
+            {/* Come back */}
             <div className="p-5 flex items-center justify-between border-b border-white/5">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
@@ -166,13 +169,13 @@ export default function NotificationsPage() {
                 </div>
               </div>
               <button
-                onClick={() => setNotifLogStory(!notifLogStory)}
-                className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${notifLogStory ? 'bg-accent-gold' : 'bg-white/15'}`}
+                onClick={() => setNotifComeBack(!notifComeBack)}
+                className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${notifComeBack ? 'bg-accent-gold' : 'bg-white/15'}`}
               >
                 <motion.span
                   layout
                   className="absolute top-1 w-5 h-5 bg-white rounded-full shadow-sm"
-                  animate={{ left: notifLogStory ? '1.375rem' : '0.25rem' }}
+                  animate={{ left: notifComeBack ? '1.375rem' : '0.25rem' }}
                   transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                 />
               </button>

@@ -1,7 +1,7 @@
 'use client';
 
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { NOTIFICATION_CONFIG, MESSAGE_VARIANTS } from './notification-config';
+import { NOTIFICATION_CONFIG, CHURN_TIERS, CHURN_MESSAGE_VARIANTS, ChurnTierKey } from './notification-config';
 import { isNativePlatform } from './appleAuth';
 import { getApiUrl } from './api';
 
@@ -10,14 +10,12 @@ import { getApiUrl } from './api';
 export interface NotificationState {
   username: string;
   lastTitle: string | null;
-  lastMediaType: 'movie' | 'book' | 'tv' | null;
-  daysSinceLastLog: number;
   collectionCount: number;
   hasUnratedItemsWithin14Days: boolean;
   daysSinceLastReflection: number;
   language: 'zh-TW' | 'en-US';
   notifEnabled: boolean;
-  notifLogStory: boolean;
+  notifComeBack: boolean;
   notifFolioReflection: boolean;
 }
 
@@ -62,9 +60,9 @@ export function recordEngagement(weight: number): void {
  * 根據 engagement history 計算最佳排程小時。
  * 資料不足時返回 fallback。
  */
-export function getOptimalHour(type: 'log_story' | 'folio_reflection'): number {
-  const fallback = type === 'log_story'
-    ? NOTIFICATION_CONFIG.LOG_STORY_FALLBACK_HOUR
+export function getOptimalHour(type: 'come_back' | 'folio_reflection'): number {
+  const fallback = type === 'come_back'
+    ? NOTIFICATION_CONFIG.COME_BACK_FALLBACK_HOUR
     : NOTIFICATION_CONFIG.FOLIO_REFLECTION_FALLBACK_HOUR;
 
   try {
@@ -148,34 +146,50 @@ export async function checkAndRequestPermission(): Promise<boolean> {
   }
 }
 
+// ─── Interpolate ──────────────────────────────────────────────────────────
+
+export interface InterpolateVars {
+  username: string;
+  collectionCount: number;
+  lastTitle: string | null;
+}
+
+/**
+ * 將文案模板中的 {username}/{collectionCount}/{lastTitle} 代入實際值。
+ * {username} 為空時移除開頭的「{username}，」/「{username}, 」前綴（含標點與空白）。
+ * 模板需要 {lastTitle} 但值不存在時回傳 null，呼叫端應排除該變體。
+ */
+export function interpolate(template: string, vars: InterpolateVars): string | null {
+  if (template.includes('{lastTitle}') && !vars.lastTitle) return null;
+
+  let result = template;
+  if (!vars.username) {
+    result = result.replace(/^\{username\}[，,]\s*/, '');
+  } else {
+    result = result.replace(/\{username\}/g, vars.username);
+  }
+  result = result.replace(/\{collectionCount\}/g, String(vars.collectionCount));
+  if (vars.lastTitle) {
+    result = result.replace(/\{lastTitle\}/g, vars.lastTitle);
+  }
+  return result;
+}
+
 // ─── Notification Content ────────────────────────────────────────────────────
 
-function mediaEmoji(type: 'movie' | 'book' | 'tv' | null): string {
-  if (type === 'movie') return '🎬';
-  if (type === 'book') return '📚';
-  if (type === 'tv') return '📺';
-  return '📚';
-}
+function buildComeBackContent(tierKey: ChurnTierKey, state: NotificationState): { title: string; body: string } | null {
+  const pool = CHURN_MESSAGE_VARIANTS[state.language]?.[tierKey] ?? CHURN_MESSAGE_VARIANTS['en-US'][tierKey];
+  const candidates = pool
+    .map((template) => interpolate(template, {
+      username: state.username,
+      collectionCount: state.collectionCount,
+      lastTitle: state.lastTitle,
+    }))
+    .filter((body): body is string => body !== null);
 
-function randomVariant(language: 'zh-TW' | 'en-US'): string {
-  const variants = MESSAGE_VARIANTS[language] ?? MESSAGE_VARIANTS['en-US'];
-  return variants[Math.floor(Math.random() * variants.length)];
-}
-
-function buildLogStoryContent(state: NotificationState): { title: string; body: string } {
-  const isChinese = state.language === 'zh-TW';
-  if (state.lastTitle && state.daysSinceLastLog > 0) {
-    return {
-      title: isChinese ? 'Storio' : 'Storio',
-      body: isChinese
-        ? `${state.username}，${state.daysSinceLastLog} 天沒有新典藏了 ${mediaEmoji(state.lastMediaType)}`
-        : `${state.username}, it's been ${state.daysSinceLastLog} days since your last story ${mediaEmoji(state.lastMediaType)}`,
-    };
-  }
-  return {
-    title: isChinese ? 'Storio' : 'Storio',
-    body: randomVariant(state.language),
-  };
+  if (candidates.length === 0) return null;
+  const body = candidates[Math.floor(Math.random() * candidates.length)];
+  return { title: 'Storio', body };
 }
 
 function buildFolioReflectionContent(state: NotificationState): { title: string; body: string } {
@@ -205,7 +219,19 @@ function nextScheduleDate(hour: number, minute: number): Date {
   return target;
 }
 
-function applyBlackout(hour: number): number {
+/**
+ * 計算「距現在 daysFromNow 天後」的目標日期，套用指定時分。
+ * 與 nextScheduleDate 不同：不判斷「今天是否已過」，永遠是未來日期
+ * （churn-rescue 階梯的 daysFromNow 恆 ≥ 3，不會發生同日情況）。
+ */
+function futureScheduleDate(daysFromNow: number, hour: number, minute: number): Date {
+  const target = new Date();
+  target.setDate(target.getDate() + daysFromNow);
+  target.setHours(hour, minute, 0, 0);
+  return target;
+}
+
+export function applyBlackout(hour: number): number {
   const { BLACKOUT_START_HOUR, BLACKOUT_END_HOUR } = NOTIFICATION_CONFIG;
   if (hour >= BLACKOUT_START_HOUR && hour < BLACKOUT_END_HOUR) {
     return BLACKOUT_END_HOUR;
@@ -233,12 +259,14 @@ export async function cancelAll(): Promise<void> {
 
 // ─── Reschedule ──────────────────────────────────────────────────────────────
 
-const STORIO_NOTIF_ID_LOG_STORY = 1001;
+const CHURN_NOTIF_ID_BASE = 2001; // CHURN_TIERS[0..6] → 2001–2007
 const STORIO_NOTIF_ID_FOLIO = 1002;
 
 /**
  * 主排程函式。每次 App Open Reset 時呼叫。
- * 取消現有通知 → 判斷觸發條件 → 排程最多 MAX_PER_DAY 則。
+ * Come back：notifComeBack 為 true 時，一次預排 CHURN_TIERS 全部 7 則未來日期通知
+ *   （now + tier.days 天，各自的 optimal hour）。取代舊有「條件達標才排今晚」的反應式邏輯。
+ * Folio reflection：邏輯不變，獨立判斷是否排程，不受 come back 佔用 toSchedule 陣列長度影響。
  */
 export async function reschedule(state: NotificationState): Promise<void> {
   if (!isNativePlatform()) return;
@@ -247,9 +275,7 @@ export async function reschedule(state: NotificationState): Promise<void> {
     return;
   }
 
-  const { IGNORE_THRESHOLD, MAX_PER_DAY, LOG_STORY_INTERVAL_DAYS,
-    FOLIO_REFLECTION_INTERVAL_DAYS, UNRATED_RECENT_WINDOW_DAYS,
-    UNRATED_COOLDOWN_DAYS } = NOTIFICATION_CONFIG;
+  const { UNRATED_COOLDOWN_DAYS, FOLIO_REFLECTION_INTERVAL_DAYS, IGNORE_THRESHOLD } = NOTIFICATION_CONFIG;
 
   // 檢查權限
   const { display } = await LocalNotifications.checkPermissions();
@@ -260,34 +286,31 @@ export async function reschedule(state: NotificationState): Promise<void> {
   const toSchedule: Parameters<typeof LocalNotifications.schedule>[0]['notifications'] = [];
   const now = Date.now();
 
-  // ── Log a story ──────────────────────────────────────────────────────────
-  if (state.notifLogStory) {
-    const logState = getTriggerState('log_story');
-    const shouldSkip = logState.ignoredCount >= IGNORE_THRESHOLD;
-    const intervalOk = state.daysSinceLastLog >= LOG_STORY_INTERVAL_DAYS;
-
-    if (!shouldSkip && intervalOk) {
-      const rawHour = getOptimalHour('log_story');
+  // ── Come back（churn-rescue 階梯）──────────────────────────────────────
+  if (state.notifComeBack) {
+    CHURN_TIERS.forEach((tier, index) => {
+      const rawHour = getOptimalHour('come_back');
       const hour = applyBlackout(rawHour);
-      const at = nextScheduleDate(hour, NOTIFICATION_CONFIG.LOG_STORY_FALLBACK_MINUTE);
-      const { title, body } = buildLogStoryContent(state);
+      const at = futureScheduleDate(tier.days, hour, NOTIFICATION_CONFIG.COME_BACK_FALLBACK_MINUTE);
+      const content = buildComeBackContent(tier.key, state);
+      if (!content) return;
+
       toSchedule.push({
-        id: STORIO_NOTIF_ID_LOG_STORY,
-        title,
-        body,
+        id: CHURN_NOTIF_ID_BASE + index,
+        title: content.title,
+        body: content.body,
         schedule: { at },
-        extra: { storio: true, trigger: 'log_story' },
+        extra: { storio: true, trigger: 'come_back', tier: tier.key },
         sound: undefined,
         actionTypeId: '',
         attachments: undefined,
         channelId: undefined,
       });
-      saveTriggerState('log_story', { ...logState, lastSentAt: now });
-    }
+    });
   }
 
-  // ── Folio reflection ─────────────────────────────────────────────────────
-  if (state.notifFolioReflection && toSchedule.length < MAX_PER_DAY) {
+  // ── Folio reflection（獨立排程，不受 come back 佔用 toSchedule 影響）────
+  if (state.notifFolioReflection) {
     const folioState = getTriggerState('folio_reflection');
     const shouldSkip = folioState.ignoredCount >= IGNORE_THRESHOLD;
 
@@ -340,21 +363,19 @@ export async function fetchNotificationState(
   username: string,
   language: 'zh-TW' | 'en-US',
   notifEnabled: boolean,
-  notifLogStory: boolean,
+  notifComeBack: boolean,
   notifFolioReflection: boolean,
 ): Promise<NotificationState> {
   const today = Date.now();
   const defaultState: NotificationState = {
     username,
     lastTitle: null,
-    lastMediaType: null,
-    daysSinceLastLog: 0,
     collectionCount: 0,
     hasUnratedItemsWithin14Days: false,
     daysSinceLastReflection: 0,
     language,
     notifEnabled,
-    notifLogStory,
+    notifComeBack,
     notifFolioReflection,
   };
 
@@ -381,9 +402,6 @@ export async function fetchNotificationState(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
     const latest = sorted[0];
-    const daysSinceLastLog = Math.floor(
-      (today - new Date(latest.created_at).getTime()) / 86400000
-    );
 
     // 未評分 14 天內
     const window14 = today - NOTIFICATION_CONFIG.UNRATED_RECENT_WINDOW_DAYS * 86400000;
@@ -400,8 +418,6 @@ export async function fetchNotificationState(
     return {
       ...defaultState,
       lastTitle: latest.title,
-      lastMediaType: latest.media_type,
-      daysSinceLastLog,
       collectionCount: items.length,
       hasUnratedItemsWithin14Days: hasUnrated,
       daysSinceLastReflection,

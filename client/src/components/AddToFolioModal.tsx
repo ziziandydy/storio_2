@@ -15,7 +15,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { getApiUrl } from '@/lib/api';
 
 import { useToast } from '@/components/ToastProvider';
-import { recordEngagement, resetIgnoredCount } from '@/lib/notifications';
+import { recordEngagement } from '@/lib/notifications';
 import { isNativePlatform } from '@/lib/appleAuth';
 import { emitStoryAdded } from '@/lib/notification-events';
 
@@ -91,7 +91,6 @@ export default function AddToFolioModal({
       // 通知：記錄行為信號（iOS only）
       if (isNativePlatform()) {
         recordEngagement(2);
-        resetIgnoredCount('log_story');
         emitStoryAdded();
       }
     } catch (err: any) {
