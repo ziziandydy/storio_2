@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.18.0](https://github.com/ziziandydy/storio_2/compare/v1.17.0...v1.18.0) (2026-09-01)
+
+
+### 新功能 (Features)
+
+* **notifications:** 新增 churn-rescue 7 層階梯設定與文案內容 ([cf7e890](https://github.com/ziziandydy/storio_2/commit/cf7e8902dc3b2e78c27ee996c6ff9569abb62fb4))
+* **notifications:** 新增 futureScheduleDate()，getOptimalHour type 改為 come_back，applyBlackout 改為 export 供測試 ([4524db3](https://github.com/ziziandydy/storio_2/commit/4524db3c21a5b1dd6df42a8d2c0397b47cbef1a1))
+
+
+### 重構 (Refactoring)
+
+* **notifications:** NotificationState 移除 daysSinceLastLog/lastMediaType，notifLogStory 改名 notifComeBack ([cbe0ad2](https://github.com/ziziandydy/storio_2/commit/cbe0ad283b174b9f83903a178a27dbaab08064d2))
+* **notifications:** notifLogStory 改名 notifComeBack，Profile 開關文案改為「回訪提醒」，移除死碼呼叫 ([33c9581](https://github.com/ziziandydy/storio_2/commit/33c9581b7cee95a93dd27fa4d1b19dc7712d435c))
+
+
+### Bug 修復 (Bug Fixes)
+
+* **notifications:** 主開關開啟時改讀 userStore 最新 token，避免 stale closure 導致立即排程被跳過 ([29a2d2a](https://github.com/ziziandydy/storio_2/commit/29a2d2ab4d7998897c88eb8a889e1ab466a6ad4a))
+* **notifications:** reschedule() 改為主動預排 7 層未來日期，修復排程 bug；移除 Log a story 死碼 ([4e7bfbc](https://github.com/ziziandydy/storio_2/commit/4e7bfbc6bde38c856ecd13811105cbe66f3967f7))
+
 ## [1.17.0](https://github.com/ziziandydy/storio_2/compare/v1.16.1...v1.17.0) (2026-08-02)
 
 
