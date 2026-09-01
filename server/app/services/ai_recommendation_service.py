@@ -3,11 +3,13 @@ import google.generativeai as genai
 from openai import AsyncOpenAI
 from app.core.config import settings
 from app.core.supabase import get_supabase_client
+from app.services.ai_usage_logger import log_ai_usage
 import json
 
 logger = logging.getLogger(__name__)
 import datetime
 import asyncio
+import time
 from typing import List, Dict
 
 REGION_MARKET_MAP: Dict[str, str] = {
@@ -95,6 +97,7 @@ class AIRecommendationService:
         if not settings.GEMINI_API_KEY:
             return []
 
+        start = time.monotonic()
         try:
             genai.configure(api_key=settings.GEMINI_API_KEY)
             model = genai.GenerativeModel('gemini-2.5-flash')
@@ -117,6 +120,14 @@ class AIRecommendationService:
                 model.generate_content_async(prompt),
                 timeout=25.0
             )
+            usage = getattr(response, "usage_metadata", None)
+            log_ai_usage(
+                endpoint="daily_recommendations", provider="gemini", model="gemini-2.5-flash", success=True,
+                prompt_tokens=getattr(usage, "prompt_token_count", None),
+                completion_tokens=getattr(usage, "candidates_token_count", None),
+                total_tokens=getattr(usage, "total_token_count", None),
+                latency_ms=int((time.monotonic() - start) * 1000),
+            )
 
             text = response.text.replace("```json", "").replace("```", "").strip()
             if "[" in text and "]" in text:
@@ -126,6 +137,10 @@ class AIRecommendationService:
             return books[:30]
 
         except Exception as e:
+            log_ai_usage(
+                endpoint="daily_recommendations", provider="gemini", model="gemini-2.5-flash", success=False,
+                latency_ms=int((time.monotonic() - start) * 1000), error=str(e),
+            )
             logger.error("Gemini recommendation fetch failed: %s", e)
             return []
 
@@ -134,6 +149,7 @@ class AIRecommendationService:
         if not settings.OPENAI_API_KEY:
             return []
 
+        start = time.monotonic()
         try:
             client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
             lang_name = "Traditional Chinese (繁體中文)" if language == "zh-TW" else "English"
@@ -151,6 +167,14 @@ class AIRecommendationService:
                 ),
                 timeout=25.0
             )
+            usage = response.usage
+            log_ai_usage(
+                endpoint="daily_recommendations", provider="openai", model="gpt-4o-mini", success=True,
+                prompt_tokens=usage.prompt_tokens if usage else None,
+                completion_tokens=usage.completion_tokens if usage else None,
+                total_tokens=usage.total_tokens if usage else None,
+                latency_ms=int((time.monotonic() - start) * 1000),
+            )
 
             content = response.choices[0].message.content
             text = content.replace("```json", "").replace("```", "").strip()
@@ -158,5 +182,9 @@ class AIRecommendationService:
                 text = text[text.find("["):text.rfind("]")+1]
             return json.loads(text)[:30]
         except Exception as e:
+            log_ai_usage(
+                endpoint="daily_recommendations", provider="openai", model="gpt-4o-mini", success=False,
+                latency_ms=int((time.monotonic() - start) * 1000), error=str(e),
+            )
             logger.error("OpenAI recommendation fetch failed: %s", e)
             return []

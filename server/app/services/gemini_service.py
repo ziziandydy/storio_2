@@ -2,12 +2,14 @@ import logging
 import google.generativeai as genai
 from openai import AsyncOpenAI
 from app.core.config import settings
+from app.services.ai_usage_logger import log_ai_usage
 import json
 
 logger = logging.getLogger(__name__)
 import datetime
 import asyncio
 import re
+import time
 from typing import List, Dict
 
 class GeminiService:
@@ -20,10 +22,11 @@ class GeminiService:
             genai.configure(api_key=settings.GEMINI_API_KEY)
 
     @classmethod
-    async def _call_openai_fallback(cls, system_prompt: str, user_prompt: str) -> str:
+    async def _call_openai_fallback(cls, system_prompt: str, user_prompt: str, endpoint: str) -> str:
         if not settings.OPENAI_API_KEY:
             raise ValueError("OpenAI API Key missing")
-        
+
+        start = time.monotonic()
         try:
             logger.debug("Gemini unavailable, falling back to OpenAI")
             client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
@@ -35,8 +38,20 @@ class GeminiService:
                 ],
                 timeout=10.0
             )
+            usage = response.usage
+            log_ai_usage(
+                endpoint=endpoint, provider="openai", model="gpt-4o-mini", success=True,
+                prompt_tokens=usage.prompt_tokens if usage else None,
+                completion_tokens=usage.completion_tokens if usage else None,
+                total_tokens=usage.total_tokens if usage else None,
+                latency_ms=int((time.monotonic() - start) * 1000),
+            )
             return response.choices[0].message.content
         except Exception as e:
+            log_ai_usage(
+                endpoint=endpoint, provider="openai", model="gpt-4o-mini", success=False,
+                latency_ms=int((time.monotonic() - start) * 1000), error=str(e),
+            )
             logger.error("OpenAI fallback failed: %s", e)
             raise e
 
@@ -123,6 +138,7 @@ class GeminiService:
 
         # 1. Try Gemini
         if settings.GEMINI_API_KEY:
+            start = time.monotonic()
             try:
                 cls.configure()
                 model = genai.GenerativeModel('gemini-2.5-flash')
@@ -130,24 +146,36 @@ class GeminiService:
                     model.generate_content_async(f"{system_prompt}\n\n{user_prompt}"),
                     timeout=10.0
                 )
-                
+                usage = getattr(response, "usage_metadata", None)
+                log_ai_usage(
+                    endpoint="reflection_suggestions", provider="gemini", model="gemini-2.5-flash", success=True,
+                    prompt_tokens=getattr(usage, "prompt_token_count", None),
+                    completion_tokens=getattr(usage, "candidates_token_count", None),
+                    total_tokens=getattr(usage, "total_token_count", None),
+                    latency_ms=int((time.monotonic() - start) * 1000),
+                )
+
                 text = response.text.strip()
                 # Clean markdown if present
                 if "```" in text:
                     match = re.search(r'\[.*\]', text, re.DOTALL)
                     if match:
                         text = match.group(0)
-                
+
                 parsed_data = json.loads(text)
                 if isinstance(parsed_data, list):
                     return [str(s) for s in parsed_data[:3]]
             except Exception as e:
+                log_ai_usage(
+                    endpoint="reflection_suggestions", provider="gemini", model="gemini-2.5-flash", success=False,
+                    latency_ms=int((time.monotonic() - start) * 1000), error=str(e),
+                )
                 logger.error("Gemini suggestion generation failed: %s", e)
 
         # 2. Try OpenAI Fallback
         if settings.OPENAI_API_KEY:
             try:
-                text = await cls._call_openai_fallback(system_prompt, user_prompt)
+                text = await cls._call_openai_fallback(system_prompt, user_prompt, endpoint="reflection_suggestions")
                 text = text.strip()
                 if "```" in text:
                     match = re.search(r'\[.*\]', text, re.DOTALL)
@@ -167,10 +195,11 @@ class GeminiService:
         if not settings.GEMINI_API_KEY or not content.strip():
             return content
 
+        start = time.monotonic()
         try:
             cls.configure()
             model = genai.GenerativeModel('gemini-2.5-flash')
-            
+
             lang_name = "Traditional Chinese (繁體中文)" if language == "zh-TW" else "English"
 
             char_limit = "50 Chinese characters" if language == "zh-TW" else "120 English characters"
@@ -193,20 +222,28 @@ class GeminiService:
 
             Output ONLY the refined text. No markdown, no intro/outro.
             """
-            
+
             response = await asyncio.wait_for(
                 model.generate_content_async(prompt),
                 timeout=10.0
             )
-            
+            usage = getattr(response, "usage_metadata", None)
+            log_ai_usage(
+                endpoint="reflection_refine", provider="gemini", model="gemini-2.5-flash", success=True,
+                prompt_tokens=getattr(usage, "prompt_token_count", None),
+                completion_tokens=getattr(usage, "candidates_token_count", None),
+                total_tokens=getattr(usage, "total_token_count", None),
+                latency_ms=int((time.monotonic() - start) * 1000),
+            )
+
             return response.text.replace("```", "").strip()
 
         except Exception as e:
+            log_ai_usage(
+                endpoint="reflection_refine", provider="gemini", model="gemini-2.5-flash", success=False,
+                latency_ms=int((time.monotonic() - start) * 1000), error=str(e),
+            )
             logger.error("Gemini refine failed: %s", e)
-            return content
-
-        except Exception as e:
-            logger.error("Gemini refine failed (second handler): %s", e)
 
             # OpenAI Fallback
             if settings.OPENAI_API_KEY:
@@ -214,7 +251,7 @@ class GeminiService:
                     system_prompt = "You are an expert editor polishing Traditional Chinese text. Output ONLY the refined text."
                     user_prompt = f"Original: {content}\n\nRefine this text to be more fluent and insightful:"
 
-                    return await cls._call_openai_fallback(system_prompt, user_prompt)
+                    return await cls._call_openai_fallback(system_prompt, user_prompt, endpoint="reflection_refine")
                 except Exception as openai_error:
                     logger.error("OpenAI refine fallback failed: %s", openai_error)
 

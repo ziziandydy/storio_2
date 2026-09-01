@@ -6,8 +6,10 @@ import json
 logger = logging.getLogger(__name__)
 import asyncio
 import re
+import time
 from app.core.config import settings
 from app.schemas.search import AISearchIntent
+from app.services.ai_usage_logger import log_ai_usage
 
 class SemanticSearchService:
     @classmethod
@@ -54,6 +56,7 @@ class SemanticSearchService:
 
         # 1. Try Gemini
         if settings.GEMINI_API_KEY:
+            start = time.monotonic()
             try:
                 genai.configure(api_key=settings.GEMINI_API_KEY)
                 model = genai.GenerativeModel('gemini-2.5-flash')
@@ -61,15 +64,28 @@ class SemanticSearchService:
                     model.generate_content_async(f"{system_prompt}\n\n{user_prompt}"),
                     timeout=10.0
                 )
-                
+                usage = getattr(response, "usage_metadata", None)
+                log_ai_usage(
+                    endpoint="search_intent", provider="gemini", model="gemini-2.5-flash", success=True,
+                    prompt_tokens=getattr(usage, "prompt_token_count", None),
+                    completion_tokens=getattr(usage, "candidates_token_count", None),
+                    total_tokens=getattr(usage, "total_token_count", None),
+                    latency_ms=int((time.monotonic() - start) * 1000),
+                )
+
                 text = cls._clean_json(response.text)
                 parsed_data = json.loads(text)
                 return AISearchIntent(**parsed_data)
             except Exception as e:
+                log_ai_usage(
+                    endpoint="search_intent", provider="gemini", model="gemini-2.5-flash", success=False,
+                    latency_ms=int((time.monotonic() - start) * 1000), error=str(e),
+                )
                 logger.error("Gemini intent parsing failed: %s", e)
 
         # 2. Try OpenAI Fallback
         if settings.OPENAI_API_KEY:
+            start = time.monotonic()
             try:
                 client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
                 response = await asyncio.wait_for(
@@ -83,11 +99,23 @@ class SemanticSearchService:
                     ),
                     timeout=10.0
                 )
+                usage = response.usage
+                log_ai_usage(
+                    endpoint="search_intent", provider="openai", model="gpt-4o-mini", success=True,
+                    prompt_tokens=usage.prompt_tokens if usage else None,
+                    completion_tokens=usage.completion_tokens if usage else None,
+                    total_tokens=usage.total_tokens if usage else None,
+                    latency_ms=int((time.monotonic() - start) * 1000),
+                )
                 content = response.choices[0].message.content
                 text = cls._clean_json(content)
                 parsed_data = json.loads(text)
                 return AISearchIntent(**parsed_data)
             except Exception as e:
+                log_ai_usage(
+                    endpoint="search_intent", provider="openai", model="gpt-4o-mini", success=False,
+                    latency_ms=int((time.monotonic() - start) * 1000), error=str(e),
+                )
                 logger.error("OpenAI intent parsing fallback failed: %s", e)
 
         # Fallback if both fail
