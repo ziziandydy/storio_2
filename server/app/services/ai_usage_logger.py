@@ -20,7 +20,7 @@ def _write_usage_row(payload: dict) -> None:
         )
 
 
-def log_ai_usage(
+async def log_ai_usage(
     endpoint: str,
     provider: str,
     model: str,
@@ -35,9 +35,13 @@ def log_ai_usage(
     """
     記錄一次真正打出去的 AI API 呼叫（不含快取命中），供之後估算成本用。
 
-    Fire-and-forget：在有 running event loop 的情境（正常 FastAPI request）下，
-    寫入丟到背景執行緒、不 await，不會拖慢呼叫端的回應時間；寫入失敗只記 log，
-    不拋出例外、不影響原本的 AI 呼叫結果。
+    寫入丟到背景執行緒跑（不佔用 event loop），但會 await 直到寫入完成才返回——
+    比照這個 codebase 其他 DB cache 寫入的既有寫法（trending_service.py、
+    ai_recommendation_service.py 的 _persist_daily_rec 皆是 await run_in_executor）。
+    曾經改成不 await 的「真·fire-and-forget」版本，結果在 Railway 上這個背景執行緒
+    會在 request/response 週期結束後就被中斷、寫入從未真正完成過（正式環境
+    ai_api_usage 表永遠是空的）。寫入失敗（含真的丟例外）只記 log，不拋出例外、
+    不影響原本的 AI 呼叫結果。
     """
     payload = {
         "endpoint": endpoint,
@@ -58,4 +62,4 @@ def log_ai_usage(
         _write_usage_row(payload)
         return
 
-    loop.run_in_executor(None, _write_usage_row, payload)
+    await loop.run_in_executor(None, _write_usage_row, payload)

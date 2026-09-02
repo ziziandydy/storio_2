@@ -39,7 +39,7 @@ class GeminiService:
                 timeout=10.0
             )
             usage = response.usage
-            log_ai_usage(
+            await log_ai_usage(
                 endpoint=endpoint, provider="openai", model="gpt-4o-mini", success=True,
                 prompt_tokens=usage.prompt_tokens if usage else None,
                 completion_tokens=usage.completion_tokens if usage else None,
@@ -48,7 +48,7 @@ class GeminiService:
             )
             return response.choices[0].message.content
         except Exception as e:
-            log_ai_usage(
+            await log_ai_usage(
                 endpoint=endpoint, provider="openai", model="gpt-4o-mini", success=False,
                 latency_ms=int((time.monotonic() - start) * 1000), error=str(e),
             )
@@ -147,7 +147,7 @@ class GeminiService:
                     timeout=10.0
                 )
                 usage = getattr(response, "usage_metadata", None)
-                log_ai_usage(
+                await log_ai_usage(
                     endpoint="reflection_suggestions", provider="gemini", model="gemini-2.5-flash", success=True,
                     prompt_tokens=getattr(usage, "prompt_token_count", None),
                     completion_tokens=getattr(usage, "candidates_token_count", None),
@@ -166,7 +166,7 @@ class GeminiService:
                 if isinstance(parsed_data, list):
                     return [str(s) for s in parsed_data[:3]]
             except Exception as e:
-                log_ai_usage(
+                await log_ai_usage(
                     endpoint="reflection_suggestions", provider="gemini", model="gemini-2.5-flash", success=False,
                     latency_ms=int((time.monotonic() - start) * 1000), error=str(e),
                 )
@@ -228,7 +228,7 @@ class GeminiService:
                 timeout=10.0
             )
             usage = getattr(response, "usage_metadata", None)
-            log_ai_usage(
+            await log_ai_usage(
                 endpoint="reflection_refine", provider="gemini", model="gemini-2.5-flash", success=True,
                 prompt_tokens=getattr(usage, "prompt_token_count", None),
                 completion_tokens=getattr(usage, "candidates_token_count", None),
@@ -239,7 +239,7 @@ class GeminiService:
             return response.text.replace("```", "").strip()
 
         except Exception as e:
-            log_ai_usage(
+            await log_ai_usage(
                 endpoint="reflection_refine", provider="gemini", model="gemini-2.5-flash", success=False,
                 latency_ms=int((time.monotonic() - start) * 1000), error=str(e),
             )

@@ -2,7 +2,7 @@
 ai_usage_logger 單元測試：驗證 AI API 呼叫量/token 用量記錄的核心邏輯。
 """
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from app.services import ai_usage_logger
 
@@ -52,12 +52,14 @@ def test_write_usage_row_swallows_supabase_errors():
 
 # --- log_ai_usage：payload 組裝 + 排程行為 ---
 
-def test_log_ai_usage_builds_correct_payload_and_writes_synchronously_without_running_loop():
-    """測試環境沒有 running event loop 時，退回同步寫入（不需要背景執行緒）。"""
+@pytest.mark.asyncio
+async def test_log_ai_usage_builds_correct_payload_and_writes_synchronously_without_running_loop():
+    """asyncio.get_running_loop() 找不到 loop 時，退回同步寫入（不需要背景執行緒）。"""
     mock_client, mock_table = make_mock_supabase()
 
-    with patch.object(ai_usage_logger, "get_supabase_client", return_value=mock_client):
-        ai_usage_logger.log_ai_usage(
+    with patch.object(ai_usage_logger, "get_supabase_client", return_value=mock_client), \
+         patch.object(ai_usage_logger.asyncio, "get_running_loop", side_effect=RuntimeError("no loop")):
+        await ai_usage_logger.log_ai_usage(
             endpoint="reflection_refine",
             provider="openai",
             model="gpt-4o-mini",
@@ -80,12 +82,17 @@ def test_log_ai_usage_builds_correct_payload_and_writes_synchronously_without_ru
 
 
 @pytest.mark.asyncio
-async def test_log_ai_usage_schedules_on_executor_when_loop_running():
-    """有 running event loop 時（正常 FastAPI request 情境），改丟到背景執行緒，不阻塞呼叫端。"""
+async def test_log_ai_usage_awaits_executor_write_when_loop_running():
+    """
+    有 running event loop 時（正常 FastAPI request 情境），寫入丟到背景執行緒跑，
+    但呼叫端會 await 到寫入真的完成才返回——這是修復 Railway 正式環境從未寫入成功
+    （fire-and-forget 的背景 thread 在 request 週期結束後被中斷）的關鍵行為。
+    """
     fake_loop = MagicMock()
+    fake_loop.run_in_executor = AsyncMock(return_value=None)
 
     with patch.object(ai_usage_logger.asyncio, "get_running_loop", return_value=fake_loop):
-        ai_usage_logger.log_ai_usage(
+        await ai_usage_logger.log_ai_usage(
             endpoint="search_intent",
             provider="gemini",
             model="gemini-2.5-flash",
@@ -96,7 +103,7 @@ async def test_log_ai_usage_schedules_on_executor_when_loop_running():
             latency_ms=210,
         )
 
-    fake_loop.run_in_executor.assert_called_once()
+    fake_loop.run_in_executor.assert_awaited_once()
     args = fake_loop.run_in_executor.call_args[0]
     assert args[0] is None
     assert args[1] is ai_usage_logger._write_usage_row
