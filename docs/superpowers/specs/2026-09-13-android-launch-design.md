@@ -52,6 +52,18 @@ iOS 用 `Assets.xcassets`，Android 需要 adaptive icon（foreground/background
 
 `scripts/build-ios.sh`（暫移 `.env.local` 改用 production 環境變數打包）與 `scripts/bump-version.sh`（改 `.pbxproj` 的 `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION`）都是 iOS 專用，需要 Android 對應版本（改 `android/app/build.gradle` 的 `versionName`/`versionCode`）。
 
+### 7. 頭像上傳完全繞過 Capacitor plugin，跨平台行為未知
+
+`app/profile/page.tsx` 與 `components/OnboardingModal.tsx` 的頭像上傳都是原生 `<input type="file" accept="image/*">`，不是走 `@capacitor/camera` 這類官方 plugin。iOS 當初就因為這個踩過真實的 App Store 拒審 crash（缺 `NSCameraUsageDescription`，TCC SIGABRT）。Android 上這個原生 file input 觸發系統相機/相簿選擇器的行為，在不同 WebView 版本與 scoped storage（Android 10+）機制下有已知的相容性坑，需要實測驗證，不能預設「跟 iOS 一樣能動」。
+
+**修法**：模擬器上實測整個頭像上傳流程（相機拍照＋相簿選取兩條路徑），若發現問題再視情況修正（例如改走 `@capacitor/camera` plugin 取代裸 file input）。
+
+### 8. Android 硬體／手勢返回鍵完全沒有處理
+
+`grep backButton` 在整個 `client/src` 是空的——iOS 沒有硬體返回鍵這個概念，所以從未有人寫過相關邏輯。Capacitor App 在 Android 上的預設行為是「返回鍵 = 瀏覽器上一頁，沒有上一頁就直接關閉 App」，對一個 Next.js client-side routing 的 SPA 來說，這通常會導致使用者在某些頁面（例如 Modal 開啟中、表單填寫到一半）按返回鍵時，App 無預警直接退出或产生不符預期的導航跳轉。
+
+**修法**：透過 `@capacitor/app` 的 `App.addListener('backButton', ...)`（`@capacitor/app` 已是既有依賴，不需要新增套件）攔截返回鍵事件，依當前路由狀態決定行為（Modal 開啟中先關 Modal、有上一頁就 `router.back()`、在首頁則走系統預設的退出確認或直接退出）。
+
 ---
 
 ## 元件與實作計畫
@@ -84,6 +96,15 @@ iOS 用 `Assets.xcassets`，Android 需要 adaptive icon（foreground/background
 - 新增 `scripts/build-android.sh`（比照 `build-ios.sh` 的「暫移 `.env.local`、用 production 環境變數打包」邏輯，改為 `npx cap sync android`）
 - `scripts/bump-version.sh` 擴充支援 Android（`--sync`/`--build` 模式下同步更新 `android/app/build.gradle` 的 `versionName`/`versionCode`）
 
+### 元件 7：頭像上傳跨平台驗證
+- 模擬器上實測 `profile/page.tsx`、`OnboardingModal.tsx` 的頭像上傳（相機拍照＋相簿選取兩條路徑）
+- 若原生 file input 在 Android WebView 上有相容性問題，評估改走 `@capacitor/camera` plugin
+
+### 元件 8：Android 返回鍵處理
+- 用既有依賴 `@capacitor/app` 的 `App.addListener('backButton', ...)` 攔截返回鍵事件
+- 依當前路由/Modal 狀態決定行為：Modal 開啟中先關 Modal、有上一頁歷史就 `router.back()`、在首頁走系統預設退出行為
+- 測試：模擬器上逐頁按返回鍵，確認沒有「無預警直接退出 App」或「Modal 開著卻整頁跳轉」的情況
+
 ### 元件 7：簽署策略
 - 採用 **Play App Signing**（Google 官方推薦）：本地產生 upload keystore 用於簽署上傳的 App Bundle，Google 保管真正的簽署金鑰
 - upload keystore 需要妥善備份（遺失需要走 Google 的帳號復原流程），但不像自管金鑰遺失就無法更新 App 那麼致命
@@ -110,6 +131,7 @@ iOS 用 `Assets.xcassets`，Android 需要 adaptive icon（foreground/background
 1. **Google Play Developer 帳號審查結果未知**：若審查被拒或需補件，會影響第三塊（上架送審）的時程，但不影響本文件範圍的工程工作
 2. **實體測試機尚未取得**：真機驗收會是最後一步的阻塞點，需要使用者自行採購
 3. **Puppeteer 分享圖片在 Android WebView 的行為未知**：這是最大的技術不確定性，iOS 當初也是實測才發現多個真實 bug，Android 需要同樣的實測心理準備
+4. **頭像上傳（裸 file input）與返回鍵行為都是「理論上會有問題但沒實測過」**：這兩項是本次 brainstorming 追加找到的，屬於「iOS 沒有對應概念、程式碼裡從未考慮過」的類別，優先順序上應該排在模擬器驗證的早期階段，避免後期才發現要大改
 
 ---
 
