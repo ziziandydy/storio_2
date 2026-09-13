@@ -284,7 +284,8 @@ Storio 1.0 正式通過 Apple 審核並上架 App Store。歷經動態島修復�
 - [ ] **新增類別 (Shows)**: 擴充系統以支援「展演 (Show)」類別（如表演、劇場、演唱會等），包含搜索與建立 Memory。評估結論見 `~/.gstack/projects/ziziandydy-storio_2/iTubai-main-design-20260712-103457.md`（擱置中，重啟門檻：Ticketmaster TW API 覆蓋率 spike 或 3+ 用戶明確需求）。
 - [x] **Apple Sign-in**: ✅ 已完成（2026-04-05）。Hybrid 方案：iOS 原生用 Face ID（`@capacitor-community/apple-sign-in` + `signInWithIdToken`），Web 用 OAuth redirect。GitHub Actions 每 5 個月自動更新 JWT Secret Key。
 - [x] **智慧搜尋 (AI Search)**: ✅ 已完成（v1.13.0 起上線 Auto/AI/Keyword 三模式搜尋；v1.16.0 擴充人物/類型 chips 探索，見上方 add-person-search 條目）。
-- [ ] **分季收藏 (Seasons)**: 讓使用者可以自由新增影集的不同季別，例如只將已觀看的第 1~5 季加入收藏，而尚未觀看的第 6~8 季則保留。
+- [x] **分季收藏 (Seasons)**: 讓使用者可以自由新增影集的不同季別，例如只將已觀看的第 1~5 季加入收藏，而尚未觀看的第 6~8 季則保留。✅ 已完成（v1.17.0，2026-08-02 送審上架）。
+- [ ] **Android 版本上架**: 完成 Android 版本並上架 Google Play。
 
 ## 🎨 UI/UX 優化 (UI/UX Polish)
 - [x] **多次觀看記錄 (Multi-View)**: 已確立設計方向，針對重複觀看同一作品，將建立**多張獨立的 Memory Card**。
