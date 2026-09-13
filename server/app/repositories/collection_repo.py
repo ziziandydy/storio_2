@@ -1,10 +1,13 @@
 import logging
-from typing import List, Optional
+from typing import Callable, List, Optional, TypeVar
 from uuid import UUID
+import httpx
 from app.core.supabase import get_supabase_client
 
 logger = logging.getLogger(__name__)
 from app.schemas.item import StoryCreate, StoryResponse
+
+T = TypeVar("T")
 
 class CollectionRepository:
     def __init__(self, token: str = None):
@@ -12,6 +15,16 @@ class CollectionRepository:
         if token:
             self.client.postgrest.auth(token)
         self.table = self.client.table("collections")
+
+    def _execute_with_retry(self, run_query: Callable[[], T]) -> T:
+        """執行一次 Postgrest query，若 Supabase 端在呼叫間中斷 HTTP/2 連線
+        （httpx.RemoteProtocolError）就重試一次。HTTP/2 GOAWAY 語意保證
+        被中斷的 stream 未曾被伺服器處理過，重試不會造成重複寫入。"""
+        try:
+            return run_query()
+        except httpx.RemoteProtocolError:
+            logger.warning("Supabase 連線被中斷，重試一次")
+            return run_query()
 
     def _map_from_db(self, item: dict) -> dict:
         """Map DB media_type/subtype back to application domain types."""
@@ -29,25 +42,37 @@ class CollectionRepository:
         return data
 
     def get_user_stories(self, user_id: str) -> List[StoryResponse]:
-        response = self.table.select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
+        response = self._execute_with_retry(
+            lambda: self.table.select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
+        )
         return [StoryResponse(**self._map_from_db(item)) for item in response.data]
 
     def get_story(self, user_id: str, story_id: UUID) -> Optional[StoryResponse]:
-        response = self.table.select("*").eq("id", str(story_id)).eq("user_id", user_id).execute()
+        response = self._execute_with_retry(
+            lambda: self.table.select("*").eq("id", str(story_id)).eq("user_id", user_id).execute()
+        )
         if response.data:
             return StoryResponse(**self._map_from_db(response.data[0]))
         return None
 
     def count_user_stories(self, user_id: str) -> int:
-        response = self.table.select("*", count="exact", head=True).eq("user_id", user_id).execute()
+        response = self._execute_with_retry(
+            lambda: self.table.select("*", count="exact", head=True).eq("user_id", user_id).execute()
+        )
         return response.count
 
     def check_duplicate(self, user_id: str, external_id: str) -> bool:
-        response = self.table.select("id").eq("user_id", user_id).eq("external_id", external_id).limit(1).execute()
+        response = self._execute_with_retry(
+            lambda: self.table.select("id").eq("user_id", user_id).eq("external_id", external_id).limit(1).execute()
+        )
         return len(response.data) > 0
 
     def get_instances_by_external_id(self, user_id: str, external_id: str) -> List[dict]:
-        response = self.table.select("id, created_at, rating, notes, seasons").eq("user_id", user_id).eq("external_id", external_id).order("created_at", desc=True).execute()
+        response = self._execute_with_retry(
+            lambda: self.table.select("id, created_at, rating, notes, seasons")
+                .eq("user_id", user_id).eq("external_id", external_id)
+                .order("created_at", desc=True).execute()
+        )
         return response.data
 
     def create_story(self, user_id: str, story: StoryCreate) -> StoryResponse:
@@ -70,7 +95,7 @@ class CollectionRepository:
         data = self._map_to_db(data)
         
         try:
-            response = self.table.insert(data).execute()
+            response = self._execute_with_retry(lambda: self.table.insert(data).execute())
             logger.debug("Story inserted successfully for user %s", user_id)
             
             if response.data:
@@ -89,18 +114,22 @@ class CollectionRepository:
         if "media_type" in story_update:
             story_update = self._map_to_db(story_update)
             
-        response = self.table.update(story_update).eq("id", str(story_id)).eq("user_id", user_id).execute()
+        response = self._execute_with_retry(
+            lambda: self.table.update(story_update).eq("id", str(story_id)).eq("user_id", user_id).execute()
+        )
         if response.data:
             return StoryResponse(**self._map_from_db(response.data[0]))
         return None
 
     def delete_story(self, user_id: str, story_id: UUID) -> bool:
-        response = self.table.delete().eq("id", str(story_id)).eq("user_id", user_id).execute()
+        response = self._execute_with_retry(
+            lambda: self.table.delete().eq("id", str(story_id)).eq("user_id", user_id).execute()
+        )
         return len(response.data) > 0
 
     def delete_user_stories(self, user_id: str):
         """Clear all stories for a specific user."""
-        self.table.delete().eq("user_id", user_id).execute()
+        self._execute_with_retry(lambda: self.table.delete().eq("user_id", user_id).execute())
 
     def get_collection_stats(self, user_id: str) -> dict:
         from datetime import datetime, timedelta, timezone
@@ -113,7 +142,9 @@ class CollectionRepository:
         # Fetch all items from the last 30 days + this year to cover all metrics
         # Actually, let's just fetch all 'created_at' for the user. 
         # For a personal app, this is fine. If it scales, we optimize.
-        response = self.table.select("created_at").eq("user_id", user_id).execute()
+        response = self._execute_with_retry(
+            lambda: self.table.select("created_at").eq("user_id", user_id).execute()
+        )
         
         created_ats = []
         for item in response.data:
@@ -208,9 +239,11 @@ class CollectionRepository:
             f"and(archived_date.is.null,created_at.gte.{start_iso},created_at.lte.{end_iso})"
         )
 
-        response = self.table.select(
-            "id, external_id, title, media_type, subtype, poster_path, created_at, archived_date"
-        ).eq("user_id", user_id).or_(or_filter).execute()
+        response = self._execute_with_retry(
+            lambda: self.table.select(
+                "id, external_id, title, media_type, subtype, poster_path, created_at, archived_date"
+            ).eq("user_id", user_id).or_(or_filter).execute()
+        )
         logging.info(f"Found {len(response.data)} items.")
 
         items = []

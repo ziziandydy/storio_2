@@ -1,3 +1,4 @@
+import httpx
 import pytest
 from unittest.mock import MagicMock, patch
 from uuid import uuid4, UUID
@@ -189,6 +190,93 @@ def test_get_monthly_stats_filters_by_archived_date_not_created_at(mock_supabase
 
     assert len(result["items"]) == 1
     assert result["summary"]["movie"] == 1
+
+
+# --- Supabase 連線被對端中斷時自動重試一次（修復正式環境間歇性新增失敗 bug）---
+# 背景：httpx 底層 HTTP/2 連線在兩次呼叫之間被 Supabase 端關閉時，
+# 下一次呼叫會直接拋出 httpx.RemoteProtocolError（ConnectionTerminated），
+# 原本沒有任何重試機制，導致偶發的連線中斷直接變成使用者可見的新增失敗。
+
+def test_create_story_retries_once_on_connection_terminated(mock_supabase):
+    """第一次呼叫因連線被中斷而失敗，重試一次後應該成功，使用者端不應看到錯誤。"""
+    user_id = str(uuid4())
+    mock_table = MagicMock()
+    mock_supabase.table.return_value = mock_table
+
+    mock_insert = MagicMock()
+    mock_table.insert.return_value = mock_insert
+
+    success_response = MagicMock()
+    success_response.data = [{
+        "id": str(uuid4()),
+        "user_id": user_id,
+        "title": "Dune",
+        "media_type": "movie",
+        "external_id": "123",
+        "source": "tmdb",
+        "created_at": "2024-01-01T00:00:00Z",
+        "rating": 0,
+    }]
+
+    mock_insert.execute.side_effect = [
+        httpx.RemoteProtocolError("Connection terminated"),
+        success_response,
+    ]
+
+    repo = CollectionRepository()
+    story_in = StoryCreate(
+        title="Dune", media_type="movie", external_id="123", source="tmdb"
+    )
+
+    result = repo.create_story(user_id, story_in)
+
+    assert result.title == "Dune"
+    assert mock_insert.execute.call_count == 2
+
+
+def test_create_story_raises_after_repeated_connection_terminated(mock_supabase):
+    """連續兩次都因連線中斷失敗時，仍應如實拋出錯誤（不能無限重試或吞掉錯誤）。"""
+    user_id = str(uuid4())
+    mock_table = MagicMock()
+    mock_supabase.table.return_value = mock_table
+
+    mock_insert = MagicMock()
+    mock_table.insert.return_value = mock_insert
+    mock_insert.execute.side_effect = httpx.RemoteProtocolError("Connection terminated")
+
+    repo = CollectionRepository()
+    story_in = StoryCreate(
+        title="Dune", media_type="movie", external_id="123", source="tmdb"
+    )
+
+    with pytest.raises(httpx.RemoteProtocolError):
+        repo.create_story(user_id, story_in)
+
+    assert mock_insert.execute.call_count == 2
+
+
+def test_get_instances_by_external_id_retries_once_on_connection_terminated(mock_supabase):
+    """讀取 related instances 時遇到同樣的連線中斷，也應該透明重試一次。"""
+    user_id = str(uuid4())
+    mock_table = MagicMock()
+    mock_supabase.table.return_value = mock_table
+
+    success_response = MagicMock()
+    success_response.data = [
+        {"id": str(uuid4()), "created_at": "2026-07-15T00:00:00Z", "rating": 4, "notes": None, "seasons": None},
+    ]
+
+    query_chain = mock_table.select.return_value.eq.return_value.eq.return_value.order.return_value
+    query_chain.execute.side_effect = [
+        httpx.RemoteProtocolError("Connection terminated"),
+        success_response,
+    ]
+
+    repo = CollectionRepository()
+    instances = repo.get_instances_by_external_id(user_id, "37854")
+
+    assert len(instances) == 1
+    assert query_chain.execute.call_count == 2
 
 
 def test_get_monthly_stats_item_date_prefers_archived_date_over_created_at(mock_supabase):
