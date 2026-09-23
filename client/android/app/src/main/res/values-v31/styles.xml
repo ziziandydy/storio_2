@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Android 12+（API 31+）系統原生 Splash Screen API 需要獨立設定，
+         android:background 這個舊屬性在此版本以上不會被套用，
+         否則系統會用預設白底顯示 launcher icon，冷啟動瞬間會先閃一下白色
+         才轉場到 Capacitor 的 @drawable/splash（黑底）。 -->
+    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <item name="android:windowSplashScreenBackground">@color/ic_launcher_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="android:background">@drawable/splash</item>
+    </style>
+</resources>
