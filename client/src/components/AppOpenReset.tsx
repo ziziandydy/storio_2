@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSettingsStore } from '@/store/settingsStore';
 import { notificationManager } from '@/lib/notifications';
 import { isNativePlatform } from '@/lib/appleAuth';
+import { handleBackButton } from '@/lib/androidBackButton';
 import { NOTIFICATION_CONFIG } from '@/lib/notification-config';
 import { onStoryAdded } from '@/lib/notification-events';
 import NotificationPrimerCard from '@/components/NotificationPrimerCard';
@@ -129,6 +130,17 @@ export default function AppOpenReset() {
     return () => { handle.then(h => h.remove()); };
   }, [notifEnabled, token, language, notifComeBack, notifFolioReflection,
     setNotifEnabled, setNotifPermissionDenied]);
+
+  // Android 返回鍵：有瀏覽歷史就導航返回，沒有（在根頁面）才真的退出 App
+  useEffect(() => {
+    if (!isNativePlatform()) return;
+
+    const handle = App.addListener('backButton', ({ canGoBack }) => {
+      handleBackButton(canGoBack, () => window.history.back(), () => App.exitApp());
+    });
+
+    return () => { handle.then(h => h.remove()); };
+  }, []);
 
   const handleBannerDismiss = () => {
     setShowBanner(false);
