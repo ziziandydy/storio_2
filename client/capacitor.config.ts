@@ -30,6 +30,11 @@ const googleWebClientId =
   readEnvValue(envProduction, 'GOOGLE_WEB_CLIENT_ID') ??
   process.env.GOOGLE_WEB_CLIENT_ID;
 
+const googleAndroidClientId =
+  readEnvValue(envLocal, 'GOOGLE_ANDROID_CLIENT_ID') ??
+  readEnvValue(envProduction, 'GOOGLE_ANDROID_CLIENT_ID') ??
+  process.env.GOOGLE_ANDROID_CLIENT_ID;
+
 const config: CapacitorConfig = {
   appId: 'com.storio.app',
   appName: 'storio',
@@ -44,6 +49,7 @@ const config: CapacitorConfig = {
   plugins: {
     GoogleAuth: {
       clientId: googleIosClientId ?? '',
+      androidClientId: googleAndroidClientId ?? '',
       scopes: ['profile', 'email'],
       serverClientId: googleWebClientId ?? '',
       forceCodeForRefreshToken: true,
