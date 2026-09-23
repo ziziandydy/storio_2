@@ -8,6 +8,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ToastProvider';
 import { useAuth } from '@/hooks/useAuth';
+import { isIOSPlatform, isNativePlatform } from '@/lib/appleAuth';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -246,13 +247,17 @@ export default function OnboardingModal({ isOpen, onClose, onLogin, onContinueAs
                                 {t.onboarding.google}
                             </button>
                             
-                            <button 
-                                onClick={() => onLogin('apple')}
-                                className="w-full py-4 bg-black border border-white/20 text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-white/5 transition-all active:scale-[0.98]"
-                            >
-                                <Image src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" width={18} height={18} alt="Apple" className="invert" />
-                                {t.onboarding.apple}
-                            </button>
+                            {/* iOS 原生 App 或 Web（含 Web 上的 iOS 瀏覽器）都顯示；只有 Android 原生 App 隱藏
+                                （@capacitor-community/apple-sign-in 沒有 Android 實作，Apple 也不要求 Android 提供此選項） */}
+                            {(isIOSPlatform() || !isNativePlatform()) && (
+                                <button
+                                    onClick={() => onLogin('apple')}
+                                    className="w-full py-4 bg-black border border-white/20 text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-white/5 transition-all active:scale-[0.98]"
+                                >
+                                    <Image src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" width={18} height={18} alt="Apple" className="invert" />
+                                    {t.onboarding.apple}
+                                </button>
+                            )}
 
                             <button 
                                 onClick={() => setAuthStep('email')}

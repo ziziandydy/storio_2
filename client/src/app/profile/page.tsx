@@ -16,7 +16,7 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import OnboardingModal from '@/components/OnboardingModal';
 import { supabase, getURL } from '@/lib/supabase';
-import { isNativePlatform, nativeAppleSignIn } from '@/lib/appleAuth';
+import { isNativePlatform, isIOSPlatform, nativeAppleSignIn } from '@/lib/appleAuth';
 import { nativeGoogleSignIn } from '@/lib/googleAuth';
 import { getApiUrl } from '@/lib/api';
 import { getTitleKeyByCount, TitleTranslationKey } from '@/utils/leveling';
@@ -297,7 +297,7 @@ export default function ProfilePage() {
 
   const handleLogin = async (provider: 'google' | 'apple' | 'email') => {
     try {
-      if (provider === 'apple' && isNativePlatform()) {
+      if (provider === 'apple' && isIOSPlatform()) {
         const { error, cancelled } = await nativeAppleSignIn();
         if (cancelled) return;
         if (error) throw error;

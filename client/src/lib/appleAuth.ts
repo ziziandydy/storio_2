@@ -6,6 +6,10 @@ export function isNativePlatform(): boolean {
   return Capacitor.isNativePlatform();
 }
 
+export function isIOSPlatform(): boolean {
+  return Capacitor.getPlatform() === 'ios';
+}
+
 /** 用戶主動取消 Apple 授權時，plugin 拋出 code 1001 */
 export function isAppleCancelError(err: unknown): boolean {
   if (typeof err !== 'object' || err === null) return false;

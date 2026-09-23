@@ -16,7 +16,7 @@ import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase, getURL } from '@/lib/supabase';
 import { SplashScreen as NativeSplash } from '@capacitor/splash-screen';
-import { isNativePlatform, nativeAppleSignIn } from '@/lib/appleAuth';
+import { isNativePlatform, isIOSPlatform, nativeAppleSignIn } from '@/lib/appleAuth';
 import { nativeGoogleSignIn } from '@/lib/googleAuth';
 import { useToast } from '@/components/ToastProvider';
 
@@ -93,7 +93,7 @@ export default function Home() {
 
   const handleLogin = async (provider: 'google' | 'apple' | 'email') => {
     try {
-      if (provider === 'apple' && isNativePlatform()) {
+      if (provider === 'apple' && isIOSPlatform()) {
         const { error, cancelled } = await nativeAppleSignIn();
         if (cancelled) return; // 用戶主動取消，靜默處理
         if (error) throw error;
