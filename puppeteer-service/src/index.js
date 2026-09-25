@@ -13,6 +13,7 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
 const DEFAULT_ORIGINS = [
   'https://storio.andismtu.com',
   'capacitor://localhost',
+  'https://localhost', // Android：capacitor.config.ts 的 androidScheme: 'https' 讓 WebView origin 跟 iOS 的 capacitor://localhost 不同
   'http://localhost:3000',
   'http://localhost:3010',
 ];

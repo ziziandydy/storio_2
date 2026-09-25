@@ -52,6 +52,7 @@ origins = [
     "capacitor://localhost",
     "http://capacitor.localhost",
     "capacitor://127.0.0.1",
+    "https://localhost",  # Android：capacitor.config.ts 的 androidScheme: 'https' 讓 WebView origin 變成這個，跟 iOS 的 capacitor://localhost 不同
     os.getenv("DEV_CORS_ORIGIN", ""),  # 區網 IP，於 server/.env 設定 (dev only)
     os.getenv("FRONTEND_URL", ""),     # Production Vercel URL
     "https://storio.andismtu.com",
