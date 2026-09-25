@@ -30,11 +30,6 @@ const googleWebClientId =
   readEnvValue(envProduction, 'GOOGLE_WEB_CLIENT_ID') ??
   process.env.GOOGLE_WEB_CLIENT_ID;
 
-const googleAndroidClientId =
-  readEnvValue(envLocal, 'GOOGLE_ANDROID_CLIENT_ID') ??
-  readEnvValue(envProduction, 'GOOGLE_ANDROID_CLIENT_ID') ??
-  process.env.GOOGLE_ANDROID_CLIENT_ID;
-
 const config: CapacitorConfig = {
   appId: 'com.storio.app',
   appName: 'storio',
@@ -49,7 +44,15 @@ const config: CapacitorConfig = {
   plugins: {
     GoogleAuth: {
       clientId: googleIosClientId ?? '',
-      androidClientId: googleAndroidClientId ?? '',
+      // ⚠️ 這裡要放 Web Client ID，不是 Android OAuth Client ID！
+      // @codetrix-studio/capacitor-google-auth 的 Android 原生實作
+      // （GoogleAuth.java）直接把這個值傳給
+      // GoogleSignInOptions.Builder.requestIdToken()，而 requestIdToken()
+      // 依 Google 規範只接受 Web 類型的 Client ID（idToken 的 audience）。
+      // 新建的 Android OAuth Client（package name + SHA-1）本身仍需要存在於
+      // Google Cloud Console，但它是給 Google Play Services SDK 背景比對
+      // 簽署用的，不該被塞進這個欄位——塞錯會導致 DEVELOPER_ERROR (code 10)。
+      androidClientId: googleWebClientId ?? '',
       scopes: ['profile', 'email'],
       serverClientId: googleWebClientId ?? '',
       forceCodeForRefreshToken: true,
