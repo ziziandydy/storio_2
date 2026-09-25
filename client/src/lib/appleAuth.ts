@@ -10,6 +10,10 @@ export function isIOSPlatform(): boolean {
   return Capacitor.getPlatform() === 'ios';
 }
 
+export function isAndroidPlatform(): boolean {
+  return Capacitor.getPlatform() === 'android';
+}
+
 /** 用戶主動取消 Apple 授權時，plugin 拋出 code 1001 */
 export function isAppleCancelError(err: unknown): boolean {
   if (typeof err !== 'object' || err === null) return false;

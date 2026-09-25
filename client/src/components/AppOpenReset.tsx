@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { App } from '@capacitor/app';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { StatusBar } from '@capacitor/status-bar';
 import { useAuth } from '@/hooks/useAuth';
 import { useSettingsStore } from '@/store/settingsStore';
 import { notificationManager } from '@/lib/notifications';
-import { isNativePlatform } from '@/lib/appleAuth';
+import { isNativePlatform, isAndroidPlatform } from '@/lib/appleAuth';
 import { handleBackButton } from '@/lib/androidBackButton';
 import { NOTIFICATION_CONFIG } from '@/lib/notification-config';
 import { onStoryAdded } from '@/lib/notification-events';
@@ -130,6 +131,17 @@ export default function AppOpenReset() {
     return () => { handle.then(h => h.remove()); };
   }, [notifEnabled, token, language, notifComeBack, notifFolioReflection,
     setNotifEnabled, setNotifPermissionDenied]);
+
+  // Android：WebView 內容不與系統狀態列重疊。
+  // iOS 用 env(safe-area-inset-top) 讓版面自動避開瀏海/動態島（--sa-top，見
+  // globals.css），但 Android WebView 對這個 CSS 環境變數沒有對應實作，永遠
+  // 回傳 0px，導致所有用 --sa-top 定位的 UI（例如各頁面的 sticky header）會
+  // 貼齊螢幕頂端、被狀態列實際遮住且點不到。呼叫這個 API 讓 Android 系統把
+  // WebView 可視區域整個往下推，不需要更動既有的 --sa-top CSS。
+  useEffect(() => {
+    if (!isAndroidPlatform()) return;
+    StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+  }, []);
 
   // Android 返回鍵：有瀏覽歷史就導航返回，沒有（在根頁面）才真的退出 App
   useEffect(() => {

@@ -17,7 +17,7 @@ vi.mock('@/lib/supabase', () => ({
   supabase: { auth: { signInWithIdToken: vi.fn(), updateUser: vi.fn() } },
 }));
 
-import { isIOSPlatform } from '@/lib/appleAuth';
+import { isIOSPlatform, isAndroidPlatform } from '@/lib/appleAuth';
 
 describe('isIOSPlatform', () => {
   beforeEach(() => getPlatformMock.mockReset());
@@ -35,5 +35,24 @@ describe('isIOSPlatform', () => {
   it('平台是 web 時回傳 false', () => {
     getPlatformMock.mockReturnValue('web');
     expect(isIOSPlatform()).toBe(false);
+  });
+});
+
+describe('isAndroidPlatform', () => {
+  beforeEach(() => getPlatformMock.mockReset());
+
+  it('平台是 android 時回傳 true', () => {
+    getPlatformMock.mockReturnValue('android');
+    expect(isAndroidPlatform()).toBe(true);
+  });
+
+  it('平台是 ios 時回傳 false', () => {
+    getPlatformMock.mockReturnValue('ios');
+    expect(isAndroidPlatform()).toBe(false);
+  });
+
+  it('平台是 web 時回傳 false', () => {
+    getPlatformMock.mockReturnValue('web');
+    expect(isAndroidPlatform()).toBe(false);
   });
 });
