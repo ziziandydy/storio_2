@@ -9,12 +9,12 @@
 
 | 項目 | 狀態 |
 |------|------|
-| Google Play Developer 帳號 | ✅ 已通過審查，可建立 App（個人帳號，非組織帳號） |
+| Google Play Developer 帳號 | ⚠️ **2026-09-26 實際登入 Play Console 查證後更正**：帳號審查通過只代表能登入 Console，**「Create app」按鈕目前仍是 disabled**。首頁顯示兩項待完成的「Action required」：(1) Verify that you have access to an Android mobile device——需在**實體 Android 手機**安裝 Google Play Console App 掃 QR code 驗證，頁面明寫「Only the account owner can do this」；(2) Verify your contact phone number——被鎖住，需先完成 (1) 與身分文件審核才能繼續。**這是 Task 6 的硬性前提，比原本以為的「已可建立 App」還早一關，需要實體 Android 裝置才能解除** |
 | Target API Level | ✅ 已升級至 API 36（Android 16），2026-09-25 完成並驗證（commit `9eeba79`） |
 | Play App Signing / upload keystore | ✅ 已備妥（`client/android/app/upload-keystore.jks`，Task 9 完成） |
 | Release Bundle 建置流程 | ✅ `./gradlew bundleRelease` 已驗證可正常簽署產出 `.aab` |
 | 隱私政策頁面 | ✅ 已有現成頁面 `https://storio.andismtu.com/privacy`（iOS 上架時建立），可直接沿用 |
-| 實體 Android 測試機 | ⏳ 尚未取得（不阻塞本階段——見下方「與 Task 11 的關係」） |
+| 實體 Android 測試機 | ⏳ **尚未取得，且已從「不阻塞本階段」升級為阻塞 Task 6**——見上方帳號驗證項目 |
 
 ---
 
@@ -35,7 +35,7 @@
 2. **不走組織帳號路徑**：組織帳號雖可完全豁免測試門檻，但需要 D-U-N-S 號碼（最長 30 天入審）+ 金流驗證（再 5 天），且需要登記商業實體。使用者目前無登記商業實體，12 人／14 天的封閉測試路徑遠快於此。
 3. **測試者招募方式**：使用者明確表示不採用公開社群徵集（PTT／Reddit／Discord 等），改用 Google Play「不公開連結」私下邀請熟識的朋友／家人，湊滿 12 人即可。
 4. **Data Safety 表單發現的既有漏洞**：翻查 `server/app/services/ai_recommendation_service.py`、`gemini_service.py` 確認 App 的「AI 潤飾」與「AI 建議」功能會把使用者的心得文字（reflection）送到 Gemini／OpenAI 第三方服務處理。iOS 上架時的 App Privacy 聲明只寫了「Email/Name 用於 Authentication」，**沒有揭露這條資料流**。本次 Google Play 的 Data Safety 表單會補上，之後應回頭補正 iOS 的宣告（不在本文件範圍，留待另外處理）。
-5. **與 Task 11（實機驗收）的關係**：原 Android 落地 spec 把實機驗收定位為「送審前最後關卡而非啟動門檻」。封閉測試軌道的 12 位測試者會在**自己的真實 Android 手機**上安裝使用，天然涵蓋多款真實裝置的驗證——可以在使用者尚未取得自己的實體機時就啟動 14 天倒數，兩件事並行，不互相阻塞。
+5. **與 Task 11（實機驗收）的關係——⚠️ 2026-09-26 已更正**：原本認為實機驗收是「送審前最後關卡而非啟動門檻」，封閉測試的其他測試者可用自己的真機補足驗證、不阻塞流程。**但實際登入 Play Console 查證後發現：帳號的「Verify that you have access to an Android mobile device」是 Create app 按鈕本身的前提，不是後段測試階段的事**。也就是說，實體 Android 裝置現在是整個 Task 6-11 的**啟動門檻**，不是最後關卡；使用者必須先拿到一台實體 Android 手機、安裝 Google Play Console App 完成帳號驗證，才能繼續往下走。
 
 ---
 
