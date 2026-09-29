@@ -56,6 +56,38 @@ cd client && npx cap sync ios
 
 ---
 
+## 2b. Android Emulator 開發設定
+
+### 一次性機器設定
+
+Android SDK Command-line Tools（不需完整 Android Studio）：
+```bash
+export ANDROID_HOME="/opt/homebrew/share/android-commandlinetools"
+export ANDROID_SDK_ROOT="$ANDROID_HOME"
+export PATH="$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+```
+（建議寫進 `~/.zshrc`，此 export 只在互動式 shell 生效，Bash 工具起的子 shell 需要每次重新 export。）
+
+- 需要 **JDK 17 與 21 並存**：不同 Gradle 模組的 toolchain 要求不一致，`./gradlew` 本身有時要用 JDK 21 執行（`export JAVA_HOME=".../openjdk@21"`）才能過
+- `platforms;android-<N>` / `build-tools;<N>.0.0` 用 `sdkmanager` 安裝，N 要跟 `client/android/variables.gradle` 的 `compileSdkVersion` 一致（Google Play 對 target API 有下限規定，會隨時間调整，上架前務必查最新規定，見 `docs/superpowers/specs/2026-09-25-google-play-submission-design.md`）
+
+### 啟動模擬器 + 建置
+
+```bash
+emulator -avd Storio_Pixel_API35 -no-boot-anim -gpu swiftshader_indirect &
+cd client/android && ./gradlew assembleDebug   # 或 bundleRelease 產正式簽署 AAB
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+> ⚠️ **跟 iOS 同一類坑，Android 也會犯**：Android 專用 build 必須用 `npm run build:android`（`client/scripts/build-android.sh`，暫時移走 `.env.local` 改用 `.env.production`）。用一般 `npm run build` 會把本機 LAN IP 烤進靜態檔案，模擬器連不上後端，且不會報錯、只會靜默失敗（Trending/搜尋等功能悄悄壞掉）。`npx cap sync android` 前也要確認 `.env.local` 已移開，否則 `CAPACITOR_DEV_URL` 會寫進 `capacitor.config.json` 導致 splash 卡住不消失。
+
+### 已知環境問題
+
+- **8GB Mac 上模擬器 + Gradle daemon 同時跑容易記憶體吃緊**（`load average` 衝到 10+、`PhysMem` 只剩幾十 MB 可用），會導致 `adb install`/`adb shell input tap` 整個卡死、或觸發假的「System UI isn't responding」ANR 對話框，跟程式碼無關。徵狀：指令長時間無回應、或畫面明明對但點擊沒反應。處理方式：`./gradlew --stop` 停掉 daemon，`adb -s emulator-5554 emu kill` 乾淨關閉模擬器（若進程卡在無法中斷的 `UN` 狀態要 `kill -9`），等 load average 降到個位數再重啟
+- Android WebView 的 origin 是 `https://localhost`（`capacitor.config.ts` 的 `androidScheme: 'https'`），跟 iOS 的 `capacitor://localhost` 不同——後端與 Puppeteer 分享圖片微服務的 CORS 白名單都要兩個 origin 都放
+
+---
+
 ## 3. 驗證服務狀態
 
 啟動後，可使用以下指令確認服務是否存活：
@@ -277,3 +309,7 @@ npx playwright test    # 需先啟動 dev server（port 3010）+ 後端
 ### 與 iOS 發布流程的關係
 
 完整鏈路：**改 code → 後端 CI 綠（自動）→ `npm run release` → `ios:sync` → `build:ios` → Xcode Archive → 送審**。CI 是 code 變更後、發版前的自動檢查點。
+
+### 與 Android 發布流程的關係
+
+技術落地已完成，鏈路類似：**改 code → 後端 CI 綠 → `build:android` → `cd client/android && ./gradlew bundleRelease` → 上傳 Play Console**。Google Play 上架送審目前卡在帳號的實體裝置驗證，詳見 `docs/superpowers/specs/2026-09-25-google-play-submission-design.md` 與 `docs/BACKLOG.md`。

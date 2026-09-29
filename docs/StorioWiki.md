@@ -6,10 +6,10 @@
 
 Storio 2 是一個強調「沉浸式行動優先 (Mobile-First)」的個人典藏室系統，核心概念為「Storio - Collect stories in your folio」。
 
-*   **Frontend**: Next.js (React App Router) + Tailwind CSS，支援 Static HTML Export 並封裝於 **Capacitor (iOS)**。
+*   **Frontend**: Next.js (React App Router) + Tailwind CSS，支援 Static HTML Export 並封裝於 **Capacitor (iOS + Android)**。Android 技術落地已完成（`client/android/`），上架送審規劃見 `docs/superpowers/specs/2026-09-25-google-play-submission-design.md`。
 *   **Backend**: FastAPI (Python)，部署於 Vercel Serverless Functions。
 *   **Landing Page**: 獨立的 `index.html` (Tailwind CDN) 置於根目錄，支援 GitHub Pages 與多語系。
-*   **Database & Auth**: Supabase (PostgreSQL) 提供資料庫、身分驗證（Anonymous Login、Google OAuth、**Apple Sign-In**）。Apple Sign-In 採 Hybrid 方案：iOS 原生用 `@capacitor-community/apple-sign-in`（Face ID），Web 用 `signInWithOAuth`。邏輯封裝於 `client/src/lib/appleAuth.ts`。
+*   **Database & Auth**: Supabase (PostgreSQL) 提供資料庫、身分驗證（Anonymous Login、Google OAuth、**Apple Sign-In**）。Apple Sign-In 採 Hybrid 方案：iOS 原生用 `@capacitor-community/apple-sign-in`（Face ID），Web 用 `signInWithOAuth`；**Android 無原生實作、UI 上隱藏該選項**（`isIOSPlatform()`/`isNativePlatform()` 判斷）。Google 登入的 Android 版需注意 `capacitor.config.ts` 的 `androidClientId` 必須填 **Web** 類型 OAuth Client（非 Android 類型），否則觸發 `DEVELOPER_ERROR`。邏輯封裝於 `client/src/lib/appleAuth.ts`。
 
 ## 2. 核心目錄結構 (Directory Structure)
 
