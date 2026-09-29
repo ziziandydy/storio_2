@@ -285,7 +285,7 @@ Storio 1.0 正式通過 Apple 審核並上架 App Store。歷經動態島修復�
 - [x] **Apple Sign-in**: ✅ 已完成（2026-04-05）。Hybrid 方案：iOS 原生用 Face ID（`@capacitor-community/apple-sign-in` + `signInWithIdToken`），Web 用 OAuth redirect。GitHub Actions 每 5 個月自動更新 JWT Secret Key。
 - [x] **智慧搜尋 (AI Search)**: ✅ 已完成（v1.13.0 起上線 Auto/AI/Keyword 三模式搜尋；v1.16.0 擴充人物/類型 chips 探索，見上方 add-person-search 條目）。
 - [x] **分季收藏 (Seasons)**: 讓使用者可以自由新增影集的不同季別，例如只將已觀看的第 1~5 季加入收藏，而尚未觀看的第 6~8 季則保留。✅ 已完成（v1.17.0，2026-08-02 送審上架）。
-- [ ] **Android 版本上架**: 完成 Android 版本並上架 Google Play。
+- [ ] **Android 版本上架**: 技術落地已完成（Capacitor Android 整合、Google 登入、CORS、圖示/啟動畫面、Play App Signing、target API 36 升級，皆已模擬器驗證）。Google Play 上架送審的 spec/plan 已寫好，素材（圖示/feature graphic/截圖/文案/Data Safety 對照表）已產出於 `docs/play-store-assets/`。**卡在 Play Console 帳號的裝置驗證關卡**——「Verify that you have access to an Android mobile device」需要實體 Android 手機安裝 Google Play Console App 掃碼驗證，才能解鎖建立 App，等使用者取得實體機後繼續。
 
 ## 🎨 UI/UX 優化 (UI/UX Polish)
 - [x] **多次觀看記錄 (Multi-View)**: 已確立設計方向，針對重複觀看同一作品，將建立**多張獨立的 Memory Card**。
