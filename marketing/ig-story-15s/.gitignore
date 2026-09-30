@@ -1,0 +1,11 @@
+out/frames/
+out/stills/
+out/review/
+out/qa/
+out/*/frames/
+out/*/stills/
+out/*.mp4
+out/*/
+# V1 使用的第三方海報（TMDB），有版權疑慮，不進公開 repo
+assets/posters/
+assets/share/

@@ -1,0 +1,29 @@
+{
+  "bpm": 90,
+  "duration": 15.0,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "audience": "Series & film fans, 25-44",
+  "hits": {
+    "hookA": 0,
+    "hookB": 1,
+    "question": 2,
+    "brand": 3,
+    "everyFilm": 4,
+    "everySeason": 6,
+    "seasons": 8,
+    "seasonChip": 8.5,
+    "addBtn": 10,
+    "rate": 11,
+    "starsStart": 11.5,
+    "stamp": 13,
+    "ticket": 14,
+    "tv": 16,
+    "riser": 16.5,
+    "deadAir": 18,
+    "finale": 19,
+    "tagline": 20,
+    "cta": 21
+  }
+}

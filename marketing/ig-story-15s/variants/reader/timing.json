@@ -1,0 +1,25 @@
+{
+  "bpm": 76,
+  "duration": 15.0,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "audience": "Literary readers, 35-54",
+  "hits": {
+    "hook": 0,
+    "underline": 1,
+    "margin": 1.25,
+    "question": 1.75,
+    "brand": 3.25,
+    "shelf": 4.5,
+    "reflect": 8,
+    "typeStart": 8.25,
+    "stars": 10.5,
+    "stamp": 12,
+    "share": 13,
+    "share2": 15,
+    "finale": 16,
+    "tagline": 17,
+    "cta": 18
+  }
+}

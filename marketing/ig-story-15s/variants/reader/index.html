@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Storio — Reader</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Karla:wght@400;500;700&family=Caveat:wght@600&display=block" rel="stylesheet">
+<style>
+  :root { --green: #122d22; --green2: #1c4232; --paper: #f5f4ef; --ink: #1d1f1c; --brass: #c5a059; --lamp: #ffd9a0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--green); }
+  body { font-family: Karla, sans-serif; color: var(--paper); -webkit-font-smoothing: antialiased; }
+  .abs { position: absolute; } .c { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); }
+  #root { position: absolute; inset: 0; overflow: hidden; background: var(--green); }
+  #bg { position: absolute; inset: -5%; background:
+        radial-gradient(55% 35% at 70% 18%, rgba(255,217,160,.28), rgba(255,217,160,0) 70%),
+        radial-gradient(80% 60% at 50% 60%, var(--green2), var(--green) 75%); }
+  #stage { position: absolute; inset: 0; }
+  .scene { position: absolute; inset: 0; visibility: hidden; }
+  .serif { font-family: 'Playfair Display', serif; }
+  .head { font-family: 'Playfair Display', serif; font-weight: 600; line-height: 1.02; white-space: nowrap; text-align: center; }
+  .head em { font-style: italic; font-weight: 400; color: var(--lamp); }
+  .word { will-change: transform, filter; }
+  .page { position: absolute; background: var(--paper); color: var(--ink); border-radius: 6px;
+          box-shadow: 0 40px 90px rgba(0,0,0,.45), inset 0 0 120px rgba(120,100,60,.12);
+          background-image: repeating-linear-gradient(0deg, transparent 0 63px, rgba(29,31,28,.05) 63px 64px); }
+  .quote { font-family: 'Playfair Display', serif; font-size: 70px; line-height: 1.22; text-align: center; }
+  .attr { font-size: 30px; letter-spacing: .14em; text-transform: uppercase; color: rgba(29,31,28,.55); text-align: center; }
+  .hand { font-family: Caveat, cursive; font-weight: 600; color: #a67c2e; white-space: nowrap; }
+  .part { position: absolute; inset: 0; } .part img { width: 100%; height: 100%; display: block; }
+  .logo { position: absolute; }
+  .cover { position: absolute; width: 300px; height: 450px; background-size: cover; background-position: center; border-radius: 4px 10px 10px 4px;
+           box-shadow: 0 30px 50px rgba(0,0,0,.5), inset 6px 0 10px rgba(0,0,0,.25); }
+  .label { font-size: 26px; font-weight: 700; letter-spacing: .3em; text-transform: uppercase; color: #8a6a2e; }
+  #refText { font-size: 50px; line-height: 1.38; color: var(--ink); white-space: pre-wrap; }
+  #caret { display: inline-block; width: 3px; height: 54px; background: #8a6a2e; vertical-align: -10px; margin-left: 3px; }
+  .star { position: absolute; width: 64px; height: 64px; } .star svg { width: 100%; height: 100%; overflow: visible; }
+  .stamp { position: absolute; width: 180px; height: 180px; border: 6px solid rgba(166,124,46,.9); border-radius: 26px;
+           display: flex; flex-direction: column; align-items: center; justify-content: center; color: #8a6a2e; background: rgba(245,244,239,.7); }
+  .stamp b { font: 700 22px Karla; letter-spacing: .3em; } .stamp i { font: normal 700 104px/0.95 'Playfair Display'; }
+  .tpl { position: absolute; width: 480px; height: 853px; border-radius: 22px; background-size: cover; background-position: center; box-shadow: 0 45px 90px rgba(0,0,0,.55); }
+  .cta { font-weight: 700; font-size: 38px; letter-spacing: .18em; color: var(--paper); border: 2px solid var(--brass); padding: 22px 50px; border-radius: 999px; white-space: nowrap; }
+  #fxCanvas, #vignette, #grain { position: absolute; inset: 0; pointer-events: none; }
+  #vignette { background: radial-gradient(110% 75% at 50% 45%, rgba(0,0,0,0) 55%, rgba(0,0,0,.55) 100%); }
+  #grain { opacity: .07; mix-blend-mode: overlay; background-size: 256px 256px; }
+</style>
+</head>
+<body>
+<div id="root">
+  <div id="bg"></div>
+  <div id="stage">
+    <section class="scene" id="s1">
+      <div class="page c" id="page" style="left:540px;top:830px;width:840px;height:940px">
+        <div class="quote abs" style="left:0;right:0;top:200px">&ldquo;I went to the woods<br>because I wished to<br><span id="uWord">live deliberately.</span>&rdquo;</div>
+        <svg class="abs" id="uline" style="left:0;top:0;overflow:visible" width="840" height="940"><path id="uPath" fill="none" stroke="#b58a3a" stroke-width="7" stroke-linecap="round"/></svg>
+        <div class="attr abs" style="left:0;right:0;top:620px">Henry David Thoreau &middot; Walden</div>
+        <div class="hand abs" id="note" style="left:560px;top:760px;font-size:78px;transform:rotate(-8deg)">this.</div>
+      </div>
+      <div class="c head" id="question" style="left:540px;top:1440px;font-size:80px"><em>Where do your notes go?</em></div>
+      <div class="logo c" id="logoB" style="left:540px;top:760px;width:420px;height:420px"></div>
+      <div class="c head" id="brandName" style="left:540px;top:1090px;font-size:128px;font-weight:700">Storio</div>
+      <div class="c" id="brandLine" style="left:540px;top:1200px;font-size:44px;color:rgba(245,244,239,.8);white-space:nowrap">A home for everything you read.</div>
+    </section>
+
+    <section class="scene" id="s2">
+      <div class="c head" id="head2" style="left:540px;top:430px;font-size:104px;z-index:5">Keep every <em>book.</em></div>
+      <div class="c" id="shelf" style="left:540px;top:960px;width:1080px;height:600px"></div>
+      <div class="c" id="plank" style="left:540px;top:1230px;width:940px;height:6px;background:linear-gradient(90deg,transparent,#c5a059,transparent)"></div>
+    </section>
+
+    <section class="scene" id="s3">
+      <div class="c head" id="head3" style="left:540px;top:400px;font-size:96px">Write what <em>stayed.</em></div>
+      <div class="page c" id="refCard" style="left:540px;top:900px;width:900px;height:620px;padding:60px 64px">
+        <div class="label" style="margin-bottom:30px">Your reflection &middot; Walden</div>
+        <div id="refText"></div>
+        <div class="abs" id="refCount" style="left:64px;bottom:46px;font-size:26px;letter-spacing:.18em;color:rgba(29,31,28,.4)">0 / 300</div>
+      </div>
+      <div class="c" id="stars" style="left:540px;top:1340px;width:860px;height:70px"></div>
+      <div class="stamp c" id="stamp" style="left:840px;top:650px"><b>SCORE</b><i>10</i></div>
+    </section>
+
+    <section class="scene" id="s4">
+      <div class="c head" id="head4" style="left:540px;top:390px;font-size:92px">Share what <em>moved you.</em></div>
+      <div class="tpl" id="tDesk" style="background-image:url(../../assets/share2/read_desk.png)"></div>
+      <div class="tpl" id="tBook" style="background-image:url(../../assets/share2/read_default.png)"></div>
+    </section>
+
+    <section class="scene" id="s5">
+      <div class="logo c" id="logo" style="left:540px;top:760px;width:560px;height:560px"></div>
+      <div class="c head" id="tag" style="left:540px;top:1215px;font-size:78px">Keep what your<br><em>books gave you.</em></div>
+      <div class="c cta" id="cta" style="left:540px;top:1420px">FREE ON THE APP STORE</div>
+    </section>
+  </div>
+  <canvas id="fxCanvas" width="1080" height="1920"></canvas>
+  <div id="vignette"></div>
+  <div id="grain"></div>
+</div>
+<script src="../../vendor/gsap.min.js"></script>
+<script src="../../lib/kit.js"></script>
+<script src="composition.js"></script>
+</body>
+</html>

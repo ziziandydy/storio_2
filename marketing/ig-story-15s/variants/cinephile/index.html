@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Storio — Cinephile</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:ital,wght@0,500;0,700;1,500&display=block" rel="stylesheet">
+<style>
+  :root { --teal: #3fc6d1; --amber: #ffb454; --ink: #050709; --paper: #eef3f4; --gold: #c5a059; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+  body { font-family: 'Barlow Condensed', sans-serif; color: var(--paper); -webkit-font-smoothing: antialiased; }
+  .abs { position: absolute; } .c { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); }
+  #root { position: absolute; inset: 0; overflow: hidden; background: var(--ink); }
+  #bg { position: absolute; inset: -5%; background: radial-gradient(70% 45% at 50% 50%, #0f2a30 0%, #050709 70%); }
+  #stage { position: absolute; inset: 0; }
+  .scene { position: absolute; inset: 0; visibility: hidden; }
+  .title { font-family: Anton, sans-serif; text-transform: uppercase; letter-spacing: .01em; line-height: .92; white-space: nowrap; }
+  .char { display: inline-block; will-change: transform; }
+  .accent { color: var(--amber); }
+  .label { font-weight: 500; font-size: 54px; letter-spacing: .08em; text-transform: uppercase; color: rgba(238,243,244,.7); white-space: nowrap; }
+  .num { font-family: Anton, sans-serif; line-height: 1; color: var(--paper); text-shadow: 0 0 60px rgba(63,198,209,.45); }
+  .part { position: absolute; inset: 0; } .part img { width: 100%; height: 100%; display: block; }
+  .logo { position: absolute; }
+  /* film strip */
+  #strip { position: absolute; left: 0; top: 780px; height: 600px; width: 4000px; background: #0b0d10; }
+  .sprockets { position: absolute; left: 0; right: 0; height: 46px; background: repeating-linear-gradient(90deg, transparent 0 22px, #2a2e33 22px 58px, transparent 58px 80px); }
+  .frame { position: absolute; top: 75px; width: 300px; height: 450px; background-size: cover; background-position: center; border-radius: 8px; filter: brightness(.55) saturate(.8); }
+  .frame.on { filter: none; box-shadow: 0 0 0 5px var(--amber), 0 0 70px rgba(255,180,84,.5); }
+  .poster { position: absolute; background-size: cover; background-position: center; border-radius: 18px; box-shadow: 0 40px 90px rgba(0,0,0,.8); }
+  .chip { position: absolute; width: 132px; height: 88px; border-radius: 18px; border: 3px solid rgba(238,243,244,.35); display: flex; align-items: center; justify-content: center;
+          font: 700 44px 'Barlow Condensed'; color: rgba(238,243,244,.75); }
+  .chip.on { background: var(--gold); border-color: var(--gold); color: #0b0b0b; }
+  .btn { position: absolute; height: 104px; padding: 0 56px; border-radius: 26px; background: var(--gold); color: #0b0b0b; display: flex; align-items: center; justify-content: center;
+         font: 700 44px 'Barlow Condensed'; letter-spacing: .12em; white-space: nowrap; }
+  .star { position: absolute; width: 72px; height: 72px; } .star svg { width: 100%; height: 100%; overflow: visible; }
+  .stamp { position: absolute; width: 190px; height: 190px; border: 7px solid rgba(197,160,89,.9); border-radius: 28px; background: rgba(0,0,0,.6);
+           display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .stamp b { font: 700 24px 'Barlow Condensed'; letter-spacing: .3em; color: var(--gold); } .stamp i { font: normal 400 118px/0.95 Anton; color: #e2c07a; }
+  .quote { font: italic 500 50px/1.25 'Barlow Condensed'; color: rgba(238,243,244,.88); text-align: center; white-space: nowrap; }
+  .tpl { position: absolute; width: 520px; height: 924px; border-radius: 26px; background-size: cover; background-position: center; box-shadow: 0 50px 100px rgba(0,0,0,.85); }
+  .cta { font: 700 44px 'Barlow Condensed'; letter-spacing: .16em; color: #0b0b0b; background: var(--amber); padding: 22px 52px; border-radius: 999px; white-space: nowrap; }
+  #bars .bar { position: absolute; left: 0; right: 0; height: 250px; background: #000; }
+  #grade { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: soft-light; background: linear-gradient(180deg, rgba(40,160,180,.35), rgba(255,160,70,.3)); }
+  #fxCanvas, #flash, #vignette, #grain { position: absolute; inset: 0; pointer-events: none; }
+  #flash { background: radial-gradient(circle at 50% 50%, rgba(255,230,200,.9), rgba(0,0,0,0) 70%); opacity: 0; mix-blend-mode: screen; }
+  #vignette { background: radial-gradient(110% 75% at 50% 50%, rgba(0,0,0,0) 50%, rgba(0,0,0,.85) 100%); }
+  #grain { opacity: .12; mix-blend-mode: overlay; background-size: 256px 256px; }
+</style>
+</head>
+<body>
+<div id="root">
+  <div id="bg"></div>
+  <div id="stage">
+    <section class="scene" id="s1">
+      <div class="c" id="hookA" style="left:540px;top:760px;text-align:center">
+        <div class="num" id="numA" style="font-size:340px">0</div>
+        <div class="label">episodes watched this year</div>
+      </div>
+      <div class="c" id="hookB" style="left:540px;top:1210px;text-align:center">
+        <div class="num" id="numB" style="font-size:200px">0</div>
+        <div class="label">films</div>
+      </div>
+      <div class="c title" id="question" style="left:540px;top:900px;font-size:168px;text-align:center">REMEMBER<br><span class="accent">THEM ALL?</span></div>
+      <div class="logo c" id="logoS" style="left:540px;top:900px;width:560px;height:560px"></div>
+    </section>
+
+    <section class="scene" id="s2">
+      <div class="c title" id="head2" style="left:540px;top:600px;font-size:132px;width:1000px;height:130px">
+        <div class="abs" id="hFilm" style="left:50%;top:0;transform:translateX(-50%)">EVERY FILM.</div>
+        <div class="abs accent" id="hSeason" style="left:50%;top:0;transform:translateX(-50%)">EVERY SEASON.</div>
+      </div>
+      <div id="strip"><div class="sprockets" style="top:12px"></div><div class="sprockets" style="bottom:12px"></div></div>
+    </section>
+
+    <section class="scene" id="s3">
+      <div class="c title" id="head3" style="left:540px;top:420px;font-size:124px">SEASON BY <span class="accent">SEASON.</span></div>
+      <div class="c poster" id="sPoster" style="left:540px;top:830px;width:380px;height:570px;background-image:url(../../art/out/wildfire_season.jpg)"></div>
+      <div class="c" id="chips" style="left:540px;top:1210px;width:760px;height:90px"></div>
+      <div class="c label" id="chipCap" style="left:540px;top:1310px;font-size:46px">3 of 5 seasons watched</div>
+      <div class="c btn" id="addBtn" style="left:540px;top:1440px">ADD TO STORIO</div>
+    </section>
+
+    <section class="scene" id="s4">
+      <div class="c title" id="head4" style="left:540px;top:400px;font-size:156px">RATE IT<span class="accent">.</span></div>
+      <div class="c poster" id="rPoster" style="left:540px;top:830px;width:420px;height:630px;background-image:url(../../art/out/night_shift.jpg)"></div>
+      <div class="c" id="stars" style="left:540px;top:1225px;width:860px;height:80px"></div>
+      <div class="stamp c" id="stamp" style="left:770px;top:650px"><b>SCORE</b><i>9</i></div>
+      <div class="c quote" id="quote" style="left:540px;top:1400px">"The rooftop scene still gives me chills."</div>
+    </section>
+
+    <section class="scene" id="s5">
+      <div class="c title" id="head5" style="left:540px;top:390px;font-size:112px">KEEP THE <span class="accent">TICKET.</span></div>
+      <div class="tpl" id="tTicket" style="background-image:url(../../assets/share2/cine_ticket.png)"></div>
+      <div class="tpl" id="tTv" style="background-image:url(../../assets/share2/cine_tv.png)"></div>
+    </section>
+
+    <section class="scene" id="s6">
+      <div class="logo c" id="logo" style="left:540px;top:760px;width:660px;height:660px"></div>
+      <div class="c title" id="tag" style="left:540px;top:1230px;font-size:92px;text-align:center">REMEMBER EVERY STORY<br><span class="accent">YOU'VE WATCHED.</span></div>
+      <div class="c cta" id="cta" style="left:540px;top:1420px">FREE ON THE APP STORE</div>
+    </section>
+  </div>
+  <canvas id="fxCanvas" width="1080" height="1920"></canvas>
+  <div id="grade"></div>
+  <div id="flash"></div>
+  <div id="vignette"></div>
+  <div id="grain"></div>
+  <div id="bars"><div class="bar" id="barT" style="top:0"></div><div class="bar" id="barB" style="bottom:0"></div></div>
+</div>
+<script src="../../vendor/gsap.min.js"></script>
+<script src="../../lib/kit.js"></script>
+<script src="composition.js"></script>
+</body>
+</html>
