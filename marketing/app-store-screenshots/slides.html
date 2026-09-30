@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Storio App Store Screenshots</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Jost:wght@300;400;500&family=Noto+Serif+TC:wght@600&family=Noto+Sans+TC:wght@400;500&family=Inter:wght@500;600;700&display=block" rel="stylesheet">
+<style>
+  :root { --ink: #080808; --card: #141414; --gold: #c5a059; --gold-soft: #d9bf86; --ivory: #ece5d6; --dim: rgba(236,229,214,.62); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1242px; height: 2688px; overflow: hidden; background: var(--ink); }
+  body { color: var(--ivory); -webkit-font-smoothing: antialiased; font-family: Jost, 'Noto Sans TC', sans-serif; }
+  #slide { position: absolute; inset: 0; overflow: hidden;
+           background: radial-gradient(70% 22% at 50% 12%, rgba(197,160,89,.16), rgba(197,160,89,0) 70%),
+                       radial-gradient(80% 40% at 50% 70%, rgba(197,160,89,.08), rgba(0,0,0,0) 70%), var(--ink); }
+  .abs { position: absolute; }
+
+  /* caption */
+  #cap { position: absolute; left: 0; right: 0; top: 190px; text-align: center; }
+  #kicker { font: 400 30px Jost, 'Noto Sans TC'; letter-spacing: .5em; padding-left: .5em; color: var(--gold); text-transform: uppercase; }
+  #rule { width: 120px; height: 1px; margin: 34px auto 40px; background: linear-gradient(90deg, rgba(197,160,89,0), rgba(197,160,89,.9), rgba(197,160,89,0)); }
+  #head { font: 500 124px/1.02 'Cormorant Garamond', serif; letter-spacing: -.005em; }
+  #head em { color: var(--gold-soft); }
+  #sub { margin-top: 38px; font: 300 42px/1.4 Jost; color: var(--dim); letter-spacing: .01em; }
+  .zh #kicker { font: 500 34px 'Noto Sans TC'; letter-spacing: .6em; padding-left: .6em; }
+  .zh #head { font: 600 100px/1.25 'Noto Serif TC', serif; letter-spacing: .02em; }
+  .zh #head em { font-style: normal; }
+  .zh #sub { font: 400 40px/1.55 'Noto Sans TC'; letter-spacing: .04em; }
+
+  /* components */
+  .shot { position: absolute; border-radius: 40px; overflow: hidden; background: var(--card);
+          box-shadow: 0 70px 140px rgba(0,0,0,.75), 0 0 0 2px rgba(197,160,89,.3); }
+  .shot img { display: block; width: 100%; height: auto; }
+  .soft { box-shadow: 0 50px 100px rgba(0,0,0,.7), 0 0 0 2px rgba(197,160,89,.18); }
+
+  /* rebuilt "Add to Storio" sheet (mirrors RateAndReflectForm styling, localized) */
+  #sheet { position: absolute; border-radius: 56px; background: #151515; border: 2px solid rgba(255,255,255,.07);
+           box-shadow: 0 80px 160px rgba(0,0,0,.8), 0 0 0 2px rgba(197,160,89,.22); overflow: hidden; font-family: Inter, 'Noto Sans TC', sans-serif; }
+  #sheet .top { display: flex; align-items: center; gap: 26px; padding: 44px 52px; background: rgba(255,255,255,.03); border-bottom: 1px solid rgba(255,255,255,.06); }
+  #sheet .ico { width: 70px; height: 70px; border-radius: 20px; border: 2px solid rgba(197,160,89,.35); display: grid; place-items: center; color: var(--gold); }
+  #sheet .ttl { font: 500 50px 'Cormorant Garamond', 'Noto Serif TC', serif; color: #fff; flex: 1; }
+  .zh #sheet .ttl { font: 600 44px 'Noto Serif TC'; }
+  #sheet .x { color: rgba(255,255,255,.55); font-size: 46px; font-weight: 300; }
+  #sheet .body { padding: 50px 52px 56px; }
+  #sheet h3 { font: 600 62px Inter, 'Noto Sans TC'; color: #fff; margin-bottom: 46px; }
+  #sheet .lbl { font: 600 24px Inter, 'Noto Sans TC'; letter-spacing: .24em; color: rgba(236,229,214,.5); text-transform: uppercase; margin-bottom: 20px; display: flex; justify-content: space-between; }
+  .zh #sheet .lbl { font: 500 28px 'Noto Sans TC'; letter-spacing: .2em; }
+  #sheet .box { border-radius: 26px; background: rgba(255,255,255,.035); border: 2px solid rgba(255,255,255,.07); padding: 30px 34px; margin-bottom: 44px; }
+  #sheet .date { font: 500 36px 'JetBrains Mono', ui-monospace, monospace; letter-spacing: .12em; color: #eee; }
+  #sheet .stars { display: flex; align-items: center; gap: 14px; }
+  #sheet .stars svg { width: 62px; height: 62px; }
+  #sheet .score { margin-left: auto; font: 500 64px 'Cormorant Garamond'; color: var(--gold-soft); }
+  #sheet .txt { font: 400 40px/1.5 Inter, 'Noto Sans TC'; color: #eee; min-height: 250px; }
+  .zh #sheet .txt { font: 400 42px/1.6 'Noto Sans TC'; }
+  #sheet .cnt { font: 500 24px ui-monospace, monospace; color: rgba(236,229,214,.35); margin-top: 22px; letter-spacing: .1em; }
+  #sheet .btn { height: 118px; border-radius: 30px; background: var(--gold); color: #0d0d0d; display: flex; align-items: center; justify-content: center; gap: 20px;
+                font: 700 34px Inter, 'Noto Sans TC'; letter-spacing: .24em; text-transform: uppercase; }
+  .zh #sheet .btn { font: 500 38px 'Noto Sans TC'; letter-spacing: .3em; }
+</style>
+</head>
+<body>
+<div id="slide">
+  <div id="cap"><div id="kicker"></div><div id="rule"></div><div id="head"></div><div id="sub"></div></div>
+  <div id="art"></div>
+</div>
+<script>
+const P = new URLSearchParams(location.search);
+const LANG = P.get('lang') || 'en', N = Number(P.get('s') || 1);
+if (LANG === 'zh') document.body.classList.add('zh');
+const C = 'components/', S2 = '../ig-story-15s/assets/share2/';
+
+const COPY = {
+  en: [
+    ['Collect', 'Every story you love,<br><em>kept beautifully.</em>', 'Movies, series and books in one private folio.'],
+    ['Search', 'Find any film,<br><em>series or book.</em>', 'Search once, add it to your folio in a tap.'],
+    ['Rate & Reflect', 'Rate it.<br><em>Write what stayed.</em>', 'A score out of ten and a few honest lines.'],
+    ['Discover', 'Trailers, cast<br><em>and where to watch.</em>', 'Everything about a story on one immersive page.'],
+    ['Revisit', 'Look back,<br><em>day by day.</em>', 'Your collection on a calendar and in a gallery.'],
+    ['Share', 'Share cards<br><em>worth posting.</em>', 'Pick a style. Share one story or your whole month.'],
+  ],
+  zh: [
+    ['典藏', '喜歡的每個故事<br><em>都好好收藏</em>', '電影、影集、書籍，收進你的私人典藏室'],
+    ['搜尋', '電影、影集、書籍<br><em>一次搜尋</em>', '找到作品，一鍵加入你的 Storio'],
+    ['評分與心得', '打個分數<br><em>寫下留在心裡的話</em>', '十分制評分，加上幾句真心的感想'],
+    ['探索', '預告、演員、哪裡看<br><em>一頁看完</em>', '沉浸式詳情頁，作品資訊一次掌握'],
+    ['回顧', '用日曆<br><em>重溫每一天的故事</em>', '日曆與畫廊兩種視角，回顧典藏足跡'],
+    ['分享', '分享卡片<br><em>美得值得發</em>', '多種模板，分享單一作品或整月回顧'],
+  ],
+};
+const [k, h, s] = COPY[LANG][N - 1];
+document.querySelector('#kicker').textContent = k;
+document.querySelector('#head').innerHTML = h;
+document.querySelector('#sub').textContent = s;
+
+const shot = (src, x, y, w, rot = 0, cls = 'shot', z = 1) =>
+  `<div class="${cls}" style="left:${x}px;top:${y}px;width:${w}px;transform:rotate(${rot}deg);z-index:${z}"><img src="${src}"></div>`;
+const STAR = '12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2';
+const star = (on) => `<svg viewBox="0 0 24 24"><polygon points="${STAR}" fill="${on ? '#d9bf86' : 'none'}" stroke="${on ? '#d9bf86' : 'rgba(197,160,89,.45)'}" stroke-width="1.2" stroke-linejoin="round"/></svg>`;
+
+function sheet() {
+  const L = LANG === 'zh'
+    ? { t: '加入 Storio', name: '怪奇物語', at: '收藏日期', date: '2026 / 03 / 24', rate: '你的評分', ref: '你的心得', text: '一個週末重看完整季，最後一集還是讓我起雞皮疙瘩。', btn: '加入 Storio' }
+    : { t: 'Add to Storio', name: 'Stranger Things', at: 'Archived at', date: 'MAR 24 2026', rate: 'Your rating', ref: 'Your reflection', text: 'Rewatched the whole season in one weekend. That last episode still gets me.', btn: 'Add to Storio' };
+  const bm = '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>';
+  return `<div id="sheet" style="left:101px;top:1010px;width:1040px;z-index:2">
+    <div class="top"><div class="ico">${bm}</div><div class="ttl">${L.t}</div><div class="x">✕</div></div>
+    <div class="body">
+      <h3>${L.name}</h3>
+      <div class="lbl">${L.at}</div><div class="box"><span class="date">${L.date}</span></div>
+      <div class="lbl">${L.rate}</div><div class="box stars">${Array.from({ length: 10 }, (_, i) => star(i < 9)).join('')}<span class="score">9</span></div>
+      <div class="lbl">${L.ref}</div><div class="box"><div class="txt">${L.text}</div><div class="cnt">${[...L.text].length} / 100</div></div>
+      <div class="btn">${bm}${L.btn}</div>
+    </div></div>`;
+}
+
+const LAYOUTS = {
+  1: () => shot(C + 'poster.png', 40, 1180, 440, -9, 'shot soft') + shot(C + 'recap.png', 770, 1180, 430, 9, 'shot soft')
+        + shot(C + 'gallery.png', 256, 980, 730, 0, 'shot', 2)
+        + `<div class="shot" style="left:321px;top:2150px;width:600px;z-index:3;padding:10px 0 0;background:#101010">${`<img src="${C}counter.png">`}</div>`,
+  2: () => shot(C + 'grid.png', 101, 960, 1040) + shot(C + 'searchbar.png', 121, 2150, 1000, 0, 'shot', 2),
+  3: () => shot(C + 'poster.png', 780, 870, 380, 8, 'shot soft') + sheet(),
+  4: () => shot(C + 'poster.png', 80, 980, 620, -4, 'shot', 1) + shot(C + 'cast.png', 560, 1130, 620, 3, 'shot', 2)
+        + shot(C + 'trailers.png', 130, 1980, 980, 0, 'shot', 3) + shot(C + 'watch.png', 600, 1720, 560, -2, 'shot soft', 2),
+  5: () => shot(C + 'calendar.png', 81, 960, 1080) + shot(C + 'gallery.png', 700, 1760, 470, 6, 'shot', 2),
+  6: () => shot(S2 + 'cine_ticket.png', 30, 1060, 460, -10, 'shot soft') + shot(S2 + 'read_desk.png', 752, 1060, 460, 10, 'shot soft')
+        + shot(C + 'recap.png', 311, 940, 620, 0, 'shot', 2) + shot(C + 'styles.png', 121, 2110, 1000, 0, 'shot', 3),
+};
+document.querySelector('#art').innerHTML = LAYOUTS[N]();
+
+(async () => {
+  await Promise.all([...document.images].map((i) => i.decode().catch(() => {})));
+  await document.fonts.ready;
+  window.__ready = true;
+})();
+</script>
+</body>
+</html>
