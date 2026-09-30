@@ -1,0 +1,27 @@
+{
+  "bpm": 64,
+  "duration": 15.0,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "audience": "V1 re-cut: slow, refined, unhurried (broad 25-44)",
+  "notes": "1 beat = 0.9375s. 16 beats = 15s. Long crossfades; motion settles on the beat instead of hitting it.",
+  "hits": {
+    "line": 0,
+    "frame": 0.5,
+    "parts": 1,
+    "wordmark": 2,
+    "tagline": 2.5,
+    "folio": 4,
+    "films": 4.25,
+    "series": 5.5,
+    "books": 6.75,
+    "rate": 8,
+    "stars": 8.25,
+    "reflect": 9,
+    "share": 11.25,
+    "share2": 11.75,
+    "finale": 13.75,
+    "cta": 14.5
+  }
+}
