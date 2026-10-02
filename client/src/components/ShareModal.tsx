@@ -186,7 +186,8 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
     const cacheEntry = getCacheEntry(selectedTemplate);
 
     if (!cacheEntry) {
-      // 尚未就緒：顯示「請稍候」（isSharing 短暫阻擋按鈕，queue 會自動補齊）
+      // 快取已過期或尚未就緒：重新排入 queue（同時觸發 re-render，按鈕會回到「請稍候」）
+      prioritize(selectedTemplate);
       return;
     }
 
@@ -247,7 +248,10 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
 
   const handleDownload = async () => {
     const cacheEntry = getCacheEntry(selectedTemplate);
-    if (!cacheEntry) return;
+    if (!cacheEntry) {
+      prioritize(selectedTemplate);
+      return;
+    }
 
     const url = URL.createObjectURL(cacheEntry.blob);
     const a = document.createElement('a');
@@ -510,19 +514,10 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
                           <Loader2 className="animate-spin" size={18} />
                         ) : !isCurrentTemplateReady ? (
                           <><Loader2 className="animate-spin" size={18} /> 請稍候...</>
+                        ) : isDownloaded ? (
+                          <><Check size={18} /> {t.shareModal.saved}</>
                         ) : (
-                          <><Share2 size={18} /> {t.details.share}</>
-                        )}
-                      </button>
-                      <button
-                        onClick={handleDownload}
-                        disabled={isSharing || !isCurrentTemplateReady}
-                        className="flex-1 py-4 bg-white/5 text-white hover:bg-white/10 rounded-2xl font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all border border-white/10 disabled:opacity-50"
-                      >
-                        {isDownloaded ? (
-                          <><Check size={14} /> {t.shareModal.saved}</>
-                        ) : (
-                          <><Download size={14} /> {t.shareModal.download}</>
+                          <><Share2 size={18} /> {t.shareModal.shareOrSave}</>
                         )}
                       </button>
                     </>

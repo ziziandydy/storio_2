@@ -101,6 +101,9 @@ export function useProgressiveRenderQueue({
   const [, forceUpdate] = useState(0);
 
   const settingsHash = computeSettingsHash(settings);
+  // 目前 queue 所對應的 settings hash；debounce 只在 hash 真的改變時才重新渲染，
+  // 否則 mount 時會在 1.5s 後把剛渲染好的圖全部作廢並重跑一輪。
+  const queuedHashRef = useRef<string | null>(null);
 
   // 同步 ref
   useEffect(() => { settingsRef.current = settings; }, [settings]);
@@ -135,7 +138,7 @@ export function useProgressiveRenderQueue({
 
     // 已有 cache 則跳過
     if (getCachedRender(cacheKey)) {
-      const next = queueRef.current.slice(1);
+      const next = queueRef.current.filter((t) => t !== templateId);
       queueRef.current = next;
       setQueue([...next]);
       // 繼續下一項
@@ -159,8 +162,9 @@ export function useProgressiveRenderQueue({
     } catch (err) {
       console.error(`[RenderQueue] 渲染失敗 ${templateId}:`, err);
     } finally {
-      // 從 queue 移除已處理的
-      const next = queueRef.current.slice(1);
+      // 從 queue 移除已處理的。必須按 id 移除而非 slice(1)：渲染途中 prioritize() 可能
+      // 把別的模板插到最前面，slice(1) 會誤刪那個剛被使用者選中的模板。
+      const next = queueRef.current.filter((t) => t !== templateId);
       queueRef.current = next;
       setQueue([...next]);
       isRenderingRef.current = false;
@@ -176,6 +180,7 @@ export function useProgressiveRenderQueue({
   // 啟動 queue
   useEffect(() => {
     if (!enabled) return;
+    queuedHashRef.current = settingsHash;
     const initial = buildInitialQueue(currentTemplate, allTemplates);
     queueRef.current = initial;
     setQueue([...initial]);
@@ -186,8 +191,10 @@ export function useProgressiveRenderQueue({
   // settings 變更：1.5s debounce 後重新 queue
   useEffect(() => {
     if (!enabled) return;
+    if (settingsHash === queuedHashRef.current) return;
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     debounceTimerRef.current = setTimeout(() => {
+      queuedHashRef.current = settingsHash;
       invalidateCache();
       const initial = buildInitialQueue(currentTemplate, allTemplates);
       queueRef.current = initial;

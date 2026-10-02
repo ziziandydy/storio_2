@@ -260,6 +260,7 @@ export const translations = {
       readyToShare: 'Ready to share your collection.',
       download: 'Download',
       saved: 'Saved',
+      shareOrSave: 'Share / Download',
       templates: {
         default: 'Default',
         pure: 'Pure',
@@ -544,6 +545,7 @@ export const translations = {
       readyToShare: '準備分享你的典藏',
       download: '下載',
       saved: '已儲存',
+      shareOrSave: '分享 / 下載',
       templates: {
         default: '預設模糊',
         pure: '純淨海報',

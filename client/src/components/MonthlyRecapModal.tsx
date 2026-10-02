@@ -179,7 +179,11 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
   // Share action
   const handleShare = async () => {
     const cacheEntry = getCacheEntry(selectedTemplate);
-    if (!cacheEntry) return;
+    if (!cacheEntry) {
+      // 快取已過期或尚未就緒：重新排入 queue（同時觸發 re-render，按鈕會回到「請稍候」）
+      prioritize(selectedTemplate);
+      return;
+    }
 
     setIsSharing(true);
     const blob = cacheEntry.blob;
@@ -227,7 +231,10 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
 
   const handleDownload = async () => {
     const cacheEntry = getCacheEntry(selectedTemplate);
-    if (!cacheEntry) return;
+    if (!cacheEntry) {
+      prioritize(selectedTemplate);
+      return;
+    }
     const url = URL.createObjectURL(cacheEntry.blob);
     const a = document.createElement('a');
     a.href = url;
@@ -249,9 +256,11 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
   // Cache 過期後（放置超過 TTL）重新排入 queue，補回 PNG cache，
   // 避免使用者停留過久後按分享/下載時 cache 是空的且沒有任何回應。
   useEffect(() => {
-    if (!isOpen || serviceStatus !== 'ready' || isCurrentTemplateReady) return;
+    // 必須等統計資料就緒：否則會拿空資料渲染出一張「空白月回顧」並快取起來，
+    // 資料到達後 queue 會因為已有 cache 而跳過它，使用者就會分享到空白圖。
+    if (!isOpen || serviceStatus !== 'ready' || !statsData || isCurrentTemplateReady) return;
     prioritize(selectedTemplate);
-  }, [isOpen, serviceStatus, isCurrentTemplateReady, selectedTemplate, prioritize]);
+  }, [isOpen, serviceStatus, statsData, isCurrentTemplateReady, selectedTemplate, prioritize]);
 
   return (
     <AnimatePresence>
@@ -472,19 +481,10 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
                           <Loader2 className="animate-spin" size={18} />
                         ) : !isCurrentTemplateReady ? (
                           <><Loader2 className="animate-spin" size={18} /> 請稍候...</>
+                        ) : isDownloaded ? (
+                          <><Check size={18} /> {t.shareModal.saved}</>
                         ) : (
-                          <><Share2 size={18} /> {t.details.share}</>
-                        )}
-                      </button>
-                      <button
-                        onClick={handleDownload}
-                        disabled={isSharing || !isCurrentTemplateReady}
-                        className="flex-1 py-4 bg-white/5 text-white hover:bg-white/10 rounded-2xl font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all border border-white/10 disabled:opacity-50"
-                      >
-                        {isDownloaded ? (
-                          <><Check size={14} /> {t.shareModal.saved}</>
-                        ) : (
-                          <><Download size={14} /> {t.shareModal.download}</>
+                          <><Share2 size={18} /> {t.shareModal.shareOrSave}</>
                         )}
                       </button>
                     </>
