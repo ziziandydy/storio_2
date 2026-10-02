@@ -371,6 +371,7 @@ function CollectionItemPageContent() {
                   initialNotes={item.notes || ''}
                   initialDate={getArchivedDate(item)}
                   title={item.title}
+                  mediaType={item.media_type}
                   onSave={handleUpdate}
                   onCancel={() => setIsEditing(false)}
                 />

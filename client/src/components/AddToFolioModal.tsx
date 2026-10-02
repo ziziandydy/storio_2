@@ -288,6 +288,7 @@ export default function AddToFolioModal({
                     isSaving={isSubmitting}
                     title={title}
                     overview={overview} // Pass overview
+                    mediaType={media_type}
                   />
                 </div>
               </>

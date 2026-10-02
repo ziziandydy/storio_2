@@ -14,6 +14,7 @@ interface RateAndReflectFormProps {
     initialDate?: string; // Format: YYYY-MM-DD
     title: string;
     overview?: string;
+    mediaType?: 'movie' | 'tv' | 'book'; // 讓 AI 建議用對「看完／讀完」的語氣
     onSave: (rating: number, notes: string, date?: string) => Promise<void>;
     onCancel?: () => void;
     isSaving?: boolean;
@@ -25,6 +26,7 @@ export default function RateAndReflectForm({
     initialDate,
     title,
     overview,
+    mediaType,
     onSave,
     onCancel,
     isSaving = false
@@ -82,7 +84,10 @@ export default function RateAndReflectForm({
                 },
                 body: JSON.stringify({
                     title,
-                    synopsis: overview
+                    synopsis: overview,
+                    media_type: mediaType,
+                    // 只有已評分（例如編輯既有收藏）才帶；新增時還沒評分，不送
+                    rating: rating > 0 ? rating : undefined,
                 })
             });
             if (!res.ok) throw new Error('AI Service Unavailable');
