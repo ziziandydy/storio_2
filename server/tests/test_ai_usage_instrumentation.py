@@ -61,7 +61,7 @@ async def test_generate_reflection_suggestions_logs_gemini_success():
     kwargs = mock_log.call_args.kwargs
     assert kwargs["endpoint"] == "reflection_suggestions"
     assert kwargs["provider"] == "gemini"
-    assert kwargs["model"] == "gemini-2.5-flash"
+    assert kwargs["model"] == "gemini-3.1-flash-lite"
     assert kwargs["success"] is True
     assert kwargs["total_tokens"] == 15
 
@@ -84,10 +84,11 @@ async def test_generate_reflection_suggestions_falls_back_to_openai_and_logs_bot
         suggestions = await gemini_service.GeminiService.generate_reflection_suggestions("Some Title")
 
     assert suggestions == ["a.", "b.", "c."]
-    assert mock_log.call_count == 2
-    gemini_call, openai_call = mock_log.call_args_list
-    assert gemini_call.kwargs["provider"] == "gemini"
-    assert gemini_call.kwargs["success"] is False
+    # Flash-Lite 失敗 → 2.5 Flash 失敗 → OpenAI 成功，共三筆用量記錄
+    assert mock_log.call_count == 3
+    lite_call, flash_call, openai_call = mock_log.call_args_list
+    assert (lite_call.kwargs["provider"], lite_call.kwargs["model"], lite_call.kwargs["success"]) == ("gemini", "gemini-3.1-flash-lite", False)
+    assert (flash_call.kwargs["provider"], flash_call.kwargs["model"], flash_call.kwargs["success"]) == ("gemini", "gemini-2.5-flash", False)
     assert openai_call.kwargs["provider"] == "openai"
     assert openai_call.kwargs["endpoint"] == "reflection_suggestions"
     assert openai_call.kwargs["success"] is True

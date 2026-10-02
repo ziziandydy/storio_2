@@ -3,14 +3,19 @@ import google.generativeai as genai
 from openai import AsyncOpenAI
 from app.core.config import settings
 from app.services.ai_usage_logger import log_ai_usage
+from app.services.reflection_suggestion_prompt import pick_angles, build_suggestion_prompt, filter_suggestions
 import json
 
 logger = logging.getLogger(__name__)
+
+# 心得建議／潤飾：短輸出、不需要深度推理，用 Flash-Lite（實測 ~1s、約 2.5 Flash 的十分之一成本）。
+FAST_MODEL = "gemini-3.1-flash-lite"
+FALLBACK_MODEL = "gemini-2.5-flash"
 import datetime
 import asyncio
 import re
 import time
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 class GeminiService:
     _cache: List[Dict[str, str]] = []
@@ -110,72 +115,66 @@ class GeminiService:
             return cls._cache
 
     @classmethod
-    async def generate_reflection_suggestions(cls, title: str, synopsis: str = None, language: str = "zh-TW") -> List[str]:
+    async def generate_reflection_suggestions(
+        cls,
+        title: str,
+        synopsis: str = None,
+        language: str = "zh-TW",
+        media_type: Optional[str] = None,
+        rating: Optional[float] = None,
+    ) -> List[str]:
         if not settings.GEMINI_API_KEY and not settings.OPENAI_API_KEY:
             return []
 
-        lang_name = "Traditional Chinese (繁體中文)" if language == "zh-TW" else "English"
-        char_limit = "50 Chinese characters" if language == "zh-TW" else "120 English characters"
-        context = f"Title: {title}\nSynopsis: {synopsis[:500] if synopsis else 'N/A'}"
+        # 角度每次隨機抽 3 個，避免三句都長同一個樣子（尤其是「適合…」推薦句公式）
+        angles = pick_angles(language)
+        full_prompt = build_suggestion_prompt(title, synopsis, language, media_type, rating, angles)
+        openai_system_prompt = "You help users write short, casual, first-person notes about movies, series and books."
 
-        system_prompt = f"""Role: insightful viewer/reader.
-        Task: Generate 3 short, insightful reflection suggestions.
-        Language: {lang_name}."""
-
-        user_prompt = f"""
-        Generate 3 reflection suggestions for:
-        {context}
-
-        Requirements:
-        1. Each suggestion MUST be a grammatically complete sentence.
-        2. MUST end with proper punctuation (. ! ? 。 ！ ？).
-        3. Keep each suggestion under {char_limit}.
-        4. Specific to the work's themes/plot.
-        5. Tone: Personal, authentic.
-
-        Output ONLY a JSON Array of strings: ["s1", "s2", "s3"]
-        """
-
-        # 1. Try Gemini
+        # 1. Try Gemini：先用快又便宜的 Flash-Lite，失敗或輸出全被過濾再退到 2.5 Flash
         if settings.GEMINI_API_KEY:
-            start = time.monotonic()
-            try:
-                cls.configure()
-                model = genai.GenerativeModel('gemini-2.5-flash')
-                response = await asyncio.wait_for(
-                    model.generate_content_async(f"{system_prompt}\n\n{user_prompt}"),
-                    timeout=10.0
-                )
-                usage = getattr(response, "usage_metadata", None)
-                await log_ai_usage(
-                    endpoint="reflection_suggestions", provider="gemini", model="gemini-2.5-flash", success=True,
-                    prompt_tokens=getattr(usage, "prompt_token_count", None),
-                    completion_tokens=getattr(usage, "candidates_token_count", None),
-                    total_tokens=getattr(usage, "total_token_count", None),
-                    latency_ms=int((time.monotonic() - start) * 1000),
-                )
+            cls.configure()
+            for model_name in (FAST_MODEL, FALLBACK_MODEL):
+                start = time.monotonic()
+                try:
+                    model = genai.GenerativeModel(model_name, generation_config={"temperature": 0.9})
+                    response = await asyncio.wait_for(
+                        model.generate_content_async(full_prompt),
+                        timeout=10.0,
+                    )
+                    usage = getattr(response, "usage_metadata", None)
+                    await log_ai_usage(
+                        endpoint="reflection_suggestions", provider="gemini", model=model_name, success=True,
+                        prompt_tokens=getattr(usage, "prompt_token_count", None),
+                        completion_tokens=getattr(usage, "candidates_token_count", None),
+                        total_tokens=getattr(usage, "total_token_count", None),
+                        latency_ms=int((time.monotonic() - start) * 1000),
+                    )
 
-                text = response.text.strip()
-                # Clean markdown if present
-                if "```" in text:
-                    match = re.search(r'\[.*\]', text, re.DOTALL)
-                    if match:
-                        text = match.group(0)
+                    text = response.text.strip()
+                    # Clean markdown if present
+                    if "```" in text:
+                        match = re.search(r'\[.*\]', text, re.DOTALL)
+                        if match:
+                            text = match.group(0)
 
-                parsed_data = json.loads(text)
-                if isinstance(parsed_data, list):
-                    return [str(s) for s in parsed_data[:3]]
-            except Exception as e:
-                await log_ai_usage(
-                    endpoint="reflection_suggestions", provider="gemini", model="gemini-2.5-flash", success=False,
-                    latency_ms=int((time.monotonic() - start) * 1000), error=str(e),
-                )
-                logger.error("Gemini suggestion generation failed: %s", e)
+                    parsed_data = json.loads(text)
+                    if isinstance(parsed_data, list):
+                        # 模型仍可能違規（問句、「適合…」推薦句），過濾後有結果才採用，否則換下一個模型
+                        filtered = filter_suggestions(parsed_data, language)
+                        if filtered:
+                            return filtered
+                except Exception as e:
+                    await log_ai_usage(
+                        endpoint="reflection_suggestions", provider="gemini", model=model_name, success=False,
+                        latency_ms=int((time.monotonic() - start) * 1000), error=str(e),
+                    )
+                    logger.error("Gemini suggestion generation failed (%s): %s", model_name, e)
 
         # 2. Try OpenAI Fallback
         if settings.OPENAI_API_KEY:
             try:
-                text = await cls._call_openai_fallback(system_prompt, user_prompt, endpoint="reflection_suggestions")
+                text = await cls._call_openai_fallback(openai_system_prompt, full_prompt, endpoint="reflection_suggestions")
                 text = text.strip()
                 if "```" in text:
                     match = re.search(r'\[.*\]', text, re.DOTALL)
@@ -184,7 +183,10 @@ class GeminiService:
                 
                 parsed_data = json.loads(text)
                 if isinstance(parsed_data, list):
-                    return [str(s) for s in parsed_data[:3]]
+                    # 模型仍可能違規（問句、「適合…」推薦句），過濾後有結果才採用，否則換下一個 provider
+                    filtered = filter_suggestions(parsed_data, language)
+                    if filtered:
+                        return filtered
             except Exception as e:
                 logger.error("OpenAI suggestion fallback failed: %s", e)
 
@@ -198,7 +200,7 @@ class GeminiService:
         start = time.monotonic()
         try:
             cls.configure()
-            model = genai.GenerativeModel('gemini-2.5-flash')
+            model = genai.GenerativeModel(FAST_MODEL)
 
             lang_name = "Traditional Chinese (繁體中文)" if language == "zh-TW" else "English"
 
@@ -229,7 +231,7 @@ class GeminiService:
             )
             usage = getattr(response, "usage_metadata", None)
             await log_ai_usage(
-                endpoint="reflection_refine", provider="gemini", model="gemini-2.5-flash", success=True,
+                endpoint="reflection_refine", provider="gemini", model=FAST_MODEL, success=True,
                 prompt_tokens=getattr(usage, "prompt_token_count", None),
                 completion_tokens=getattr(usage, "candidates_token_count", None),
                 total_tokens=getattr(usage, "total_token_count", None),
@@ -240,7 +242,7 @@ class GeminiService:
 
         except Exception as e:
             await log_ai_usage(
-                endpoint="reflection_refine", provider="gemini", model="gemini-2.5-flash", success=False,
+                endpoint="reflection_refine", provider="gemini", model=FAST_MODEL, success=False,
                 latency_ms=int((time.monotonic() - start) * 1000), error=str(e),
             )
             logger.error("Gemini refine failed: %s", e)

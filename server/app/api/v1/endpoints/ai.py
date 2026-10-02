@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
-from typing import List, Optional
+from pydantic import BaseModel, Field
+from typing import List, Optional, Literal
 from app.services.gemini_service import GeminiService
 from app.api.deps import get_language
 
@@ -9,6 +9,8 @@ router = APIRouter()
 class SuggestionRequest(BaseModel):
     title: str
     synopsis: Optional[str] = None
+    media_type: Optional[Literal["movie", "tv", "book"]] = None
+    rating: Optional[float] = Field(None, ge=0, le=10)  # 10 分制；未評分可不傳
 
 class RefineRequest(BaseModel):
     content: str
@@ -22,9 +24,13 @@ class RefineResponse(BaseModel):
 @router.post("/suggestions", response_model=SuggestionResponse)
 async def generate_suggestions(request: SuggestionRequest, language: str = Depends(get_language)):
     """
-    Generate 3 short reflection suggestions based on the item.
+    Generate up to 3 short, casual first-person reflection drafts based on the item.
+    media_type / rating are optional hints (older clients may omit them).
     """
-    suggestions = await GeminiService.generate_reflection_suggestions(request.title, request.synopsis, language)
+    suggestions = await GeminiService.generate_reflection_suggestions(
+        request.title, request.synopsis, language,
+        media_type=request.media_type, rating=request.rating,
+    )
     return SuggestionResponse(suggestions=suggestions)
 
 @router.post("/refine", response_model=RefineResponse)
