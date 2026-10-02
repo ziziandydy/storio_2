@@ -16,8 +16,14 @@ const m = vi.hoisted(() => ({
 
 vi.mock('framer-motion', () => {
   const strip = ({ initial, animate, exit, transition, drag, dragConstraints, dragElastic, onDragEnd, ...rest }: Record<string, unknown>) => rest;
-  const make = (Tag: string) => ({ children, ...p }: { children?: React.ReactNode } & Record<string, unknown>) => React.createElement(Tag, strip(p), children);
-  return { motion: new Proxy({}, { get: (_t, tag: string) => make(tag) }), AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</> };
+  const make = (Tag: string) => {
+    const Mock = ({ children, ...p }: { children?: React.ReactNode } & Record<string, unknown>) => React.createElement(Tag, strip(p), children);
+    Mock.displayName = `motion.${Tag}`;
+    return Mock;
+  };
+  const AnimatePresence = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+  AnimatePresence.displayName = 'AnimatePresence';
+  return { motion: new Proxy({}, { get: (_t, tag: string) => make(tag) }), AnimatePresence };
 });
 vi.mock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => m.isNative() } }));
 vi.mock('@capacitor/share', () => ({ Share: { share: (...a: unknown[]) => m.nativeShare(...a) } }));
