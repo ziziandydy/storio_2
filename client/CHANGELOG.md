@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.19.0](https://github.com/ziziandydy/storio_2/compare/v1.18.0...v1.19.0) (2026-10-03)
+
+
+### 新功能 (Features)
+
+* **ai:** 心得建議改為口語短句，並改用 Gemini 3.1 Flash-Lite ([63cb0c0](https://github.com/ziziandydy/storio_2/commit/63cb0c0ad1bad3e715587cfdac124322782cb355))
+* **ai:** 記錄 Gemini/OpenAI API 呼叫量與 token 用量 ([0518241](https://github.com/ziziandydy/storio_2/commit/0518241de32ea2e3a0b052eedff5478996b9322e))
+* **android:** 加入 Capacitor Android 平台，模擬器最小可跑 build 驗證通過 ([610b76d](https://github.com/ziziandydy/storio_2/commit/610b76dec7ed0557f7faf71572152a7a71cb734b))
+* **android:** 本機通知 Android 13+ 權限宣告與 notification icon ([bf08071](https://github.com/ziziandydy/storio_2/commit/bf08071ea1495933a281c3b4e760c035056cad93))
+* **android:** 設定 Google 登入 Android Client ID ([d0cf5f2](https://github.com/ziziandydy/storio_2/commit/d0cf5f2ba5a48edfd036e3b2dcd171ca6dabe0c9))
+* **android:** 設定 Play App Signing upload keystore 簽署流程 ([0bca461](https://github.com/ziziandydy/storio_2/commit/0bca4611b6af0c93f6d2ab12d3a5eb98fe271b56))
+* **android:** 新增 adaptive icon、splash screen 資源與 API 31+ 相容修正 ([8cde300](https://github.com/ziziandydy/storio_2/commit/8cde300fce222f4b3d4e77eb368904007e251aa9)), closes [#0d0d0](https://github.com/ziziandydy/storio_2/issues/0d0d0)
+* **android:** 新增 build-android.sh，bump-version.sh 擴充支援 Android 版號 ([3f36ea9](https://github.com/ziziandydy/storio_2/commit/3f36ea9374ff9dd0b77aa83408d629cae457b0b8))
+* **android:** 新增 isIOSPlatform() helper，Android 上隱藏 Apple 登入選項 ([c557bba](https://github.com/ziziandydy/storio_2/commit/c557bba6c575196d7fb61042a810cb8b361f198c))
+* **android:** 新增返回鍵處理，避免無預警直接退出 App ([a75f3db](https://github.com/ziziandydy/storio_2/commit/a75f3dbdac227a486987e2c71e12945b5d3a32f4))
+* **client:** 心得建議請求帶入作品類型與已有評分 ([1528ad2](https://github.com/ziziandydy/storio_2/commit/1528ad2d0a31fc77da7132cbd8a464913d3b5908))
+* **marketing:** 新增 App Store 6.5 吋截圖產線（英文 / 繁中各 6 張） ([6661a3d](https://github.com/ziziandydy/storio_2/commit/6661a3d7d912682094bc60c0b61322dce1a2c662))
+* **marketing:** 新增 IG Story 15 秒廣告影片產線與三支受眾版本 ([8a8cd5e](https://github.com/ziziandydy/storio_2/commit/8a8cd5ed2a19ae38ab5d935c906a008746d9e03d))
+* **marketing:** 新增 IG Story 優雅版（V1 慢節奏重製） ([4b9c863](https://github.com/ziziandydy/storio_2/commit/4b9c863e6c3c98a7a4b184ffa35c64fc33e54000))
+
+
+### Bug 修復 (Bug Fixes)
+
+* **ai:** log_ai_usage 改為 await 背景寫入，修復正式環境從未真正寫入 ([3815274](https://github.com/ziziandydy/storio_2/commit/38152746274010f4054231cb1aa51dfd8c81e41e))
+* **android:** 修復 SHARE 按鈕被狀態列遮擋、無法點擊的問題 ([b20d25a](https://github.com/ziziandydy/storio_2/commit/b20d25acc0207b5a021cb98d5a5c0547590da473))
+* **android:** Google 登入 DEVELOPER_ERROR — androidClientId 誤填 Android Client 而非 Web Client ([6dd90aa](https://github.com/ziziandydy/storio_2/commit/6dd90aa27d592efa795cf2406e9e6136fa8b76c3))
+* **collection:** Supabase 連線被中斷時自動重試一次，修復正式環境間歇性新增失敗 ([40fb0b5](https://github.com/ziziandydy/storio_2/commit/40fb0b585ec4d65468a84417f36ee9ff2a52c308))
+* **cors:** 後端與 Puppeteer service 補上 Android WebView 的 https://localhost origin ([d524d0e](https://github.com/ziziandydy/storio_2/commit/d524d0e91ca7e1204c7bbef203bf76da246850d8))
+* **share:** 原生 App 移除假的 Download 鈕，並修正渲染佇列三個 bug ([37d778b](https://github.com/ziziandydy/storio_2/commit/37d778b07d506672f5197f1de724ea70031d1ba8))
+* **test:** 測試的 framer-motion mock 補上 displayName，修正 Vercel build 的 react/display-name lint 失敗 ([409e9d3](https://github.com/ziziandydy/storio_2/commit/409e9d3a7e37edc734a8b4b17a9dd1942af6b7bc))
+
 ## [1.18.0](https://github.com/ziziandydy/storio_2/compare/v1.17.0...v1.18.0) (2026-09-01)
 
 
