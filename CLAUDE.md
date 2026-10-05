@@ -46,6 +46,7 @@ storio_2/
 │   ├── repositories/       # Repository 層 (Supabase 讀寫)
 │   └── schemas/            # Pydantic Models
 ├── docs/               # PRD, Wiki, Backlog, Sprint Specs
+├── marketing/          # 行銷素材產線：IG Story 廣告影片 (ig-story-15s)、App Store 截圖 (app-store-screenshots)
 ├── openspec/           # OpenSpec 變更提案 (changes/, specs/)
 └── GEMINI.md           # 專案核心規範 (必讀)
 ```
@@ -82,7 +83,8 @@ Controller (endpoints/) → Service (services/) → Repository (repositories/) �
 | `StoryCard` | 支援呼吸燈提示的收藏卡片 |
 | `StoryDetailsView` | 共用詳情展示 (Backdrop-First 設計) |
 | `RateAndReflectForm` | 評分與心得表單 (含 AI 潤飾，100字限制) |
-| `ShareModal` | 分享圖片生成 (多模板：Default/Pure/Ticket/RetroTV/Shelf/Desk) |
+| `ShareModal` | 分享圖片生成 (多模板：Default/Pure/Ticket/RetroTV/Shelf/Desk)；原生 App 只有「Share / Download」一顆鈕（走系統分享面板儲存影像，**不可用 `<a download>`**，WKWebView 無效），網頁桌面保留 Download |
+| `MonthlyRecapModal` | 月回顧分享（Calendar/Collage/Waterfall/Shelf），與 `ShareModal` 共用 `useProgressiveRenderQueue` 與同一套分享/儲存邏輯 |
 | `NavigationFAB` | 浮動操作按鈕 (取代底部導覽列) |
 | `OnboardingGuideModal` | 首次使用功能學習卡 (4 張卡片輪播，localStorage 控制，safe-area 適配) |
 | `AppOpenReset` | 本機通知核心 (掛於 layout，app 開啟時記錄 engagement、重排程通知、判斷 Primer/Banner) |
@@ -158,7 +160,8 @@ find-skills                         # 尋找新技能
 ## 測試規範
 
 - 遵循 **TDD**（先寫測試再實作）
-- **後端**: Pytest — `server/tests/`（36 tests）
+- **後端**: Pytest — `server/tests/`（120 tests）。會走到 Gemini/OpenAI 備援路徑的測試，必須 patch 清空 `OPENAI_API_KEY`，否則本機 `.env` 的 key 會讓測試真的打外部 API
+- **前端單元/元件**: Vitest — `client/src/**/__tests__/`（121 tests，`cd client && npm test`；元件測試檔頂端加 `// @vitest-environment jsdom`，使用 `@testing-library/react`）。目前未進 CI
 - **前端/E2E**: Playwright — `client/tests/`（目前未進 CI，落後較多版本）
 - 原則上禁止為了讓測試通過而 mock 資料庫；惟**現有後端測試實際以 mock（MagicMock/AsyncMock）為主**，與此原則有落差，待後續釐清是否導入測試用 Supabase 專案。
 
@@ -191,7 +194,7 @@ find-skills                         # 尋找新技能
 
 ### 完成階段
 12. **`/qa`（gstack）** — 若涉及 UI 變更，headless browser 自動掃 UI bug、截圖存證、自動修復
-13. **`superpowers:verification-before-completion`** — 跑全套測試，確認通過才宣告完成
+13. **`superpowers:verification-before-completion`** — 跑全套測試，確認通過才宣告完成；前端變更**push 前必須再跑 `cd client && npx next lint`**（Next build 會 lint 整個 `src/`，含測試檔，漏跑會讓 Vercel 部署失敗）
 14. **`/review`（gstack）** — Pre-landing code review（SQL 安全、LLM trust boundary 等）
 15. **`openspec-archive-change`** — 歸檔變更
 
@@ -202,7 +205,7 @@ find-skills                         # 尋找新技能
 > - `feat:` commits → MINOR（1.1.0 → 1.2.0）
 > - `feat!:` 或 `BREAKING CHANGE` → MAJOR（1.1.0 → 2.0.0）
 >
-> ⚠️ **git tag 與 App Store 版號可能脫節**：曾有版本直接從 Xcode 上傳未走 `npm run release`，導致 git tag 落後 App Store。發布前先到 App Store Connect 確認當前版號，若 `standard-version` 算出的版號低於實際，用 `npm run release -- --release-as X.Y.0` 手動指定。（目前 git 與 App Store 已對齊於 1.14.0）
+> ⚠️ **git tag 與 App Store 版號可能脫節**：曾有版本直接從 Xcode 上傳未走 `npm run release`，導致 git tag 落後 App Store。發布前先到 App Store Connect 確認當前版號，若 `standard-version` 算出的版號低於實際，用 `npm run release -- --release-as X.Y.0` 手動指定。（2026-10-03：git 與送審版號為 v1.19.0 build 25；`ios:sync` 會連 Android 版號一起同步）
 
 16. **版號更新（自動）**：
     ```bash
@@ -237,6 +240,7 @@ find-skills                         # 尋找新技能
 
 ## 已知重要 Bug
 
+- ~~**分享「Saved」但相簿沒圖**~~：✅ v1.19.0 已修。原生 App 的 `<a download>` 無效卻顯示成功；改為只留「Share / Download」走系統分享面板。
 - ~~**`3d` 模板截圖失真**~~：✅ 已由 Puppeteer 微服務遷移解決（不再用 `html-to-image`），`preserve-3d` 截圖正常。歷史背景見 `docs/BUG_REPORT_SHARE_IMAGE.md`。
 
 ---

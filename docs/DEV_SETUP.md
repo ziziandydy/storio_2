@@ -271,7 +271,7 @@ curl -X POST http://localhost:4000/render \
 
 ```bash
 cd server
-python3 -m pytest -q          # 全套 36 tests，約 12-16 秒
+python3 -m pytest -q          # 全套 120 tests，約 15-30 秒
 ```
 
 **現有測試以 mock（MagicMock/AsyncMock）為主，不連真實 Supabase**，因此本地與 CI 皆可用 dummy 憑證執行：
@@ -296,6 +296,19 @@ env -i PATH="$PATH" \
 - **任何 PR**（且 `server/**` 有變更）
 
 **規則**：後端測試綠才能放心 merge / 發版。這是發版安全網的第一層。
+
+### 前端單元 / 元件測試 (Vitest)
+
+```bash
+cd client
+npm test                # vitest run，全套 121 tests（約 4 秒）
+npx next lint           # push 前必跑：Next build 會 lint 整個 src/（含測試檔）
+```
+
+- 測試放在 `client/src/**/__tests__/`；元件 / hook 測試檔頂端加 `// @vitest-environment jsdom`（預設環境是 node），使用 `@testing-library/react`。
+- 涵蓋：`ShareModal`（單一 Storio 分享）、`MonthlyRecapModal`（月回顧分享）、`useProgressiveRenderQueue`（渲染佇列、快取 TTL、debounce）、`share-api`。
+- 全程 mock Capacitor / Puppeteer service / fetch，不連真實服務。framer-motion 在測試裡以具名（`displayName`）的假元件替代，否則會違反 `react/display-name`。
+- 目前**未進 CI**（`backend-tests.yml` 只跑後端）。
 
 ### 前端 E2E (Playwright)
 

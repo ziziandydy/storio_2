@@ -267,6 +267,10 @@ Storio 1.0 正式通過 Apple 審核並上架 App Store。歷經動態島修復�
   - **修復方向**：對所有 `datetime.fromisoformat()` 呼叫加入 `try/except (ValueError, TypeError)`，解析失敗返回 `None`，上層 service 層以 `None` 作為預設值排序。
 
 ### 🐛 Known Issues (Bugs to Fix)
+- [x] **分享「Saved」但相簿沒圖 (Fake Saved on Native)**: *(已修復 2026-10-03，v1.19.0)* `ShareModal`/`MonthlyRecapModal` 的 Download 用 `<a download>` + blob URL，在 iOS WKWebView 無效但仍顯示 Saved。→ 原生 App 移除 Download 鈕，分享鈕改「Share / Download」，由系統分享面板的「儲存影像」存進相簿；網頁桌面保留 Download。
+- [x] **分享渲染佇列 4 個 bug**: *(已修復 2026-10-03，補 121 項前端測試時挖出)* ① 開啟後 1.5s 重複渲染整輪並 revoke 畫面上的圖；② 渲染途中切換模板，被選的模板被 `slice(1)` 誤刪而卡在「請稍候」；③ 月回顧在統計資料到達前以空資料渲染並快取，導致分享空白圖；④ 快取過期（5 分鐘）後按分享毫無反應。
+- [ ] **「心得潤飾」prompt 匠氣 (Refine Reflection Prompt)**: `refine_reflection` 的 prompt 要求 "more insightful / expand even short thoughts into meaningful sentences"，會把「看完哭了，推。」改成「深深觸動了我的心…真誠推薦給每個人」——文謅謅且擅自加內容。建議比照心得建議的做法重寫：保留使用者原意與口氣、只順稿、不加新觀點、不拉長，並補測試。
+- [ ] **iOS App Privacy 聲明漏報 AI 資料流**: 「心得建議／潤飾」會把作品標題、簡介與使用者心得文字送到 Gemini / OpenAI 第三方處理，但 iOS App Privacy 只聲明 Email/Name（Authentication）。Google Play Data Safety 已補上，iOS 之後應回頭補正。
 - [x] **分享預覽與匯出圖片空白 (Share Image Blank Issue — Round 2)**: *(已修復 2026-03-20)*
   - **Root Cause 1**：`proxy.py` 手動設定 `Access-Control-Allow-Origin: *` 與 `CORSMiddleware` 的 `allow_credentials=True` 產生規範衝突，導致 Safari 拒絕 CORS 回應。→ 已移除手動 Header。
   - **Root Cause 2**：`3d` 書架模板使用外部 Unsplash URL 作為 CSS `background-image`，繞過 Proxy 機制，`html-to-image` 無法安全抓取，觸發 Tainted Canvas。→ 已下載圖片至本地 `library_bg.jpg` 並改為 `<img>` 標籤。
@@ -285,6 +289,8 @@ Storio 1.0 正式通過 Apple 審核並上架 App Store。歷經動態島修復�
 - [x] **Apple Sign-in**: ✅ 已完成（2026-04-05）。Hybrid 方案：iOS 原生用 Face ID（`@capacitor-community/apple-sign-in` + `signInWithIdToken`），Web 用 OAuth redirect。GitHub Actions 每 5 個月自動更新 JWT Secret Key。
 - [x] **智慧搜尋 (AI Search)**: ✅ 已完成（v1.13.0 起上線 Auto/AI/Keyword 三模式搜尋；v1.16.0 擴充人物/類型 chips 探索，見上方 add-person-search 條目）。
 - [x] **分季收藏 (Seasons)**: 讓使用者可以自由新增影集的不同季別，例如只將已觀看的第 1~5 季加入收藏，而尚未觀看的第 6~8 季則保留。✅ 已完成（v1.17.0，2026-08-02 送審上架）。
+- [x] **心得建議改寫 + 換模型 (AI Reflection Suggestions)**: ✅ 已完成（後端 2026-10-03 上線，前端隨 v1.19.0）。建議改為口語短句（隨機角度、禁問句與「適合…／Best watched when…」推薦公式、規則過濾），`/api/v1/ai/suggestions` 新增選填 `media_type`/`rating`；「心得建議」與「心得潤飾」改用 `gemini-3.1-flash-lite`（約 0.9 秒，成本約 2.5 Flash 的十分之一），建議備援順序 Flash-Lite → 2.5 Flash → OpenAI。
+- [x] **行銷素材產線**: ✅ IG Story 15 秒廣告影片（三受眾版＋優雅版）與 App Store 6.5 吋截圖（en-US / zh-Hant 各 6 張），原始碼在 `marketing/`；第三方海報與成品 MP4 不進公開 repo。待辦：用繁中介面重截元件，替換繁中截圖裡殘留的英文介面。
 - [ ] **Android 版本上架**: 技術落地已完成（Capacitor Android 整合、Google 登入、CORS、圖示/啟動畫面、Play App Signing、target API 36 升級，皆已模擬器驗證）。Google Play 上架送審的 spec/plan 已寫好，素材（圖示/feature graphic/截圖/文案/Data Safety 對照表）已產出於 `docs/play-store-assets/`。**卡在 Play Console 帳號的裝置驗證關卡**——「Verify that you have access to an Android mobile device」需要實體 Android 手機安裝 Google Play Console App 掃碼驗證，才能解鎖建立 App，等使用者取得實體機後繼續。
 
 ## 🎨 UI/UX 優化 (UI/UX Polish)

@@ -68,6 +68,7 @@ Storio 2 是一個強調「沉浸式行動優先 (Mobile-First)」的個人典�
     *   **UI**: 點擊 `StoryCard` 或是使用 `AddToFolioModal` 將作品加入館藏；在 `RateAndReflectForm` 撰寫心得。
     *   **API**: 透過 `collection.py` 端點進行資料更新。
     *   **Service & Repo**: `collection_service.py` 處理權限及資料整合後，交由 `collection_repo.py` 將資料寫入 Supabase。
+    *   **AI 心得建議**: `RateAndReflectForm` 開啟時呼叫 `POST /api/v1/ai/suggestions`（帶 `title`、`synopsis`、選填 `media_type`/`rating`）→ `GeminiService.generate_reflection_suggestions` 用 `reflection_suggestion_prompt.py` 組 prompt：每次隨機抽 3 個角度、禁問句與推薦公式，輸出再以規則過濾。模型順序 `gemini-3.1-flash-lite` → `gemini-2.5-flash` → OpenAI。使用者點選後整句填入心得欄。**心得潤飾**（`/ai/refine`）同樣用 `gemini-3.1-flash-lite`。
 3.  **首次使用引導 (Onboarding Flow)**:
     *   **啟動序列**: Native Splash → Web 飛入動畫 → Auth 檢查（未登入 → `OnboardingModal`）→ 首頁 → 功能學習卡
     *   **登入方式**: Google OAuth（web redirect）、Apple Sign-In（iOS native Face ID / web OAuth redirect）、訪客模式（Anonymous Auth）
@@ -77,6 +78,9 @@ Storio 2 是一個強調「沉浸式行動優先 (Mobile-First)」的個人典�
 4.  **個人頁面與分享 (Profile & Social Share)**:
     *   **UI**: `/profile` 頁面顯示用戶的 `HeroStats` 及等級稱號 (Leveling System)。
     *   **功能**: 利用 `ShareModal` 與 `MonthlyRecapModal` 將個人的館藏與心得產生圖片或連結分享至社群平台。
+    *   **渲染流程**: Modal 開啟 → 檢查圖片服務健康（`getRenderServiceHealth`，冷啟動最多等 60s）→ `useProgressiveRenderQueue` 依序呼叫 Puppeteer 微服務渲染各模板（目前模板優先，一次只跑一個）→ 結果以 TTL 5 分鐘的 objectURL 快取；設定（標題/評分/心得開關）變更 1.5s debounce 後才重新渲染；關閉 Modal 會 revoke 全部 objectURL。月回顧須等統計資料就緒才渲染。
+    *   **分享 / 儲存**: 原生 App（iOS/Android）只有一顆「Share / Download」——`Filesystem.writeFile`（Cache）→ `Share.share` 叫出系統分享面板，使用者在面板選「儲存影像」存進相簿（**`<a download>` 在 WKWebView 無效，不可用**）；網頁優先 `navigator.share({files})`，不支援時退回 `<a download>`（桌面保留 Download 鈕）。
+    *   **測試**: `client/src/**/__tests__/`（Vitest + jsdom + Testing Library），見 `DEV_SETUP.md` §5。
 5.  **本機通知 (Local Notifications, v1.14.0)**:
     *   **核心模式**: App Open Reset — 每次 app 開啟（僅 iOS native），`AppOpenReset` 元件讀取最新 collection 資料 → 取消舊通知 → 依觸發條件重排程個人化通知。零後端，純 `@capacitor/local-notifications`。
     *   **兩種類型**: Log a story（距上次記錄 ≥ 3 天）、Folio reflection（14 天內未評分或心得逾 7 天）。
