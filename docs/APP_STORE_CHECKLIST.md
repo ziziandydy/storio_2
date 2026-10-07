@@ -3,7 +3,7 @@
 > ✅ **v1.0 正式上架成功（2026-04-17）**
 > 所有 Phase 均已完成。此文件保留作為歷史記錄。
 >
-> ⚠️ **2026-07-16 更新**：後續版本（v1.1.x～v1.16.0）不需重跑 Phase 0~3（App Icons、Bundle ID、隱私宣告等一次性設定已定型）；每次發版實際流程改依 `CLAUDE.md`「iOS 發佈階段」章節（版號更新 → `build:ios` → Xcode Archive → 送審）。最新版本狀態見 `docs/BACKLOG.md`（2026-10-03：v1.19.0 build 25 已送審；v1.16.0 build 18 起各版已上架）。
+> ⚠️ **2026-07-16 更新**：後續版本（v1.1.x～v1.16.0）不需重跑 Phase 0~3（App Icons、Bundle ID、隱私宣告等一次性設定已定型）；每次發版實際流程改依 `CLAUDE.md`「iOS 發佈階段」章節（版號更新 → `build:ios` → Xcode Archive → 送審）。最新版本狀態見 `docs/BACKLOG.md`（2026-10-07：v1.19.0 build 25 已上線；v1.16.0 build 18 起各版均已上架）。
 >
 > 📸 **2026-10-03 新增截圖素材**：iPhone 6.5 吋（1242×2688）英文 en-US 與繁中 zh-Hant 各 6 張，由 `marketing/app-store-screenshots/` 產生（`node render.mjs`），成品在 `marketing/app-store-screenshots/out/`（不進 git）。App Store Connect 需分別在兩個語系的在地化頁面上傳。
 

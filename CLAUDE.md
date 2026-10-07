@@ -205,7 +205,7 @@ find-skills                         # 尋找新技能
 > - `feat:` commits → MINOR（1.1.0 → 1.2.0）
 > - `feat!:` 或 `BREAKING CHANGE` → MAJOR（1.1.0 → 2.0.0）
 >
-> ⚠️ **git tag 與 App Store 版號可能脫節**：曾有版本直接從 Xcode 上傳未走 `npm run release`，導致 git tag 落後 App Store。發布前先到 App Store Connect 確認當前版號，若 `standard-version` 算出的版號低於實際，用 `npm run release -- --release-as X.Y.0` 手動指定。（2026-10-03：git 與送審版號為 v1.19.0 build 25；`ios:sync` 會連 Android 版號一起同步）
+> ⚠️ **git tag 與 App Store 版號可能脫節**：曾有版本直接從 Xcode 上傳未走 `npm run release`，導致 git tag 落後 App Store。發布前先到 App Store Connect 確認當前版號，若 `standard-version` 算出的版號低於實際，用 `npm run release -- --release-as X.Y.0` 手動指定。（2026-10-07：git 與 App Store 已對齊於 v1.19.0 build 25，已上線；`ios:sync` 會連 Android 版號一起同步）
 
 16. **版號更新（自動）**：
     ```bash
