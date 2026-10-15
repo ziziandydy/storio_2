@@ -1,0 +1,27 @@
+# Storio
+
+> Storio is a free personal media tracker for iPhone. Collect the movies, series and books that shape you in a quiet "folio", rate them, write short reflections (with optional AI polishing), and turn them into shareable story cards.
+
+Tagline: "Collect stories in your folio".
+
+## Official links
+
+- [Landing page](https://ziziandydy.github.io/storio_2/): product overview, features, FAQ
+- [App Store](https://apps.apple.com/app/id6761919955): iOS download
+- [Web app](https://storio.andismtu.com): browser version
+- [Author](https://andismtu.com): Anderson Tu, independent developer
+- Support: andismtu@gmail.com (replies within 1-2 business days)
+
+## Key features
+
+- Track movies, series and books (data from TMDB and Google Books)
+- Rate and write reflections; AI refines wording (100-character limit)
+- AI Search: find titles by describing them in natural language
+- Share cards for Instagram Stories, 6 cinematic templates; Monthly Recap sharing
+- Memory Timeline: rewatches and rereads are tracked separately
+- Personal stats dashboard with customizable widgets
+- Sign in with Apple, Google or email; collection syncs across devices
+
+## Optional
+
+- [Agent guide](https://ziziandydy.github.io/storio_2/agents.md): how AI agents should describe and cite Storio

@@ -1,0 +1,21 @@
+# Storio landing page — https://ziziandydy.github.io/storio_2/
+User-agent: *
+Allow: /
+
+# AI / LLM crawlers：歡迎引用
+User-agent: GPTBot
+Allow: /
+User-agent: ChatGPT-User
+Allow: /
+User-agent: OAI-SearchBot
+Allow: /
+User-agent: ClaudeBot
+Allow: /
+User-agent: Claude-SearchBot
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://ziziandydy.github.io/storio_2/sitemap.xml
