@@ -50,3 +50,6 @@ test-results/
 Sites/
 .gstack/
 .worktrees/
+
+# graphify 知識圖譜輸出（可由 graphify update . 重建）
+graphify-out/

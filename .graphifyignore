@@ -1,0 +1,25 @@
+# 工具/AI 輔助目錄（非產品內容）
+.agents/
+.agent/
+.claude/
+.cursor/
+.superpowers/
+.gemini/
+.worktrees/
+skills/
+
+# 行銷素材與暫存產出
+marketing/
+image/
+nanobanana-output/
+temp_banner/
+
+# 圖片與影片不進語意抽取
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.mp4
+*.mov
+*.mp3
