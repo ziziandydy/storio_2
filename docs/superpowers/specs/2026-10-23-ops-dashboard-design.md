@@ -77,7 +77,18 @@ Looker Studio 報表分頁：**成長｜AI 與成本｜行銷｜商店｜健康*
 | 落地頁 | `https://ziziandydy.github.io/storio_2/` HTTP 200 | 行銷入口 |
 | Puppeteer | `/health` | 分享圖服務；Render 免費層會休眠，5 分鐘一次的檢查會讓它保持喚醒（副作用，需留意免費時數） |
 
+- 上表只用到 UptimeRobot 免費版的 **HTTP** 與 **Keyword** 兩種監控，Port 與 Ping 用不到；7 個以內遠低於 50 個上限。
 - 搜尋端點有 30 次／分鐘的限流，5 分鐘一次不會觸發。
+
+**免費版覆蓋不到的項目與取捨**：
+
+| 項目 | 狀況 | 處理 |
+|---|---|---|
+| 資料庫是否被暫停或失效 | 即時監控做不到。`/search/trending/*` 有程序內記憶體快取（`trending_service.py` 的 L1），每天第一次請求後不再讀資料庫，不能當 DB 健康檢查；`GET /` 也不經過資料庫 | 由每日 keepalive（5.1）負責，失敗時寄信，最慢一天內發現 |
+| AI 金鑰失效 | 不每 5 分鐘呼叫 AI 端點（持續花 token，且免費版是否支援 POST 未確認） | 看 dashboard「AI 與成本」分頁的每日失敗率，晚一天發現 |
+| 真實用戶的 5xx 比例與延遲分佈 | UptimeRobot 只看自己的探測結果 | Railway 後台 Metrics 分頁；需要更精確時再評估 Sentry |
+| SSL 憑證與網域到期 | 免費版沒有 | 憑證由 Vercel、GitHub Pages、Railway 自動續期；`andismtu.com` 網域到期請在註冊商或行事曆設提醒 |
+| 手機推播 | 免費版僅 5 個整合，手機 App 能力未查證 | 實作時先確認，不行改用 email 或 Telegram |
 - 後端的 CPU／記憶體／流量用 Railway 後台 Metrics 分頁看，不另外整合。
 
 ### 5.3 資料層：`ops` schema（第 1 階段）
