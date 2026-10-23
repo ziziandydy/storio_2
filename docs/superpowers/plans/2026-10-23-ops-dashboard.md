@@ -12,6 +12,8 @@
 
 **範圍**：本計畫只涵蓋 spec 的第 0 階段與第 1 階段。第 2 階段（Search Console 行銷分頁）與第 3 階段（App Store Connect 商店分頁）另寫計畫。
 
+**執行順序**：先做 **Task 0**（連線可行性驗證）。它決定 Looker Studio 能不能直接連 Supabase，結果會影響 Task 5 與 Task 7。
+
 ## Global Constraints
 
 - 全部使用繁體中文（註解、文件、commit 訊息）。
@@ -45,6 +47,64 @@
 | `.github/workflows/supabase-keepalive.yml`（新增） | 每日排程，依序 ping prod 與 dev |
 | `server/migrations/005_ops_dashboard.sql`（新增） | `ops` schema、5 個 views、`looker_ro` 角色與權限 |
 | `docs/OPS_DASHBOARD.md`（新增） | 維運手冊：監控清單、報表連結、輪替 `looker_ro` 密碼、新增指標的方法 |
+
+---
+
+### Task 0: 連線可行性驗證（spike，用完即丟）
+
+**目的**：計畫中風險最高的一環是「Supabase pooler 是否接受自訂登入角色」與「Looker Studio 能否連上 Supabase（SSL、IP）」。先用一個探測角色在 **dev** 驗證，避免寫完 views、keepalive、監控之後才發現走不通。不建立 `ops` schema、不留任何資產。
+
+**Files:**
+- 無（只操作 dev 資料庫與 Looker Studio）
+
+**Interfaces:**
+- Consumes: dev 專案的 session pooler 連線資訊（Dashboard → Connect → Session pooler）
+- Produces: 一個明確結論：**可行**（繼續 Task 1 起的原計畫），或**不可行**（改採 spec 第 7 節後備方案：n8n 每日把 view 結果寫進 Google Sheet，Looker 讀 Sheet；此時 Task 5 Step 7 與 Task 7 Step 1 需要改寫，先回報再繼續）
+
+- [ ] **Step 1: 在 dev 建立探測角色**
+
+由 Tu 先產生密碼（只含英數字，只用這一次）：
+
+```bash
+openssl rand -base64 24 | tr -d '/+=' | cut -c1-24
+```
+再到 **dev** 專案 SQL Editor 執行（把密碼貼進單引號內；這行不要存成檔案）：
+
+```sql
+create role looker_probe login password '<剛產生的密碼>';
+```
+Expected: 成功。
+
+- [ ] **Step 2: 以探測角色透過 session pooler 連線**
+
+由 Tu 到 dev 專案 Dashboard → Connect → Session pooler 取得主機（埠 5432）與專案代碼，執行（密碼用 `PGPASSWORD` 環境變數，不要寫進指令列）：
+
+```bash
+PGPASSWORD='<探測角色密碼>' psql "host=<dev session pooler 主機> port=5432 dbname=postgres user=looker_probe.<dev 專案代碼> sslmode=require" -c "select 1 as ok;"
+```
+Expected: 回傳 `ok = 1`。
+若失敗：記下完整錯誤訊息（不含密碼），到 Step 4 清理後，回報並採後備方案。
+
+- [ ] **Step 3: 以相同參數從 Looker Studio 連線**
+
+由 Tu 在 Looker Studio 新增 PostgreSQL 連接器，主機、埠 `5432`、資料庫 `postgres`、使用者 `looker_probe.<dev 專案代碼>`、密碼同上，啟用 SSL（若要求憑證，下載 Supabase 的 CA 憑證上傳），選「自訂查詢」輸入 `select 1 as ok`。
+Expected: 預覽顯示一列 `ok = 1`。
+若出現連線逾時或被拒：確認 dev 專案沒有設定 Network Restrictions；有的話加入 Google 官方列出的 Looker Studio IP 範圍後重試；仍失敗就記下錯誤並採後備方案。
+
+- [ ] **Step 4: 清理**
+
+由 Tu 在 dev SQL Editor 執行，並在 Looker Studio 刪除剛建的資料來源與測試報表：
+
+```sql
+drop role if exists looker_probe;
+```
+Expected: 成功；Looker Studio 內沒有殘留的探測資料來源。
+
+- [ ] **Step 5: 決策關卡**
+
+把 Step 2 與 Step 3 的結果（成功或完整錯誤訊息）告訴我。
+- 兩者皆成功：繼續 Task 1。Task 5 Step 7 仍要在 prod 重新驗證一次（prod 的 pooler 主機與專案代碼不同）。
+- 任一失敗：**停止**，先與 Tu 決定改走後備方案，我再修改 Task 5、Task 7 後才繼續。
 
 ---
 
@@ -674,7 +734,7 @@ Expected: `406`、`404` 或 `403`（schema 未對外公開），**不是** `200`
 ```bash
 PGPASSWORD='<looker_ro 密碼>' psql "host=<session pooler 主機> port=5432 dbname=postgres user=looker_ro.<專案代碼> sslmode=require" -c "select count(*) from ops.v_signups_daily;"
 ```
-Expected: 回傳一個數字。若 pooler 拒絕自訂角色，記錄錯誤訊息，改採 spec 第 7 節的後備方案（n8n 每日把 view 結果寫進 Google Sheet 再讓 Looker 讀），並暫停 Task 7 直到 Tu 決定。
+Expected: 回傳一個數字（Task 0 已在 dev 驗證過機制，這裡確認 prod 的主機與專案代碼也通）。若 pooler 拒絕自訂角色，記錄錯誤訊息，改採 spec 第 7 節的後備方案（n8n 每日把 view 結果寫進 Google Sheet 再讓 Looker 讀），並暫停 Task 7 直到 Tu 決定。
 
 ---
 
