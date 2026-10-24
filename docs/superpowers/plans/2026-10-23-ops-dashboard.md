@@ -812,7 +812,9 @@ Expected: 該監控轉為 Down 並寄出通知 email。確認後改回 `"source"
 - 資料庫：`postgres`
 - 使用者名稱：`looker_ro.<專案代碼>`
 - 密碼：Task 5 Step 2 產生的密碼
-- 啟用 SSL（若連接器要求憑證，下載 Supabase 的 CA 憑證上傳）
+- 勾選「Enable SSL」並上傳 Supabase 根憑證（Task 0 實測：Dashboard → Database → Settings → SSL Configuration 下載 `prod-ca-2021.crt`；Looker 的上傳框只收 `.pem`，需先複製改名為 `.pem`，本機已有 `~/Downloads/prod-ca-2021.pem`）。**不要**勾「Enable client authentication」，客戶端憑證與私鑰留空
+- 連接器的資料表清單會是空的（只列 `public` 且 `looker_ro` 無權限），屬正常現象，直接用下方的自訂查詢
+- Data freshness 預設為 12 小時，符合本報表「非即時」的需求，不必調整
 - 若 Looker 因 IP 被擋而連不上：Supabase 預設沒有 IP 限制，若有設 Network Restrictions，加入 Google 官方列出的 Looker Studio IP 範圍後重試
 
 接著為下列每個查詢各建立一個自訂查詢資料來源（連接器不支援直接選 `ops` schema 的表）：
