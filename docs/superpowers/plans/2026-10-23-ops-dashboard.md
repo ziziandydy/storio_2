@@ -509,7 +509,8 @@ begin
 end
 $$;
 
-alter role looker_ro connection limit 5;
+-- Looker Studio 每個資料來源與圖表都可能各開一條連線；上限 5 時第 6 條起被拒（too many connections for role）
+alter role looker_ro connection limit 15;
 alter role looker_ro set statement_timeout = '30s';
 
 -- 權限：只對 ops views 有 SELECT；anon / authenticated 一律沒有
