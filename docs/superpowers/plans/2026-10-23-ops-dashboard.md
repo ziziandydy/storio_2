@@ -6,7 +6,7 @@
 
 **Architecture:** 每日 GitHub Actions 呼叫一個小 shell script，對 Supabase 做一次唯讀的資料庫查詢以防暫停（Tu 觀察到平常開 App 就算活動，故不做寫入）；UptimeRobot 以 HTTP／Keyword 監控抓服務與 TMDB／Google Books 靜默失敗；prod Supabase 新增不對外公開的 `ops` schema，放彙總 views 與唯讀角色 `looker_ro`，由 Looker Studio 以自訂 SQL 讀取並分頁呈現。
 
-**Tech Stack:** Bash、Python 3 標準庫（僅測試用 mock）、PostgreSQL（Supabase）、GitHub Actions、UptimeRobot 免費版、Looker Studio。
+**Tech Stack:** Bash、Python 3 標準庫（僅測試用）、PostgreSQL（Supabase）、GitHub Actions、UptimeRobot 免費版、Looker Studio。
 
 **Spec:** `docs/superpowers/specs/2026-10-23-ops-dashboard-design.md`
 
@@ -42,8 +42,7 @@
 | 檔案 | 責任 |
 |---|---|
 | `scripts/supabase-keepalive.sh`（新增） | 對單一 Supabase 專案做一次唯讀查詢，任何失敗則非 0 結束 |
-| `scripts/tests/mock_supabase.py`（新增） | 測試用的假 Supabase REST 伺服器（標準庫） |
-| `scripts/tests/test_supabase_keepalive.sh`（新增） | 對 script 的情境測試（成功、GET 401、GET 回非陣列、缺環境變數、伺服器不可達） |
+| `scripts/tests/test_supabase_keepalive.py`（新增） | 程序內假 Supabase 伺服器加 script 情境測試（成功、GET 401、GET 回非陣列、缺環境變數、伺服器不可達） |
 | `.github/workflows/supabase-keepalive.yml`（新增） | 每日排程，依序 ping prod 與 dev |
 | `server/migrations/004_ops_dashboard.sql`（新增） | `ops` schema、5 個 views、`looker_ro` 角色與權限 |
 | `docs/OPS_DASHBOARD.md`（新增） | 維運手冊：監控清單、報表連結、輪替 `looker_ro` 密碼、新增指標的方法 |
@@ -112,127 +111,110 @@ Expected: 成功；Looker Studio 內沒有殘留的探測資料來源。
 
 **Files:**
 - Create: `scripts/supabase-keepalive.sh`
-- Create: `scripts/tests/mock_supabase.py`
-- Create: `scripts/tests/test_supabase_keepalive.sh`
+- Create: `scripts/tests/test_supabase_keepalive.py`
 
 **Interfaces:**
 - Consumes: 環境變數 `SUPABASE_URL`（例如 `https://xxxx.supabase.co`）、`SUPABASE_ANON_KEY`
 - Produces: `scripts/supabase-keepalive.sh` — 成功回傳 0；任何 HTTP 錯誤、逾時、缺環境變數、或回應不是 JSON 陣列則回傳非 0 並在 stderr 印出原因。Task 3 的 workflow 以 `bash scripts/supabase-keepalive.sh` 呼叫。
 
-- [ ] **Step 1: 寫 mock 伺服器（測試用）**
+- [ ] **Step 1: 寫失敗的測試（含程序內假伺服器）**
 
-建立 `scripts/tests/mock_supabase.py`：
+建立 `scripts/tests/test_supabase_keepalive.py`。假 Supabase 伺服器以執行緒跑在測試程序內，再以子程序呼叫 script（實測：從 shell 另起的背景伺服器在某些環境下連不上，單一程序內最穩）：
 
 ```python
 #!/usr/bin/env python3
-"""測試用假 Supabase REST 伺服器。用法：mock_supabase.py <port> <mode> <log_file>
-mode: ok | get401 | get_html"""
+"""測試 scripts/supabase-keepalive.sh。用法：python3 scripts/tests/test_supabase_keepalive.py
+在同一個程序內起假 Supabase REST 伺服器（執行緒），再以子程序呼叫 script。"""
 import json
-import sys
+import os
+import subprocess
+import threading
+import unittest
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
 
-port, mode, log_file = int(sys.argv[1]), sys.argv[2], sys.argv[3]
-
-
-class Handler(BaseHTTPRequestHandler):
-    def _log(self):
-        with open(log_file, "a", encoding="utf-8") as f:
-            f.write(f"{self.command} {self.path}\n")
-
-    def _send(self, status, body):
-        data = json.dumps(body).encode()
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(data)))
-        self.end_headers()
-        self.wfile.write(data)
-
-    def do_GET(self):
-        self._log()
-        if mode == "get401":
-            self._send(401, {"message": "Invalid API key"})
-        elif mode == "get_html":
-            data = b"<html>gateway ok</html>"
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html")
-            self.send_header("Content-Length", str(len(data)))
-            self.end_headers()
-            self.wfile.write(data)
-        else:
-            self._send(200, [])
-
-    def log_message(self, *args):
-        pass
+SCRIPT = Path(__file__).resolve().parents[1] / "supabase-keepalive.sh"
 
 
-HTTPServer(("127.0.0.1", port), Handler).serve_forever()
+class MockSupabase:
+    """mode: ok | get401 | get_html。requests 記錄收到的 '<METHOD> <path>'。"""
+
+    def __init__(self, mode):
+        self.requests = []
+        outer = self
+
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                outer.requests.append(f"GET {self.path}")
+                if mode == "get401":
+                    status, ctype, body = 401, "application/json", json.dumps({"message": "Invalid API key"})
+                elif mode == "get_html":
+                    status, ctype, body = 200, "text/html", "<html>gateway ok</html>"
+                else:
+                    status, ctype, body = 200, "application/json", "[]"
+                data = body.encode()
+                self.send_response(status)
+                self.send_header("Content-Type", ctype)
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+
+            def log_message(self, *args):
+                pass
+
+        self.server = HTTPServer(("127.0.0.1", 0), Handler)
+        self.url = f"http://127.0.0.1:{self.server.server_port}"
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+
+    def close(self):
+        self.server.shutdown()
+        self.server.server_close()
+
+
+def run_script(env_extra, drop=()):
+    env = {k: v for k, v in os.environ.items() if k not in drop}
+    env.update(env_extra)
+    return subprocess.run(["bash", str(SCRIPT)], env=env, capture_output=True, text=True, timeout=60)
+
+
+class KeepaliveTest(unittest.TestCase):
+    def with_mock(self, mode):
+        mock = MockSupabase(mode)
+        self.addCleanup(mock.close)
+        return mock, run_script({"SUPABASE_URL": mock.url, "SUPABASE_ANON_KEY": "test-key"})
+
+    def test_success_reads_collections_and_exits_zero(self):
+        mock, r = self.with_mock("ok")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertTrue(any(q.startswith("GET /rest/v1/collections") for q in mock.requests))
+
+    def test_get_401_fails(self):
+        _, r = self.with_mock("get401")
+        self.assertNotEqual(r.returncode, 0)
+
+    def test_non_array_200_fails_with_clear_message(self):
+        _, r = self.with_mock("get_html")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("不是 JSON 陣列", r.stderr)
+
+    def test_missing_env_fails(self):
+        r = run_script({}, drop=("SUPABASE_URL", "SUPABASE_ANON_KEY"))
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("SUPABASE_URL", r.stderr)
+
+    def test_unreachable_server_fails(self):
+        r = run_script({"SUPABASE_URL": "http://127.0.0.1:1", "SUPABASE_ANON_KEY": "k"})
+        self.assertNotEqual(r.returncode, 0)
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
 ```
 
-- [ ] **Step 2: 寫失敗的測試**
+- [ ] **Step 2: 執行測試，確認失敗**
 
-建立 `scripts/tests/test_supabase_keepalive.sh`：
-
-```bash
-#!/usr/bin/env bash
-# 測試 scripts/supabase-keepalive.sh。用法：bash scripts/tests/test_supabase_keepalive.sh
-set -u
-cd "$(dirname "$0")/../.."
-
-PORT=18765
-LOG="$(mktemp)"
-fail=0
-
-start_mock() {
-  : > "$LOG"
-  python3 scripts/tests/mock_supabase.py "$PORT" "$1" "$LOG" &
-  MOCK_PID=$!
-  sleep 0.7
-}
-stop_mock() { kill "$MOCK_PID" 2>/dev/null; wait "$MOCK_PID" 2>/dev/null; }
-
-run_script() {
-  SUPABASE_URL="http://127.0.0.1:${PORT}" SUPABASE_ANON_KEY="test-key" \
-    bash scripts/supabase-keepalive.sh >/dev/null 2>"$LOG.err"
-}
-
-check() {  # check <名稱> <期望退出碼是否為 0: yes|no> <實際退出碼>
-  if { [ "$2" = yes ] && [ "$3" -eq 0 ]; } || { [ "$2" = no ] && [ "$3" -ne 0 ]; }; then
-    echo "PASS: $1"
-  else
-    echo "FAIL: $1 (exit=$3)"; fail=1
-  fi
-}
-
-# 1. 成功：發出讀取請求（RLS 下回空陣列也算成功），退出碼 0
-start_mock ok; run_script; code=$?; stop_mock
-check "成功情境退出碼為 0" yes "$code"
-grep -q "^GET /rest/v1/collections" "$LOG" && echo "PASS: 有發出讀取請求" || { echo "FAIL: 沒有讀取請求"; fail=1; }
-
-# 2. GET 回 401 → 失敗
-start_mock get401; run_script; code=$?; stop_mock
-check "GET 401 時失敗" no "$code"
-
-# 3. GET 回 200 但不是 JSON 陣列（閘道錯誤頁）→ 失敗
-start_mock get_html; run_script; code=$?; stop_mock
-check "GET 回非陣列時失敗" no "$code"
-grep -q "不是 JSON 陣列" "$LOG.err" && echo "PASS: 錯誤訊息說明原因" || { echo "FAIL: 錯誤訊息不明確"; fail=1; }
-
-# 4. 缺少環境變數 → 失敗
-env -u SUPABASE_URL -u SUPABASE_ANON_KEY bash scripts/supabase-keepalive.sh >/dev/null 2>"$LOG.err"
-check "缺少環境變數時失敗" no "$?"
-
-# 5. 伺服器不可達 → 失敗
-SUPABASE_URL="http://127.0.0.1:1" SUPABASE_ANON_KEY="k" bash scripts/supabase-keepalive.sh >/dev/null 2>&1
-check "伺服器不可達時失敗" no "$?"
-
-rm -f "$LOG" "$LOG.err"
-exit "$fail"
-```
-
-- [ ] **Step 3: 執行測試，確認失敗**
-
-Run: `bash scripts/tests/test_supabase_keepalive.sh`
-Expected: 多筆 FAIL（`scripts/supabase-keepalive.sh` 還不存在，bash 找不到檔案，退出碼非 0，所以「成功情境」會是 FAIL；「應失敗」的情境可能顯示 PASS，但整體以「成功情境 FAIL」為準，總退出碼為 1）。
+Run: `python3 scripts/tests/test_supabase_keepalive.py`
+Expected: 成功情境等測試 FAIL（`scripts/supabase-keepalive.sh` 還不存在，退出碼 127）。
 
 - [ ] **Step 4: 實作 script**
 
@@ -269,13 +251,13 @@ echo "keepalive 成功：${now}"
 
 - [ ] **Step 5: 執行測試，確認通過**
 
-Run: `bash scripts/tests/test_supabase_keepalive.sh`
-Expected: 全部顯示 PASS，退出碼為 0。
+Run: `python3 scripts/tests/test_supabase_keepalive.py`
+Expected: `Ran 5 tests ... OK`。
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add scripts/supabase-keepalive.sh scripts/tests/mock_supabase.py scripts/tests/test_supabase_keepalive.sh
+git add scripts/supabase-keepalive.sh scripts/tests/test_supabase_keepalive.py
 git commit -m "feat(ops): 新增 Supabase keepalive script（唯讀）與測試" -m "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>" -m "Claude-Session: https://claude.ai/code/session_01UyHKMe35rtKmP8DN1w1kNN"
 ```
 
