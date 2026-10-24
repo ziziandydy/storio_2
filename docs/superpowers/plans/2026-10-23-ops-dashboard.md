@@ -4,7 +4,7 @@
 
 **Goal:** 建立 Storio 的單一入口營運 dashboard（Looker Studio 分頁），並讓 prod 與 dev 的 Supabase 免費專案不被暫停、關鍵服務有即時警報。
 
-**Architecture:** 每日 GitHub Actions 呼叫一個小 shell script，對 Supabase 做一次讀加一次寫以防暫停；UptimeRobot 以 HTTP／Keyword 監控抓服務與 TMDB／Google Books 靜默失敗；prod Supabase 新增不對外公開的 `ops` schema，放彙總 views 與唯讀角色 `looker_ro`，由 Looker Studio 以自訂 SQL 讀取並分頁呈現。
+**Architecture:** 每日 GitHub Actions 呼叫一個小 shell script，對 Supabase 做一次唯讀的資料庫查詢以防暫停（Tu 觀察到平常開 App 就算活動，故不做寫入）；UptimeRobot 以 HTTP／Keyword 監控抓服務與 TMDB／Google Books 靜默失敗；prod Supabase 新增不對外公開的 `ops` schema，放彙總 views 與唯讀角色 `looker_ro`，由 Looker Studio 以自訂 SQL 讀取並分頁呈現。
 
 **Tech Stack:** Bash、Python 3 標準庫（僅測試用 mock）、PostgreSQL（Supabase）、GitHub Actions、UptimeRobot 免費版、Looker Studio。
 
@@ -25,11 +25,12 @@
 - 所有日期分組使用 UTC。
 - 免費額度與限制：UptimeRobot 免費版（50 個監控、5 分鐘間隔、HTTP 與 Keyword 可用、**限非商業用途**）；Looker 單次查詢上限 15 萬列。
 - Commit 訊息結尾加上：`Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` 與 `Claude-Session: https://claude.ai/code/session_01UyHKMe35rtKmP8DN1w1kNN`。
+- **監控不得產生額外費用**：Railway（後端與 Puppeteer 都在這，是付費、依用量計費）只被輕量 HTTP GET 打；不新增任何服務、不開常駐程序、不加付費監控方案。實作上把會呼叫外部 API 的 TMDB／Google Books 檢查降到 15 分鐘一次，其餘 5 分鐘。
 - 不得讀取、印出或提交任何金鑰值；金鑰由 Tu 在各平台後台操作或以 `gh secret set` 互動輸入。
 
 ## Review Focus
 
-1. **keepalive 的 PATCH 回 `[]`**：RLS 擋住或 `id=1` 那列不存在時，PostgREST 仍回 HTTP 200，若只看狀態碼會「假成功」。預期：視為失敗並讓 workflow 變紅。（Task 1 測試）
+1. **GET 回 200 但不是 JSON 陣列**：閘道或錯誤頁可能回 HTTP 200 的 HTML；專案被暫停時也可能回非預期內容。若只看狀態碼會「假成功」。預期：回應不是以 `[` 開頭的 JSON 陣列就視為失敗並讓 workflow 變紅。（Task 1 測試）
 2. **缺少環境變數**：GitHub Secrets 沒設或打錯名稱時，script 應立刻以明確訊息失敗，不是靜默成功。（Task 1 測試）
 3. **未成熟的 cohort**：註冊不滿 7 天的用戶不可能已滿足「7 天內啟用」，會把啟用率拉低。預期：view 提供 `cohort_mature` 欄位讓報表可過濾。（Task 4、5）
 4. **資料很少或為空**：`ai_api_usage` 近期幾乎沒有資料，view 在 0 列時仍要正常回傳，圖表不能壞。（Task 5）
@@ -40,12 +41,11 @@
 
 | 檔案 | 責任 |
 |---|---|
-| `scripts/supabase-keepalive.sh`（新增） | 對單一 Supabase 專案做一次讀、一次寫，任何失敗則非 0 結束 |
+| `scripts/supabase-keepalive.sh`（新增） | 對單一 Supabase 專案做一次唯讀查詢，任何失敗則非 0 結束 |
 | `scripts/tests/mock_supabase.py`（新增） | 測試用的假 Supabase REST 伺服器（標準庫） |
-| `scripts/tests/test_supabase_keepalive.sh`（新增） | 對 script 的三種情境測試（成功、PATCH 401、PATCH 回 `[]`）加缺環境變數 |
-| `server/migrations/004_keepalive.sql`（新增） | `public.keepalive` 表、RLS、權限 |
+| `scripts/tests/test_supabase_keepalive.sh`（新增） | 對 script 的情境測試（成功、GET 401、GET 回非陣列、缺環境變數、伺服器不可達） |
 | `.github/workflows/supabase-keepalive.yml`（新增） | 每日排程，依序 ping prod 與 dev |
-| `server/migrations/005_ops_dashboard.sql`（新增） | `ops` schema、5 個 views、`looker_ro` 角色與權限 |
+| `server/migrations/004_ops_dashboard.sql`（新增） | `ops` schema、5 個 views、`looker_ro` 角色與權限 |
 | `docs/OPS_DASHBOARD.md`（新增） | 維運手冊：監控清單、報表連結、輪替 `looker_ro` 密碼、新增指標的方法 |
 
 ---
@@ -117,7 +117,7 @@ Expected: 成功；Looker Studio 內沒有殘留的探測資料來源。
 
 **Interfaces:**
 - Consumes: 環境變數 `SUPABASE_URL`（例如 `https://xxxx.supabase.co`）、`SUPABASE_ANON_KEY`
-- Produces: `scripts/supabase-keepalive.sh` — 成功回傳 0；任何 HTTP 錯誤、逾時、缺環境變數、或 PATCH 回傳空陣列 `[]` 則回傳非 0 並在 stderr 印出原因。Task 3 的 workflow 以 `bash scripts/supabase-keepalive.sh` 呼叫。
+- Produces: `scripts/supabase-keepalive.sh` — 成功回傳 0；任何 HTTP 錯誤、逾時、缺環境變數、或回應不是 JSON 陣列則回傳非 0 並在 stderr 印出原因。Task 3 的 workflow 以 `bash scripts/supabase-keepalive.sh` 呼叫。
 
 - [ ] **Step 1: 寫 mock 伺服器（測試用）**
 
@@ -126,7 +126,7 @@ Expected: 成功；Looker Studio 內沒有殘留的探測資料來源。
 ```python
 #!/usr/bin/env python3
 """測試用假 Supabase REST 伺服器。用法：mock_supabase.py <port> <mode> <log_file>
-mode: ok | patch401 | patch_empty"""
+mode: ok | get401 | get_html"""
 import json
 import sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -149,17 +149,17 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         self._log()
-        self._send(200, [])
-
-    def do_PATCH(self):
-        self._log()
-        self.rfile.read(int(self.headers.get("Content-Length", 0)))
-        if mode == "patch401":
+        if mode == "get401":
             self._send(401, {"message": "Invalid API key"})
-        elif mode == "patch_empty":
-            self._send(200, [])
+        elif mode == "get_html":
+            data = b"<html>gateway ok</html>"
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
         else:
-            self._send(200, [{"id": 1, "pinged_at": "2026-10-23T03:17:00Z"}])
+            self._send(200, [])
 
     def log_message(self, *args):
         pass
@@ -203,20 +203,19 @@ check() {  # check <名稱> <期望退出碼是否為 0: yes|no> <實際退出�
   fi
 }
 
-# 1. 成功：讀與寫都發出，退出碼 0
+# 1. 成功：發出讀取請求（RLS 下回空陣列也算成功），退出碼 0
 start_mock ok; run_script; code=$?; stop_mock
 check "成功情境退出碼為 0" yes "$code"
 grep -q "^GET /rest/v1/collections" "$LOG" && echo "PASS: 有發出讀取請求" || { echo "FAIL: 沒有讀取請求"; fail=1; }
-grep -q "^PATCH /rest/v1/keepalive?id=eq.1" "$LOG" && echo "PASS: 有發出寫入請求" || { echo "FAIL: 沒有寫入請求"; fail=1; }
 
-# 2. PATCH 回 401 → 失敗
-start_mock patch401; run_script; code=$?; stop_mock
-check "PATCH 401 時失敗" no "$code"
+# 2. GET 回 401 → 失敗
+start_mock get401; run_script; code=$?; stop_mock
+check "GET 401 時失敗" no "$code"
 
-# 3. PATCH 回 200 但是空陣列（RLS 擋住或列不存在）→ 失敗
-start_mock patch_empty; run_script; code=$?; stop_mock
-check "PATCH 回空陣列時失敗" no "$code"
-grep -qi "沒有更新任何列" "$LOG.err" && echo "PASS: 錯誤訊息說明原因" || { echo "FAIL: 錯誤訊息不明確"; fail=1; }
+# 3. GET 回 200 但不是 JSON 陣列（閘道錯誤頁）→ 失敗
+start_mock get_html; run_script; code=$?; stop_mock
+check "GET 回非陣列時失敗" no "$code"
+grep -q "不是 JSON 陣列" "$LOG.err" && echo "PASS: 錯誤訊息說明原因" || { echo "FAIL: 錯誤訊息不明確"; fail=1; }
 
 # 4. 缺少環境變數 → 失敗
 env -u SUPABASE_URL -u SUPABASE_ANON_KEY bash scripts/supabase-keepalive.sh >/dev/null 2>"$LOG.err"
@@ -241,34 +240,30 @@ Expected: 多筆 FAIL（`scripts/supabase-keepalive.sh` 還不存在，bash 找�
 
 ```bash
 #!/usr/bin/env bash
-# Supabase 防暫停：對專案做一次資料庫讀取與一次寫入。
+# Supabase 防暫停：對專案做一次唯讀的資料庫查詢。
 # 用法：SUPABASE_URL=https://xxxx.supabase.co SUPABASE_ANON_KEY=... bash scripts/supabase-keepalive.sh
-# 依據：免費專案 7 天內使用者資料庫活動不足會被暫停（官方未說明唯讀是否算數，故讀寫都做）。
+# 依據：免費專案 7 天內使用者資料庫活動不足會被暫停。Tu 觀察到平常開 App 就算活動，
+# 故只做讀取；若日後仍被暫停，再補寫入（見 docs/OPS_DASHBOARD.md）。
 set -euo pipefail
 
 : "${SUPABASE_URL:?缺少環境變數 SUPABASE_URL}"
 : "${SUPABASE_ANON_KEY:?缺少環境變數 SUPABASE_ANON_KEY}"
 
 base="${SUPABASE_URL%/}/rest/v1"
-auth=(-H "apikey: ${SUPABASE_ANON_KEY}" -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
 
-# 1. 讀：RLS 下通常回 []，但仍是一次真實的資料庫查詢
-curl --fail --silent --show-error --max-time 20 "${auth[@]}" \
-  "${base}/collections?select=id&limit=1" -o /dev/null
+# 讀：RLS 下 anon 通常回 []，但仍是一次真實的資料庫查詢。
+# --fail 讓 HTTP 4xx／5xx 直接失敗。
+resp="$(curl --fail --silent --show-error --max-time 20 \
+  -H "apikey: ${SUPABASE_ANON_KEY}" -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+  "${base}/collections?select=id&limit=1")"
 
-# 2. 寫：更新 keepalive 表唯一一列的時間戳
+# 閘道錯誤頁可能回 200 的 HTML，回應必須是 JSON 陣列
+case "${resp}" in
+  \[*) ;;
+  *) echo "keepalive 失敗：回應不是 JSON 陣列（可能是閘道錯誤頁或專案已暫停）" >&2; exit 1 ;;
+esac
+
 now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-resp="$(curl --fail --silent --show-error --max-time 20 "${auth[@]}" \
-  -X PATCH -H "Content-Type: application/json" -H "Prefer: return=representation" \
-  -d "{\"pinged_at\":\"${now}\"}" \
-  "${base}/keepalive?id=eq.1")"
-
-# PostgREST 在 RLS 擋住或列不存在時仍回 200 與 []，要當成失敗
-if [ "${resp}" = "[]" ] || [ -z "${resp}" ]; then
-  echo "keepalive 失敗：PATCH 沒有更新任何列（請確認 public.keepalive 的 id=1 存在且 RLS 允許 anon 更新）" >&2
-  exit 1
-fi
-
 echo "keepalive 成功：${now}"
 ```
 
@@ -281,97 +276,41 @@ Expected: 全部顯示 PASS，退出碼為 0。
 
 ```bash
 git add scripts/supabase-keepalive.sh scripts/tests/mock_supabase.py scripts/tests/test_supabase_keepalive.sh
-git commit -m "feat(ops): 新增 Supabase keepalive script 與測試" -m "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>" -m "Claude-Session: https://claude.ai/code/session_01UyHKMe35rtKmP8DN1w1kNN"
+git commit -m "feat(ops): 新增 Supabase keepalive script（唯讀）與測試" -m "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>" -m "Claude-Session: https://claude.ai/code/session_01UyHKMe35rtKmP8DN1w1kNN"
 ```
 
 ---
 
-### Task 2: keepalive 資料表 migration
+### Task 2: 以真實專案實測 keepalive script
 
 **Files:**
-- Create: `server/migrations/004_keepalive.sql`
+- 無（不需要 migration、不新增資料表；只讀既有的 `public.collections`）
 
 **Interfaces:**
-- Consumes: 無
-- Produces: `public.keepalive(id int primary key, pinged_at timestamptz)`，只有 `id=1` 一列；anon 可 SELECT 與更新 `pinged_at`；Task 1 的 script 與 Task 3 的 workflow 依賴它。
+- Consumes: Task 1 的 `scripts/supabase-keepalive.sh`；dev 與 prod 的專案 URL 與 anon key
+- Produces: 確認 script 對兩個真實專案都成功，且壞金鑰會失敗；Task 3 才能放心排程
 
-- [ ] **Step 1: 寫 migration**
-
-建立 `server/migrations/004_keepalive.sql`：
-
-```sql
--- Migration 004: 新增 keepalive 表（防止 Supabase 免費專案因閒置被暫停）
--- Design doc: docs/superpowers/specs/2026-10-23-ops-dashboard-design.md
---
--- 背景：免費專案 7 天內使用者資料庫活動不足會被暫停。GitHub Actions 每日
--- 對這張表更新一次時間戳（scripts/supabase-keepalive.sh），確保有真實的資料庫寫入。
--- 表內只有一列時間戳，被濫用也無害，因此允許 anon 讀取與更新。
---
--- 執行方式：在 Supabase Dashboard > SQL Editor 執行（prod 與 dev 兩個專案都要執行）。
--- 冪等：可重複執行。
-
-create table if not exists public.keepalive (
-  id int primary key,
-  pinged_at timestamptz not null default now()
-);
-
-insert into public.keepalive (id) values (1) on conflict (id) do nothing;
-
-alter table public.keepalive enable row level security;
-
-drop policy if exists keepalive_anon_read on public.keepalive;
-create policy keepalive_anon_read on public.keepalive
-  for select to anon using (id = 1);
-
-drop policy if exists keepalive_anon_update on public.keepalive;
-create policy keepalive_anon_update on public.keepalive
-  for update to anon using (id = 1) with check (id = 1);
-
--- 權限收斂：anon 只能讀，且只能更新 pinged_at；不能新增、刪除
-revoke all on public.keepalive from anon;
-grant select on public.keepalive to anon;
-grant update (pinged_at) on public.keepalive to anon;
-
--- 驗證（執行後手動確認）
--- SELECT * FROM public.keepalive;   -- 應只有 id=1 一列
-```
-
-- [ ] **Step 2: 套用到 dev**
-
-由 Tu 在 **dev** 專案的 Supabase Dashboard → SQL Editor 貼上並執行整份檔案。
-Expected: 成功，無錯誤；執行 `select * from public.keepalive;` 回傳 `id=1` 一列。
-
-- [ ] **Step 3: 用 script 對 dev 實測**
+- [ ] **Step 1: 對 dev 實測**
 
 由 Tu 在終端機執行（金鑰從 dev 專案 Settings → API Keys 取得，不要貼到對話裡）：
 
 ```bash
 SUPABASE_URL="https://<dev 專案代碼>.supabase.co" SUPABASE_ANON_KEY="<dev anon key>" bash scripts/supabase-keepalive.sh
 ```
-Expected: 印出 `keepalive 成功：<時間>`；回到 SQL Editor 查 `select pinged_at from public.keepalive;` 時間有更新。
+Expected: 印出 `keepalive 成功：<時間>`。
+若出現 401／403：代表 anon 對 `collections` 沒有 SELECT 權限，回報給我，改查另一張 anon 可讀的表或改用 `/rest/v1/` 根路徑；不要自行放寬 RLS。
 
-- [ ] **Step 4: 套用到 prod 並實測**
+- [ ] **Step 2: 對 prod 實測**
 
-由 Tu 在 **prod** 專案重複 Step 2、Step 3（URL 與 key 換成 prod 的）。
-Expected: 同 Step 2 與 Step 3。
+同 Step 1，URL 與 key 換成 prod 的。
+Expected: 同 Step 1。
 
-- [ ] **Step 5: 負向測試（確認權限收斂）**
-
-由 Tu 對 dev 執行（嘗試用 anon 刪除，應被拒絕或無作用）：
-
-```bash
-curl -s -o /dev/null -w "%{http_code}\n" -X DELETE \
-  -H "apikey: <dev anon key>" -H "Authorization: Bearer <dev anon key>" \
-  "https://<dev 專案代碼>.supabase.co/rest/v1/keepalive?id=eq.1"
-```
-Expected: 回傳 `401` 或 `403`（沒有 DELETE 權限）；之後 `select * from public.keepalive;` 仍有 `id=1` 一列。
-
-- [ ] **Step 6: Commit**
+- [ ] **Step 3: 負向測試**
 
 ```bash
-git add server/migrations/004_keepalive.sql
-git commit -m "feat(ops): 新增 keepalive 資料表 migration" -m "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>" -m "Claude-Session: https://claude.ai/code/session_01UyHKMe35rtKmP8DN1w1kNN"
+SUPABASE_URL="https://<dev 專案代碼>.supabase.co" SUPABASE_ANON_KEY="wrong" bash scripts/supabase-keepalive.sh; echo "exit=$?"
 ```
+Expected: 印出 curl 的 401 錯誤，`exit` 非 0。
 
 ---
 
@@ -428,7 +367,7 @@ Expected: `yaml ok`
 
 - [ ] **Step 3: Commit 並 push**
 
-先確認 Task 1、Task 2 已 commit，再 push（workflow 要在 main 上才能被 `gh workflow run` 觸發）：
+先確認 Task 1 已 commit，再 push（workflow 要在 main 上才能被 `gh workflow run` 觸發）：
 
 ```bash
 git add .github/workflows/supabase-keepalive.yml
@@ -468,7 +407,7 @@ Expected: 結論 `failure`，且 Tu 的 email 收到 GitHub 的失敗通知；pr
 ### Task 4: `ops` schema、views 與唯讀角色（migration 檔案）
 
 **Files:**
-- Create: `server/migrations/005_ops_dashboard.sql`
+- Create: `server/migrations/004_ops_dashboard.sql`
 
 **Interfaces:**
 - Consumes: `auth.users`（`created_at`、`is_anonymous`）、`public.collections`（`user_id`、`created_at`、`media_type`、`notes`、`rating`、`seasons`）、`public.ai_api_usage`
@@ -482,10 +421,10 @@ Expected: 結論 `failure`，且 Tu 的 email 收到 GitHub 的失敗通知；pr
 
 - [ ] **Step 1: 寫 migration**
 
-建立 `server/migrations/005_ops_dashboard.sql`：
+建立 `server/migrations/004_ops_dashboard.sql`：
 
 ```sql
--- Migration 005: 新增 ops schema（營運 dashboard 的彙總 views 與唯讀角色）
+-- Migration 004: 新增 ops schema（營運 dashboard 的彙總 views 與唯讀角色）
 -- Design doc: docs/superpowers/specs/2026-10-23-ops-dashboard-design.md
 --
 -- 背景：Looker Studio 以唯讀角色 looker_ro 讀取這些預先彙總的 views。
@@ -633,7 +572,7 @@ Expected: 成功。（若 `drop role` 因仍有權限相依而失敗，先執行
 - [ ] **Step 5: Commit**
 
 ```bash
-git add server/migrations/005_ops_dashboard.sql
+git add server/migrations/004_ops_dashboard.sql
 git commit -m "feat(ops): 新增 ops schema、彙總 views 與唯讀角色 migration" -m "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>" -m "Claude-Session: https://claude.ai/code/session_01UyHKMe35rtKmP8DN1w1kNN"
 ```
 
@@ -645,12 +584,12 @@ git commit -m "feat(ops): 新增 ops schema、彙總 views 與唯讀角色 migra
 - 無新增檔案（操作 prod 資料庫）
 
 **Interfaces:**
-- Consumes: Task 4 的 `server/migrations/005_ops_dashboard.sql`
+- Consumes: Task 4 的 `server/migrations/004_ops_dashboard.sql`
 - Produces: prod 上可登入的 `looker_ro`；Task 7 以 `looker_ro.<專案代碼>` 帳號連線 session pooler
 
 - [ ] **Step 1: 套用到 prod**
 
-由 Tu 在 **prod** 專案 SQL Editor 執行 `server/migrations/005_ops_dashboard.sql` 整份。
+由 Tu 在 **prod** 專案 SQL Editor 執行 `server/migrations/004_ops_dashboard.sql` 整份。
 Expected: 成功，無錯誤。
 
 - [ ] **Step 2: 產生並設定 `looker_ro` 密碼**
@@ -762,16 +701,16 @@ Expected: 前三行數字皆 `≥ 1`；後兩行皆為 `200`。任何一項不�
 
 - [ ] **Step 2: 查 Puppeteer 服務的健康檢查網址**
 
-由 Tu 在 Render 後台查出 `storio-puppeteer-service` 的公開網址，並確認：
+Puppeteer 分享服務已遷移到 Railway（公開網址見 `client/.env.production` 的 `NEXT_PUBLIC_PUPPETEER_SERVICE_URL`，目前為 `https://worthy-beauty-production.up.railway.app`），請確認：
 
 ```bash
 curl -s -m 60 -o /dev/null -w "%{http_code}\n" https://<Puppeteer 服務網址>/health
 ```
-Expected: `200`（免費層休眠時第一次可能需要數十秒喚醒，逾時就重試一次）。
+Expected: `200`，內容為 `{"status":"ok",...}`（Railway 服務不休眠，我已實測回 200）。
 
 - [ ] **Step 3: 在 UptimeRobot 建立 6 個監控**
 
-由 Tu 註冊 UptimeRobot 免費帳號（自己登入與建帳號，我不代為操作），依下表建立，檢查間隔使用免費版的 5 分鐘，通知寄 Tu 的 email：
+由 Tu 註冊 UptimeRobot 免費帳號（自己登入與建帳號，我不代為操作），依下表建立，檢查間隔：`Backend TMDB`、`Backend Google Books` 設 15 分鐘（會讓後端去打 TMDB 與 Google，降低 Railway 用量與外部額度消耗），其餘 4 個設免費版最短的 5 分鐘。通知寄 Tu 的 email：
 
 | 名稱 | 類型 | 網址 | 關鍵字（Keyword 類型） |
 |---|---|---|---|
@@ -783,6 +722,8 @@ Expected: `200`（免費層休眠時第一次可能需要數十秒喚醒，逾�
 | Puppeteer | HTTP(s) | `https://<Puppeteer 服務網址>/health` | — |
 
 Expected: 6 個監控都顯示 Up。
+
+**成本估算**：打到 Railway 的請求約每天 288（存活）＋ 96×2（兩項內容檢查）＋ 288（Puppeteer `/health`）≈ 770 次，皆為幾 KB 的 GET，對 Railway 用量的影響可忽略；一個月後到 Railway Usage 頁確認沒有明顯增加。
 
 - [ ] **Step 4: 失敗模擬**
 
@@ -856,7 +797,7 @@ Expected: 五個資料來源都能預覽出資料（可為空列）。若連線�
 
 - [ ] **Step 4: 建立「健康」分頁（只放連結）**
 
-文字與連結元件：UptimeRobot 狀態頁（Task 6 的網址）、Railway 專案 Metrics 分頁、Render 服務頁、Supabase 專案首頁。**不使用 iframe 嵌入**（spec 5.4：外部網頁能否嵌入未驗證）。
+文字與連結元件：UptimeRobot 狀態頁（Task 6 的網址）、Railway 專案 Metrics 分頁（後端與 Puppeteer 同在 Railway）、Supabase 專案首頁。**不使用 iframe 嵌入**（spec 5.4：外部網頁能否嵌入未驗證）。
 
 - [ ] **Step 5: 分享設定與手機驗證**
 
@@ -894,8 +835,8 @@ Expected: 三個分頁都能載入並可切換；Tu 在電腦休眠時也能開�
 
 | 元件 | 位置 | 做什麼 |
 |---|---|---|
-| keepalive | `.github/workflows/supabase-keepalive.yml`、`scripts/supabase-keepalive.sh` | 每日 03:17 UTC 對 prod 與 dev 做一次讀加一次寫，失敗時 GitHub 寄信 |
-| `ops` views | `server/migrations/005_ops_dashboard.sql`（只存在 prod） | 彙總註冊、啟用、留存代理、收藏、AI 用量 |
+| keepalive | `.github/workflows/supabase-keepalive.yml`、`scripts/supabase-keepalive.sh` | 每日 03:17 UTC 對 prod 與 dev 各做一次唯讀查詢，失敗時 GitHub 寄信 |
+| `ops` views | `server/migrations/004_ops_dashboard.sql`（只存在 prod） | 彙總註冊、啟用、留存代理、收藏、AI 用量 |
 | `looker_ro` | prod 資料庫角色 | 只能讀 `ops` views |
 | 監控 | UptimeRobot 免費版（限非商業用途） | 6 個 HTTP／Keyword 監控，含 TMDB 與 Google Books 靜默失敗偵測 |
 
@@ -931,7 +872,7 @@ Expected: 三個分頁都能載入並可切換；Tu 在電腦休眠時也能開�
 
 ## 驗證 keepalive 是否有效
 
-官方未保證，只能觀察：之後若不再收到 Supabase 的「專案即將暫停」警告信，就是有效。若仍被暫停，追加更頻繁的寫入或升級 Pro。
+官方未保證，只能觀察：之後若不再收到 Supabase 的「專案即將暫停」警告信，就是有效。若仍被暫停（或收到「專案即將暫停」警告信），在 script 補上寫入（需新增一張只有一列時間戳的 `public.keepalive` 表加 RLS），再不行升級 Pro。
 ```
 
 - [ ] **Step 2: 手冊內容檢查**

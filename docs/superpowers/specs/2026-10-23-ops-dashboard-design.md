@@ -28,7 +28,7 @@
 | 前端 | Next.js 14 靜態匯出（Vercel）、Capacitor iOS／Android | 無產品分析、無錯誤監控 |
 | 後端 | FastAPI（Railway） | 無營運統計端點；Railway 後台有 Metrics 分頁（具體圖表以後台為準） |
 | 資料庫與驗證 | Supabase（含匿名登入） | `auth.users`（含 `is_anonymous`、`created_at`）、`collections`、`ai_api_usage`（無 user_id）、`trending_cache`、`daily_recommendations` |
-| 分享圖 | Puppeteer 微服務（Render 免費層） | 無 |
+| 分享圖 | Puppeteer 微服務（Railway，與後端同平台） | 無 |
 | 外部後台 | App Store Connect、Search Console | 各自獨立 |
 
 已知盲點：2026-10-22 TMDB 金鑰填錯時，搜尋端點仍回 HTTP 200（後端靜默略過 TMDB），Railway 與一般在線監控都不會發現。
@@ -51,17 +51,15 @@ Looker Studio 報表分頁：**成長｜AI 與成本｜行銷｜商店｜健康*
 
 ### 5.1 Supabase 防暫停 keepalive（第 0 階段）
 
-**依據**：官方文件〈Project Pausing〉：免費專案在「7 天內使用者資料庫活動不足」時暫停，「通常每天幾次對資料庫的請求就夠」，可用 API 呼叫產生活動；文件**沒有**說明唯讀請求是否算數。討論串中自稱 Supabase 員工的回覆說至少要一次寫入（未經官方文件證實）。因此設計成同時涵蓋讀與寫，且無法被保證，只能事後觀察。
+**依據**：官方文件〈Project Pausing〉：免費專案在「7 天內使用者資料庫活動不足」時暫停，「通常每天幾次對資料庫的請求就夠」，可用 API 呼叫產生活動；文件**沒有**說明唯讀請求是否算數。討論串中自稱 Supabase 員工的回覆說至少要一次寫入（未經官方文件證實）。Tu 的經驗是平常開 App 就算活動（但 App 本身也會寫入，這不足以證明唯讀就夠）。**決策（2026-10-24）**：先只做唯讀，不新增資料表；之後若仍被暫停或收到警告信，再補寫入。無法被保證，只能事後觀察。
 
 - **工作流程**：`.github/workflows/supabase-keepalive.yml`，每日一次（`17 3 * * *` UTC，避開整點），並支援 `workflow_dispatch`。免費：公開 repo 標準 runner 不限分鐘數。
-- **每次對 prod 與 dev 各做**：
-  1. 讀：`GET /rest/v1/collections?select=id&limit=1`
-  2. 寫：`PATCH /rest/v1/keepalive?id=eq.1`，body `{"pinged_at": "<now>"}`
-  - 兩者用 `curl --fail`，任一失敗則 workflow 失敗，GitHub 會寄信給 Tu（這也是專案被暫停時的警報）。
-- **新增資料表**（migration `server/migrations/004_keepalive.sql`，prod 與 dev 都要套用）：`public.keepalive(id int primary key, pinged_at timestamptz)`，預先插入 `id=1` 一列；啟用 RLS，只允許 anon **SELECT 與 UPDATE** 該列（`PATCH ... ?id=eq.1` 需要能讀到該列才能更新），不允許 INSERT／DELETE。表內只有一列時間戳，被濫用也無害。
+- **每次對 prod 與 dev 各做一次**：`GET /rest/v1/collections?select=id&limit=1`（RLS 下 anon 通常回 `[]`，仍是一次真實的資料庫查詢）。
+  - 用 `curl --fail`，並檢查回應是 JSON 陣列（閘道錯誤頁可能回 200 的 HTML）；任一失敗則 workflow 失敗，GitHub 會寄信給 Tu（這也是專案被暫停時的警報）。
+- **不需要 migration**：不新增資料表，不動資料庫結構。
 - **Secrets**（GitHub repo secrets）：prod 與 dev 各一組 `SUPABASE_URL` 與 anon key（只用 anon，絕不放 service role）。
-- **驗證**：兩個專案手動觸發都成功、`pinged_at` 有更新；故意用錯誤 key 時 workflow 會失敗並寄信。長期有效性靠觀察：之後不再收到 Supabase 的「即將暫停」警告信。
-- **後備**：若觀察到仍被暫停，改用 Supabase Pro（不暫停），或追加更頻繁的寫入。
+- **驗證**：兩個專案手動觸發都成功；故意用錯誤 key 時 workflow 會失敗並寄信。長期有效性靠觀察：之後不再收到 Supabase 的「即將暫停」警告信。
+- **後備**：若觀察到仍被暫停，先在 script 補上寫入（新增一張只有一列時間戳的 `public.keepalive` 表加 RLS，只允許 anon SELECT 與 UPDATE 該列），再不行改用 Supabase Pro（不暫停）。
 
 ### 5.2 健康監控（第 1 階段）
 
@@ -75,10 +73,11 @@ Looker Studio 報表分頁：**成長｜AI 與成本｜行銷｜商店｜健康*
 | Google Books 是否正常 | 書籍關鍵字搜尋含 `"source":"google_books"` | 同上 |
 | Web App | `https://storio.andismtu.com/` HTTP 200 | 前端是否在線 |
 | 落地頁 | `https://ziziandydy.github.io/storio_2/` HTTP 200 | 行銷入口 |
-| Puppeteer | `/health` | 分享圖服務；Render 免費層會休眠，5 分鐘一次的檢查會讓它保持喚醒（副作用，需留意免費時數） |
+| Puppeteer | `/health` | 分享圖服務（已遷移到 Railway，不休眠）；Railway 為付費依用量計費，本監控只是輕量 GET，用量影響可忽略 |
 
 - 上表只用到 UptimeRobot 免費版的 **HTTP** 與 **Keyword** 兩種監控，Port 與 Ping 用不到；7 個以內遠低於 50 個上限。
-- 搜尋端點有 30 次／分鐘的限流，5 分鐘一次不會觸發。
+- 搜尋端點有 30 次／分鐘的限流，不會觸發。
+- **不得產生額外費用**：不新增服務、不升級監控方案；TMDB 與 Google Books 兩項內容檢查設 15 分鐘一次（會讓後端去打外部 API），其餘 5 分鐘。
 
 **免費版覆蓋不到的項目與取捨**：
 
@@ -116,7 +115,7 @@ Looker Studio 報表分頁：**成長｜AI 與成本｜行銷｜商店｜健康*
   - **AI 與成本**（第 1 階段）：呼叫量、失敗率、token、延遲
   - **行銷**（第 2 階段）：Search Console 連接器（原生），涵蓋落地頁與 App 網域
   - **商店**（第 3 階段）：App Store Connect 資料，經 n8n 每日寫入 Google Sheet 再接入
-  - **健康**（第 1 階段）：UptimeRobot 狀態頁與 Railway、Render 後台的連結。**不依賴 iframe 嵌入**（Looker Studio 嵌入外部網頁的限制查證不到可靠說法）
+  - **健康**（第 1 階段）：UptimeRobot 狀態頁與 Railway 後台（後端與 Puppeteer 同在 Railway）的連結。**不依賴 iframe 嵌入**（Looker Studio 嵌入外部網頁的限制查證不到可靠說法）
 - 更新頻率：非健康指標以每日為單位即可，**不依賴特定的快取間隔**；實作時實測資料新鮮度。
 - 手機：用瀏覽器開報表連結；版面用手機友善的頁面尺寸。
 - 分享：僅限 Tu 的 Google 帳號，**不公開**（含用戶數與營運資料）。
@@ -125,7 +124,7 @@ Looker Studio 報表分頁：**成長｜AI 與成本｜行銷｜商店｜健康*
 
 | 階段 | 內容 | 前置 |
 |---|---|---|
-| 0 | keepalive workflow + `keepalive` 表（prod、dev） | 無 |
+| 0 | keepalive workflow（prod、dev，唯讀） | 無 |
 | 1 | UptimeRobot 監控、`ops` views + `looker_ro`、Looker 的「成長」「AI 與成本」「健康」分頁 | Looker 連 Supabase 成功 |
 | 2 | Search Console「行銷」分頁 | 第 1 階段 |
 | 3 | App Store Connect → n8n → Google Sheet →「商店」分頁 | 需要 App Store Connect API 金鑰，需妥善保管 |
@@ -142,7 +141,7 @@ Looker Studio 報表分頁：**成長｜AI 與成本｜行銷｜商店｜健康*
 
 ## 8. 驗收標準
 
-1. keepalive：兩個專案手動觸發皆成功、`pinged_at` 更新；用錯誤 key 時 workflow 失敗並寄信。
+1. keepalive：兩個專案手動觸發皆成功；用錯誤 key 時 workflow 失敗並寄信。
 2. 權限：以 `looker_ro` 登入，能查 `ops` views，**不能**查 `auth.users` 與 `public.collections`。
 3. 指標正確：各 view 的數字與手寫 SQL 的結果相符。
 4. 警報：暫時把 TMDB 關鍵字改錯，監控會在 5～10 分鐘內發出通知，再改回來。
