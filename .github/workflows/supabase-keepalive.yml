@@ -1,0 +1,30 @@
+name: Supabase Keepalive
+
+on:
+  schedule:
+    # 每日 03:17 UTC（避開整點的排程擁擠）
+    - cron: '17 3 * * *'
+  workflow_dispatch: # 允許手動觸發
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ping prod
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_PROD_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_PROD_ANON_KEY }}
+        run: bash scripts/supabase-keepalive.sh
+
+      # prod 失敗時 dev 仍要 ping，兩邊的失敗都要被看到
+      - name: Ping dev
+        if: always()
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_DEV_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_DEV_ANON_KEY }}
+        run: bash scripts/supabase-keepalive.sh
