@@ -45,7 +45,7 @@ storio_2/
 │   ├── services/           # Service 層 (業務邏輯)
 │   ├── repositories/       # Repository 層 (Supabase 讀寫)
 │   └── schemas/            # Pydantic Models
-├── docs/               # PRD, Wiki, Backlog, Sprint Specs
+├── docs/               # PRD, Wiki, Backlog, Sprint Specs, OPS_DASHBOARD（營運觀測維運手冊）
 ├── marketing/          # 行銷素材產線：IG Story 廣告影片 (ig-story-15s)、App Store 截圖 (app-store-screenshots)
 ├── openspec/           # OpenSpec 變更提案 (changes/, specs/)
 └── GEMINI.md           # 專案核心規範 (必讀)
@@ -60,6 +60,7 @@ storio_2/
 3. **`docs/BACKLOG.md`** — 確認當前任務優先級與已知 Bug
 4. **`docs/PRD.md`** — 確認產品規格邊界
 5. **`docs/DEV_SETUP.md`** — 啟動開發環境的正確指令
+6. **`docs/OPS_DASHBOARD.md`** — 營運報表、keepalive、監控的入口與維護（動到 `server/migrations/` 的 `ops` views 或監控時必讀）
 
 ---
 
@@ -250,7 +251,7 @@ find-skills                         # 尋找新技能
 | 服務 | 平台 | 方案 |
 |------|------|------|
 | Frontend | Vercel | Hobby |
-| Backend | Railway | Free Tier |
+| Backend | Railway | Free Tier（含 Puppeteer 分享圖服務） |
 | Database & Auth | Supabase | Free Tier |
 
-> 注意：Supabase Free Tier 連續 7 天無活動會自動暫停。
+> 注意：Supabase Free Tier 連續 7 天無活動會自動暫停；已有每日 keepalive（`.github/workflows/supabase-keepalive.yml`，只讀）防止，見 `docs/OPS_DASHBOARD.md`。

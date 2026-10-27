@@ -7,7 +7,7 @@
 Storio 2 是一個強調「沉浸式行動優先 (Mobile-First)」的個人典藏室系統，核心概念為「Storio - Collect stories in your folio」。
 
 *   **Frontend**: Next.js (React App Router) + Tailwind CSS，支援 Static HTML Export 並封裝於 **Capacitor (iOS + Android)**。Android 技術落地已完成（`client/android/`），上架送審規劃見 `docs/superpowers/specs/2026-09-25-google-play-submission-design.md`。
-*   **Backend**: FastAPI (Python)，部署於 Vercel Serverless Functions。
+*   **Backend**: FastAPI (Python)，部署於 Railway（分享圖片的 Puppeteer 微服務也在 Railway）。
 *   **Landing Page**: 獨立的 `index.html` (Tailwind CDN) 置於根目錄，支援 GitHub Pages 與多語系。
 *   **Database & Auth**: Supabase (PostgreSQL) 提供資料庫、身分驗證（Anonymous Login、Google OAuth、**Apple Sign-In**）。Apple Sign-In 採 Hybrid 方案：iOS 原生用 `@capacitor-community/apple-sign-in`（Face ID），Web 用 `signInWithOAuth`；**Android 無原生實作、UI 上隱藏該選項**（`isIOSPlatform()`/`isNativePlatform()` 判斷）。Google 登入的 Android 版需注意 `capacitor.config.ts` 的 `androidClientId` 必須填 **Web** 類型 OAuth Client（非 Android 類型），否則觸發 `DEVELOPER_ERROR`。邏輯封裝於 `client/src/lib/appleAuth.ts`。
 
@@ -105,7 +105,7 @@ Storio 2 是一個強調「沉浸式行動優先 (Mobile-First)」的個人典�
 ### 部署服務分配
 
 *   **前端 (Frontend)**: Vercel (Hobby Tier)
-*   **後端 (Backend)**: Railway (Starter / Free Tier)
+*   **後端 (Backend)**: Railway（FastAPI 與 Puppeteer 分享圖服務，依用量計費）
 *   **資料庫與驗證 (Database & Auth)**: Supabase (Free Tier)
 
 ### 承受使用量上限與擴充評估 (Scaling Triggers)
@@ -128,3 +128,13 @@ Storio 2 是一個強調「沉浸式行動優先 (Mobile-First)」的個人典�
     *   **擴充時機**:
         *   **Serverless 超時**: 若 Next.js Server Actions (例如：生成分享圖片、或呼叫 AI API 時) 等待後端處理的時間超過 10 秒，會直接被 Vercel 中斷並報錯。此時需升級 Pro (可延長為 15~300 秒) 或是將耗時邏輯完全移交非同步的 Railway 背景處理。
         *   **CDN 流量突增**: 社群分享帶來突發流量，導致每月 100GB 頻寬用盡。
+
+## 6. 營運觀測 (Ops Dashboard)
+
+營運觀測只讀資料、不改變 App 行為；完整入口、指標定義與維護流程見 [`docs/OPS_DASHBOARD.md`](OPS_DASHBOARD.md)。
+
+*   **keepalive**：`.github/workflows/supabase-keepalive.yml` + `scripts/supabase-keepalive.sh`，每日對 prod 與 dev Supabase 各做一次唯讀查詢，避免免費專案閒置被暫停；失敗時 GitHub 寄信。
+*   **`ops` schema（只存在 prod）**：`server/migrations/004_ops_dashboard.sql`、`005_ops_activity.sql` 建立彙總 views（註冊、啟用、留存代理、收藏、AI 用量、活躍人數），唯讀角色 `looker_ro` 只能讀這些 views，`ops` 不對外公開 API。
+*   **Looker Studio 報表**：以自訂 SQL 讀 `ops` views，五個分頁（成長／AI 與成本／啟用與留存／活躍／健康），僅限 Tu 的 Google 帳號。
+*   **UptimeRobot**：6 個 HTTP／Keyword 監控（含 TMDB、Google Books 靜默失敗偵測），只用 email 通知；監控不得產生額外費用。
+*   **限制**：上線人數為近似值（`auth.sessions`）、留存以「建立收藏」近似、日期為 UTC。

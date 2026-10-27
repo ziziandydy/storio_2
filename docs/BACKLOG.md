@@ -1,6 +1,29 @@
 # Storio 專案待辦清單與未來優化 (Backlog & Future Improvements)
 
-最後更新：2026-07-14
+最後更新：2026-10-27
+
+---
+
+## 📍 最新狀態（2026-10-27）
+
+> 下方各里程碑是 v1.13～v1.16 的歷史紀錄；v1.17 之後的詳細內容見 `client/CHANGELOG.md`。
+
+**App 版本**：iOS v1.19.0（build 25）已上線，含分季收藏（v1.17）、churn-rescue 通知階梯（v1.18）、分享「Saved 假成功」修復與 AI 建議改寫（v1.19）。Android 技術落地完成，Play 送審素材備妥於 `docs/play-store-assets/`，等 Tu 在 Play Console 操作。
+
+**營運觀測（2026-10-27 完成）**：Supabase keepalive（GitHub Actions 每日）、UptimeRobot 6 個監控、Looker Studio 報表（成長／AI 與成本／啟用與留存／活躍／健康）。入口與維護見 [`docs/OPS_DASHBOARD.md`](OPS_DASHBOARD.md)。
+
+### 待辦
+
+| 優先 | 項目 | 說明 |
+|------|------|------|
+| P1 | 依賴套件安全更新 | `npm audit` 有 3 個 critical（`next` 14.1.0、`@capacitor/ios` 7.6.0、`tar`）與 6 個 high。`next` → 14.2.35 為 minor 升級但會影響 Vercel 與 iOS 靜態 build，`@capacitor/ios` 需要新的 App Store build，兩者都要先做完整回歸再發版 |
+| P1 | 啟用 GitHub 安全功能 | repo 的 Dependabot alerts、secret scanning 目前都關閉，也沒有 code scanning；需要在 Settings → Code security 開啟 |
+| P2 | 新用戶不收藏 | 2026-10 數據：註冊（含匿名）約 2,588，收藏過的僅約 20 人；近 30 天只有 1 人新增收藏，啟用率近期為 0。需要產品面解法（引導、首次收藏流程） |
+| P2 | App 開啟事件記錄 | 營運報表的「上線人數」目前以 session 更新時間近似，歷史趨勢被低估；要準確 DAU/MAU 需在 App 端記錄開啟事件 |
+| P2 | 心得潤飾 prompt 改寫 | v1.19.0 後潤飾輸出仍偏匠氣 |
+| P3 | v1.16.0 人物搜尋 4 個 Minor findings | 見該版本 review 紀錄；Show trending 仍擱置 |
+| P3 | 觀察 keepalive 有效性 | keepalive 只讀；若收到 Supabase「即將暫停」警告信，補寫入（做法見維運手冊） |
+| P3 | 監控成本複查 | 約 2026-11-24 到 Railway Usage 頁確認監控沒有讓用量明顯增加 |
 
 ---
 
