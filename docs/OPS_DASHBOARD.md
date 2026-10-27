@@ -1,0 +1,81 @@
+# Storio 營運 Dashboard 維運手冊
+
+> 設計：`docs/superpowers/specs/2026-10-23-ops-dashboard-design.md`
+> 計畫：`docs/superpowers/plans/2026-10-23-ops-dashboard.md`
+
+## 入口
+
+- 報表（Looker Studio，名稱 Storio Ops，不公開）：<https://datastudio.google.com/reporting/ac4485d1-2b4a-494c-aefd-a4ebaba31888>
+- 即時健康（UptimeRobot 登入後台，非公開狀態頁）：<https://dashboard.uptimerobot.com/status/1277301/monitors>
+- 通知管道：email（UptimeRobot 與 GitHub Actions 失敗信都寄到 Tu 的信箱，手機用 Gmail 通知）
+
+## 報表分頁
+
+| 分頁 | 看什麼 | 資料來源（`ops` schema） |
+|---|---|---|
+| 成長 | 總用戶、正式註冊、總收藏、啟用率與心得／評分／分季使用率、正式與匿名每日新增、每日新增收藏（依類型） | `v_signups_daily`、`v_activation`、`v_collections_daily`、`v_activity_summary` |
+| AI 與成本 | 每日呼叫量、失敗率、token、延遲 | `v_ai_usage_daily` |
+| 啟用與留存 | 啟用率趨勢（只含註冊滿 7 天）、留存透視表 | `v_activation`、`v_retention_proxy` |
+| 活躍 | 近 7／30 天上線人數、有新增收藏人數、正式新註冊；近 30 天每日趨勢 | `v_activity_summary`、`v_active_daily`、`v_signups_daily` |
+| 健康 | UptimeRobot、Railway、Supabase 後台連結（不嵌入外部頁面） | 無 |
+
+## 組成
+
+| 元件 | 位置 | 做什麼 |
+|---|---|---|
+| keepalive | `.github/workflows/supabase-keepalive.yml`、`scripts/supabase-keepalive.sh` | 每日 03:17 UTC 對 prod 與 dev 各做一次唯讀查詢，失敗時 GitHub 寄信 |
+| `ops` views | `server/migrations/004_ops_dashboard.sql`、`005_ops_activity.sql`（只存在 prod） | 彙總註冊、啟用、留存代理、收藏、AI 用量、活躍人數 |
+| `looker_ro` | prod 資料庫角色 | 只能讀 `ops` views；連線上限 15 |
+| 監控 | UptimeRobot 免費版（限非商業用途） | 6 個 HTTP／Keyword 監控，含 TMDB 與 Google Books 靜默失敗偵測 |
+| 報表 | Looker Studio | 每個 view 一個自訂查詢資料來源（`select * from ops.v_xxx`），資料新鮮度 12 小時 |
+
+## 指標定義（看數字前先讀）
+
+- **註冊含匿名**：`auth.users` 全部帳號。匿名帳號是 App 首次開啟時自動建立，約等於「新安裝」，不是真人註冊；卡片標「正式」才排除匿名。
+- **上線人數是近似值**：以 `auth.sessions` 最後更新時間計，App 沒有記錄開啟事件。近 7／30 天卡片相對可信；每日趨勢的歷史部分因為每個 session 只留最後一次更新，會被低估。要準確數字需在 App 端記錄開啟事件（另開功能）。
+- **有新增收藏**：`public.collections.created_at`，滾動窗（現在往前 7／30 天），不是日曆週／月。
+- **留存以「建立收藏」近似**，看不到單純開啟 App。
+- **啟用率**：註冊後 7 天內至少新增 1 筆收藏的比例；註冊不滿 7 天的群組以 `cohort_mature` 排除。
+- **AI 延遲**：view 依 endpoint／provider／model 分開存百分位數，報表日彙總 p50 取各組平均、p95 取各組最大，是近似值。
+- 日期一律 UTC，台灣晚間資料會落在前一天。
+
+## 常見維護
+
+### 輪替 `looker_ro` 密碼
+1. 終端機：`openssl rand -base64 24 | tr -d '/+=' | cut -c1-24`
+2. Supabase prod SQL Editor：`alter role looker_ro login password '<新密碼>';`
+3. Looker Studio 各資料來源重新授權（更新密碼；PostgreSQL 資料來源沒有複製功能，每個要各自輸入）。
+4. 密碼只存在密碼管理器，不放 repo。
+
+### 新增一個指標
+1. 在新的 migration（例如 `006_*.sql`）用 `create or replace view ops.v_xxx` 建 view，保持預先彙總（Looker 單次查詢上限 15 萬列）。
+2. 對 `looker_ro` 授權：`grant select on ops.v_xxx to looker_ro;`（`004` 的 `grant ... on all tables` 只涵蓋當時已存在的 view，新 view 必須自己授權。）
+3. 在 prod SQL Editor 執行 migration。
+4. 在 Looker Studio 新增自訂查詢資料來源 `select * from ops.v_xxx`（連線資訊：prod session pooler、使用者 `looker_ro.<專案代碼>`、SSL 並上傳 Supabase 根憑證改名的 `.pem`、不勾 client authentication）。
+5. 日期一律 UTC。
+
+### Looker 出現 `too many connections for role "looker_ro"`
+資料來源與圖表各自佔連線，上限已調為 15。若新增很多資料來源後又出現，到 Supabase SQL Editor 執行 `alter role looker_ro connection limit <更大的數字>;`。這個錯誤不會出現在 `pg_stat_activity`，要看 Supabase Pooler 日誌。
+
+### Supabase 專案被暫停了
+1. 看 GitHub 是否有 `Supabase Keepalive` 失敗信，確認是 prod 還是 dev。
+2. 到 Supabase Dashboard 按 Restore project。
+3. 還原後手動觸發：`gh workflow run supabase-keepalive.yml`。
+4. keepalive 目前只讀；若仍被暫停，或收到 Supabase「即將暫停」警告信，補寫入：建立一張只有一列時間戳的 `public.keepalive` 表加 RLS（只允許 anon SELECT／UPDATE），並讓 script 每日更新那一列。
+5. 若反覆被暫停，評估升級 Supabase Pro。
+
+### UptimeRobot 告警處理
+- Backend alive 失敗：Railway 後端掛了，先看 Railway Metrics 與部署日誌。
+- TMDB／Google Books 失敗：後端活著但外部 API 靜默壞掉（API 金鑰、額度）。這兩項 30 分鐘檢查一次，避免多餘的外部呼叫。
+- 監控不得產生額外費用：不新增服務、不升級付費方案；Railway 只被輕量 GET 打。一個月後到 Railway Usage 頁確認用量沒有明顯增加。
+
+## 已知限制
+
+- 上線人數為近似值（見上）。
+- 留存以「建立收藏」近似，看不到單純開啟 App。
+- AI 用量沒有 user_id，看不到每人用量。
+- 資料庫健康只有每日 keepalive，沒有 5 分鐘即時偵測（`/search/trending/*` 有程序內記憶體快取，不能當 DB 檢查）。
+- AI 金鑰失效最慢隔天從失敗率發現，不是即時警報。
+- 報表資料新鮮度 12 小時，不是即時。
+- 報表內嵌的資料來源綁在報表上，刪除或複製報表前要想清楚。
+- Looker Studio 沒有可建立圖表的官方 API，圖表只能在介面中手動維護。
