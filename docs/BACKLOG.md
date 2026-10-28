@@ -16,8 +16,8 @@
 
 | 優先 | 項目 | 說明 |
 |------|------|------|
-| P1 | 依賴套件安全更新 | `npm audit` 有 3 個 critical（`next` 14.1.0、`@capacitor/ios` 7.6.0、`tar`）與 6 個 high。`next` → 14.2.35 為 minor 升級但會影響 Vercel 與 iOS 靜態 build，`@capacitor/ios` 需要新的 App Store build，兩者都要先做完整回歸再發版 |
-| P1 | 啟用 GitHub 安全功能 | repo 的 Dependabot alerts、secret scanning 目前都關閉，也沒有 code scanning；需要在 Settings → Code security 開啟 |
+| P1 | 依賴套件安全更新 | `npm audit` 有 3 個 critical（`next` 14.1.0、`@capacitor/ios` 7.6.0、`tar`）與 6 個 high。`next` → 14.2.35 為 minor 升級但會影響 Vercel 與 iOS 靜態 build，`@capacitor/ios` 需要新的 App Store build，兩者都要先做完整回歸再發版。**已決定（2026-10-27）排進下一次 iOS 發版一起做**：先跑 `npm test`、`next lint`、`build:ios`，再上真機；backend 另需 `pip-audit` 掃描 |
+| ✅ | GitHub 安全功能 | 2026-10-27 已開啟 Dependabot alerts、secret scanning 與 push protection；Dependabot 自動升級 PR 與 code scanning 刻意未開 |
 | P2 | 新用戶不收藏 | 2026-10 數據：註冊（含匿名）約 2,588，收藏過的僅約 20 人；近 30 天只有 1 人新增收藏，啟用率近期為 0。需要產品面解法（引導、首次收藏流程） |
 | P2 | App 開啟事件記錄 | 營運報表的「上線人數」目前以 session 更新時間近似，歷史趨勢被低估；要準確 DAU/MAU 需在 App 端記錄開啟事件 |
 | P2 | 心得潤飾 prompt 改寫 | v1.19.0 後潤飾輸出仍偏匠氣 |
