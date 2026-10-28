@@ -20,7 +20,7 @@ const notoSansTC = Noto_Sans_TC({
 
 export const metadata: Metadata = {
   title: "Storio - Collect stories in your Folio",
-  description: "A personal collection of movies, series, and books.",
+  description: "Storio is a free app to collect the movies, series and books that shape you, rate them, write short reflections, and share story cards. Available on iPhone and the web.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

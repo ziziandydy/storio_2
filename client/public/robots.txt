@@ -17,3 +17,5 @@ User-agent: PerplexityBot
 Allow: /
 User-agent: Google-Extended
 Allow: /
+
+Sitemap: https://storio.andismtu.com/sitemap.xml

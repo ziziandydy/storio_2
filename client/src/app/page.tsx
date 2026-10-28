@@ -19,6 +19,7 @@ import { SplashScreen as NativeSplash } from '@capacitor/splash-screen';
 import { isNativePlatform, isIOSPlatform, nativeAppleSignIn } from '@/lib/appleAuth';
 import { nativeGoogleSignIn } from '@/lib/googleAuth';
 import { useToast } from '@/components/ToastProvider';
+import HomeJsonLd from '@/components/HomeJsonLd';
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
@@ -120,11 +121,17 @@ export default function Home() {
   };
 
   if (!isInitialized) {
-    return <div className="fixed inset-0 bg-folio-black z-[200]" />;
+    return (
+      <>
+        <HomeJsonLd />
+        <div className="fixed inset-0 bg-folio-black z-[200]" />
+      </>
+    );
   }
 
   return (
     <div className="bg-folio-black min-h-screen text-white font-sans relative overflow-x-hidden selection:bg-accent-gold/30">
+      <HomeJsonLd />
       {/* 動態島安全區域遮罩 */}
       <div className="fixed top-0 left-0 right-0 h-[var(--sa-top)] bg-folio-black z-[100] pointer-events-none" />
 
