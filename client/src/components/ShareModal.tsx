@@ -9,6 +9,7 @@ import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { getRenderServiceHealth, blobToBase64 } from '@/lib/share-api';
+import { getURL } from '@/lib/supabase';
 import { useProgressiveRenderQueue } from '@/hooks/useProgressiveRenderQueue';
 import type { RenderPayload, RenderSettings } from '@/lib/share-api';
 import type { TemplateId } from '@/hooks/useProgressiveRenderQueue';
@@ -193,7 +194,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
 
     setIsSharing(true);
     const blob = cacheEntry.blob;
-    const shareMessage = `${t.details.shareMessage} ${window.location.origin}`;
+    const shareMessage = `${t.details.shareMessage} ${getURL()}`;
 
     try {
       if (Capacitor.isNativePlatform()) {

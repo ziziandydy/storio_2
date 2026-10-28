@@ -14,6 +14,9 @@ const m = vi.hoisted(() => ({
   base64: vi.fn(),
 }));
 
+// 原生 App 的 window.location.origin 是 capacitor://localhost，分享文字必須用正式網址
+vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://storio.andismtu.com');
+
 vi.mock('framer-motion', () => {
   const strip = ({ initial, animate, exit, transition, drag, dragConstraints, dragElastic, onDragEnd, ...rest }: Record<string, unknown>) => rest;
   const make = (Tag: string) => {
@@ -307,7 +310,7 @@ describe('ShareModal — 原生 App（iOS / Android）', () => {
     expect(m.nativeShare).toHaveBeenCalledTimes(1);
     expect(m.nativeShare.mock.calls[0][0]).toEqual({
       title: 'Share',
-      text: `${T.details.shareMessage} ${window.location.origin}`,
+      text: `${T.details.shareMessage} https://storio.andismtu.com/`,
       url: 'file:///cache/out.png',
     });
     expect(m.writeFile.mock.invocationCallOrder[0]).toBeLessThan(m.nativeShare.mock.invocationCallOrder[0]);

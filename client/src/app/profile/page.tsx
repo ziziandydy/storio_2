@@ -346,7 +346,7 @@ export default function ProfilePage() {
       try {
         await navigator.share({
           title: 'Storio',
-          text: `${t.profile.shareMessage} ${window.location.origin}`,
+          text: `${t.profile.shareMessage} ${getURL()}`,
         });
       } catch (err) {
         console.error('Share failed:', err);

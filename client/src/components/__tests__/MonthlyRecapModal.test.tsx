@@ -14,6 +14,9 @@ const m = vi.hoisted(() => ({
   token: { current: 'tok' as string | null },
 }));
 
+// 原生 App 的 window.location.origin 是 capacitor://localhost，分享文字必須用正式網址
+vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://storio.andismtu.com');
+
 vi.mock('framer-motion', () => {
   const strip = ({ initial, animate, exit, transition, drag, dragConstraints, dragElastic, onDragEnd, ...rest }: Record<string, unknown>) => rest;
   const make = (Tag: string) => {
@@ -293,7 +296,7 @@ describe('MonthlyRecapModal — 原生 App 分享 / 儲存', () => {
     expect(w.directory).toBe('CACHE');
     expect(m.nativeShare.mock.calls[0][0]).toEqual({
       title: 'FEB 2026',
-      text: `${T.details.shareMessage} ${window.location.origin}`,
+      text: `${T.details.shareMessage} https://storio.andismtu.com/`,
       url: 'file:///cache/recap.png',
     });
   });
