@@ -3,7 +3,7 @@ import path from 'path';
 
 export default defineConfig({
   // tsconfig 的 jsx 為 "preserve"（給 Next 用），測試環境需自行轉譯 JSX
-  esbuild: { jsx: 'automatic' },
+  oxc: { jsx: { runtime: 'automatic' } },
   test: {
     // 預設 node；元件 / hook 測試檔以 `// @vitest-environment jsdom` 切換
     environment: 'node',
