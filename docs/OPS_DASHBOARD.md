@@ -64,6 +64,27 @@
 4. keepalive 目前只讀；若仍被暫停，或收到 Supabase「即將暫停」警告信，補寫入：建立一張只有一列時間戳的 `public.keepalive` 表加 RLS（只允許 anon SELECT／UPDATE），並讓 script 每日更新那一列。
 5. 若反覆被暫停，評估升級 Supabase Pro。
 
+### 部署後用 Railway CLI 驗證
+後端與 Puppeteer 分享圖服務都在 Railway 專案 `comfortable-spontaneity`（production）：後端服務名 `storio_2`、分享圖服務名 `worthy-beauty`。另一個專案 `outstanding-rebirth` 與 Storio 無關，不要連到它。push 到 main 會自動重新部署。外部請求只能推測有沒有換新版，部署狀態與日誌要用 CLI 看。
+
+一次性設定（Tu 自己做，登入會開瀏覽器授權）：
+```bash
+brew install railway
+railway login
+cd ~/Sites/storio_2 && railway link -w "Anderson Tu's Projects" -p comfortable-spontaneity -e production
+```
+
+每次 push 到 main 後（動到 `server/` 或 `puppeteer-service/` 時必做）：
+1. `railway deployment list --service storio_2`（分享圖服務換成 `worthy-beauty`）：最新一筆要是 SUCCESS，不是 FAILED／CRASHED。
+2. `railway logs --service storio_2`：確認啟動沒有 traceback、依賴安裝沒失敗。
+3. 外部煙霧測試：
+   - 後端：`curl https://storio2-production.up.railway.app/` 回 `{"status":"online",...}`；`/api/v1/collection/` 不帶 token 應回 401。
+   - 分享圖：`curl https://worthy-beauty-production.up.railway.app/health` 回 `ok`，uptime 歸零代表已換新版。
+4. 升級認證、HTTP 層或 AI 套件時，另在 App 實測登入、搜尋、分享圖各一次。
+5. 出問題：Railway 後台對上一個成功的部署按 Redeploy／Rollback，再修。
+
+注意：CLI 登入後有部署、改環境變數、刪服務的權限；Claude 只用唯讀指令（status、deployment list、logs），改設定或部署要先問 Tu。不要使用 `curl … | sh` 的 agents 安裝腳本（會連帶改 AI 工具的 MCP 設定），以 Homebrew 安裝即可。
+
 ### UptimeRobot 告警處理
 - Backend alive 失敗：Railway 後端掛了，先看 Railway Metrics 與部署日誌。
 - TMDB／Google Books 失敗：後端活著但外部 API 靜默壞掉（API 金鑰、額度）。這兩項 30 分鐘檢查一次，避免多餘的外部呼叫。
