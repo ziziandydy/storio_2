@@ -16,7 +16,7 @@
 
 | 優先 | 項目 | 說明 |
 |------|------|------|
-| P1 | **下次 iOS 發版內容（待發）** | ① 修復分享文字網址：原生 App 內 `window.location.origin` 是 `capacitor://localhost`，複製／分享出現打不開的連結；已於 2026-10-28 修好（`7c3c025`），**程式已在 main，但已上架的 App 要發新版才會修好**。② 依賴升級階段 4：`next` 14.1.0 → 14.2.35、`@capacitor/ios`／`cli`／`core` 對齊 7.6.9 以上、`npm audit fix` 處理 `tar`、`@xmldom/xmldom`、`nanoid`、`postcss`、`ws`。發版前跑 `npm test`、`next lint`、`build:ios`，再上真機（登入、收藏、分享、通知）。Supabase 不需 migration |
+| P1 | **下次 iOS 發版內容（待發）** | ① 修復分享文字網址：原生 App 內 `window.location.origin` 是 `capacitor://localhost`，複製／分享出現打不開的連結；已於 2026-10-28 修好（`7c3c025`），**程式已在 main，但已上架的 App 要發新版才會修好**。② 依賴升級階段 4：`next` 14.1.0 → 14.2.35、`@capacitor/ios`／`cli`／`core` 對齊 7.6.9 以上、`npm audit fix` 處理 `tar`、`@xmldom/xmldom`、`nanoid`、`postcss`、`ws`。③ **送審前先補 iOS App Privacy 聲明**：「心得建議／潤飾」會把作品標題、簡介與使用者心得送到 Gemini／OpenAI，但 App Store Connect「App 隱私」只聲明 Email／Name（Authentication），需補「使用者內容」並標明用於 App 功能、由第三方處理（Google Play Data Safety 已補）；這是後台設定，不用重新 build，只有 Tu 能操作。發版前跑 `npm test`、`next lint`、`build:ios`，再上真機（登入、收藏、分享、通知）。Supabase 不需 migration |
 | P1 | 依賴安全更新（進行中） | 2026-10-28 已完成：刪除 `client/pnpm-lock.yaml`、後端依賴 120→85 行並升級 PyJWT／anyio／certifi／cryptography／urllib3／protobuf、`puppeteer-service` 的 express 系列；Dependabot 警示 370→145，後端 critical 清空。**剩餘**：階段 2 FastAPI＋Starlette 跨大版本（只動 Railway，風險高，建議用 Opus）、階段 3b `puppeteer` 22 升級（要比對 6 個分享模板截圖，只動 Railway）、階段 4（併入上一列）、階段 5 開發工具 `vitest` 等（只影響本機）。`client/` 仍有 12 個 critical，來源是 `next`、`@capacitor/ios`、`tar`、`handlebars`、`tinypool`、`vitest` |
 | P3 | Railway 部署設定 | ① 每次 push 到 main 兩個 Railway 服務都會重新部署（含純文件），可設 Watch Paths；② `worthy-beauty` 日誌出現 Vercel 預覽網址 CORS 被擋，視需要放行。皆為 Railway／服務設定變更，需 Tu 決定 |
 | ✅ | GitHub 安全功能 | 2026-10-27 已開啟 Dependabot alerts、secret scanning 與 push protection；Dependabot 自動升級 PR 與 code scanning 刻意未開 |
@@ -295,7 +295,7 @@ Storio 1.0 正式通過 Apple 審核並上架 App Store。歷經動態島修復�
 - [x] **分享「Saved」但相簿沒圖 (Fake Saved on Native)**: *(已修復 2026-10-03，v1.19.0 build 25 已於 2026-10-07 確認上線)* `ShareModal`/`MonthlyRecapModal` 的 Download 用 `<a download>` + blob URL，在 iOS WKWebView 無效但仍顯示 Saved。→ 原生 App 移除 Download 鈕，分享鈕改「Share / Download」，由系統分享面板的「儲存影像」存進相簿；網頁桌面保留 Download。
 - [x] **分享渲染佇列 4 個 bug**: *(已修復 2026-10-03，補 121 項前端測試時挖出)* ① 開啟後 1.5s 重複渲染整輪並 revoke 畫面上的圖；② 渲染途中切換模板，被選的模板被 `slice(1)` 誤刪而卡在「請稍候」；③ 月回顧在統計資料到達前以空資料渲染並快取，導致分享空白圖；④ 快取過期（5 分鐘）後按分享毫無反應。
 - [ ] **「心得潤飾」prompt 匠氣 (Refine Reflection Prompt)**: `refine_reflection` 的 prompt 要求 "more insightful / expand even short thoughts into meaningful sentences"，會把「看完哭了，推。」改成「深深觸動了我的心…真誠推薦給每個人」——文謅謅且擅自加內容。建議比照心得建議的做法重寫：保留使用者原意與口氣、只順稿、不加新觀點、不拉長，並補測試。
-- [ ] **iOS App Privacy 聲明漏報 AI 資料流**: 「心得建議／潤飾」會把作品標題、簡介與使用者心得文字送到 Gemini / OpenAI 第三方處理，但 iOS App Privacy 只聲明 Email/Name（Authentication）。Google Play Data Safety 已補上，iOS 之後應回頭補正。
+- [ ] **iOS App Privacy 聲明漏報 AI 資料流**: 「心得建議／潤飾」會把作品標題、簡介與使用者心得文字送到 Gemini / OpenAI 第三方處理，但 iOS App Privacy 只聲明 Email/Name（Authentication）。Google Play Data Safety 已補上，iOS 之後應回頭補正。**已併入「下次 iOS 發版內容」③（送審前處理）。**
 - [x] **分享預覽與匯出圖片空白 (Share Image Blank Issue — Round 2)**: *(已修復 2026-03-20)*
   - **Root Cause 1**：`proxy.py` 手動設定 `Access-Control-Allow-Origin: *` 與 `CORSMiddleware` 的 `allow_credentials=True` 產生規範衝突，導致 Safari 拒絕 CORS 回應。→ 已移除手動 Header。
   - **Root Cause 2**：`3d` 書架模板使用外部 Unsplash URL 作為 CSS `background-image`，繞過 Proxy 機制，`html-to-image` 無法安全抓取，觸發 Tainted Canvas。→ 已下載圖片至本地 `library_bg.jpg` 並改為 `<img>` 標籤。
