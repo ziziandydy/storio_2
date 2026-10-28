@@ -20,6 +20,14 @@ const DEFAULT_ORIGINS = [
 
 const allowedOrigins = [...new Set([...DEFAULT_ORIGINS, ...ALLOWED_ORIGINS])];
 
+// Vercel 預覽部署（storio-<hash>-ziziandydys-projects.vercel.app 與分支預覽）。
+// 前後都錨定，且網域尾綴屬於本帳號，只有帳號擁有者能建立這類網址。
+const VERCEL_PREVIEW_ORIGIN = /^https:\/\/storio-[a-z0-9-]+-ziziandydys-projects\.vercel\.app$/;
+
+function isOriginAllowed(origin) {
+  return allowedOrigins.includes(origin) || VERCEL_PREVIEW_ORIGIN.test(origin);
+}
+
 // Puppeteer browser 單例
 let browser = null;
 
@@ -53,7 +61,7 @@ app.use(
     origin: (origin, callback) => {
       // 允許無 origin 的請求（如 curl、server-to-server）
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
+      if (isOriginAllowed(origin)) return callback(null, true);
       callback(new Error(`CORS: origin ${origin} not allowed`));
     },
     methods: ['GET', 'POST'],
