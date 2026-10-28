@@ -36,7 +36,19 @@ export default function PrivacyPage() {
                 </section>
 
                 <section className="space-y-3">
-                    <h2 className="text-lg font-bold text-white tracking-wide">3. Analytics, Training, and Personalization</h2>
+                    <h2 className="text-lg font-bold text-white tracking-wide">3. AI-Assisted Features and Third-Party Processing</h2>
+                    <p className="text-white/70">
+                        Some Storio features use third-party AI services to generate their results: Google (Gemini API) and OpenAI. When you use these features, the following is sent to these providers for processing:
+                        <br /><br />
+                        • <strong>Reflection polishing:</strong> the reflection text you write.<br />
+                        • <strong>Reflection suggestions:</strong> the title, synopsis, media type and rating of the work you are viewing.<br />
+                        • <strong>AI search:</strong> the search description you type.<br /><br />
+                        This happens only when you use those features, and the data is used to deliver the result you requested. We do not send your email address, name or account identifier to these providers. How these providers handle the data is governed by their own privacy policies and terms.
+                    </p>
+                </section>
+
+                <section className="space-y-3">
+                    <h2 className="text-lg font-bold text-white tracking-wide">4. Analytics, Training, and Personalization</h2>
                     <p className="text-white/70 bg-white/5 p-4 rounded-xl border border-white/10 mt-2">
                         <strong>Data Processing Rights:</strong> To ensure the continuous evolution and sustainability of Storio, we reserve the right to utilize collected data (including usage patterns and generalized collection metrics) for analytic and operational purposes. This encompasses, but is not limited to:
                         <br /><br />
@@ -48,21 +60,21 @@ export default function PrivacyPage() {
                 </section>
 
                 <section className="space-y-3">
-                    <h2 className="text-lg font-bold text-white tracking-wide">4. Data Sharing and Disclosure</h2>
+                    <h2 className="text-lg font-bold text-white tracking-wide">5. Data Sharing and Disclosure</h2>
                     <p className="text-white/70">
                         We do not sell your personal data to data brokers. We may share necessary data with trusted third-party service providers who assist us in operating our application, conducting our business, or serving our users, so long as those parties agree to keep this information confidential according to industry standards.
                     </p>
                 </section>
 
                 <section className="space-y-3">
-                    <h2 className="text-lg font-bold text-white tracking-wide">5. Security of Your Information</h2>
+                    <h2 className="text-lg font-bold text-white tracking-wide">6. Security of Your Information</h2>
                     <p className="text-white/70">
                         We implement a variety of security measures to maintain the safety of your personal information. However, please be aware that no transmission of data over the internet or any wireless network can be guaranteed to be 100% secure.
                     </p>
                 </section>
 
                 <section className="space-y-3">
-                    <h2 className="text-lg font-bold text-white tracking-wide">6. Your Rights</h2>
+                    <h2 className="text-lg font-bold text-white tracking-wide">7. Your Rights</h2>
                     <p className="text-white/70">
                         You maintain the right to access, correct, or delete your personal data stored within Storio. You can execute these rights directly through the Profile settings within the application or by contacting us at andismtu@gmail.com.
                     </p>

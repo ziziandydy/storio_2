@@ -15,25 +15,23 @@ App Store Connect → 你的 App → App 隱私（App Privacy）→ 編輯「資
 | **User Content → Other User Content** | **是（本次要補）** | 是 | 否 | App Functionality |
 | Identifiers → User ID | 是（Supabase 帳號 ID，含匿名帳號） | 是 | 否 | App Functionality |
 
-「Other User Content」涵蓋：心得文字、評分、收藏清單。這些存在 Supabase，且心得會送到 Gemini／OpenAI。
+「Other User Content」涵蓋：心得文字、評分、收藏清單。這些存在 Supabase，其中心得文字在使用「AI 潤飾」時會送到 Gemini／OpenAI。
 
 ## 不收集（據實回答）
 Location、Financial Info、Health & Fitness、Browsing History、Contacts、Diagnostics、Usage Data（App 內無 Analytics／Crashlytics SDK）。
 
 ## 需要你確認的兩項
-- **Search History**：搜尋關鍵字會經後端轉給 TMDB／Google Books，若後端沒有留存可不勾；若你要保守，可勾為 App Functionality。
+- **Search History**：AI 語意搜尋會把使用者輸入的搜尋描述送到 Gemini，一般搜尋則轉給 TMDB／Google Books；Storio 後端不留存，但 Gemini 端的保留由其政策決定。建議保守勾選為 App Functionality、不與身分連結、不用於追蹤。
 - **Photos or Videos**：頭像若有上傳到 Storio 的儲存空間才需勾；Play 的版本寫「不收集」，iOS 要一致。
 
 ## 追蹤（Tracking）
 全部回答「不用於追蹤」，不需要 App Tracking Transparency 提示。
 
-## 隱私權政策網址與內容（需 Tu 決定）
-網址：`https://storio.andismtu.com/privacy`（原始碼 `client/src/app/privacy/page.tsx`）。目前內容與實際行為對不上：
+## 隱私權政策（已更新）
+網址：`https://storio.andismtu.com/privacy`（原始碼 `client/src/app/privacy/page.tsx`）。
 
-- 第 3 節寫「可能整合第三方追蹤腳本或 cookies」與「用匿名資料訓練 AI 模型」，但 App 實際沒有任何 Analytics／追蹤 SDK，也沒有拿使用者資料訓練模型；隱私標籤要填「不用於追蹤」，兩邊互相矛盾。
-- 完全沒提「心得文字會交由 Google Gemini、OpenAI 處理」，這正是隱私標籤要補的那條資料流。
-
-建議把政策改成與標籤一致：寫明 AI 潤飾／建議會把心得文字與作品資訊傳給 Gemini／OpenAI 處理、不用於廣告或追蹤；刪掉未實際發生的追蹤與模型訓練字句。政策是對外的法律文字，**由 Tu 確認措辭後再改**，改了網頁會立刻生效（不需要 App 發版）。
+- 2026-10-28 新增第 3 節「AI-Assisted Features and Third-Party Processing」，寫明送給 Google Gemini／OpenAI 的內容：心得潤飾送心得文字、心得建議送作品標題／簡介／類型／評分、AI 搜尋送搜尋描述；不送 Email、姓名、帳號 ID。
+- 依 Tu 的決定，**保留**原第 3 節（現為第 4 節）的追蹤、個人化廣告與模型訓練字句。注意：這幾句是「保留權利」的寫法，目前 App 並未實際追蹤、投放廣告或訓練模型，隱私標籤依「現況」填「不用於追蹤」；若日後真的加入分析 SDK 或廣告，標籤與 ATT 提示都要同步更新。審核員若質疑政策與標籤，可回覆「政策為保留條款，現行版本未實作」。
 
 ## 完成後
 - 後台按「發佈」，隱私標籤變更不需重新 build 或送審新版本，但審核員在下一個版本會依此核對。
