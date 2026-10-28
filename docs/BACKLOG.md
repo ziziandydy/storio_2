@@ -1,10 +1,10 @@
 # Storio 專案待辦清單與未來優化 (Backlog & Future Improvements)
 
-最後更新：2026-10-27
+最後更新：2026-10-28
 
 ---
 
-## 📍 最新狀態（2026-10-27）
+## 📍 最新狀態（2026-10-28）
 
 > 下方各里程碑是 v1.13～v1.16 的歷史紀錄；v1.17 之後的詳細內容見 `client/CHANGELOG.md`。
 
@@ -16,7 +16,9 @@
 
 | 優先 | 項目 | 說明 |
 |------|------|------|
-| P1 | 依賴套件安全更新 | `npm audit` 有 3 個 critical（`next` 14.1.0、`@capacitor/ios` 7.6.0、`tar`）與 6 個 high。`next` → 14.2.35 為 minor 升級但會影響 Vercel 與 iOS 靜態 build，`@capacitor/ios` 需要新的 App Store build，兩者都要先做完整回歸再發版。**已決定（2026-10-27）排進下一次 iOS 發版一起做**：先跑 `npm test`、`next lint`、`build:ios`，再上真機；backend 另需 `pip-audit` 掃描 |
+| P1 | **下次 iOS 發版內容（待發）** | ① 修復分享文字網址：原生 App 內 `window.location.origin` 是 `capacitor://localhost`，複製／分享出現打不開的連結；已於 2026-10-28 修好（`7c3c025`），**程式已在 main，但已上架的 App 要發新版才會修好**。② 依賴升級階段 4：`next` 14.1.0 → 14.2.35、`@capacitor/ios`／`cli`／`core` 對齊 7.6.9 以上、`npm audit fix` 處理 `tar`、`@xmldom/xmldom`、`nanoid`、`postcss`、`ws`。發版前跑 `npm test`、`next lint`、`build:ios`，再上真機（登入、收藏、分享、通知）。Supabase 不需 migration |
+| P1 | 依賴安全更新（進行中） | 2026-10-28 已完成：刪除 `client/pnpm-lock.yaml`、後端依賴 120→85 行並升級 PyJWT／anyio／certifi／cryptography／urllib3／protobuf、`puppeteer-service` 的 express 系列；Dependabot 警示 370→145，後端 critical 清空。**剩餘**：階段 2 FastAPI＋Starlette 跨大版本（只動 Railway，風險高，建議用 Opus）、階段 3b `puppeteer` 22 升級（要比對 6 個分享模板截圖，只動 Railway）、階段 4（併入上一列）、階段 5 開發工具 `vitest` 等（只影響本機）。`client/` 仍有 12 個 critical，來源是 `next`、`@capacitor/ios`、`tar`、`handlebars`、`tinypool`、`vitest` |
+| P3 | Railway 部署設定 | ① 每次 push 到 main 兩個 Railway 服務都會重新部署（含純文件），可設 Watch Paths；② `worthy-beauty` 日誌出現 Vercel 預覽網址 CORS 被擋，視需要放行。皆為 Railway／服務設定變更，需 Tu 決定 |
 | ✅ | GitHub 安全功能 | 2026-10-27 已開啟 Dependabot alerts、secret scanning 與 push protection；Dependabot 自動升級 PR 與 code scanning 刻意未開 |
 | P2 | 新用戶不收藏 | 2026-10 數據：註冊（含匿名）約 2,588，收藏過的僅約 20 人；近 30 天只有 1 人新增收藏，啟用率近期為 0。需要產品面解法（引導、首次收藏流程） |
 | P2 | App 開啟事件記錄 | 營運報表的「上線人數」目前以 session 更新時間近似，歷史趨勢被低估；要準確 DAU/MAU 需在 App 端記錄開啟事件 |
