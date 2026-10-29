@@ -17,7 +17,8 @@ export function detectBot(): { isBot: boolean; reason: BotReason | null } {
     return { isBot: true, reason: 'render_service' };
   }
   if (navigator.webdriver) return { isBot: true, reason: 'webdriver' };
-  if (BOT_UA_PATTERN.test(navigator.userAgent || '')) {
+  // Cubot 手機 UA 含 "bot" 子字串，先移除再比對（不用 lookbehind，舊 WKWebView 會語法錯誤）
+  if (BOT_UA_PATTERN.test((navigator.userAgent || '').replace(/cubot/gi, ''))) {
     return { isBot: true, reason: 'user_agent' };
   }
   return { isBot: false, reason: null };

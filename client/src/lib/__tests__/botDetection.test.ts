@@ -49,6 +49,16 @@ describe('detectBot', () => {
     expect(detectBot()).toEqual({ isBot: false, reason: null });
   });
 
+  it('Cubot 手機 Chrome 不是 bot', () => {
+    setEnv('Mozilla/5.0 (Linux; Android 10; CUBOT X30) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36', false, '/');
+    expect(detectBot()).toEqual({ isBot: false, reason: null });
+  });
+
+  it('UA 同時含 CUBOT 與 Googlebot 仍判為 user_agent', () => {
+    setEnv('Mozilla/5.0 (Linux; Android 10; CUBOT X30) compatible; Googlebot/2.1', false, '/');
+    expect(detectBot()).toEqual({ isBot: true, reason: 'user_agent' });
+  });
+
   it('一般 iPhone Safari 不是 bot', () => {
     setEnv(IPHONE, false, '/');
     expect(detectBot()).toEqual({ isBot: false, reason: null });

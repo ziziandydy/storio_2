@@ -31,6 +31,7 @@ describe('useAuth 匿名登入', () => {
     detectBot.mockReturnValue({ isBot: true, reason: 'user_agent' });
     renderHook(() => useAuth());
     await waitFor(() => expect(useUserStore.getState().loading).toBe(false));
+    await waitFor(() => expect(detectBot).toHaveBeenCalled());
     expect(signInAnonymously).not.toHaveBeenCalled();
     expect(useUserStore.getState().user).toBeNull();
   });
