@@ -1,6 +1,6 @@
 import { detectBot } from '@/lib/botDetection';
 import { getApiUrl } from '@/lib/api';
-import { useUserStore } from '@/store/userStore';
+import { supabase } from '@/lib/supabase';
 
 export type ClientEvent = 'open' | 'browse' | 'detail_view' | 'search' | 'share';
 
@@ -24,9 +24,12 @@ export function getVisitorId(): string {
   return memoryVisitorId;
 }
 
-/** 同主體＋事件＋UTC 日只送一次；送出前先寫 key。storage 失敗時視為未送過 */
-function alreadySentToday(event: ClientEvent, subject: string): boolean {
-  const key = `storio_evt_${event}_${subject}`;
+/** 同主體＋事件＋UTC 日只送一次；送出前先寫 key（防同 tick 重複），失敗時由呼叫端移除 */
+function dedupeKey(event: ClientEvent, subject: string): string {
+  return `storio_evt_${event}_${subject}`;
+}
+
+function alreadySentToday(key: string): boolean {
   const today = new Date().toISOString().slice(0, 10);
   try {
     if (localStorage.getItem(key) === today) return true;
@@ -37,37 +40,53 @@ function alreadySentToday(event: ClientEvent, subject: string): boolean {
   return false;
 }
 
-/** 上報互動事件；不回 Promise、永不丟例外 */
-export function track(event: ClientEvent): void {
+function clearKey(key: string): void {
   try {
-    const bot = detectBot();
-    if (bot.reason === 'render_service') return;
+    localStorage.removeItem(key);
+  } catch {
+    // 忽略
+  }
+}
 
-    const { token, user } = useUserStore.getState();
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    let body: Record<string, unknown> = { event };
-    let subject: string;
+async function send(event: ClientEvent): Promise<void> {
+  const bot = detectBot();
+  if (bot.reason === 'render_service') return;
 
-    if (token) {
-      subject = user?.id ?? 'user';
-      headers.Authorization = `Bearer ${token}`;
-    } else if (event === 'open') {
-      subject = getVisitorId();
-      body = { event, visitor_id: subject, is_suspected_bot: bot.isBot };
-      if (bot.reason === 'user_agent' || bot.reason === 'webdriver') body.bot_reason = bot.reason;
-    } else {
-      return;
-    }
+  // getSession 遇過期 token 會先刷新，避免回前景時帶舊 token
+  const { data } = await supabase.auth.getSession();
+  const session = data?.session;
+  const token = session?.access_token;
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  let body: Record<string, unknown> = { event };
+  let subject: string;
 
-    if (alreadySentToday(event, subject)) return;
+  if (token) {
+    subject = session?.user?.id ?? 'user';
+    headers.Authorization = `Bearer ${token}`;
+  } else if (event === 'open') {
+    subject = getVisitorId();
+    body = { event, visitor_id: subject, is_suspected_bot: bot.isBot };
+    if (bot.reason === 'user_agent' || bot.reason === 'webdriver') body.bot_reason = bot.reason;
+  } else {
+    return;
+  }
 
-    fetch(getApiUrl('/api/v1/events'), {
+  const key = dedupeKey(event, subject);
+  if (alreadySentToday(key)) return;
+
+  try {
+    const res = await fetch(getApiUrl('/api/v1/events'), {
       method: 'POST',
-      keepalive: true,
       headers,
       body: JSON.stringify(body),
-    }).catch(() => {});
+    });
+    if (!res.ok) clearKey(key); // 失敗不算已送，不重試
   } catch {
-    // 上報失敗一律靜默
+    clearKey(key);
   }
+}
+
+/** 上報互動事件；不回 Promise、永不丟例外、不阻塞 UI */
+export function track(event: ClientEvent): void {
+  send(event).catch(() => {});
 }

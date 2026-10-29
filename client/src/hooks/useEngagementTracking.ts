@@ -5,6 +5,12 @@ import { track } from '@/lib/analytics';
 import { detectBot } from '@/lib/botDetection';
 import { isNativePlatform } from '@/lib/appleAuth';
 
+/** auth 就緒：與冷啟動同一條件，避免回前景時 token 尚未就緒 */
+function isAuthReady(): boolean {
+  const { loading, token, anonSignInFailed } = useUserStore.getState();
+  return !loading && (!!token || detectBot().isBot || anonSignInFailed);
+}
+
 /**
  * 上報 open：auth 就緒後（有 token／bot／匿名登入失敗的真人）每次掛載最多一次；
  * 原生 App 另在回到前景時再上報（track 本身有同日去重）。
@@ -26,10 +32,10 @@ export function useOpenTracking(): void {
   useEffect(() => {
     if (!isNativePlatform()) return;
     const handle = App.addListener('appStateChange', ({ isActive }) => {
-      if (isActive) track('open');
+      if (isActive && isAuthReady()) track('open');
     });
     return () => {
-      handle.then((h) => h.remove());
+      handle.then((h) => h.remove()).catch(() => {});
     };
   }, []);
 }

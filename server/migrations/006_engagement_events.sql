@@ -144,6 +144,7 @@ $$;
 --   ('ops','v_engagement_rate_weekly'),('ops','v_real_users'));
 --
 -- b. 去重生效：第二次 insert 應報 duplicate key（23505），最後 delete 清掉測試列
+--    （第二次 insert 與 delete 請分開執行）
 -- insert into public.engagement_events (day, event, platform, visitor_id, is_suspected_bot, bot_reason)
 -- values (current_date, 'open', 'web', '00000000-0000-0000-0000-000000000001', true, 'user_agent');
 -- insert into public.engagement_events (day, event, platform, visitor_id, is_suspected_bot, bot_reason)
@@ -154,8 +155,9 @@ $$;
 -- select * from ops.v_real_users;
 -- select * from ops.v_engagement_daily order by day desc limit 20;
 --
--- d. 唯讀角色只能讀 view、不能讀事件表（prod 才有 looker_ro）
--- set role looker_ro;
--- select * from ops.v_real_users;              -- 應成功
--- select count(*) from public.engagement_events; -- 應報 permission denied
--- reset role;
+-- d. 唯讀角色只能讀 view、不能讀事件表（prod 才有 looker_ro）。SQL Editor 的 postgres 可能無法 set role，改用權限查詢：
+-- select
+--   has_table_privilege('looker_ro', 'public.engagement_events', 'select') as can_read_table,      -- 應為 false
+--   has_table_privilege('looker_ro', 'ops.v_engagement_daily', 'select') as can_read_daily,        -- 應為 true
+--   has_table_privilege('looker_ro', 'ops.v_engagement_rate_weekly', 'select') as can_read_weekly, -- 應為 true
+--   has_table_privilege('looker_ro', 'ops.v_real_users', 'select') as can_read_real_users;         -- 應為 true

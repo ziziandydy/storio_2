@@ -2,12 +2,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 
-const { track, detectBot } = vi.hoisted(() => ({ track: vi.fn(), detectBot: vi.fn() }));
+const { track, detectBot, addListener, isNative } = vi.hoisted(() => ({
+  track: vi.fn(),
+  detectBot: vi.fn(),
+  addListener: vi.fn(),
+  isNative: vi.fn(() => false),
+}));
 vi.mock('@/lib/supabase', () => ({ supabase: { auth: {} } }));
 vi.mock('@/lib/analytics', () => ({ track }));
 vi.mock('@/lib/botDetection', () => ({ detectBot }));
-vi.mock('@capacitor/app', () => ({ App: { addListener: vi.fn() } }));
-vi.mock('@/lib/appleAuth', () => ({ isNativePlatform: () => false }));
+vi.mock('@capacitor/app', () => ({ App: { addListener } }));
+vi.mock('@/lib/appleAuth', () => ({ isNativePlatform: isNative }));
 
 import { useOpenTracking, useBrowseTracking } from '../useEngagementTracking';
 import { useUserStore } from '@/store/userStore';
@@ -38,6 +43,42 @@ describe('useOpenTracking', () => {
     useUserStore.setState({ anonSignInFailed: true });
     renderHook(() => useOpenTracking());
     expect(track).toHaveBeenCalledWith('open');
+  });
+});
+
+describe('useOpenTracking native resume', () => {
+  beforeEach(() => {
+    track.mockReset();
+    detectBot.mockReturnValue({ isBot: false, reason: null });
+    isNative.mockReturnValue(true);
+  });
+  afterEach(() => {
+    isNative.mockReturnValue(false);
+    addListener.mockReset();
+  });
+
+  it('native resume sends open only when auth ready', () => {
+    let cb: (s: { isActive: boolean }) => void = () => {};
+    addListener.mockImplementation((_: string, fn: typeof cb) => {
+      cb = fn;
+      return Promise.resolve({ remove: vi.fn() });
+    });
+    useUserStore.setState({ user: null, token: null, loading: true, anonSignInFailed: false });
+    renderHook(() => useOpenTracking());
+    cb({ isActive: true });
+    expect(track).not.toHaveBeenCalled();
+    act(() => useUserStore.setState({ loading: false, token: 't' }));
+    track.mockClear();
+    cb({ isActive: true });
+    expect(track).toHaveBeenCalledWith('open');
+  });
+
+  it('remove rejection is swallowed', async () => {
+    addListener.mockReturnValue(Promise.reject(new Error('x')));
+    useUserStore.setState({ loading: false });
+    const { unmount } = renderHook(() => useOpenTracking());
+    unmount();
+    await Promise.resolve();
   });
 });
 
