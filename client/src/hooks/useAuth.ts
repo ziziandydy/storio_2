@@ -2,9 +2,10 @@ import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User } from '@supabase/supabase-js';
 import { useUserStore } from '@/store/userStore';
+import { detectBot } from '@/lib/botDetection';
 
 export function useAuth() {
-  const { user, token, loading, setUser, setToken, setLoading, fetchSession } = useUserStore();
+  const { user, token, loading, setUser, setToken, setLoading, fetchSession, setAnonSignInFailed } = useUserStore();
 
   useEffect(() => {
     // Top-Level E2E API Mock Escape Hatch to completely cut-out Supabase hanging the loading state
@@ -21,6 +22,11 @@ export function useAuth() {
       // Session check is now handled inside onAuthStateChange or after fetchSession
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
+        // 疑似爬蟲／分享圖渲染服務不建立匿名帳號，避免汙染 auth.users
+        if (detectBot().isBot) {
+          setLoading(false);
+          return;
+        }
         await signInAnonymously();
       }
     };
@@ -73,8 +79,10 @@ export function useAuth() {
       setUser(data.user);
       const { data: sessionData } = await supabase.auth.getSession();
       setToken(sessionData.session?.access_token ?? null);
+      setAnonSignInFailed(false);
     } catch (error) {
       console.error('Error signing in anonymously:', error);
+      setAnonSignInFailed(true);
     } finally {
       setLoading(false);
     }
