@@ -12,6 +12,7 @@ import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { getRenderServiceHealth, blobToBase64 } from '@/lib/share-api';
 import { getURL } from '@/lib/supabase';
+import { track } from '@/lib/analytics';
 import { useProgressiveRenderQueue } from '@/hooks/useProgressiveRenderQueue';
 import type { RenderPayload, RenderSettings } from '@/lib/share-api';
 import type { TemplateId } from '@/hooks/useProgressiveRenderQueue';
@@ -200,10 +201,12 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
           directory: Directory.Cache,
         });
         await Share.share({ title: monthName, text: shareMessage, url: savedFile.uri });
+        track('share');
       } else {
         const file = new File([blob], `${fileName}.png`, { type: 'image/png' });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({ title: monthName, text: shareMessage, files: [file] });
+          track('share');
         } else {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
@@ -213,6 +216,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
           URL.revokeObjectURL(url);
           setIsDownloaded(true);
           setTimeout(() => setIsDownloaded(false), 2000);
+          track('share');
         }
       }
     } catch (err) {
@@ -244,6 +248,7 @@ export default function MonthlyRecapModal({ isOpen, onClose, monthValue, monthNa
     URL.revokeObjectURL(url);
     setIsDownloaded(true);
     setTimeout(() => setIsDownloaded(false), 2000);
+    track('share');
   };
 
   const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {

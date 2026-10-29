@@ -10,6 +10,7 @@ import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { getRenderServiceHealth, blobToBase64 } from '@/lib/share-api';
 import { getURL } from '@/lib/supabase';
+import { track } from '@/lib/analytics';
 import { useProgressiveRenderQueue } from '@/hooks/useProgressiveRenderQueue';
 import type { RenderPayload, RenderSettings } from '@/lib/share-api';
 import type { TemplateId } from '@/hooks/useProgressiveRenderQueue';
@@ -213,12 +214,14 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
           text: shareMessage,
           url: savedFile.uri,
         });
+        track('share');
       } else {
         // Mobile Web share（任務 7.13）
         const file = new File([blob], `${fileName}.png`, { type: 'image/png' });
 
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({ title, text: shareMessage, files: [file] });
+          track('share');
         } else {
           // <a download> fallback
           const url = URL.createObjectURL(blob);
@@ -229,6 +232,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
           URL.revokeObjectURL(url);
           setIsDownloaded(true);
           setTimeout(() => setIsDownloaded(false), 2000);
+          track('share');
         }
       }
     } catch (err) {
@@ -262,6 +266,7 @@ export default function ShareModal({ isOpen, onClose, title, item, template, fil
     URL.revokeObjectURL(url);
     setIsDownloaded(true);
     setTimeout(() => setIsDownloaded(false), 2000);
+    track('share');
   };
 
   const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {

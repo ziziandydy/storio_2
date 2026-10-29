@@ -28,6 +28,8 @@ vi.mock('framer-motion', () => {
   AnimatePresence.displayName = 'AnimatePresence';
   return { motion: new Proxy({}, { get: (_t, tag: string) => make(tag) }), AnimatePresence };
 });
+const trackMock = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/analytics', () => ({ track: (...a: unknown[]) => trackMock(...a) }));
 vi.mock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => m.isNative() } }));
 vi.mock('@capacitor/share', () => ({ Share: { share: (...a: unknown[]) => m.nativeShare(...a) } }));
 vi.mock('@capacitor/filesystem', () => ({
@@ -365,5 +367,68 @@ describe('MonthlyRecapModal — 網頁版', () => {
     expect(screen.getByText(T.shareModal.saved)).toBeTruthy();
     await flush(2100);
     expect(screen.queryByText(T.shareModal.saved)).toBeNull();
+  });
+});
+
+describe('MonthlyRecapModal — 互動事件 share', () => {
+  beforeEach(() => trackMock.mockClear());
+
+  it('records share after successful share（原生）', async () => {
+    m.isNative.mockReturnValue(true);
+    await mount();
+    await flush(300);
+    await act(async () => { fireEvent.click(btn(T.shareModal.shareOrSave)); });
+    await flush(50);
+    expect(trackMock).toHaveBeenCalledTimes(1);
+    expect(trackMock).toHaveBeenCalledWith('share');
+  });
+
+  it('records share after successful share（Web Share）', async () => {
+    setWebShare({ share: vi.fn().mockResolvedValue(undefined), canShare: () => true });
+    await mount();
+    await flush(300);
+    await act(async () => { fireEvent.click(btn(T.shareModal.shareOrSave)); });
+    await flush(50);
+    expect(trackMock).toHaveBeenCalledTimes(1);
+    expect(trackMock).toHaveBeenCalledWith('share');
+  });
+
+  it('records share after <a download> fallback inside try', async () => {
+    setWebShare({ share: vi.fn(), canShare: () => false });
+    spyAnchorDownloads();
+    await mount();
+    await flush(300);
+    await act(async () => { fireEvent.click(btn(T.shareModal.shareOrSave)); });
+    await flush(50);
+    expect(trackMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancelled share is not recorded（原生）', async () => {
+    m.isNative.mockReturnValue(true);
+    m.nativeShare.mockRejectedValueOnce(new Error('canceled'));
+    await mount();
+    await flush(300);
+    await act(async () => { fireEvent.click(btn(T.shareModal.shareOrSave)); });
+    await flush(50);
+    expect(trackMock).not.toHaveBeenCalled();
+  });
+
+  it('cancelled share is not recorded（Web Share，下載 fallback 也不記）', async () => {
+    setWebShare({ share: vi.fn().mockRejectedValue(new Error('x')), canShare: () => true });
+    spyAnchorDownloads();
+    await mount();
+    await flush(300);
+    await act(async () => { fireEvent.click(btn(T.shareModal.shareOrSave)); });
+    await flush(50);
+    expect(trackMock).not.toHaveBeenCalled();
+  });
+
+  it('download records share', async () => {
+    spyAnchorDownloads();
+    await mount();
+    await flush(300);
+    await act(async () => { fireEvent.click(btn(new RegExp(T.shareModal.download))); });
+    expect(trackMock).toHaveBeenCalledTimes(1);
+    expect(trackMock).toHaveBeenCalledWith('share');
   });
 });

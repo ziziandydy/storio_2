@@ -13,6 +13,7 @@ import { NOTIFICATION_CONFIG } from '@/lib/notification-config';
 import { onStoryAdded } from '@/lib/notification-events';
 import NotificationPrimerCard from '@/components/NotificationPrimerCard';
 import NotificationBanner from '@/components/NotificationBanner';
+import { useOpenTracking } from '@/hooks/useEngagementTracking';
 
 const LAST_SCHEDULED_KEY = 'storio_notif_last_scheduled';
 
@@ -28,6 +29,9 @@ export default function AppOpenReset() {
   const [showPrimer, setShowPrimer] = useState(false);
   const [showBanner, setShowBanner] = useState(false);
   const hasRun = useRef(false);
+
+  // 互動事件：open（掛在根 layout，網頁與原生每個 session 一次）
+  useOpenTracking();
 
   // App Open Reset：排程 + Permission Primer
   useEffect(() => {

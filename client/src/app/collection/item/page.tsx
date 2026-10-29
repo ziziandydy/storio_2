@@ -8,6 +8,7 @@ import { ArrowLeft, Star, Loader2, Film, Book as BookIcon, Calendar, Trash2, Edi
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ToastProvider';
 import { getApiUrl } from '@/lib/api';
+import { track } from '@/lib/analytics';
 import { ItemDetail } from '@/types';
 import StoryDetailsView from '@/components/StoryDetailsView';
 import RateAndReflectForm from '@/components/RateAndReflectForm';
@@ -103,6 +104,7 @@ function CollectionItemPageContent() {
         if (res.ok) {
           const data = await res.json();
           setItem(data);
+          track('detail_view');
         } else {
           router.push('/collection');
         }

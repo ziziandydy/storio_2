@@ -8,6 +8,7 @@ import AddToFolioModal from '@/components/AddToFolioModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useSettingsStore } from '@/store/settingsStore';
 import { getApiUrl } from '@/lib/api';
+import { track } from '@/lib/analytics';
 import { ItemDetail } from '@/types';
 import StoryDetailsView from '@/components/StoryDetailsView';
 
@@ -44,6 +45,7 @@ function DetailsPageContent() {
         if (!res.ok) throw new Error('Failed to fetch details');
         const data = await res.json();
         setItem(data);
+        track('detail_view');
       } catch (err) {
         setError('Could not retrieve story details.');
         console.error(err);

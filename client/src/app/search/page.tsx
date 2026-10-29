@@ -12,6 +12,7 @@ import { useToast } from '@/components/ToastProvider';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useSettingsStore } from '@/store/settingsStore';
 import { getApiUrl } from '@/lib/api';
+import { track } from '@/lib/analytics';
 import { ItemDetail } from '@/types';
 
 // 定義與後端一致的型別
@@ -153,6 +154,7 @@ function SearchContent() {
       const hasPreciseParams = !!(pid || cid || gid || author);
 
       setLoading(true);
+      track('search');
       try {
         let res;
         if (isAiSearch && !hasPreciseParams) {

@@ -20,11 +20,13 @@ import { isNativePlatform, isIOSPlatform, nativeAppleSignIn } from '@/lib/appleA
 import { nativeGoogleSignIn } from '@/lib/googleAuth';
 import { useToast } from '@/components/ToastProvider';
 import HomeJsonLd from '@/components/HomeJsonLd';
+import { useBrowseTracking } from '@/hooks/useEngagementTracking';
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
   const { t } = useTranslation();
   const { showToast } = useToast();
+  useBrowseTracking();
   const [scrollY, setScrollY] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
   const [showSplash, setShowSplash] = useState(false);

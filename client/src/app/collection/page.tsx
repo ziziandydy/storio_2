@@ -16,6 +16,7 @@ import CalendarView from '@/components/views/CalendarView';
 import GalleryView from '@/components/views/GalleryView';
 import { getApiUrl } from '@/lib/api';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useBrowseTracking } from '@/hooks/useEngagementTracking';
 
 export default function CollectionPage() {
   const [stories, setStories] = useState<Story[]>([]);
@@ -24,6 +25,7 @@ export default function CollectionPage() {
   const { currentView } = useViewStore();
   const { t } = useTranslation();
   const router = useRouter();
+  useBrowseTracking();
 
   useEffect(() => {
     const fetchCollection = async () => {
