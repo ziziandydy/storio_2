@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { User } from '@supabase/supabase-js';
+import { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
 import { useUserStore } from '@/store/userStore';
 import { detectBot } from '@/lib/botDetection';
 
@@ -9,6 +9,7 @@ let initPromise: Promise<void> | null = null;
 let anonPromise: Promise<void> | null = null;
 let authSubscription: { unsubscribe: () => void } | null = null;
 let migration: { key: string; promise: Promise<void> } | null = null;
+let authQueue: Promise<void> = Promise.resolve();
 
 /** 僅供測試：重設模組層狀態 */
 export function __resetAuthForTests() {
@@ -17,6 +18,7 @@ export function __resetAuthForTests() {
   anonPromise = null;
   authSubscription = null;
   migration = null;
+  authQueue = Promise.resolve();
 }
 
 function signInAnonymouslyOnce(): Promise<void> {
@@ -65,28 +67,41 @@ function migrateGuestOnce(oldId: string, newId: string): Promise<void> {
   return promise;
 }
 
+const MIGRATE_EVENTS = new Set(['INITIAL_SESSION', 'SIGNED_IN', 'USER_UPDATED']);
+
+async function handleAuthChange(event: AuthChangeEvent, session: Session | null) {
+  const { setUser, setToken, setLoading } = useUserStore.getState();
+  const newUser = session?.user ?? null;
+
+  // INITIAL_SESSION 也要搬：網頁 OAuth redirect 的 SIGNED_IN 可能早於 listener 註冊
+  if (MIGRATE_EVENTS.has(event) && newUser && !newUser.is_anonymous) {
+    const previousGuestId = localStorage.getItem('storio_guest_id');
+    if (previousGuestId && previousGuestId !== newUser.id) {
+      await migrateGuestOnce(previousGuestId, newUser.id);
+    }
+  }
+
+  // 只記錄「目前 session 的匿名帳號」為訪客 ID
+  if (newUser?.is_anonymous) {
+    localStorage.setItem('storio_guest_id', newUser.id);
+  }
+
+  setUser(newUser);
+  setToken(session?.access_token ?? null);
+  setLoading(false);
+}
+
 function ensureAuthListener() {
   if (authSubscription) return;
-  // App 生命週期內常駐，不隨元件 unmount 解除
-  const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-    const { setUser, setToken, setLoading } = useUserStore.getState();
-    const newUser = session?.user ?? null;
-
-    if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && newUser && !newUser.is_anonymous) {
-      const previousGuestId = localStorage.getItem('storio_guest_id');
-      if (previousGuestId && previousGuestId !== newUser.id) {
-        await migrateGuestOnce(previousGuestId, newUser.id);
-      }
-    }
-
-    // 只記錄「目前 session 的匿名帳號」為訪客 ID
-    if (newUser?.is_anonymous) {
-      localStorage.setItem('storio_guest_id', newUser.id);
-    }
-
-    setUser(newUser);
-    setToken(session?.access_token ?? null);
-    setLoading(false);
+  // App 生命週期內常駐，不隨元件 unmount 解除。
+  // callback 不可 await 任何 supabase 呼叫（事件可能在 auth lock 內送出，會 deadlock），
+  // 改以 setTimeout 移出 lock，並用佇列維持事件順序與「先搬移、再切 user」。
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    setTimeout(() => {
+      authQueue = authQueue
+        .then(() => handleAuthChange(event, session))
+        .catch((err) => console.error('Auth state handling failed:', err));
+    }, 0);
   });
   authSubscription = subscription;
 }
@@ -122,7 +137,10 @@ export function useAuth() {
 
     const { loading: isLoading, user: currentUser } = useUserStore.getState();
     if (isLoading && !currentUser) {
-      initAuthOnce();
+      initAuthOnce().catch((err) => {
+        console.error('Auth init failed:', err);
+        useUserStore.getState().setLoading(false);
+      });
     }
 
     ensureAuthListener();

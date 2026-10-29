@@ -88,36 +88,72 @@ describe('useAuth 匿名登入', () => {
     expect(localStorage.getItem('storio_guest_id')).toBe('anon-1');
   });
 
-  it('migrates once on sign-in', async () => {
+  const mountWithGuest = async () => {
     localStorage.setItem('storio_guest_id', 'anon-1');
     getSession.mockResolvedValue({ data: { session: anonSession('anon-1') } });
     renderHook(() => useAuth());
     await waitFor(() => expect(listener).not.toBeNull());
-    await act(async () => {
-      await Promise.all([
-        listener!('SIGNED_IN', realSession('real-1')),
-        listener!('USER_UPDATED', realSession('real-1')),
-      ]);
-      await listener!('USER_UPDATED', realSession('real-1'));
+  };
+  const flush = () => act(async () => { await new Promise((r) => setTimeout(r, 10)); });
+
+  it('migrates once on sign-in', async () => {
+    await mountWithGuest();
+    act(() => {
+      listener!('SIGNED_IN', realSession('real-1'));
+      listener!('USER_UPDATED', realSession('real-1'));
     });
+    await waitFor(() => expect(useUserStore.getState().user?.id).toBe('real-1'));
+    act(() => { listener!('USER_UPDATED', realSession('real-1')); });
+    await flush();
     expect(rpc).toHaveBeenCalledTimes(1);
     expect(rpc).toHaveBeenCalledWith('migrate_guest_data', { old_user_id: 'anon-1', new_user_id: 'real-1' });
     expect(localStorage.getItem('storio_guest_id')).toBeNull();
-    expect(useUserStore.getState().user?.id).toBe('real-1');
+  });
+
+  it('INITIAL_SESSION migrates', async () => {
+    await mountWithGuest();
+    act(() => { listener!('INITIAL_SESSION', realSession('real-1')); });
+    await waitFor(() => expect(useUserStore.getState().user?.id).toBe('real-1'));
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith('migrate_guest_data', { old_user_id: 'anon-1', new_user_id: 'real-1' });
+  });
+
+  it('callback does not await supabase calls', async () => {
+    await mountWithGuest();
+    await flush();
+    let resolveRpc: (v: { error: null }) => void = () => {};
+    rpc.mockReturnValue(new Promise((r) => { resolveRpc = r; }));
+    let ret: unknown;
+    act(() => { ret = listener!('SIGNED_IN', realSession('real-1')); });
+    // callback 同步返回，不回傳等待 rpc 的 promise；rpc 要等下一個 macrotask 才呼叫
+    expect(ret).toBeUndefined();
+    expect(rpc).not.toHaveBeenCalled();
+    await flush();
+    expect(rpc).toHaveBeenCalledTimes(1);
+    // 搬移完成前不切換 user
+    expect(useUserStore.getState().user?.id).not.toBe('real-1');
+    await act(async () => { resolveRpc({ error: null }); });
+    await waitFor(() => expect(useUserStore.getState().user?.id).toBe('real-1'));
   });
 
   it('migration failure keeps guest id', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     rpc.mockResolvedValue({ error: { code: '42501' } });
-    localStorage.setItem('storio_guest_id', 'anon-1');
-    getSession.mockResolvedValue({ data: { session: anonSession('anon-1') } });
-    renderHook(() => useAuth());
-    await waitFor(() => expect(listener).not.toBeNull());
-    await act(async () => { await listener!('SIGNED_IN', realSession('real-1')); });
+    await mountWithGuest();
+    act(() => { listener!('SIGNED_IN', realSession('real-1')); });
+    await waitFor(() => expect(useUserStore.getState().user?.id).toBe('real-1'));
     expect(rpc).toHaveBeenCalledTimes(1);
     expect(localStorage.getItem('storio_guest_id')).toBe('anon-1');
-    expect(useUserStore.getState().user?.id).toBe('real-1');
     expect(useUserStore.getState().token).toBe('tok-real-1');
+    expect(useUserStore.getState().loading).toBe(false);
+  });
+
+  it('init rejection does not leave loading true', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    getSession.mockRejectedValue(new Error('net'));
+    renderHook(() => useAuth());
+    await waitFor(() => expect(useUserStore.getState().loading).toBe(false));
+    await flush();
     expect(useUserStore.getState().loading).toBe(false);
   });
 
