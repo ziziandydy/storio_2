@@ -12,6 +12,8 @@
 -- * 不存搜尋字串、作品 ID、心得、IP 原文、User-Agent 原文。
 -- * 帳號刪除時事件由 on delete cascade 一併刪除；「清除資料」（只清收藏）不刪事件。
 -- * day 一律為 UTC 日期，由後端寫入。
+-- * engagement rate 與「真實用戶」只算帳號（user_id）；訪客代號（visitor_id）與 is_suspected_bot
+--   都是前端自報、可偽造，只用於「疑似爬蟲來訪次數」（v_engagement_daily）。
 -- * 週 engagement rate 的分子只算同週同平台也有 open 的主體，所以比率不超過 1；
 --   舊版 App 只有後端記的 add_collection、沒有 open，這些人不進比率，但會進「真實用戶」。
 -- * 疑似爬蟲常不保留 localStorage，訪客代號的數字較接近「來訪次數」。
@@ -68,9 +70,9 @@ with real_events as (
     date_trunc('week', day)::date as week,
     platform,
     event,
-    coalesce(user_id, visitor_id) as subject
+    user_id as subject
   from public.engagement_events
-  where not is_suspected_bot
+  where user_id is not null  -- 只算帳號，訪客代號可偽造
 ),
 openers as (
   select distinct week, platform, subject
@@ -100,20 +102,21 @@ from event_counts ec
 join open_counts oc
   on oc.week = ec.week and oc.platform = ec.platform;
 
--- 4. 真實用戶（寬鬆版）：期間內有任何非疑似爬蟲事件（含只有 open），或新增過收藏
+-- 4. 真實用戶（寬鬆版）：期間內有任何事件（含只有 open）的帳號，或新增過收藏的帳號。
+--    只算帳號（user_id）：未登入的訪客代號與爬蟲旗標都由前端自報、可偽造，不納入。
 create or replace view ops.v_real_users as
 with subjects_7d as (
-  select coalesce(user_id, visitor_id) as subject
+  select user_id as subject
   from public.engagement_events
-  where not is_suspected_bot and created_at >= now() - interval '7 days'
+  where user_id is not null and created_at >= now() - interval '7 days'
   union
   select user_id from public.collections
   where created_at >= now() - interval '7 days'
 ),
 subjects_30d as (
-  select coalesce(user_id, visitor_id) as subject
+  select user_id as subject
   from public.engagement_events
-  where not is_suspected_bot and created_at >= now() - interval '30 days'
+  where user_id is not null and created_at >= now() - interval '30 days'
   union
   select user_id from public.collections
   where created_at >= now() - interval '30 days'

@@ -12,8 +12,9 @@
 -- 規則：
 -- * 呼叫者必須已登入，且 new_user_id 必須是呼叫者自己（auth.uid()）。
 -- * old_user_id 必須是匿名帳號（不能搬走正式帳號的資料）。
--- * old_user_id = new_user_id 時不做任何事。
--- * 違反規則時丟出 42501（insufficient_privilege），前端會記 log 並保留 storio_guest_id，不影響登入。
+-- * old_user_id = new_user_id，或 old_user_id 已不存在時，不做任何事、不報錯。
+-- * 違反規則時丟出 42501（insufficient_privilege），屬永久錯誤：前端會清掉 storio_guest_id，不再重試；
+--   網路等暫時性錯誤才保留下來重試。都不影響登入。
 -- * 已知取捨：函式無法證明呼叫者「擁有」那個匿名帳號，所以任何已登入的 session 若知道某個匿名帳號的
 --   UUID，仍可把它的收藏搬到自己名下。UUID 為隨機 v4，前端網址與分享內容都不含 user id，實際風險低。
 -- * service_role 保留 EXECUTE 但沒有 auth.uid()，呼叫一律被拒（後端沒有呼叫這個函式）。
@@ -35,6 +36,11 @@ begin
   end if;
 
   if old_user_id is null or old_user_id = new_user_id then
+    return;
+  end if;
+
+  -- 來源帳號已不存在：沒有資料可搬，直接結束（讓前端清掉訪客記錄，不要無限重試）
+  if not exists (select 1 from auth.users where id = old_user_id) then
     return;
   end if;
 
