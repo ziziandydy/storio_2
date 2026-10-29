@@ -3,7 +3,7 @@
 --
 -- 背景：訪客（匿名帳號）登入 Apple／Google／Email 後，前端（client/src/hooks/useAuth.ts）以「新登入的帳號」
 -- 身分呼叫 rpc('migrate_guest_data', { old_user_id: 訪客帳號, new_user_id: 新帳號 })，把訪客的收藏搬過去。
--- 原本的函式只存在線上（不在 repo），且有三個問題：
+-- 原本的函式只存在線上（舊版定義見 server/migration_sprint_4.py），且有三個問題：
 --   1. SECURITY DEFINER（以擁有者權限執行、繞過 RLS），EXECUTE 卻開放給 PUBLIC（含 anon）；
 --   2. 不檢查呼叫者：任何持有公開 anon key 的人，只要知道 UUID，就能把任何人的收藏搬到任何帳號；
 --   3. 沒有固定 search_path。
@@ -14,6 +14,9 @@
 -- * old_user_id 必須是匿名帳號（不能搬走正式帳號的資料）。
 -- * old_user_id = new_user_id 時不做任何事。
 -- * 違反規則時丟出 42501（insufficient_privilege），前端會記 log 並保留 storio_guest_id，不影響登入。
+-- * 已知取捨：函式無法證明呼叫者「擁有」那個匿名帳號，所以任何已登入的 session 若知道某個匿名帳號的
+--   UUID，仍可把它的收藏搬到自己名下。UUID 為隨機 v4，前端網址與分享內容都不含 user id，實際風險低。
+-- * service_role 保留 EXECUTE 但沒有 auth.uid()，呼叫一律被拒（後端沒有呼叫這個函式）。
 --
 -- 執行方式：在 Supabase Dashboard > SQL Editor 貼上整份執行（先 dev 再 prod）。
 -- 冪等：可重複執行（create or replace；revoke／grant 可重複）。
@@ -62,8 +65,9 @@ grant execute on function public.migrate_guest_data(uuid, uuid) to authenticated
 
 -- 驗證（執行後手動逐段確認）
 --
--- a. 函式設定：prosecdef = true、proconfig 含 search_path=public, pg_temp
--- select prosecdef, proconfig from pg_proc where proname = 'migrate_guest_data';
+-- a. 函式設定：prosecdef = true、proconfig 含 search_path=public, pg_temp、proacl 不含 anon 與 PUBLIC（=X）
+-- select prosecdef, proconfig, proacl::text from pg_proc
+-- where proname = 'migrate_guest_data' and pronamespace = 'public'::regnamespace;
 --
 -- b. 權限：anon 應為 false、authenticated 應為 true
 -- select
