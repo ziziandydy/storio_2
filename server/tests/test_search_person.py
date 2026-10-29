@@ -264,3 +264,55 @@ async def test_search_google_books_with_author_boost_dedupes():
         assert "unique-freetext" in external_ids
         assert "unique-author" in external_ids
         assert len(merged) == 3
+
+
+# --- AI 搜尋非語意 fallback 繼承人名偵測（v1.16.0 review Minor #2：刻意保留，補測試鎖住行為）---
+@pytest.mark.asyncio
+async def test_ai_search_keyword_fallback_uses_person_detection():
+    """AI 判定為非語意（如只輸入導演名）時，fallback 走 search_tmdb，應得到該人物的作品而非同名標題"""
+    from app.schemas.search import AISearchIntent
+    mock_client = make_routed_client({
+        "search/multi": {"results": [{"id": 525, "media_type": "person", "name": "Christopher Nolan"}]},
+        "discover/movie": {"results": [
+            {"id": 1, "title": "Inception", "release_date": "2010-07-16", "poster_path": "/inception.jpg"}
+        ]},
+        "discover/tv": {"results": []},
+    })
+    intent = AISearchIntent(is_semantic=False, media_type="movie", fallback_query="諾蘭", confidence=0.9)
+
+    results = await SearchService.search_by_intent(mock_client, intent)
+
+    assert [r.title for r in results] == ["Inception"]
+    called = [c.args[0] for c in mock_client.get.call_args_list]
+    assert any("discover/movie" in u for u in called)
+    discover_params = next(c.kwargs["params"] for c in mock_client.get.call_args_list if "discover/movie" in c.args[0])
+    assert str(discover_params.get("with_people")) == "525"
+
+
+# --- genre 跨 movie/tv 命名空間對應（v1.16.0 review Minor #4）---
+def _discover_genres(mock_client) -> dict:
+    """回傳 {'movie': with_genres, 'tv': with_genres}；沒被呼叫的那側不會出現。"""
+    out = {}
+    for c in mock_client.get.call_args_list:
+        url = c.args[0]
+        for kind in ("movie", "tv"):
+            if url.endswith(f"discover/{kind}"):
+                out[kind] = str(c.kwargs["params"].get("with_genres"))
+    return out
+
+
+@pytest.mark.parametrize("gid, expected", [
+    (878, {"movie": "878", "tv": "10765"}),        # 電影科幻 → 影集 Sci-Fi & Fantasy
+    (28, {"movie": "28", "tv": "10759"}),          # 電影動作 → 影集 Action & Adventure
+    (10765, {"movie": "878|14", "tv": "10765"}),   # 影集 Sci-Fi & Fantasy → 電影科幻或奇幻
+    (10759, {"movie": "28|12", "tv": "10759"}),    # 影集 Action & Adventure → 電影動作或冒險
+    (18, {"movie": "18", "tv": "18"}),             # 兩邊共用的 ID 不變
+    (27, {"movie": "27"}),                          # 恐怖只有電影：不查影集
+    (10764, {"tv": "10764"}),                       # 實境只有影集：不查電影
+    (999999, {"movie": "999999", "tv": "999999"}), # 未知 ID：維持原行為兩邊都查
+])
+@pytest.mark.asyncio
+async def test_discover_maps_genre_across_movie_tv(gid, expected):
+    mock_client = make_routed_client({"discover/movie": {"results": []}, "discover/tv": {"results": []}})
+    await SearchService.search_tmdb(mock_client, "", gid=gid)
+    assert _discover_genres(mock_client) == expected

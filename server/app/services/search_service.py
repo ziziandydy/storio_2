@@ -18,6 +18,22 @@ class SearchService:
     BASE_URL_TMDB = "https://api.themoviedb.org/3"
     BASE_URL_GBOOKS = "https://www.googleapis.com/books/v1/volumes"
 
+    # TMDB 電影與影集的類型 ID 是兩套（https://developer.themoviedb.org/reference/genre-movie-list）。
+    # 類型 chip 帶的是單一 ID，查另一側時要換成對應 ID；"|" 是 TMDB discover 的「或」。
+    # 值為 None 表示另一側沒有對應類型，直接不查。未列出的 ID（兩邊共用或未知）兩側照原樣查。
+    _MOVIE_TO_TV_GENRE = {
+        28: "10759", 12: "10759",            # 動作、冒險 → Action & Adventure
+        14: "10765", 878: "10765",           # 奇幻、科幻 → Sci-Fi & Fantasy
+        10752: "10768",                      # 戰爭 → War & Politics
+        36: None, 27: None, 10402: None, 10749: None, 53: None, 10770: None,
+    }
+    _TV_TO_MOVIE_GENRE = {
+        10759: "28|12",
+        10765: "878|14",
+        10768: "10752",
+        10762: None, 10763: None, 10764: None, 10766: None, 10767: None,
+    }
+
     @staticmethod
     def _extract_year(date_str: str) -> Optional[int]:
         if not date_str:
@@ -26,6 +42,15 @@ class SearchService:
             return int(date_str[:4])
         except ValueError:
             return None
+
+    # TMDB 偶爾回傳缺 id 或 name 的人物／公司／類型；只略過那幾筆，不讓整個 details 失敗
+    @staticmethod
+    def _names(entities: list) -> List[str]:
+        return [e.get("name") for e in entities if e.get("name")]
+
+    @staticmethod
+    def _refs(entities: list) -> List[EntityRef]:
+        return [EntityRef(id=e["id"], name=e["name"]) for e in entities if e.get("id") is not None and e.get("name")]
 
     @staticmethod
     def _optimize_gb_cover(image_links: dict) -> Optional[str]:
@@ -132,17 +157,17 @@ class SearchService:
 
             # Cast & Crew
             top_cast = data.get("credits", {}).get("cast", [])[:5]
-            cast_list = [person.get("name") for person in top_cast]
-            cast_refs = [EntityRef(id=person.get("id"), name=person.get("name")) for person in top_cast]
+            cast_list = SearchService._names(top_cast)
+            cast_refs = SearchService._refs(top_cast)
 
             crew_directors = [person for person in data.get("credits", {}).get("crew", []) if person.get("job") == "Director"]
-            directors = [person.get("name") for person in crew_directors]
-            director_refs = [EntityRef(id=person.get("id"), name=person.get("name")) for person in crew_directors]
+            directors = SearchService._names(crew_directors)
+            director_refs = SearchService._refs(crew_directors)
             # For TV, creators usually
             if subtype == 'tv':
                 created_by = data.get("created_by", [])
-                directors.extend([person.get("name") for person in created_by])
-                director_refs.extend([EntityRef(id=person.get("id"), name=person.get("name")) for person in created_by])
+                directors.extend(SearchService._names(created_by))
+                director_refs.extend(SearchService._refs(created_by))
 
             # Details
             origin_country = data.get("origin_country", [])
@@ -153,9 +178,9 @@ class SearchService:
 
             original_lang = data.get("original_language")
             spoken_langs = [l.get("english_name") or l.get("name") for l in data.get("spoken_languages", [])]
-            production_companies = [c.get("name") for c in data.get("production_companies", [])]
-            company_refs = [EntityRef(id=c.get("id"), name=c.get("name")) for c in data.get("production_companies", [])]
-            genre_refs = [EntityRef(id=g.get("id"), name=g.get("name")) for g in data.get("genres", [])]
+            production_companies = SearchService._names(data.get("production_companies", []))
+            company_refs = SearchService._refs(data.get("production_companies", []))
+            genre_refs = SearchService._refs(data.get("genres", []))
 
             # Seasons（僅 TV；排除 season_number 0 = Specials，即時拉取不落地存 DB）
             from app.schemas.item import SeasonInfo
@@ -265,7 +290,7 @@ class SearchService:
                 quotes=[],
                 related_media=media_assets,
                 runtime=runtime,
-                genres=[g.get("name") for g in data.get("genres", [])],
+                genres=SearchService._names(data.get("genres", [])),
                 public_rating=data.get("vote_average"),
                 top_reviews=reviews,
                 reviews=reviews,
@@ -560,21 +585,30 @@ class SearchService:
         params = {"language": language, "region": region, "sort_by": "popularity.desc"}
         if with_people: params["with_people"] = with_people
         if with_companies: params["with_companies"] = with_companies
-        if with_genres: params["with_genres"] = with_genres
         if settings.TMDB_ACCESS_TOKEN: headers["Authorization"] = f"Bearer {settings.TMDB_ACCESS_TOKEN}"
         elif settings.TMDB_API_KEY: params["api_key"] = settings.TMDB_API_KEY
         else: return []
 
-        try:
-            movie_task = client.get(f"{SearchService.BASE_URL_TMDB}/discover/movie", params=params, headers=headers)
-            tv_task = client.get(f"{SearchService.BASE_URL_TMDB}/discover/tv", params=params, headers=headers)
+        movie_params, tv_params = dict(params), dict(params)
+        if with_genres:
+            gid = int(with_genres)
+            movie_genre = SearchService._TV_TO_MOVIE_GENRE.get(gid, str(gid))
+            tv_genre = SearchService._MOVIE_TO_TV_GENRE.get(gid, str(gid))
+            movie_params = {**params, "with_genres": movie_genre} if movie_genre else None
+            tv_params = {**params, "with_genres": tv_genre} if tv_genre else None
 
-            responses = await asyncio.gather(movie_task, tv_task)
+        async def _discover(kind: str, kind_params: Optional[dict]) -> dict:
+            if kind_params is None:
+                return {"results": []}
+            response = await client.get(f"{SearchService.BASE_URL_TMDB}/discover/{kind}", params=kind_params, headers=headers)
+            return response.json()
+
+        try:
+            movie_data, tv_data = await asyncio.gather(_discover("movie", movie_params), _discover("tv", tv_params))
 
             results = []
 
             # movie 與 tv 各取前 10 筆（TMDB 已依 popularity 排序，直接合併，不跨型別重排）
-            movie_data = responses[0].json()
             for item in movie_data.get("results", [])[:10]:
                 poster = f"https://image.tmdb.org/t/p/w500{item['poster_path']}" if item.get('poster_path') else None
                 results.append(StoryBase(
@@ -586,7 +620,6 @@ class SearchService:
                     source="tmdb"
                 ))
 
-            tv_data = responses[1].json()
             for item in tv_data.get("results", [])[:10]:
                 poster = f"https://image.tmdb.org/t/p/w500{item['poster_path']}" if item.get('poster_path') else None
                 results.append(StoryBase(

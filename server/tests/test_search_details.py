@@ -218,3 +218,34 @@ async def test_movie_details_seasons_always_empty():
 
     assert result is not None
     assert result.seasons == []
+
+
+@pytest.mark.asyncio
+async def test_details_skip_entities_missing_id_or_name():
+    """TMDB 偶爾回傳缺 id 或 name 的人物／公司／類型：只略過那幾筆，詳情不得整筆失敗（v1.16.0 review Minor #1）"""
+    import copy
+    payload = copy.deepcopy(MOCK_TMDB_MOVIE_DETAIL)
+    payload["credits"]["cast"] = [
+        {"id": 3223, "name": "Timothée Chalamet"},
+        {"id": 74568, "name": None},          # 缺 name
+        {"name": "No Id Person"},             # 缺 id
+    ]
+    payload["credits"]["crew"] = [
+        {"name": "Director Without Id", "job": "Director"},
+        {"id": 137427, "name": "Denis Villeneuve", "job": "Director"},
+    ]
+    payload["genres"] = [{"id": 878, "name": "科幻"}, {"id": 12}]
+    payload["production_companies"] = [{"name": "No Id Studio"}, {"id": 923, "name": "Legendary Pictures"}]
+
+    result = await SearchService.get_item_details(_mock_client(payload), "movie", "438631")
+
+    assert result is not None
+    assert [r.model_dump() for r in result.cast_refs] == [{"id": 3223, "name": "Timothée Chalamet"}]
+    assert [r.model_dump() for r in result.director_refs] == [{"id": 137427, "name": "Denis Villeneuve"}]
+    assert [r.model_dump() for r in result.genre_refs] == [{"id": 878, "name": "科幻"}]
+    assert [r.model_dump() for r in result.company_refs] == [{"id": 923, "name": "Legendary Pictures"}]
+    # 字串欄位：有名字的照舊保留（含缺 id 的），沒有名字的略過
+    assert result.cast == ["Timothée Chalamet", "No Id Person"]
+    assert result.directors == ["Director Without Id", "Denis Villeneuve"]
+    assert result.genres == ["科幻"]
+    assert result.production_companies == ["No Id Studio", "Legendary Pictures"]
