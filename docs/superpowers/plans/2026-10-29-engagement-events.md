@@ -22,7 +22,7 @@
 - `/api/v1/events` 限流 `60/minute`（共用 `app.core.limiter.limiter`）。
 - 不記搜尋字串、作品 ID、心得、IP 原文、UA 原文。
 - 事件寫入必須同步完成（sync endpoint 或 `await run_in_executor`），禁止 fire-and-forget。
-- 不修改 `clear_user_data()`、`migrate_guest_data`、migration 004／005。
+- 不修改 `clear_user_data()`、migration 004／005。（原本也寫「不修改 `migrate_guest_data`」，已由下方追加的 Task 9 取代。）
 - 真人與原生 App 的 UI、登入流程不得有任何變化；上報失敗一律靜默。
 - 後端測試用 dummy env 且移走 `server/.env`（見 `docs/DEV_SETUP.md` §5）；前端 push 前跑 `cd client && npx next lint`；iOS 只用 `npm run build:ios`。
 

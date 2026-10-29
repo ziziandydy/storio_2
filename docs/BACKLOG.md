@@ -4,24 +4,29 @@
 
 ---
 
-## 📍 最新狀態（2026-10-28）
+## 📍 最新狀態（2026-10-29）
 
 > 下方各里程碑是 v1.13～v1.16 的歷史紀錄；v1.17 之後的詳細內容見 `client/CHANGELOG.md`。
 
 **App 版本**：iOS v1.19.0（build 25）已上線，含分季收藏（v1.17）、churn-rescue 通知階梯（v1.18）、分享「Saved 假成功」修復與 AI 建議改寫（v1.19）。Android 技術落地完成，Play 送審素材備妥於 `docs/play-store-assets/`，等 Tu 在 Play Console 操作。
 
-**營運觀測（2026-10-27 完成）**：Supabase keepalive（GitHub Actions 每日）、UptimeRobot 6 個監控、Looker Studio 報表（成長／AI 與成本／啟用與留存／活躍／健康）。入口與維護見 [`docs/OPS_DASHBOARD.md`](OPS_DASHBOARD.md)。
+**營運觀測（2026-10-27 完成）**：Supabase keepalive（GitHub Actions 每日）、UptimeRobot 6 個監控、Looker Studio 報表（成長／AI 與成本／啟用與留存／活躍／互動／健康）。2026-10-29 起記錄 App／網頁互動事件，並修正匿名帳號灌水。入口與維護見 [`docs/OPS_DASHBOARD.md`](OPS_DASHBOARD.md)。
 
 ### 待辦
 
 | 優先 | 項目 | 說明 |
 |------|------|------|
-| P1 | **下次 iOS 發版內容（待發）** | ① 修復分享文字網址：原生 App 內 `window.location.origin` 是 `capacitor://localhost`，複製／分享出現打不開的連結；已於 2026-10-28 修好（`7c3c025`），**程式已在 main，但已上架的 App 要發新版才會修好**。② 依賴升級階段 4：`next` 14.1.0 → 14.2.35、`@capacitor/ios`／`cli`／`core` 對齊 7.6.9 以上、`npm audit fix` 處理 `tar`、`@xmldom/xmldom`、`nanoid`、`postcss`、`ws`。③ ✅ **iOS App Privacy 聲明（2026-10-28 Tu 已於後台補填；隱私政策頁同步新增 AI 第三方處理第 3 節，對照表見 `docs/app-store-privacy-answers.md`）**。原需求：：「心得建議／潤飾」會把作品標題、簡介與使用者心得送到 Gemini／OpenAI，但 App Store Connect「App 隱私」只聲明 Email／Name（Authentication），需補「使用者內容」並標明用於 App 功能、由第三方處理（Google Play Data Safety 已補）；這是後台設定，不用重新 build，只有 Tu 能操作。發版前跑 `npm test`、`next lint`、`build:ios`，再上真機（登入、收藏、分享、通知）。Supabase 不需 migration |
+| P1 | **下次 iOS 發版內容（v1.20.0，發版中）** | ① 分享文字網址修復（`7c3c025`）。② 依賴升級：`next` 14.2.35、Capacitor 7.6.10、`npm audit fix`（`04a54e9`）。③ ✅ iOS App Privacy：AI 第三方處理（2026-10-28）＋ **Usage Data → Product Interaction（2026-10-29 Tu 已補）**，對照表見 `docs/app-store-privacy-answers.md`。④ 互動事件記錄＋匿名帳號灌水修正（openspec `add-engagement-events`）：6 種事件分平台記錄、爬蟲與分享圖服務不建匿名帳號、全 App 只建 1 個匿名帳號、登入後正確搬移訪客收藏。後端、網頁、migration 006／007 已於 2026-10-29 上線（dev／prod 皆已執行）；iPhone XR 實機（連 prod）已驗證 6 種事件皆記為 ios、升級不多建帳號。**iOS 要等新版上架才生效。** |
 | ✅ | 依賴安全更新（伺服器端完成） | 2026-10-28 完成：刪除 `client/pnpm-lock.yaml`；後端依賴 120→85 行並升級 PyJWT／anyio／certifi／cryptography 等；**FastAPI 0.162.0＋Starlette 1.10.0**（`f785e36`，升級前逐項比對嚴格 Content-Type、null 處理、回應序列化、slowapi 與 CORS，新舊行為一致）；**Puppeteer 25.16.0（Chrome 156、Node 22）**（`1541195`，`puppeteer-service` 漏洞歸零，10 種模板新舊渲染比對一致）；`vitest` 4。Railway 兩服務部署成功、線上渲染正常，Tu 已在 iOS App 實測登入／收藏／編輯／AI 建議與潤飾／AI 搜尋／單張與月回顧分享皆正常。**剩餘**只在 `client/`：`next`、`@capacitor/ios`、`tar` 3 個 critical 與 eslint 工具鏈等 high，全部併入「下次 iOS 發版內容」② |
 | ✅ | Railway 部署設定 | 2026-10-28 完成：Watch Paths 已設（`storio_2`→`/server/**`、`worthy-beauty`→`/puppeteer-service/**`，實測未動對應資料夾的 push 會顯示 SKIPPED）；分享圖服務 CORS 已放行本帳號的 Vercel 預覽網址。遺留：`worthy-beauty` 的環境變數 `ALLOWED_ORIGIN`（單數）程式不讀，可刪或改名 |
 | ✅ | GitHub 安全功能 | 2026-10-27 已開啟 Dependabot alerts、secret scanning 與 push protection；Dependabot 自動升級 PR 與 code scanning 刻意未開 |
-| P2 | 新用戶不收藏 | 2026-10 數據：註冊（含匿名）約 2,588，收藏過的僅約 20 人；近 30 天只有 1 人新增收藏，啟用率近期為 0。需要產品面解法（引導、首次收藏流程） |
-| P2 | App 開啟事件記錄 | 營運報表的「上線人數」目前以 session 更新時間近似，歷史趨勢被低估；要準確 DAU/MAU 需在 App 端記錄開啟事件 |
+| P2 | 新用戶不收藏 | 2026-10 數據：註冊（含匿名）約 2,588，收藏過的僅約 20 人（⚠️ 2026-10-29 查明分母嚴重灌水：prod 2,778 個匿名帳號中 2,750 個是「一次造訪同一秒建多個帳號」的 bug 產物，392 次爆發，實際造訪約 420 次且含爬蟲；已修，之後看「互動」分頁的真實用戶與 engagement rate）；近 30 天只有 1 人新增收藏，啟用率近期為 0。需要產品面解法（引導、首次收藏流程） |
+| ✅ | App 開啟事件記錄 | 2026-10-29 完成：`public.engagement_events`＋`ops.v_engagement_daily`／`v_engagement_rate_weekly`／`v_real_users`，Looker「互動」分頁。報表只算帳號，訪客代號只用於疑似爬蟲來訪次數。設計 `docs/superpowers/specs/2026-10-29-engagement-events-design.md` |
+| ✅ | `migrate_guest_data` 權限漏洞 | 2026-10-29 migration 007（dev／prod 已執行）：原函式 SECURITY DEFINER 且開放 PUBLIC 呼叫、不檢查呼叫者，持 anon key 者知道 UUID 即可搬走任何人收藏。現在只能搬到自己、來源須為匿名帳號、anon 不可呼叫。已知取捨：知道某匿名帳號 UUID 的已登入者仍可搬走該匿名帳號的收藏 |
+| P2 | 找回卡在匿名帳號的收藏 | 2026-10-29 prod 有 11 個匿名帳號仍有收藏（共 26 筆），部分建立日與正式帳號註冊日相同，疑似舊版登入時搬錯帳號。資料未刪，若用戶反映收藏不見，可人工移轉 |
+| P3 | 訪客事件總量上限／舊列清理 | 未登入的 `open` 由前端自報訪客代號，限流可被 `X-Forwarded-For` 偽造繞過，理論上可無限灌列（報表已只算帳號，只剩儲存成長風險）。可加每日總量上限或定期清理舊訪客列，並把 limiter 改取 Railway 附加的真實 IP |
+| P3 | 互動事件小改進（/review 延後） | 頁面埋點（search／detail_view／browse／open）元件測試；兩個分享 modal 共 8 處 `track('share')` 可收斂；origin→platform 對照抽常數；`useAuth` 改用欄位 selector；event repo 共用 Supabase client；同日重複 `add_collection` 改 upsert ignore；`ops` views 的 `created_at` 索引（資料量大時）；visitor_id 與 user_id 去重碰撞（需知道 UUID）；migration log 空 code 時用 `||` |
+| P3 | openspec 主規格格式修正 | 15 份 `openspec/specs/*/spec.md` 檔頭仍是變更用的 `## ADDED Requirements`（早期歸檔遺留），openspec 解析不到裡面的需求，之後歸檔若要更新這些能力會被擋。改成 `# <name> Specification`／`## Purpose`／`## Requirements` 即可（2026-10-29 已修 `share-render-route`） |
 | P2 | 心得潤飾 prompt 改寫 | v1.19.0 後潤飾輸出仍偏匠氣 |
 | ✅ | `nixpacks.toml` 失效 → 改用 `railpack.json` | 2026-10-28 確認 Railway 改用 Railpack，`nixpacks.toml` 未被讀取；改以 `railpack.json` 的 `deploy.aptPackages: ["...", "fonts-noto-cjk"]` 安裝中文備援字型。⚠️ 必須保留 `"..."`，否則會取代 Railpack 偵測的 Chrome 系統函式庫（第一版漏掉，分享圖約 2～3 分鐘無法產生，已修） |
 | ✅ | v1.16.0 人物搜尋 4 個 Minor findings | 2026-10-28（`e1d39ad`）：#1 details 遇缺 id／name 的人物、類型改為略過該筆；#2 AI 搜尋 fallback 的人名偵測保留並補測試；#4 類型 chip 依 TMDB 電影／影集類型表對應（原本電影類型查影集永遠 0 筆，線上已驗證科幻 878 現在影集有結果）；#3 見下一列 |

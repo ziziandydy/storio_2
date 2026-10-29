@@ -14,11 +14,14 @@ App Store Connect → 你的 App → App 隱私（App Privacy）→ 編輯「資
 | Contact Info → Name | 是（Apple／Google 登入帶入） | 是 | 否 | App Functionality |
 | **User Content → Other User Content** | **是（本次要補）** | 是 | 否 | App Functionality |
 | Identifiers → User ID | 是（Supabase 帳號 ID，含匿名帳號） | 是 | 否 | App Functionality |
+| **Usage Data → Product Interaction** | **是（2026-10-29 已補）** | 是 | 否 | Analytics、App Functionality |
 
 「Other User Content」涵蓋：心得文字、評分、收藏清單。這些存在 Supabase，其中心得文字在使用「AI 潤飾」時會送到 Gemini／OpenAI。
 
+「Product Interaction」涵蓋：v1.20.0 起記錄的 6 種互動事件（打開、瀏覽、點擊詳細、搜尋、新增收藏、分享），每個帳號每天每種事件只記一筆，與帳號 ID 連結，只存在 Storio 自己的 Supabase，用於計算使用率。不記搜尋字串、作品 ID、心得、IP 或 User-Agent 原文，不送給第三方。
+
 ## 不收集（據實回答）
-Location、Financial Info、Health & Fitness、Browsing History、Contacts、Diagnostics、Usage Data（App 內無 Analytics／Crashlytics SDK）。
+Location、Financial Info、Health & Fitness、Browsing History、Contacts、Diagnostics；Usage Data 中只有 Product Interaction（見上），其餘（Advertising Data 等）不收集，App 內也沒有第三方 Analytics／Crashlytics SDK。
 
 ## 需要你確認的兩項
 - **Search History**：AI 語意搜尋會把使用者輸入的搜尋描述送到 Gemini，一般搜尋則轉給 TMDB／Google Books；Storio 後端不留存，但 Gemini 端的保留由其政策決定。建議保守勾選為 App Functionality、不與身分連結、不用於追蹤。
@@ -32,6 +35,9 @@ Location、Financial Info、Health & Fitness、Browsing History、Contacts、Dia
 
 - 2026-10-28 新增第 3 節「AI-Assisted Features and Third-Party Processing」，寫明送給 Google Gemini／OpenAI 的內容：心得潤飾送心得文字、心得建議送作品標題／簡介／類型／評分、AI 搜尋送搜尋描述；不送 Email、姓名、帳號 ID。
 - 依 Tu 的決定，**保留**原第 3 節（現為第 4 節）的追蹤、個人化廣告與模型訓練字句。注意：這幾句是「保留權利」的寫法，目前 App 並未實際追蹤、投放廣告或訓練模型，隱私標籤依「現況」填「不用於追蹤」；若日後真的加入分析 SDK 或廣告，標籤與 ATT 提示都要同步更新。審核員若質疑政策與標籤，可回覆「政策為保留條款，現行版本未實作」。
+
+## Google Play Data Safety（Android 上架時同步）
+- 補「App activity → App interactions」：收集、與使用者連結、用途 Analytics／App functionality、不分享給第三方。
 
 ## 完成後
 - 後台按「發佈」，隱私標籤變更不需重新 build 或送審新版本，但審核員在下一個版本會依此核對。

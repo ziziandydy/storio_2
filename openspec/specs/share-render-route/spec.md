@@ -1,5 +1,8 @@
-## ADDED Requirements
+# share-render-route Specification
 
+## Purpose
+`/share/render` 頁面：由 Puppeteer 分享圖服務載入，讀取 `window.__RENDER_DATA__` 渲染分享模板並回報完成。
+## Requirements
 ### Requirement: Share render route reads data from window.__RENDER_DATA__
 The `/share/render` page SHALL read rendering data from `window.__RENDER_DATA__` (injected by the Puppeteer service) and render the appropriate template component.
 
@@ -40,3 +43,13 @@ The `/share/render` page SHALL render the template with no navigation, no paddin
 - **WHEN** the page is visited with render data injected
 - **THEN** the page body contains only the template component
 - **AND** no NavigationFAB, header, or other application UI elements are visible
+
+### Requirement: Share render route creates no accounts or events
+The `/share/render` page, which is loaded only by the Puppeteer share-image service, SHALL NOT create a Supabase anonymous account and SHALL NOT send any engagement event.
+
+#### Scenario: Puppeteer renders a share image
+- **WHEN** the Puppeteer service loads `/share/render` in a fresh headless browser and renders a template
+- **THEN** no anonymous account is created
+- **AND** no request is sent to `/api/v1/events`
+- **AND** the rendered image is unchanged
+

@@ -104,7 +104,7 @@ Tu 想知道「有多少是真實用戶打開了 App 並真的使用產品，有
 - 去重唯一索引：`(coalesce(user_id, visitor_id), event, platform, day)`。
 - RLS 開啟、不開放 public 存取，只有後端 service role 寫入（比照 `ai_api_usage` 的模式）。
 - **刪除語意**（我的判斷）：刪除帳號（`DELETE /me`）由 `user_id` 的 `on delete cascade` 一併刪除事件，不需在程式裡另外刪。「清除資料」（`DELETE /me/data`，只清收藏）**不刪事件**，事件是使用統計而非使用者內容。不要在 `clear_user_data()` 裡加刪事件的邏輯（兩個端點共用它）。
-- **訪客轉正式帳號**（我的判斷）：`migrate_guest_data`（只存在線上 Supabase、不在 repo）只搬 `collections`，**不改它**。訪客登入成 Apple／Google 帳號的那一天，同一個人可能在兩個 `user_id` 下各被算一次；正式註冊總數約 19 人，影響可忽略，列為已知取捨。
+- **訪客轉正式帳號**（我的判斷）：`migrate_guest_data`（只存在線上 Supabase、不在 repo）只搬 `collections`，**不改它**（2026-10-29 更新：實測發現它有權限漏洞，且首訪會建多個匿名帳號導致搬錯帳號，經 Tu 核可改由 migration 007 重建、`useAuth` 改為只建一個匿名帳號，見計畫 Task 9／10）。訪客登入成 Apple／Google 帳號的那一天，同一個人可能在兩個 `user_id` 下各被算一次；正式註冊總數約 19 人，影響可忽略，列為已知取捨。
 
 **新 API `POST /api/v1/events`**（三層架構：endpoint → service → repository）
 - Body：`{ "event": "...", "platform": "ios|android|web", "visitor_id"?: uuid, "is_suspected_bot"?: bool, "bot_reason"?: str }`。

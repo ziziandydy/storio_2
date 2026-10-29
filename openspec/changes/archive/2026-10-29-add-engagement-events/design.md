@@ -17,7 +17,7 @@
 - 舊版 App 不受影響，`add_collection` 對所有版本立即生效。
 
 **Non-Goals:**
-- 刪除既有帳號、修改 004／005 views、修改 `migrate_guest_data`。
+- 刪除既有帳號、修改 004／005 views。（原列「修改 `migrate_guest_data`」，2026-10-29 經 Tu 核可改為納入：migration 007 補權限檢查、`useAuth` 只建一個匿名帳號。）
 - 事件內容細節（作品、搜尋字串、停留時間）。
 - 漏斗互斥歸類、偽裝爬蟲偵測、Next 升級。
 

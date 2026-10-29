@@ -28,7 +28,7 @@
 
 - **前端**（`client/src`）：`hooks/useAuth.ts`、新增爬蟲判斷與事件上報模組、`AppOpenReset`／根 layout、首頁與館藏頁（browse）、詳情頁、搜尋頁、`ShareModal`、`MonthlyRecapModal`。iOS／Android 需新版 App 才生效。
 - **後端**（`server/app`）：新 events endpoint／service／repository、collection service 新增成功後記錄事件、slowapi 限流。push 即生效（Railway）。
-- **資料庫**：Supabase prod 執行 migration 006（Tu 操作）；不修改既有 004／005 views 與 `migrate_guest_data`。
+- **資料庫**：Supabase prod 執行 migration 006（Tu 操作），以及 migration 007（重建 `migrate_guest_data`，補上呼叫者與來源帳號檢查）；不修改既有 004／005 views。
 - **報表**：Looker 新增資料來源與分頁（Tu 輸入 `looker_ro` 密碼）。
 - **隱私**：App Store Connect 隱私標籤需 Tu 補填；Google Play Data Safety 於 Android 上架時補。
 - **不受影響**：真人使用體驗、既有 API 行為、舊版 App 相容性。

@@ -161,8 +161,8 @@ find-skills                         # 尋找新技能
 ## 測試規範
 
 - 遵循 **TDD**（先寫測試再實作）
-- **後端**: Pytest — `server/tests/`（120 tests）。會走到 Gemini/OpenAI 備援路徑的測試，必須 patch 清空 `OPENAI_API_KEY`，否則本機 `.env` 的 key 會讓測試真的打外部 API
-- **前端單元/元件**: Vitest — `client/src/**/__tests__/`（121 tests，`cd client && npm test`；元件測試檔頂端加 `// @vitest-environment jsdom`，使用 `@testing-library/react`）。目前未進 CI
+- **後端**: Pytest — `server/tests/`（150 tests）。會走到 Gemini/OpenAI 備援路徑的測試，必須 patch 清空 `OPENAI_API_KEY`，否則本機 `.env` 的 key 會讓測試真的打外部 API
+- **前端單元/元件**: Vitest — `client/src/**/__tests__/`（183 tests，`cd client && npm test`；元件測試檔頂端加 `// @vitest-environment jsdom`，使用 `@testing-library/react`）。目前未進 CI
 - **前端/E2E**: Playwright — `client/tests/`（目前未進 CI，落後較多版本）
 - 原則上禁止為了讓測試通過而 mock 資料庫；惟**現有後端測試實際以 mock（MagicMock/AsyncMock）為主**，與此原則有落差，待後續釐清是否導入測試用 Supabase 專案。
 
