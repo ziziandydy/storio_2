@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.20.0](https://github.com/ziziandydy/storio_2/compare/v1.19.0...v1.20.0) (2026-10-29)
+
+
+### 新功能 (Features)
+
+* **api:** 新增收藏成功後記錄 add_collection 事件 ([d3fcbfe](https://github.com/ziziandydy/storio_2/commit/d3fcbfe030f933a6639783bbf7b46c4248e3c9b1))
+* **api:** POST /api/v1/events 互動事件記錄 ([ec562c4](https://github.com/ziziandydy/storio_2/commit/ec562c45acedc301da7d4534b458e2973fada1ce))
+* **client:** 互動事件上報模組與 open／browse hooks ([3e47e8d](https://github.com/ziziandydy/storio_2/commit/3e47e8d321ce3367b00d6cf195dc6d14379a92b2))
+* **client:** 掛上 open／browse／detail_view／search／share 事件 ([75150d5](https://github.com/ziziandydy/storio_2/commit/75150d5ac2fec09c9b8a605b597a7200e7cfdd75))
+* **db:** migration 006 engagement_events 與 ops 互動 views ([9702b8a](https://github.com/ziziandydy/storio_2/commit/9702b8a3cedfab440907af3a512b950d56acc3ad))
+* **landing:** 加入 App logo favicon，新增 robots.txt / sitemap.xml / llms.txt / agents.md ([c4fcc29](https://github.com/ziziandydy/storio_2/commit/c4fcc29afd36aee24c682376a0fdaad00fe262c0))
+* **landing:** footer 加入 Fazier 上架徽章 ([c835af1](https://github.com/ziziandydy/storio_2/commit/c835af127a01e177224a754329a7787da1690d79))
+* **landing:** footer 加入 Product Hunt 評論徽章 ([8f173b7](https://github.com/ziziandydy/storio_2/commit/8f173b7baaeed3021bea1be95c7f0da4febf776b))
+* **landing:** footer 加入 Turbo0 上架徽章 ([a71eaad](https://github.com/ziziandydy/storio_2/commit/a71eaad86260ce1c6850ace1aba6489ace34cef4))
+* **ops:** 新增 ops schema、彙總 views 與唯讀角色 migration ([8a16114](https://github.com/ziziandydy/storio_2/commit/8a16114d8bf5253688058151cafd9787e260c3f9))
+* **ops:** 新增 Supabase keepalive 每日排程 ([16696b0](https://github.com/ziziandydy/storio_2/commit/16696b033d8deb408273f2f946432717a8776326))
+* **ops:** 新增 Supabase keepalive script（唯讀）與測試 ([13018d4](https://github.com/ziziandydy/storio_2/commit/13018d443f3d51858cc8a76eff2e1a6fef739edd))
+* **ops:** 新增活躍人數 views（005）與 dashboard 維運手冊 ([20723ed](https://github.com/ziziandydy/storio_2/commit/20723ed12b5982de8c97a74563856ad8cb381ec8))
+* **puppeteer-service:** CORS 放行本帳號的 Vercel 預覽部署網址 ([b16fa70](https://github.com/ziziandydy/storio_2/commit/b16fa70b91908aae16ef1eb6c9584a6cd812da54))
+* **seo:** 新增 sitemap、首頁 SoftwareApplication JSON-LD 與 meta description ([f676882](https://github.com/ziziandydy/storio_2/commit/f67688228ac9ec97f6f2e99bf4005650920fb65f))
+* **seo:** Web App 新增 robots.txt / llms.txt / agents.md ([07f42a5](https://github.com/ziziandydy/storio_2/commit/07f42a555bc8243fbda55827582b37f293776ab3))
+
+
+### Bug 修復 (Bug Fixes)
+
+* **auth:** 分享圖服務與已知爬蟲不再建立匿名帳號 ([7681cd4](https://github.com/ziziandydy/storio_2/commit/7681cd4289af21ea24af9cf1a341226baae7d826))
+* **auth:** 全 App 只建一個匿名帳號，登入後正確搬移訪客收藏 ([b2db705](https://github.com/ziziandydy/storio_2/commit/b2db70581066b1d9e9acbc8542834a6e5142593b))
+* **auth:** 訪客搬移加逾時與重試、永久錯誤清訪客記錄、log 不印 ID ([38a3fc4](https://github.com/ziziandydy/storio_2/commit/38a3fc4a6c462a092ae37a454f4abb85860a3e84))
+* **auth:** auth listener 不在 lock 內 await，INITIAL_SESSION 也搬移訪客收藏 ([43d89a0](https://github.com/ziziandydy/storio_2/commit/43d89a0659ffb8b21c19d17355d8b004c6cef22e))
+* **auth:** Cubot 手機 UA 不再被誤判為爬蟲，並強化 bot 測試 ([a86ee6e](https://github.com/ziziandydy/storio_2/commit/a86ee6e258af4d8f5754e0a6670f814ab1681ec6))
+* **client:** 事件上報改用最新 session token，失敗不算已送 ([fb85aba](https://github.com/ziziandydy/storio_2/commit/fb85aba23abc2d9f2a1520ccce608d968455b50a))
+* **db:** 報表只算帳號；migrate_guest_data 來源不存在時直接結束 ([f1d9dbd](https://github.com/ziziandydy/storio_2/commit/f1d9dbdd23412f1415dfa760d84f96eb1856c160))
+* **db:** migration 007 補上 migrate_guest_data 的權限檢查 ([2403259](https://github.com/ziziandydy/storio_2/commit/240325925ed394b0f0b5c2bc228e4bba82bed295))
+* **ops:** looker_ro 連線上限由 5 調為 15（Looker 多資料來源會超過） ([c9fe28f](https://github.com/ziziandydy/storio_2/commit/c9fe28f036d2e835af0d6b360f98a40ca9340140))
+* **puppeteer-service:** 以 railpack.json 取代失效的 nixpacks.toml 安裝中文字型 ([1fcaf24](https://github.com/ziziandydy/storio_2/commit/1fcaf243623c302d3f6dbff589e49a8ae39aa66d))
+* **puppeteer-service:** railpack.json 保留 Railpack 預設套件（修復 Chrome 啟動失敗） ([e3275f3](https://github.com/ziziandydy/storio_2/commit/e3275f3bc46038394744902f85190df055c12782))
+* **search:** details 略過缺欄位的人物／類型、類型查詢對應電影與影集 ID ([e1d39ad](https://github.com/ziziandydy/storio_2/commit/e1d39adf9bd8cad6c90a0dab7a31163648d9999e)), closes [#1](https://github.com/ziziandydy/storio_2/issues/1) [#2](https://github.com/ziziandydy/storio_2/issues/2) [#4](https://github.com/ziziandydy/storio_2/issues/4) [#3](https://github.com/ziziandydy/storio_2/issues/3)
+* **share:** 原生 App 分享文字網址改用正式網址 ([7c3c025](https://github.com/ziziandydy/storio_2/commit/7c3c025a4c64254ba7d2dac86cbb551885d5d55d))
+
 ## [1.19.0](https://github.com/ziziandydy/storio_2/compare/v1.18.0...v1.19.0) (2026-10-03)
 
 
