@@ -17,12 +17,13 @@
 | 優先 | 項目 | 說明 |
 |------|------|------|
 | P1 | **下次 iOS 發版內容（待發）** | ① 修復分享文字網址：原生 App 內 `window.location.origin` 是 `capacitor://localhost`，複製／分享出現打不開的連結；已於 2026-10-28 修好（`7c3c025`），**程式已在 main，但已上架的 App 要發新版才會修好**。② 依賴升級階段 4：`next` 14.1.0 → 14.2.35、`@capacitor/ios`／`cli`／`core` 對齊 7.6.9 以上、`npm audit fix` 處理 `tar`、`@xmldom/xmldom`、`nanoid`、`postcss`、`ws`。③ ✅ **iOS App Privacy 聲明（2026-10-28 Tu 已於後台補填；隱私政策頁同步新增 AI 第三方處理第 3 節，對照表見 `docs/app-store-privacy-answers.md`）**。原需求：：「心得建議／潤飾」會把作品標題、簡介與使用者心得送到 Gemini／OpenAI，但 App Store Connect「App 隱私」只聲明 Email／Name（Authentication），需補「使用者內容」並標明用於 App 功能、由第三方處理（Google Play Data Safety 已補）；這是後台設定，不用重新 build，只有 Tu 能操作。發版前跑 `npm test`、`next lint`、`build:ios`，再上真機（登入、收藏、分享、通知）。Supabase 不需 migration |
-| P1 | 依賴安全更新（進行中） | 2026-10-28 已完成：刪除 `client/pnpm-lock.yaml`、後端依賴 120→85 行並升級 PyJWT／anyio／certifi／cryptography／urllib3／protobuf、`puppeteer-service` 的 express 系列；Dependabot 警示 370→145，後端 critical 清空。**剩餘**：階段 2 FastAPI＋Starlette 跨大版本（只動 Railway，風險高，建議用 Opus）、階段 3b `puppeteer` 22 升級（要比對 6 個分享模板截圖，只動 Railway）、階段 4（併入上一列）、~~階段 5 開發工具~~ 已完成（`vitest` 4.1.12、dev 傳遞依賴更新，`3ab641c`）。`client/` 目前只剩 3 個 critical（`next`、`@capacitor/ios`、`tar`），其餘 high 為 eslint 工具鏈（綁 `next` 版本）與 `@xmldom/xmldom`、`ws`、`postcss`，都併入階段 4 |
+| ✅ | 依賴安全更新（伺服器端完成） | 2026-10-28 完成：刪除 `client/pnpm-lock.yaml`；後端依賴 120→85 行並升級 PyJWT／anyio／certifi／cryptography 等；**FastAPI 0.162.0＋Starlette 1.10.0**（`f785e36`，升級前逐項比對嚴格 Content-Type、null 處理、回應序列化、slowapi 與 CORS，新舊行為一致）；**Puppeteer 25.16.0（Chrome 156、Node 22）**（`1541195`，`puppeteer-service` 漏洞歸零，10 種模板新舊渲染比對一致）；`vitest` 4。Railway 兩服務部署成功、線上渲染正常，Tu 已在 iOS App 實測登入／收藏／編輯／AI 建議與潤飾／AI 搜尋／單張與月回顧分享皆正常。**剩餘**只在 `client/`：`next`、`@capacitor/ios`、`tar` 3 個 critical 與 eslint 工具鏈等 high，全部併入「下次 iOS 發版內容」② |
 | ✅ | Railway 部署設定 | 2026-10-28 完成：Watch Paths 已設（`storio_2`→`/server/**`、`worthy-beauty`→`/puppeteer-service/**`，實測未動對應資料夾的 push 會顯示 SKIPPED）；分享圖服務 CORS 已放行本帳號的 Vercel 預覽網址。遺留：`worthy-beauty` 的環境變數 `ALLOWED_ORIGIN`（單數）程式不讀，可刪或改名 |
 | ✅ | GitHub 安全功能 | 2026-10-27 已開啟 Dependabot alerts、secret scanning 與 push protection；Dependabot 自動升級 PR 與 code scanning 刻意未開 |
 | P2 | 新用戶不收藏 | 2026-10 數據：註冊（含匿名）約 2,588，收藏過的僅約 20 人；近 30 天只有 1 人新增收藏，啟用率近期為 0。需要產品面解法（引導、首次收藏流程） |
 | P2 | App 開啟事件記錄 | 營運報表的「上線人數」目前以 session 更新時間近似，歷史趨勢被低估；要準確 DAU/MAU 需在 App 端記錄開啟事件 |
 | P2 | 心得潤飾 prompt 改寫 | v1.19.0 後潤飾輸出仍偏匠氣 |
+| P3 | `puppeteer-service/nixpacks.toml` 可能已失效 | Railway 現在用 Railpack 建置（日誌顯示 Railpack 偵測 Node），`nixpacks.toml` 裡安裝的 `noto-fonts-cjk-sans` 可能沒有被讀到；中文目前正常是因為字型由前端網頁的 web font 提供。可確認 Railpack 是否需要等效設定，或刪除這個檔案 |
 | P3 | v1.16.0 人物搜尋 4 個 Minor findings | 見該版本 review 紀錄；Show trending 仍擱置 |
 | P3 | 觀察 keepalive 有效性 | keepalive 只讀；若收到 Supabase「即將暫停」警告信，補寫入（做法見維運手冊） |
 | P3 | 監控成本複查 | 約 2026-11-24 到 Railway Usage 頁確認監控沒有讓用量明顯增加 |
