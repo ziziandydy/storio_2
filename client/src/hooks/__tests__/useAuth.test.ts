@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 
 const { getSession, signInAnonymously, signOut, onAuthStateChange, rpc, detectBot } = vi.hoisted(() => ({
@@ -41,6 +41,10 @@ describe('useAuth 匿名登入', () => {
     signOut.mockResolvedValue({ error: null });
     rpc.mockResolvedValue({ error: null });
     detectBot.mockReturnValue({ isBot: false, reason: null });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('bot: no anonymous sign-in and loading ends', async () => {
@@ -138,7 +142,7 @@ describe('useAuth 匿名登入', () => {
 
   it('migration failure keeps guest id', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    rpc.mockResolvedValue({ error: { code: '42501' } });
+    rpc.mockResolvedValue({ error: { code: 'PGRST000', message: 'network' } });
     await mountWithGuest();
     act(() => { listener!('SIGNED_IN', realSession('real-1')); });
     await waitFor(() => expect(useUserStore.getState().user?.id).toBe('real-1'));
@@ -146,6 +150,103 @@ describe('useAuth 匿名登入', () => {
     expect(localStorage.getItem('storio_guest_id')).toBe('anon-1');
     expect(useUserStore.getState().token).toBe('tok-real-1');
     expect(useUserStore.getState().loading).toBe(false);
+  });
+
+  it('permanent 42501 clears guest id', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    rpc.mockResolvedValue({ error: { code: '42501', message: 'denied' } });
+    await mountWithGuest();
+    act(() => { listener!('SIGNED_IN', realSession('real-1')); });
+    await waitFor(() => expect(useUserStore.getState().user?.id).toBe('real-1'));
+    expect(localStorage.getItem('storio_guest_id')).toBeNull();
+    act(() => { listener!('SIGNED_IN', realSession('real-1')); });
+    await flush();
+    expect(rpc).toHaveBeenCalledTimes(1);
+  });
+
+  it('failed migration retries on next event', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    rpc.mockResolvedValueOnce({ error: { code: 'PGRST000', message: 'network' } });
+    await mountWithGuest();
+    act(() => { listener!('SIGNED_IN', realSession('real-1')); });
+    await waitFor(() => expect(useUserStore.getState().user?.id).toBe('real-1'));
+    expect(localStorage.getItem('storio_guest_id')).toBe('anon-1');
+    act(() => { listener!('SIGNED_IN', realSession('real-1')); });
+    await waitFor(() => expect(rpc).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(localStorage.getItem('storio_guest_id')).toBeNull());
+  });
+
+  it('migration timeout does not block later auth events', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    await mountWithGuest();
+    await flush();
+    rpc.mockReturnValue(new Promise(() => {}));
+    vi.useFakeTimers();
+    act(() => { listener!('SIGNED_IN', realSession('real-1')); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(useUserStore.getState().token).not.toBe('tok-real-1');
+    await act(async () => { await vi.advanceTimersByTimeAsync(10_000); });
+    expect(useUserStore.getState().user?.id).toBe('real-1');
+    expect(useUserStore.getState().token).toBe('tok-real-1');
+    // 逾時視為暫時性錯誤，保留訪客 ID
+    expect(localStorage.getItem('storio_guest_id')).toBe('anon-1');
+    act(() => { listener!('TOKEN_REFRESHED', { ...realSession('real-1'), access_token: 'tok-refreshed' }); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(useUserStore.getState().token).toBe('tok-refreshed');
+  });
+
+  it('late rpc success after timeout keeps a new guest id', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    await mountWithGuest();
+    await flush();
+    let resolveRpc: (v: { error: null }) => void = () => {};
+    rpc.mockReturnValue(new Promise((r) => { resolveRpc = r; }));
+    vi.useFakeTimers();
+    act(() => { listener!('SIGNED_IN', realSession('real-1')); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(10_000); });
+    expect(useUserStore.getState().token).toBe('tok-real-1');
+    localStorage.setItem('storio_guest_id', 'anon-2');
+    await act(async () => { resolveRpc({ error: null }); await vi.advanceTimersByTimeAsync(0); });
+    expect(localStorage.getItem('storio_guest_id')).toBe('anon-2');
+  });
+
+  it('does not migrate for anonymous session', async () => {
+    await mountWithGuest();
+    act(() => { listener!('SIGNED_IN', anonSession('anon-9')); });
+    await waitFor(() => expect(useUserStore.getState().user?.id).toBe('anon-9'));
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('does not migrate when guest id equals user', async () => {
+    await mountWithGuest();
+    localStorage.setItem('storio_guest_id', 'real-1');
+    act(() => { listener!('SIGNED_IN', realSession('real-1')); });
+    await waitFor(() => expect(useUserStore.getState().user?.id).toBe('real-1'));
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('does not migrate without guest id', async () => {
+    await mountWithGuest();
+    localStorage.removeItem('storio_guest_id');
+    act(() => { listener!('SIGNED_IN', realSession('real-1')); });
+    await waitFor(() => expect(useUserStore.getState().user?.id).toBe('real-1'));
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('logs do not contain user ids', async () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const errLog = vi.spyOn(console, 'error').mockImplementation(() => {});
+    rpc.mockResolvedValueOnce({ error: { code: 'PGRST000', message: 'network' } });
+    await mountWithGuest();
+    act(() => { listener!('SIGNED_IN', realSession('real-1')); });
+    await waitFor(() => expect(useUserStore.getState().user?.id).toBe('real-1'));
+    act(() => { listener!('SIGNED_IN', realSession('real-1')); });
+    await waitFor(() => expect(rpc).toHaveBeenCalledTimes(2));
+    await flush();
+    const text = JSON.stringify([...log.mock.calls, ...errLog.mock.calls]);
+    expect(text).not.toContain('anon-1');
+    expect(text).not.toContain('real-1');
   });
 
   it('init rejection does not leave loading true', async () => {

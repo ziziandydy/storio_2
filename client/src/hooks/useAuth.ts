@@ -45,22 +45,46 @@ function signInAnonymouslyOnce(): Promise<void> {
   return anonPromise;
 }
 
-// 同一組 訪客→正式帳號 只搬一次；並發的事件共用同一個 promise
+const GUEST_ID_KEY = 'storio_guest_id';
+const MIGRATION_TIMEOUT_MS = 10_000;
+// 伺服器拒絕（來源非匿名帳號／目的地不是自己）：永久錯誤，不再重試
+const PERMANENT_MIGRATION_ERROR = '42501';
+
+// 只在記錄仍是同一位訪客時才清，避免誤刪之後新建的訪客 ID
+function clearGuestIdIf(guestId: string) {
+  if (localStorage.getItem(GUEST_ID_KEY) === guestId) localStorage.removeItem(GUEST_ID_KEY);
+}
+
+// 同一組 訪客→正式帳號 只搬一次；並發的事件共用同一個 promise。
+// 逾時或暫時性失敗會清掉快取，下一個事件可再試；逾時後才回來的 rpc 結果一律忽略。
 function migrateGuestOnce(oldId: string, newId: string): Promise<void> {
   const key = `${oldId}->${newId}`;
   if (migration?.key === key) return migration.promise;
   const promise = (async () => {
-    console.log(`Migrating data from ${oldId} to ${newId}`);
+    console.log('Migrating guest data');
+    let timer: ReturnType<typeof setTimeout> | undefined;
     try {
-      const { error } = await supabase.rpc('migrate_guest_data', {
-        old_user_id: oldId,
-        new_user_id: newId,
+      const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error('migration timeout')), MIGRATION_TIMEOUT_MS);
       });
+      const { error } = await Promise.race([
+        supabase.rpc('migrate_guest_data', { old_user_id: oldId, new_user_id: newId }),
+        timeout,
+      ]);
       if (error) throw error;
-      localStorage.removeItem('storio_guest_id');
+      clearGuestIdIf(oldId);
       console.log('Migration successful');
     } catch (err) {
-      console.error('Migration failed:', err);
+      const code = (err as { code?: string } | null)?.code;
+      if (code === PERMANENT_MIGRATION_ERROR) {
+        clearGuestIdIf(oldId);
+        console.error('Migration rejected:', code);
+      } else {
+        if (migration?.key === key) migration = null;
+        console.error('Migration failed:', code ?? (err instanceof Error ? err.message : 'unknown'));
+      }
+    } finally {
+      clearTimeout(timer);
     }
   })();
   migration = { key, promise };
@@ -75,7 +99,7 @@ async function handleAuthChange(event: AuthChangeEvent, session: Session | null)
 
   // INITIAL_SESSION 也要搬：網頁 OAuth redirect 的 SIGNED_IN 可能早於 listener 註冊
   if (MIGRATE_EVENTS.has(event) && newUser && !newUser.is_anonymous) {
-    const previousGuestId = localStorage.getItem('storio_guest_id');
+    const previousGuestId = localStorage.getItem(GUEST_ID_KEY);
     if (previousGuestId && previousGuestId !== newUser.id) {
       await migrateGuestOnce(previousGuestId, newUser.id);
     }
@@ -83,7 +107,7 @@ async function handleAuthChange(event: AuthChangeEvent, session: Session | null)
 
   // 只記錄「目前 session 的匿名帳號」為訪客 ID
   if (newUser?.is_anonymous) {
-    localStorage.setItem('storio_guest_id', newUser.id);
+    localStorage.setItem(GUEST_ID_KEY, newUser.id);
   }
 
   setUser(newUser);

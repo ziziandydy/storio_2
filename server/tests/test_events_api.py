@@ -95,6 +95,16 @@ def test_no_token_missing_visitor_id_rejected(rows):
     assert rows == []
 
 
+@pytest.mark.parametrize("body", [
+    {"event": "open", "visitor_id": "not-a-uuid"},
+    {"event": "open", "visitor_id": str(uuid4()), "bot_reason": "x"},
+])
+def test_invalid_visitor_payload_422(rows, body):
+    as_guest()
+    assert post(body).status_code == 422
+    assert rows == []
+
+
 def test_invalid_token_returns_401(rows):
     bad = MagicMock()
     bad.auth.get_user.side_effect = Exception("bad token")
