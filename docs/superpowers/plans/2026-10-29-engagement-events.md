@@ -260,3 +260,45 @@
 - [ ] **Step 7: Tu 在 App Store Connect 補 Product Interaction。**
 - [ ] **Step 8: `openspec-archive-change add-engagement-events`。**
 - [ ] **Step 9: iOS 發版**（與分享網址修復、依賴升級同批）：`npm run release:dry` → `npm run release` → `npm run ios:sync` → `npm run build:ios` → Xcode Archive → 送審。
+
+---
+
+## 追加任務（2026-10-29，Task 7 實測發現，Tu 核可放進本分支）
+
+實測發現：真人首訪一次建立多個匿名帳號（dev 一次 16 個；prod 2,778 個匿名帳號中 2,750 個落在 392 次「同一秒多帳號」爆發），且 `storio_guest_id` 與實際 session 帳號不一致，導致登入後收藏搬錯帳號；`migrate_guest_data` 為 SECURITY DEFINER、EXECUTE 給 PUBLIC 且不檢查呼叫者。Tu 決定：真人首訪只能建 1 個帳號；訪客先收藏再登入要接得上；採「登入後搬移、修簿記」，不採 linkIdentity。完成兩個追加任務後，重跑 Task 7。
+
+### Task 9: Migration 007（migrate_guest_data 權限檢查）
+
+**Files:**
+- Create: `server/migrations/007_secure_migrate_guest_data.sql`
+
+- [ ] **Step 1:** 重建 `public.migrate_guest_data(old_user_id uuid, new_user_id uuid)`：保留原搬移邏輯（先刪重複 `(external_id, media_type)`、再改 `user_id`）；`security definer`、`set search_path = public, pg_temp`；`auth.uid()` 為 null 或 `new_user_id` 不是呼叫者 → `42501`；`old_user_id` 為 null 或等於 `new_user_id` → 直接 return；`old_user_id` 非匿名帳號 → `42501`；`revoke all ... from public, anon; grant execute ... to authenticated;`；檔尾附驗證 SQL。
+- [ ] **Step 2:** Tu 在 dev 執行 → controller 以 supabase-dev MCP 驗證 → Tu 在 prod 執行 → controller 以 supabase MCP 驗證。
+- [ ] **Step 3: Commit** — `fix(db): migration 007 補上 migrate_guest_data 的權限檢查`
+
+### Task 10: useAuth 全 App 只建一個匿名帳號、登入後正確搬移
+
+**Files:**
+- Modify: `client/src/hooks/useAuth.ts`
+- Test: `client/src/hooks/__tests__/useAuth.test.ts`
+
+**Interfaces:**
+- Consumes: `detectBot()`、`useUserStore`（含 `anonSignInFailed`）（Task 4）；`migrate_guest_data` 的新規則（Task 9：只能由新帳號替自己搬、來源須為匿名帳號，違反時 42501）。
+- Produces: `useAuth()` 回傳值與簽名不變（`{ user, token, loading, signOut, updateProfile, signInAnonymously }`）；另匯出僅供測試的 `__resetAuthForTests(): void`，重設模組層狀態。
+
+- [ ] **Step 1: 寫失敗測試**（沿用該檔現有的 supabase mock 寫法；每測前呼叫 `__resetAuthForTests()`）
+  - `concurrent mounts create one anonymous account`：同時 `renderHook(() => useAuth())` 5 次、無 session → `signInAnonymously` 只被呼叫 1 次。
+  - `auth listener registered once`：5 個 mount → `onAuthStateChange` 只註冊 1 次；全部 unmount 後再 mount 不重複註冊。
+  - `guest id matches the signed-in anonymous user`：`signInAnonymously` 回 `user.id = 'anon-1'` → `localStorage.storio_guest_id === 'anon-1'`，且 store `user.id === 'anon-1'`。
+  - `migrates once on sign-in`：`storio_guest_id = 'anon-1'`，listener 收到 `SIGNED_IN`（非匿名 `user.id = 'real-1'`）→ `rpc('migrate_guest_data', { old_user_id: 'anon-1', new_user_id: 'real-1' })` 只呼叫 1 次（同時再送一次 `USER_UPDATED` 也不重複）；成功後 `storio_guest_id` 被移除。
+  - `migration failure keeps guest id`：rpc 回 `{ error: { code: '42501' } }` → `storio_guest_id` 保留、登入狀態照常（store user 為 `real-1`）。
+  - `bot still creates no account`：既有測試照常通過；5 個 mount 也不呼叫 `signInAnonymously`。
+- [ ] **Step 2: 跑測試確認失敗。**
+- [ ] **Step 3: 實作**（模組層狀態，不改 store 介面）：
+  - 匿名登入 single-flight：模組層 `let initPromise: Promise<void> | null`；第一個 mount 執行 `initAuth`，其他 mount 共用同一個 promise。`signInAnonymously` 本身也要 single-flight（`signOut` 會呼叫它）。
+  - auth listener 全 App 只註冊一次：模組層旗標，第一次 mount 時註冊，之後不再註冊、也不在元件 unmount 時解除（App 生命週期內常駐）。
+  - `storio_guest_id` 只在「目前 session 是匿名帳號」時寫入，值取自該 session 的 `user.id`（listener 收到的 session，或 `signInAnonymously` 成功回傳的 `data.user.id`，兩者此時一致）。
+  - 搬移：listener 收到非匿名 `SIGNED_IN`／`USER_UPDATED` 時，以模組層 in-flight 旗標保證同一次登入只呼叫一次 rpc；成功才移除 `storio_guest_id`，失敗只記 log。
+  - E2E escape hatch、bot 分支、`anonSignInFailed` 行為維持不變。
+- [ ] **Step 4: 跑測試確認通過**，再跑 `npm test`、`npx next lint`、`npm run build`。
+- [ ] **Step 5: Commit** — `fix(auth): 全 App 只建一個匿名帳號，登入後正確搬移訪客收藏`
