@@ -1,9 +1,10 @@
 from typing import List
 from uuid import UUID
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials
 from app.schemas.item import StoryCreate, StoryResponse, StoryCheckResponse
 from app.services.collection_service import CollectionService
+from app.services.event_service import EventService, platform_from_origin
 from app.api.deps import get_current_user, security
 
 router = APIRouter()
@@ -68,6 +69,7 @@ def read_collection_item(
 
 @router.post("/", response_model=StoryResponse)
 def add_to_collection(
+    request: Request,
     story_in: StoryCreate,
     user = Depends(get_current_user),
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -77,7 +79,14 @@ def add_to_collection(
     Max 10 items for Guest users.
     """
     service = CollectionService(token=credentials.credentials)
-    return service.add_story(user.id, story_in, is_anonymous=user.is_anonymous)
+    result = service.add_story(user.id, story_in, is_anonymous=user.is_anonymous)
+    # 新增成功後才記錄事件；記錄失敗由 record_safely 吞掉，不影響新增結果
+    EventService().record_safely(
+        "add_collection",
+        platform_from_origin(request.headers.get("origin")),
+        user_id=user.id,
+    )
+    return result
 
 @router.patch("/{story_id}", response_model=StoryResponse)
 def update_collection_item(
