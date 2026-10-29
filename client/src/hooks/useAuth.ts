@@ -4,8 +4,112 @@ import { User } from '@supabase/supabase-js';
 import { useUserStore } from '@/store/userStore';
 import { detectBot } from '@/lib/botDetection';
 
+// 模組層狀態：全 App 共用，避免每個 useAuth() mount 各自建匿名帳號、各自註冊 listener
+let initPromise: Promise<void> | null = null;
+let anonPromise: Promise<void> | null = null;
+let authSubscription: { unsubscribe: () => void } | null = null;
+let migration: { key: string; promise: Promise<void> } | null = null;
+
+/** 僅供測試：重設模組層狀態 */
+export function __resetAuthForTests() {
+  authSubscription?.unsubscribe();
+  initPromise = null;
+  anonPromise = null;
+  authSubscription = null;
+  migration = null;
+}
+
+function signInAnonymouslyOnce(): Promise<void> {
+  if (anonPromise) return anonPromise;
+  const { setUser, setToken, setLoading, setAnonSignInFailed } = useUserStore.getState();
+  anonPromise = (async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (error) throw error;
+      if (data.user) localStorage.setItem('storio_guest_id', data.user.id);
+      setUser(data.user);
+      const { data: sessionData } = await supabase.auth.getSession();
+      setToken(sessionData.session?.access_token ?? null);
+      setAnonSignInFailed(false);
+    } catch (error) {
+      console.error('Error signing in anonymously:', error);
+      setAnonSignInFailed(true);
+    } finally {
+      setLoading(false);
+      anonPromise = null;
+    }
+  })();
+  return anonPromise;
+}
+
+// 同一組 訪客→正式帳號 只搬一次；並發的事件共用同一個 promise
+function migrateGuestOnce(oldId: string, newId: string): Promise<void> {
+  const key = `${oldId}->${newId}`;
+  if (migration?.key === key) return migration.promise;
+  const promise = (async () => {
+    console.log(`Migrating data from ${oldId} to ${newId}`);
+    try {
+      const { error } = await supabase.rpc('migrate_guest_data', {
+        old_user_id: oldId,
+        new_user_id: newId,
+      });
+      if (error) throw error;
+      localStorage.removeItem('storio_guest_id');
+      console.log('Migration successful');
+    } catch (err) {
+      console.error('Migration failed:', err);
+    }
+  })();
+  migration = { key, promise };
+  return promise;
+}
+
+function ensureAuthListener() {
+  if (authSubscription) return;
+  // App 生命週期內常駐，不隨元件 unmount 解除
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { setUser, setToken, setLoading } = useUserStore.getState();
+    const newUser = session?.user ?? null;
+
+    if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && newUser && !newUser.is_anonymous) {
+      const previousGuestId = localStorage.getItem('storio_guest_id');
+      if (previousGuestId && previousGuestId !== newUser.id) {
+        await migrateGuestOnce(previousGuestId, newUser.id);
+      }
+    }
+
+    // 只記錄「目前 session 的匿名帳號」為訪客 ID
+    if (newUser?.is_anonymous) {
+      localStorage.setItem('storio_guest_id', newUser.id);
+    }
+
+    setUser(newUser);
+    setToken(session?.access_token ?? null);
+    setLoading(false);
+  });
+  authSubscription = subscription;
+}
+
+function initAuthOnce(): Promise<void> {
+  if (initPromise) return initPromise;
+  initPromise = (async () => {
+    await useUserStore.getState().fetchSession();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      // 疑似爬蟲／分享圖渲染服務不建立匿名帳號，避免汙染 auth.users
+      if (detectBot().isBot) {
+        useUserStore.getState().setLoading(false);
+        return;
+      }
+      await signInAnonymouslyOnce();
+    }
+  })();
+  return initPromise;
+}
+
 export function useAuth() {
-  const { user, token, loading, setUser, setToken, setLoading, fetchSession, setAnonSignInFailed } = useUserStore();
+  const { user, token, loading, setUser, setToken, setLoading } = useUserStore();
 
   useEffect(() => {
     // Top-Level E2E API Mock Escape Hatch to completely cut-out Supabase hanging the loading state
@@ -16,77 +120,15 @@ export function useAuth() {
       return;
     }
 
-    // Initial Session Check
-    const initAuth = async () => {
-      await fetchSession();
-      // Session check is now handled inside onAuthStateChange or after fetchSession
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        // 疑似爬蟲／分享圖渲染服務不建立匿名帳號，避免汙染 auth.users
-        if (detectBot().isBot) {
-          setLoading(false);
-          return;
-        }
-        await signInAnonymously();
-      }
-    };
-
-    if (loading && !user) {
-      initAuth();
+    const { loading: isLoading, user: currentUser } = useUserStore.getState();
+    if (isLoading && !currentUser) {
+      initAuthOnce();
     }
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      const newUser = session?.user ?? null;
-
-      // Handle SIGNED_IN or USER_UPDATED events
-      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && newUser && !newUser.is_anonymous) {
-        const previousGuestId = localStorage.getItem('storio_guest_id');
-        if (previousGuestId && previousGuestId !== newUser.id) {
-          console.log(`Migrating data from ${previousGuestId} to ${newUser.id}`);
-          try {
-            const { error } = await supabase.rpc('migrate_guest_data', {
-              old_user_id: previousGuestId,
-              new_user_id: newUser.id
-            });
-            if (error) throw error;
-            localStorage.removeItem('storio_guest_id');
-            console.log('Migration successful');
-          } catch (err) {
-            console.error('Migration failed:', err);
-          }
-        }
-      }
-
-      // Track current guest ID
-      if (newUser?.is_anonymous) {
-        localStorage.setItem('storio_guest_id', newUser.id);
-      }
-
-      setUser(newUser);
-      setToken(session?.access_token ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    ensureAuthListener();
   }, []);
 
-  const signInAnonymously = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase.auth.signInAnonymously();
-      if (error) throw error;
-      setUser(data.user);
-      const { data: sessionData } = await supabase.auth.getSession();
-      setToken(sessionData.session?.access_token ?? null);
-      setAnonSignInFailed(false);
-    } catch (error) {
-      console.error('Error signing in anonymously:', error);
-      setAnonSignInFailed(true);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const signInAnonymously = () => signInAnonymouslyOnce();
 
   const signOut = async () => {
     try {
@@ -95,7 +137,7 @@ export function useAuth() {
       // After sign out, localStorage guest ID should be cleared to prevent accidental migration back
       localStorage.removeItem('storio_guest_id');
       // After sign out, create a new anonymous session immediately
-      await signInAnonymously();
+      await signInAnonymouslyOnce();
     } catch (error) {
       console.error('Error signing out:', error);
       setLoading(false);
