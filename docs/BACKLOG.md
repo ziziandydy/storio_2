@@ -8,7 +8,7 @@
 
 > 下方各里程碑是 v1.13～v1.16 的歷史紀錄；v1.17 之後的詳細內容見 `client/CHANGELOG.md`。
 
-**App 版本**：iOS v1.19.0（build 25）已上線，含分季收藏（v1.17）、churn-rescue 通知階梯（v1.18）、分享「Saved 假成功」修復與 AI 建議改寫（v1.19）。Android 技術落地完成，Play 送審素材備妥於 `docs/play-store-assets/`，等 Tu 在 Play Console 操作。
+**App 版本**：iOS v1.20.0（build 26）2026-10-29 已送審（互動事件、匿名帳號灌水修正、分享網址、依賴升級）；v1.19.0（build 25）為目前上線版，含分季收藏（v1.17）、churn-rescue 通知階梯（v1.18）、分享「Saved 假成功」修復與 AI 建議改寫（v1.19）。Android 技術落地完成，Play 送審素材備妥於 `docs/play-store-assets/`，等 Tu 在 Play Console 操作。
 
 **營運觀測（2026-10-27 完成）**：Supabase keepalive（GitHub Actions 每日）、UptimeRobot 6 個監控、Looker Studio 報表（成長／AI 與成本／啟用與留存／活躍／互動／健康）。2026-10-29 起記錄 App／網頁互動事件，並修正匿名帳號灌水。入口與維護見 [`docs/OPS_DASHBOARD.md`](OPS_DASHBOARD.md)。
 
@@ -16,7 +16,7 @@
 
 | 優先 | 項目 | 說明 |
 |------|------|------|
-| P1 | **下次 iOS 發版內容（v1.20.0，發版中）** | ① 分享文字網址修復（`7c3c025`）。② 依賴升級：`next` 14.2.35、Capacitor 7.6.10、`npm audit fix`（`04a54e9`）。③ ✅ iOS App Privacy：AI 第三方處理（2026-10-28）＋ **Usage Data → Product Interaction（2026-10-29 Tu 已補）**，對照表見 `docs/app-store-privacy-answers.md`。④ 互動事件記錄＋匿名帳號灌水修正（openspec `add-engagement-events`）：6 種事件分平台記錄、爬蟲與分享圖服務不建匿名帳號、全 App 只建 1 個匿名帳號、登入後正確搬移訪客收藏。後端、網頁、migration 006／007 已於 2026-10-29 上線（dev／prod 皆已執行）；iPhone XR 實機（連 prod）已驗證 6 種事件皆記為 ios、升級不多建帳號。**iOS 要等新版上架才生效。** |
+| P1 | **iOS v1.20.0（build 26）2026-10-29 已送審，等審核** | ① 分享文字網址修復（`7c3c025`）。② 依賴升級：`next` 14.2.35、Capacitor 7.6.10、`npm audit fix`（`04a54e9`）。③ ✅ iOS App Privacy：AI 第三方處理（2026-10-28）＋ **Usage Data → Product Interaction（2026-10-29 Tu 已補）**，對照表見 `docs/app-store-privacy-answers.md`。④ 互動事件記錄＋匿名帳號灌水修正（openspec `add-engagement-events`）：6 種事件分平台記錄、爬蟲與分享圖服務不建匿名帳號、全 App 只建 1 個匿名帳號、登入後正確搬移訪客收藏。後端、網頁、migration 006／007 已於 2026-10-29 上線（dev／prod 皆已執行）；iPhone XR 實機（連 prod）已驗證 6 種事件皆記為 ios、升級不多建帳號。**iOS 要等新版上架才生效。** |
 | ✅ | 依賴安全更新（伺服器端完成） | 2026-10-28 完成：刪除 `client/pnpm-lock.yaml`；後端依賴 120→85 行並升級 PyJWT／anyio／certifi／cryptography 等；**FastAPI 0.162.0＋Starlette 1.10.0**（`f785e36`，升級前逐項比對嚴格 Content-Type、null 處理、回應序列化、slowapi 與 CORS，新舊行為一致）；**Puppeteer 25.16.0（Chrome 156、Node 22）**（`1541195`，`puppeteer-service` 漏洞歸零，10 種模板新舊渲染比對一致）；`vitest` 4。Railway 兩服務部署成功、線上渲染正常，Tu 已在 iOS App 實測登入／收藏／編輯／AI 建議與潤飾／AI 搜尋／單張與月回顧分享皆正常。**剩餘**只在 `client/`：`next`、`@capacitor/ios`、`tar` 3 個 critical 與 eslint 工具鏈等 high，全部併入「下次 iOS 發版內容」② |
 | ✅ | Railway 部署設定 | 2026-10-28 完成：Watch Paths 已設（`storio_2`→`/server/**`、`worthy-beauty`→`/puppeteer-service/**`，實測未動對應資料夾的 push 會顯示 SKIPPED）；分享圖服務 CORS 已放行本帳號的 Vercel 預覽網址。遺留：`worthy-beauty` 的環境變數 `ALLOWED_ORIGIN`（單數）程式不讀，可刪或改名 |
 | ✅ | GitHub 安全功能 | 2026-10-27 已開啟 Dependabot alerts、secret scanning 與 push protection；Dependabot 自動升級 PR 與 code scanning 刻意未開 |
