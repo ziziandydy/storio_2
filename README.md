@@ -138,7 +138,7 @@ The key was treating each failure as a diagnostic signal, not a reason to try ra
 
 ### Prerequisites
 
-- Node.js (v20+) and `pnpm`
+- Node.js 20+ and npm (the Puppeteer service needs Node 22.12+)
 - Python 3.12+
 - Xcode and CocoaPods (for iOS)
 - A Supabase project
@@ -159,9 +159,9 @@ python -m uvicorn app.main:app --reload --port 8010
 
 ```bash
 cd client
-pnpm install
+npm install
 cp .env.local.example .env.local
-pnpm dev
+npm run dev        # http://localhost:3010
 ```
 
 ### 3. Puppeteer Service (share image generation)
@@ -169,20 +169,20 @@ pnpm dev
 ```bash
 cd puppeteer-service
 npm install
-# Set ALLOWED_ORIGINS=http://localhost:3000 in .env
-node src/index.js
+FRONTEND_URL=http://localhost:3010 node src/index.js
 ```
 
-The service runs on port 3001 by default. Set `NEXT_PUBLIC_PUPPETEER_SERVICE_URL=http://localhost:3001` in `client/.env.local` to connect the frontend.
+The service runs on port 4000 by default and already allows `http://localhost:3010`. Set `NEXT_PUBLIC_PUPPETEER_SERVICE_URL=http://localhost:4000` in `client/.env.local` to connect the frontend.
 
 ### 4. iOS
 
 ```bash
 cd client
-pnpm run build
-npx cap sync ios
+npm run build:ios   # not `npm run build`: build:ios swaps in .env.production so the app talks to the production API
 npx cap open ios
 ```
+
+Release steps (versioning, build number, Archive) are in `CLAUDE.md` and `docs/DEV_SETUP.md`.
 
 ---
 
