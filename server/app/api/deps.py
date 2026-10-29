@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from supabase import Client
@@ -8,6 +9,8 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 security = HTTPBearer()
+# 選用驗證：沒帶憑證不報錯（回 None），帶了但無效仍回 401
+optional_security = HTTPBearer(auto_error=False)
 
 def get_language(accept_language: str = Header("zh-TW")) -> str:
     """
@@ -61,3 +64,15 @@ def get_current_user(
             detail="Invalid authentication credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+
+def get_optional_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_security),
+    supabase: Client = Depends(get_supabase_client)
+):
+    """
+    無憑證回 None；有憑證則同 get_current_user 驗證，無效回 401。
+    """
+    if credentials is None:
+        return None
+    return get_current_user(credentials, supabase)
