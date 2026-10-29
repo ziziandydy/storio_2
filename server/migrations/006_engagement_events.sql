@@ -63,7 +63,7 @@ select
 from public.engagement_events
 group by day, platform, event, is_suspected_bot;
 
--- 3. 每週各平台 engagement rate（只算非疑似爬蟲）
+-- 3. 每週各平台 engagement rate（只算帳號）
 create or replace view ops.v_engagement_rate_weekly as
 with real_events as (
   select
