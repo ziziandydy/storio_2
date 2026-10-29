@@ -23,8 +23,9 @@
 | P2 | 新用戶不收藏 | 2026-10 數據：註冊（含匿名）約 2,588，收藏過的僅約 20 人；近 30 天只有 1 人新增收藏，啟用率近期為 0。需要產品面解法（引導、首次收藏流程） |
 | P2 | App 開啟事件記錄 | 營運報表的「上線人數」目前以 session 更新時間近似，歷史趨勢被低估；要準確 DAU/MAU 需在 App 端記錄開啟事件 |
 | P2 | 心得潤飾 prompt 改寫 | v1.19.0 後潤飾輸出仍偏匠氣 |
-| P3 | `puppeteer-service/nixpacks.toml` 可能已失效 | Railway 現在用 Railpack 建置（日誌顯示 Railpack 偵測 Node），`nixpacks.toml` 裡安裝的 `noto-fonts-cjk-sans` 可能沒有被讀到；中文目前正常是因為字型由前端網頁的 web font 提供。可確認 Railpack 是否需要等效設定，或刪除這個檔案 |
-| P3 | v1.16.0 人物搜尋 4 個 Minor findings | 見該版本 review 紀錄；Show trending 仍擱置 |
+| ✅ | `nixpacks.toml` 失效 → 改用 `railpack.json` | 2026-10-28 確認 Railway 改用 Railpack，`nixpacks.toml` 未被讀取；改以 `railpack.json` 的 `deploy.aptPackages: ["...", "fonts-noto-cjk"]` 安裝中文備援字型。⚠️ 必須保留 `"..."`，否則會取代 Railpack 偵測的 Chrome 系統函式庫（第一版漏掉，分享圖約 2～3 分鐘無法產生，已修） |
+| ✅ | v1.16.0 人物搜尋 4 個 Minor findings | 2026-10-28（`e1d39ad`）：#1 details 遇缺 id／name 的人物、類型改為略過該筆；#2 AI 搜尋 fallback 的人名偵測保留並補測試；#4 類型 chip 依 TMDB 電影／影集類型表對應（原本電影類型查影集永遠 0 筆，線上已驗證科幻 878 現在影集有結果）；#3 見下一列 |
+| P3 | 觀察 Google Books 配額 | 自由輸入搜尋會對 Google Books 打兩次（一般＋inauthor），用量翻倍；以目前每週約 34 位上線用戶與前端 debounce，遠低於免費額度，先不改。若 Google Cloud 配額頁接近上限，再改成只在偵測到作者名時才查 inauthor |
 | P3 | 觀察 keepalive 有效性 | keepalive 只讀；若收到 Supabase「即將暫停」警告信，補寫入（做法見維運手冊） |
 | P3 | 監控成本複查 | 約 2026-11-24 到 Railway Usage 頁確認監控沒有讓用量明顯增加 |
 
