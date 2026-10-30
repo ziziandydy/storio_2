@@ -99,7 +99,7 @@ cd ~/Sites/storio_2 && railway link -w "Anderson Tu's Projects" -p comfortable-s
 
 ## 互動分頁的自訂查詢
 
-每段建成一個資料來源（連線用 `looker_ro`）：
+每段建成一個資料來源（連線用 `looker_ro`）。2026-10-29 已建好，名稱依序為 `engagement_weekly`、`engagement_daily`、`engagement_real_users`、`engagement_crawlers`；`engagement_weekly` 的 `rate` 設為百分比、彙總為平均（比率不可加總）。「互動」分頁：真實用戶 7／30 天計分卡、每週互動率表（依週新到舊）、每日互動人數、疑似爬蟲來訪、平台下拉選單。「成長」「活躍」分頁受灌水影響的卡片（總用戶數、啟用率、近 7／30 天上線人數）標題前加「⚠」，頁面下方有說明註解；「新註冊（正式）」只算正式帳號不受影響。
 
 ```sql
 -- 每週互動率
