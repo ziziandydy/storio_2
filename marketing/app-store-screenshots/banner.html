@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Storio App Store Creative Asset (16:9)</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Jost:wght@300;400;500&family=Noto+Serif+TC:wght@600&family=Noto+Sans+TC:wght@400;500&display=block" rel="stylesheet">
+<style>
+  /* 2622x1475 CSS px × deviceScaleFactor 2 = 5244x2950（App Store 16:9 creative asset） */
+  :root { --ink: #080808; --card: #141414; --gold: #c5a059; --gold-soft: #d9bf86; --ivory: #ece5d6; --dim: rgba(236,229,214,.62); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 2622px; height: 1475px; overflow: hidden; background: var(--ink); }
+  body { color: var(--ivory); -webkit-font-smoothing: antialiased; font-family: Jost, 'Noto Sans TC', sans-serif; }
+  #slide { position: absolute; inset: 0; overflow: hidden;
+           background: radial-gradient(45% 60% at 72% 50%, rgba(197,160,89,.16), rgba(197,160,89,0) 70%),
+                       radial-gradient(40% 50% at 22% 45%, rgba(197,160,89,.07), rgba(0,0,0,0) 70%), var(--ink); }
+
+  /* 文案：放在 21:9 與 3:2 裁切都保留的中央安全區內（x 210–2412、y 177–1298） */
+  #cap { position: absolute; left: 290px; top: 50%; transform: translateY(-50%); width: 1200px; }
+  #brand { display: flex; align-items: center; gap: 30px; margin-bottom: 64px; }
+  #brand img { width: 120px; height: 120px; border-radius: 26px; box-shadow: 0 0 0 2px rgba(197,160,89,.35); }
+  #brand span { font: 500 46px Jost; letter-spacing: .5em; color: var(--gold); }
+  #head { font: 500 124px/1.06 'Cormorant Garamond', serif; letter-spacing: -.005em; }
+  #head em { color: var(--gold-soft); }
+  #rule { width: 160px; height: 2px; margin: 60px 0 52px; background: linear-gradient(90deg, rgba(197,160,89,.9), rgba(197,160,89,0)); }
+  #sub { font: 300 48px/1.4 Jost; color: var(--dim); letter-spacing: .01em; }
+  .zh #head { font: 600 112px/1.3 'Noto Serif TC', serif; letter-spacing: .03em; }
+  .zh #head em { font-style: normal; }
+  .zh #sub { font: 400 46px/1.6 'Noto Sans TC'; letter-spacing: .05em; }
+
+  .shot { position: absolute; border-radius: 36px; overflow: hidden; background: var(--card);
+          box-shadow: 0 60px 120px rgba(0,0,0,.75), 0 0 0 2px rgba(197,160,89,.3); }
+  .shot img { display: block; width: 100%; height: auto; }
+  .soft { box-shadow: 0 46px 90px rgba(0,0,0,.7), 0 0 0 2px rgba(197,160,89,.18); }
+
+  /* 檢查用：?guide=1 顯示 21:9（頁首）與 3:2（搜尋結果）裁切框 */
+  .guide { position: absolute; border: 4px dashed; z-index: 9; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="slide">
+  <div id="cap">
+    <div id="brand"><img src="../ig-story-15s/assets/logo/full.png"><span>STORIO</span></div>
+    <div id="head"></div><div id="rule"></div><div id="sub"></div>
+  </div>
+  <div id="art"></div>
+</div>
+<script>
+const P = new URLSearchParams(location.search);
+const LANG = P.get('lang') || 'en';
+if (LANG === 'zh') document.body.classList.add('zh');
+const C = 'components/', S2 = '../ig-story-15s/assets/share2/';
+
+const COPY = {
+  en: ['Every story you love,<br><em>kept beautifully.</em>', 'Movies, series and books in one private folio.'],
+  zh: ['喜歡的每個故事<br><em>都好好收藏</em>', '電影、影集、書籍，收進你的私人典藏室'],
+};
+document.querySelector('#head').innerHTML = COPY[LANG][0];
+document.querySelector('#sub').textContent = COPY[LANG][1];
+
+const shot = (src, x, y, w, rot = 0, cls = 'shot', z = 1) =>
+  `<div class="${cls}" style="left:${x}px;top:${y}px;width:${w}px;transform:rotate(${rot}deg);z-index:${z}"><img src="${src}"></div>`;
+
+// 右側扇形：分享卡（票根、書桌）在兩側，館藏畫面在中央，月回顧在後
+document.querySelector('#art').innerHTML =
+    shot(S2 + 'cine_ticket.png', 1440, 330, 390, -11, 'shot soft', 1)
+  + shot(S2 + 'read_desk.png', 1930, 330, 390, 11, 'shot soft', 1)
+  + shot(C + 'recap.png', 1770, 270, 370, 4, 'shot soft', 2)
+  + shot(C + 'gallery.png', 1575, 240, 530, -2, 'shot', 3);
+
+if (P.get('guide')) {
+  const W = 2622, H = 1475;
+  const hdrH = W / (21 / 9), srW = H * 1.5;
+  document.querySelector('#slide').insertAdjacentHTML('beforeend',
+    `<div class="guide" style="left:0;top:${(H - hdrH) / 2}px;width:${W}px;height:${hdrH}px;border-color:#3af"></div>` +
+    `<div class="guide" style="left:${(W - srW) / 2}px;top:0;width:${srW}px;height:${H}px;border-color:#f3a"></div>`);
+}
+
+(async () => {
+  await Promise.all([...document.images].map((i) => i.decode().catch(() => {})));
+  await document.fonts.ready;
+  window.__ready = true;
+})();
+</script>
+</body>
+</html>
