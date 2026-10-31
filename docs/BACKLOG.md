@@ -26,7 +26,7 @@
 | P2 | 找回卡在匿名帳號的收藏 | 2026-10-29 prod 有 11 個匿名帳號仍有收藏（共 26 筆），部分建立日與正式帳號註冊日相同，疑似舊版登入時搬錯帳號。資料未刪，若用戶反映收藏不見，可人工移轉 |
 | P3 | 訪客事件總量上限／舊列清理 | 未登入的 `open` 由前端自報訪客代號，限流可被 `X-Forwarded-For` 偽造繞過，理論上可無限灌列（報表已只算帳號，只剩儲存成長風險）。可加每日總量上限或定期清理舊訪客列，並把 limiter 改取 Railway 附加的真實 IP |
 | P3 | 互動事件小改進（/review 延後） | 頁面埋點（search／detail_view／browse／open）元件測試；兩個分享 modal 共 8 處 `track('share')` 可收斂；origin→platform 對照抽常數；`useAuth` 改用欄位 selector；event repo 共用 Supabase client；同日重複 `add_collection` 改 upsert ignore；`ops` views 的 `created_at` 索引（資料量大時）；visitor_id 與 user_id 去重碰撞（需知道 UUID）；migration log 空 code 時用 `||` |
-| P1 | App Store 16:9 creative asset 上傳 | 2026-10-29 已產出中英文 5244×2950 PNG（`marketing/app-store-screenshots/render-banner.mjs`，輸出在 `out/creative-asset/`，頁首＋搜尋結果共用，重點在 21:9 與 3:2 共同安全區）。待 Tu 在 App Store Connect → Asset Library 上傳並勾「Use header asset in search results」。動機：近期曝光 2,360（+80%）但曝光→產品頁只有 1.6%，搜尋結果素材正對這個瓶頸；只在 iOS 27+ 顯示。若因劇照被退件，改用月回顧或書封版本 |
+| P1 | App Store 16:9 creative asset 上傳 | 2026-10-29 已產出中英文 5244×2950 PNG（`marketing/app-store-screenshots/render-banner.mjs`，輸出在 `out/creative-asset/`，頁首＋搜尋結果共用，重點在 21:9 與 3:2 共同安全區）。待 Tu 在 App Store Connect → Asset Library 上傳並勾「Use header asset in search results」。動機：近期曝光 2,360（+80%）但曝光→產品頁只有 1.6%，搜尋結果素材正對這個瓶頸；只在 iOS 27+ 顯示。已改為只用虛構作品的分享卡（月回顧 SEP 2026＋票根＋書桌），不含真實劇照 |
 | P2 | iPhone Duo 截圖 | 第三方報導：2027-04 起送審必須附 iPhone Duo 截圖（裝置 2026-10-23 上市）。等 Apple 公布規格後，用現有截圖產線加一組尺寸，排進下一版 |
 | P3 | openspec 主規格格式修正 | 15 份 `openspec/specs/*/spec.md` 檔頭仍是變更用的 `## ADDED Requirements`（早期歸檔遺留），openspec 解析不到裡面的需求，之後歸檔若要更新這些能力會被擋。改成 `# <name> Specification`／`## Purpose`／`## Requirements` 即可（2026-10-29 已修 `share-render-route`） |
 | P2 | 心得潤飾 prompt 改寫 | v1.19.0 後潤飾輸出仍偏匠氣 |
