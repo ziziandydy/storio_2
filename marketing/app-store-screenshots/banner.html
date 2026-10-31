@@ -60,12 +60,12 @@ document.querySelector('#sub').textContent = COPY[LANG][1];
 const shot = (src, x, y, w, rot = 0, cls = 'shot', z = 1) =>
   `<div class="${cls}" style="left:${x}px;top:${y}px;width:${w}px;transform:rotate(${rot}deg);z-index:${z}"><img src="${src}"></div>`;
 
-// 右側扇形：分享卡（票根、書桌）在兩側，館藏畫面在中央，月回顧在後
+// 右側扇形：只用虛構作品的分享卡（不含任何真實劇照或海報）。
+// 月回顧在中央，票根與書桌卡片在兩側。
 document.querySelector('#art').innerHTML =
-    shot(S2 + 'cine_ticket.png', 1440, 330, 390, -11, 'shot soft', 1)
-  + shot(S2 + 'read_desk.png', 1930, 330, 390, 11, 'shot soft', 1)
-  + shot(C + 'recap.png', 1770, 270, 370, 4, 'shot soft', 2)
-  + shot(C + 'gallery.png', 1575, 240, 530, -2, 'shot', 3);
+    shot(S2 + 'cine_ticket.png', 1385, 345, 390, -10, 'shot soft', 1)
+  + shot(S2 + 'read_desk.png', 1945, 345, 390, 10, 'shot soft', 1)
+  + shot(S2 + 'grind_recap_collage.png', 1625, 235, 470, 0, 'shot', 3);
 
 if (P.get('guide')) {
   const W = 2622, H = 1475;
