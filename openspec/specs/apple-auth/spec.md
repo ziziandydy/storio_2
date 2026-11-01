@@ -1,4 +1,9 @@
-## ADDED Requirements
+# apple-auth Specification
+
+## Purpose
+TBD（早期歸檔遺留，目的說明待補）
+
+## Requirements
 
 ### Requirement: Native Apple Sign-in
 The system SHALL allow users to authenticate securely using Apple Sign-in via the native iOS authorization dialog.

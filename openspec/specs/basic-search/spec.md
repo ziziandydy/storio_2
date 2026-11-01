@@ -1,4 +1,9 @@
-## ADDED Requirements
+# basic-search Specification
+
+## Purpose
+TBD（早期歸檔遺留，目的說明待補）
+
+## Requirements
 
 ### Requirement: Integrate basic search as a fallback mechanism
 The system SHALL route standard keyword strings that fail semantic intent parsing into the original native Title Search API flow.

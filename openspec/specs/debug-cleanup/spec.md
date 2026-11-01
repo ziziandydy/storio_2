@@ -1,4 +1,9 @@
-## MODIFIED Requirements
+# debug-cleanup Specification
+
+## Purpose
+TBD（早期歸檔遺留，目的說明待補）
+
+## Requirements
 
 ### Requirement: 移除 production log 中的敏感資訊
 後端 MUST NOT 在任何 log 或回應中洩漏 API key、token 或其片段。
@@ -22,7 +27,6 @@
 - **THEN** MUST NOT 找到任何非測試用的 `print()` 呼叫
 - **AND** 任何必要的診斷輸出 MUST 改用 Python `logging` 模組
 
-## MODIFIED Requirements
 
 ### Requirement: CORS 設定明確化
 後端 CORS 設定 MUST NOT 使用萬用字元 `"*"` 作為 `allow_methods` 或 `allow_headers`。

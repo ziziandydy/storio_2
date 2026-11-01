@@ -1,4 +1,9 @@
-## ADDED Requirements
+# person-discover-search Specification
+
+## Purpose
+TBD（早期歸檔遺留，目的說明待補）
+
+## Requirements
 
 ### Requirement: Details Response Carries Entity Refs
 The details API（`GET /api/v1/search/details/{media_type}/{external_id}`）SHALL 在既有字串欄位之外，additive 提供 `cast_refs`、`director_refs`、`genre_refs`、`company_refs` 欄位，內容為 `{id, name}` 物件陣列（TMDB numeric ID）。既有字串陣列欄位 MUST 維持不變（供已上架舊版 iOS 使用）。書籍（book）的 authors 維持字串陣列，不需 refs。

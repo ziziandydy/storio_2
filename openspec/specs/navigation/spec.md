@@ -1,4 +1,9 @@
-## MODIFIED Requirements
+# navigation Specification
+
+## Purpose
+TBD（早期歸檔遺留，目的說明待補）
+
+## Requirements
 
 ### Requirement: Cross-Component Navigation Using Query Params
 The system SHALL ensure all card clicks and "View Details" actions navigate using query parameters instead of path-based dynamic routes.

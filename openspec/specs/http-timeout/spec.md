@@ -1,4 +1,9 @@
-## MODIFIED Requirements
+# http-timeout Specification
+
+## Purpose
+TBD（早期歸檔遺留，目的說明待補）
+
+## Requirements
 
 ### Requirement: 所有外部 HTTP 呼叫必須設有 timeout
 後端所有透過 `httpx.AsyncClient` 發出的外部 API 請求 MUST 設定連線與讀取 timeout，防止 request 永久阻塞。

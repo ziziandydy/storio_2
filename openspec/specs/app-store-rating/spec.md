@@ -1,4 +1,9 @@
-## ADDED Requirements
+# app-store-rating Specification
+
+## Purpose
+TBD（早期歸檔遺留，目的說明待補）
+
+## Requirements
 
 ### Requirement: Rate on App Store
 

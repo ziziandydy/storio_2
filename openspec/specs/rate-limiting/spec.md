@@ -1,4 +1,9 @@
-## ADDED Requirements
+# rate-limiting Specification
+
+## Purpose
+TBD（早期歸檔遺留，目的說明待補）
+
+## Requirements
 
 ### Requirement: AI 端點速率限制
 後端 MUST 對 AI 搜尋端點實施 IP 層級速率限制，防止過量請求耗盡 API 費用。
@@ -20,7 +25,6 @@
 - **WHEN** 任何端點觸發速率限制
 - **THEN** 系統 MUST 返回一致的 JSON 格式錯誤，而非 HTML 或純文字
 
-## MODIFIED Requirements
 
 ### Requirement: Search Query 輸入長度驗證
 `basic-search` 能力 MUST 拒絕過長的搜尋字串以防止 AI API 費用濫用。

@@ -1,4 +1,9 @@
-## MODIFIED Requirements
+# native-integrations Specification
+
+## Purpose
+TBD（早期歸檔遺留，目的說明待補）
+
+## Requirements
 
 ### Requirement: Capacitor Splash Screen Configuration
 The system SHALL configure the native Capacitor Splash Screen to remain visible until explicitly hidden by the application code, rather than auto-hiding after a fixed duration.
@@ -8,7 +13,6 @@ The system SHALL configure the native Capacitor Splash Screen to remain visible 
 - **THEN** the native splash screen appears and STAYS visible until `SplashScreen.hide()` is called by the React application.
 - **AND** it does not automatically disappear after 3 seconds.
 
-## ADDED Requirements
 
 ### Requirement: Native Share API Bridging
 The system SHALL utilize native sharing functionalities when operating within the iOS Capacitor environment.

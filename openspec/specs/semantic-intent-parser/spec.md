@@ -1,4 +1,9 @@
-## ADDED Requirements
+# semantic-intent-parser Specification
+
+## Purpose
+TBD（早期歸檔遺留，目的說明待補）
+
+## Requirements
 
 ### Requirement: Auto-detect AI intent from search string
 The system SHALL use regular expressions or simple parsing logic to determine if a search string contains semantic intent, question words, or a comma-separated keyword bag.

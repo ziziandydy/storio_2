@@ -1,4 +1,9 @@
-## ADDED Requirements
+# static-routing Specification
+
+## Purpose
+TBD（早期歸檔遺留，目的說明待補）
+
+## Requirements
 
 ### Requirement: Statically Exportable Details Route
 The system SHALL provide a single static `/details` route that determines which movie/book to display via `type` and `id` query parameters.

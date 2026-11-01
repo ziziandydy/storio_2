@@ -1,4 +1,9 @@
-## ADDED Requirements
+# capacitor-setup Specification
+
+## Purpose
+TBD（早期歸檔遺留，目的說明待補）
+
+## Requirements
 
 ### Requirement: Capacitor Environment Configuration
 The system SHALL be configured with a basic Capacitor iOS project that avoids native UI occlusions.

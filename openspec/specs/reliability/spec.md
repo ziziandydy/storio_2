@@ -1,4 +1,9 @@
-## ADDED Requirements
+# reliability Specification
+
+## Purpose
+TBD（早期歸檔遺留，目的說明待補）
+
+## Requirements
 
 ### Requirement: 啟動時環境變數驗證（Wave 3）
 後端 MUST 在啟動時立即驗證所有必要環境變數是否存在，避免服務以不完整設定運行。
@@ -13,7 +18,6 @@
 - **AND** 錯誤訊息 MUST 明確指出哪個環境變數缺失
 - **AND** 服務 MUST NOT 繼續運行在降級狀態（快速失敗原則）
 
-## MODIFIED Requirements
 
 ### Requirement: datetime 解析容錯（Wave 3）
 後端處理外部 API 回應中的日期欄位時，MUST 對格式錯誤有容錯處理，不允許單一欄位解析失敗破壞整個 response。

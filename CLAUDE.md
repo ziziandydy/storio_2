@@ -156,6 +156,20 @@ wireframe-prototyping               # UI 原型設計（視覺確認）
 find-skills                         # 尋找新技能
 ```
 
+## Skill routing（技能路由）
+
+請求符合下列情境時，先用 Skill 工具呼叫對應技能，再動手。新功能一律先走下方「新功能開發流程」，路由規則不取代它。
+
+- 新功能、改變行為 → `superpowers:brainstorming`（方向不確定時前面再加 `/office-hours`）
+- Bug、錯誤、非預期行為 → `/investigate`（純程式碼問題可用 `superpowers:systematic-debugging`）
+- 想確認網頁或 UI 是否正常 → `/qa`
+- 合併或 push 前檢查 diff → `/review`
+- 方向、範圍有疑慮 → `/plan-ceo-review`；架構複雜 → `/plan-eng-review`
+- 部署後 smoke test → `/gstack` browse
+- 宣告完成前 → `superpowers:verification-before-completion`
+
+**不要用 `/ship` 發版**：iOS 發版走「iOS 發佈階段」的 `npm run release` → `ios:sync` → `build:ios` 流程，`/ship` 會自行改 VERSION 與 CHANGELOG，與 standard-version 衝突。
+
 ---
 
 ## 測試規範

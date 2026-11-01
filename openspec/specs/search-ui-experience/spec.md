@@ -1,4 +1,9 @@
-## ADDED Requirements
+# search-ui-experience Specification
+
+## Purpose
+TBD（早期歸檔遺留，目的說明待補）
+
+## Requirements
 
 ### Requirement: Interactive Submit Button
 The system SHALL visually transition the submit button from a standard arrow to a sparkling Storio Gold icon based on the detected search intent.

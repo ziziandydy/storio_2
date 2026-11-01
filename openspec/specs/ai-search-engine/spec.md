@@ -1,4 +1,9 @@
-## ADDED Requirements
+# ai-search-engine Specification
+
+## Purpose
+TBD（早期歸檔遺留，目的說明待補）
+
+## Requirements
 
 ### Requirement: Convert natural language to structured API query leveraging LLM
 The system SHALL use an LLM (OpenAI or Gemini) to parse the user's semantic query into specific API parameters (like genres, keywords, or directors) for TMDB or Google Books.

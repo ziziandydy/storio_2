@@ -1,4 +1,9 @@
-## ADDED Requirements
+# dynamic-island-safe-area Specification
+
+## Purpose
+TBD（早期歸檔遺留，目的說明待補）
+
+## Requirements
 
 ### Requirement: 首頁頂部安全區域遮罩
 首頁 SHALL 在 `top-0` 至 `top-[var(--sa-top)]` 之間渲染一個固定的黑色遮罩層（`z-[100]`），防止捲動內容穿透至動態島可見區域。

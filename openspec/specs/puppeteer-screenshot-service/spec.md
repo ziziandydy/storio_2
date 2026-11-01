@@ -1,4 +1,9 @@
-## ADDED Requirements
+# puppeteer-screenshot-service Specification
+
+## Purpose
+TBD（早期歸檔遺留，目的說明待補）
+
+## Requirements
 
 ### Requirement: Puppeteer screenshot service accepts render requests
 The service SHALL expose a `POST /render` HTTP endpoint that accepts a JSON payload containing template type and rendering data, drives a headless Chromium browser to render the `/share/render` route, and returns a PNG image buffer.

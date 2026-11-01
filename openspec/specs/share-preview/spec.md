@@ -1,4 +1,9 @@
-## MODIFIED Requirements
+# share-preview Specification
+
+## Purpose
+TBD（早期歸檔遺留，目的說明待補）
+
+## Requirements
 
 ### Requirement: Share Preview URL Generation
 The system SHALL generate correct asset URLs and share links pointing to the newly refactored query parameter paths.

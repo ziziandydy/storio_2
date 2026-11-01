@@ -1,4 +1,9 @@
-## ADDED Requirements
+# share-platform-router Specification
+
+## Purpose
+TBD（早期歸檔遺留，目的說明待補）
+
+## Requirements
 
 ### Requirement: ShareModal generates images via Puppeteer API
 The ShareModal SHALL call the Puppeteer screenshot service to generate images for both Mobile Web and iOS Native App, replacing all html-to-image capture logic.
