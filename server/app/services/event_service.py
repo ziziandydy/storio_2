@@ -1,4 +1,5 @@
 import logging
+import time
 from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
@@ -6,6 +7,13 @@ from uuid import UUID
 from app.repositories.event_repo import EventRepository
 
 logger = logging.getLogger(__name__)
+
+# 未登入（只有訪客代號）的事件，每個 UTC 日最多存這麼多列；超過就靜默丟棄。
+# 報表只算帳號，這只是擋住灌列造成的儲存成長。
+VISITOR_DAILY_CAP = 5000
+# 「還沒滿」的結果快取秒數，避免每個請求都多一次 count 查詢（每個 worker 各自快取）
+_CAP_RECHECK_SECONDS = 60
+_cap_state = {"day": None, "full": False, "checked": 0.0}
 
 
 def platform_from_origin(origin: Optional[str]) -> str:
@@ -31,9 +39,12 @@ class EventService:
         is_suspected_bot: bool = False,
         bot_reason: Optional[str] = None,
     ) -> None:
+        day = datetime.now(timezone.utc).date().isoformat()
+        if user_id is None and self._visitor_cap_reached(day):
+            return
         row = {
             # day 一律用 UTC 日期
-            "day": datetime.now(timezone.utc).date().isoformat(),
+            "day": day,
             "event": event,
             "platform": platform,
             "user_id": user_id,
@@ -42,6 +53,21 @@ class EventService:
             "bot_reason": bot_reason,
         }
         self.repo.insert_event(row)
+
+    def _visitor_cap_reached(self, day: str) -> bool:
+        """今日訪客列數是否已達上限。查詢失敗一律放行（不讓計數問題擋住記錄）。"""
+        if _cap_state["day"] == day:
+            if _cap_state["full"]:
+                return True
+            if time.monotonic() - _cap_state["checked"] < _CAP_RECHECK_SECONDS:
+                return False
+        try:
+            full = self.repo.count_visitor_events(day) >= VISITOR_DAILY_CAP
+        except Exception as e:
+            logger.error("Failed to count visitor events: %s", e)
+            return False
+        _cap_state.update(day=day, full=full, checked=time.monotonic())
+        return full
 
     def record_safely(
         self,

@@ -27,6 +27,8 @@ def rows(monkeypatch):
     """攔截 repository 寫入，回傳收到的列。"""
     captured = []
     monkeypatch.setattr(EventRepository, "insert_event", lambda self, row: captured.append(row))
+    # 訪客每日上限會查 DB 計數；預設回 0，上限相關測試用 cap_env 覆寫
+    monkeypatch.setattr(EventRepository, "count_visitor_events", lambda self, day: 0, raising=False)
     yield captured
     app.dependency_overrides.clear()
 
@@ -177,3 +179,64 @@ def test_row_contains_only_allowed_keys(rows):
     assert set(rows[0].keys()) == {
         "day", "event", "platform", "user_id", "visitor_id", "is_suspected_bot", "bot_reason",
     }
+
+
+# ---- 未登入 open 的每日總量上限 ----
+
+@pytest.fixture
+def cap_env(monkeypatch):
+    """重置上限快取，並以 state["count"] 控制 repo 回報的今日訪客列數。"""
+    from app.services import event_service
+
+    event_service._cap_state.update(day=None, full=False, checked=0.0)
+    state = {"count": 0, "calls": 0}
+
+    def fake_count(self, day):
+        state["calls"] += 1
+        return state["count"]
+
+    monkeypatch.setattr(EventRepository, "count_visitor_events", fake_count, raising=False)
+    yield state
+    event_service._cap_state.update(day=None, full=False, checked=0.0)
+
+
+def test_visitor_open_dropped_silently_when_cap_reached(rows, cap_env):
+    as_guest()
+    cap_env["count"] = 5000
+    resp = post({"event": "open", "visitor_id": str(uuid4())})
+    assert resp.status_code == 204
+    assert rows == []
+
+
+def test_visitor_open_recorded_below_cap(rows, cap_env):
+    as_guest()
+    cap_env["count"] = 4999
+    resp = post({"event": "open", "visitor_id": str(uuid4())})
+    assert resp.status_code == 204
+    assert len(rows) == 1
+
+
+def test_cap_check_is_cached_between_requests(rows, cap_env):
+    as_guest()
+    for _ in range(3):
+        post({"event": "open", "visitor_id": str(uuid4())})
+    assert cap_env["calls"] == 1
+
+
+def test_logged_in_user_not_subject_to_cap(rows, cap_env):
+    as_user()
+    cap_env["count"] = 999999
+    assert post({"event": "detail_view"}).status_code == 204
+    assert len(rows) == 1
+    assert cap_env["calls"] == 0
+
+
+def test_count_failure_fails_open(rows, cap_env, monkeypatch):
+    as_guest()
+
+    def boom(self, day):
+        raise RuntimeError("db down")
+
+    monkeypatch.setattr(EventRepository, "count_visitor_events", boom, raising=False)
+    assert post({"event": "open", "visitor_id": str(uuid4())}).status_code == 204
+    assert len(rows) == 1
