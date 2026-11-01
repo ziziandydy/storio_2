@@ -13,3 +13,15 @@ class EventRepository:
             if e.code == "23505":
                 return
             raise
+
+    def count_visitor_events(self, day: str) -> int:
+        """當日沒有帳號（只有訪客代號）的事件列數，供每日總量上限使用。"""
+        supabase = get_supabase_client()
+        result = (
+            supabase.table("engagement_events")
+            .select("id", count="exact", head=True)
+            .eq("day", day)
+            .is_("user_id", "null")
+            .execute()
+        )
+        return result.count or 0
