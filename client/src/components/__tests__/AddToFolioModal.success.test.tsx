@@ -14,6 +14,8 @@ const m = vi.hoisted(() => ({
   apple: vi.fn(),
   google: vi.fn(),
   reduced: false,
+  arm: vi.fn(),
+  flush: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: m.push }) }));
@@ -42,6 +44,10 @@ vi.mock('@/lib/supabase', () => ({
   supabase: { auth: { signInWithOAuth: (...a: unknown[]) => m.oauth(...a), getSession: vi.fn() } },
   getURL: (p = '') => `http://localhost:3000${p}`,
 }));
+vi.mock('@/lib/reviewPrompt', () => ({
+  armReviewPrompt: (...a: unknown[]) => m.arm(...a),
+  flushReviewPrompt: (...a: unknown[]) => m.flush(...a),
+}));
 // 表單本身與本任務無關：換成一顆直接呼叫 onSave 的按鈕
 vi.mock('../RateAndReflectForm', () => ({
   default: ({ onSave }: { onSave: (r: number, n: string) => void }) => (
@@ -52,8 +58,9 @@ vi.mock('../RateAndReflectForm', () => ({
 import AddToFolioModal from '../AddToFolioModal';
 import { useUserStore } from '@/store/userStore';
 
+const CREATED_AT = '2026-09-01T00:00:00Z';
 const setAnonymous = (isAnonymous: boolean) =>
-  useUserStore.setState({ user: { id: 'u1', is_anonymous: isAnonymous } as never });
+  useUserStore.setState({ user: { id: 'u1', is_anonymous: isAnonymous, created_at: CREATED_AT } as never });
 
 async function saveWith(result: unknown, extra: Partial<React.ComponentProps<typeof AddToFolioModal>> = {}) {
   const onClose = vi.fn();
@@ -97,6 +104,8 @@ describe('AddToFolioModal 成功畫面選擇', () => {
     m.oauth.mockReset().mockResolvedValue({ error: null });
     m.apple.mockReset();
     m.google.mockReset();
+    m.arm.mockReset();
+    m.flush.mockReset();
     setAnonymous(false);
     window.matchMedia = ((query: string) => ({
       matches: m.reduced && query.includes('prefers-reduced-motion'),
@@ -331,5 +340,75 @@ describe('AddToFolioModal 成功畫面選擇', () => {
     });
     expect(m.google).toHaveBeenCalledTimes(1);
     expect(onClose).not.toHaveBeenCalled();
+  });
+  describe('系統評價視窗登記與觸發', () => {
+    it('第二部起（已登入）→ 以正確參數 arm，celebrated=false', async () => {
+      await saveWith({ id: 's2', total_count: 2 });
+      expect(m.arm).toHaveBeenCalledTimes(1);
+      expect(m.arm).toHaveBeenCalledWith({
+        isAnonymous: false,
+        accountCreatedAt: CREATED_AT,
+        totalCount: 2,
+        celebrated: false,
+      });
+      expect(m.flush).not.toHaveBeenCalled();
+    });
+
+    it('第一部慶祝 → arm 時 celebrated=true（不在同次呼叫）', async () => {
+      await saveWith({ id: 's1', total_count: 1 });
+      expect(m.arm).toHaveBeenCalledWith(expect.objectContaining({ celebrated: true, totalCount: 1 }));
+    });
+
+    it('訪客 → arm 時 isAnonymous=true；total_count 缺漏 → totalCount=null', async () => {
+      setAnonymous(true);
+      await saveWith({ id: 's3' });
+      expect(m.arm).toHaveBeenCalledWith(expect.objectContaining({ isAnonymous: true, totalCount: null }));
+    });
+
+    it('duplicate／capacity_reached／錯誤 → 不 arm', async () => {
+      await saveWith({ status: 'duplicate' });
+      cleanup();
+      await saveWith({ status: 'capacity_reached' });
+      cleanup();
+      const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      await saveWith(Promise.reject(new Error('x')));
+      errSpy.mockRestore();
+      expect(m.arm).not.toHaveBeenCalled();
+    });
+
+    it('簡單版「繼續瀏覽」→ onClose 並 flush', async () => {
+      const { onClose } = await saveWith({ id: 's2', total_count: 2 });
+      fireEvent.click(screen.getByText('繼續瀏覽'));
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(m.flush).toHaveBeenCalledTimes(1);
+    });
+
+    it('簡單版「前往 My Storio」→ onClose、flush 並導向 /collection', async () => {
+      const { onClose } = await saveWith({ id: 's2', total_count: 2 });
+      fireEvent.click(screen.getByRole('button', { name: /前往 My Storio/ }));
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(m.flush).toHaveBeenCalledTimes(1);
+      expect(m.push).toHaveBeenCalledWith('/collection');
+    });
+
+    it('慶祝畫面的「繼續瀏覽」與「前往 My Storio」也會 flush', async () => {
+      const first = await saveWith({ id: 's1', total_count: 1 });
+      fireEvent.click(screen.getByText('繼續瀏覽'));
+      expect(first.onClose).toHaveBeenCalledTimes(1);
+      expect(m.flush).toHaveBeenCalledTimes(1);
+      first.unmount();
+      const second = await saveWith({ id: 's1', total_count: 1 });
+      fireEvent.click(screen.getByRole('button', { name: /前往 My Storio/ }));
+      expect(second.onClose).toHaveBeenCalledTimes(1);
+      expect(m.flush).toHaveBeenCalledTimes(2);
+      expect(m.push).toHaveBeenCalledWith('/collection');
+    });
+
+    it('點遮罩關閉成功視窗 → flush', async () => {
+      const { onClose } = await saveWith({ id: 's2', total_count: 2 });
+      fireEvent.click(screen.getByTestId('modal-backdrop'));
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(m.flush).toHaveBeenCalledTimes(1);
+    });
   });
 });

@@ -21,6 +21,7 @@ import { emitStoryAdded } from '@/lib/notification-events';
 import { useUserStore } from '@/store/userStore';
 import FirstCollectCelebration from './FirstCollectCelebration';
 import GuestSaveCard from './GuestSaveCard';
+import { armReviewPrompt, flushReviewPrompt } from '@/lib/reviewPrompt';
 
 /** 第一部且為訪客：慶祝播完後切換為訪客卡的延遲（毫秒） */
 const GUEST_CARD_SWITCH_MS = 3500;
@@ -102,8 +103,14 @@ export default function AddToFolioModal({
     return () => clearTimeout(id);
   }, [isOpen, mode, successVariant, guestAfterCelebrate]);
 
-  const goToCollection = () => {
+  // 關閉視窗時一併觸發系統評價排程（僅在儲存成功時 arm 過才會真的排程，否則為 no-op）
+  const handleClose = () => {
     onClose();
+    flushReviewPrompt();
+  };
+
+  const goToCollection = () => {
+    handleClose();
     router.push('/collection');
   };
 
@@ -133,8 +140,16 @@ export default function AddToFolioModal({
         setNewlyCreatedId(result.id);
       }
       // 讀 store 現值，避免 async 流程裡拿到 stale 的 user
-      const isAnonymous = useUserStore.getState().user?.is_anonymous === true;
+      const user = useUserStore.getState().user;
+      const isAnonymous = user?.is_anonymous === true;
       const variant = pickSuccessVariant(result?.total_count, isAnonymous);
+      // 儲存成功當下判定評價視窗資格；實際呼叫延到成功視窗關閉後（flushReviewPrompt）
+      armReviewPrompt({
+        isAnonymous,
+        accountCreatedAt: user?.created_at ?? null,
+        totalCount: typeof result?.total_count === 'number' ? result.total_count : null,
+        celebrated: variant === 'celebrate',
+      });
       setSuccessVariant(variant);
       setGuestAfterCelebrate(variant === 'celebrate' && isAnonymous);
       setShowMode('success');
@@ -161,7 +176,7 @@ export default function AddToFolioModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={handleClose}
             data-testid="modal-backdrop"
             className="absolute inset-0 bg-black/90 backdrop-blur-md"
           />
@@ -181,14 +196,14 @@ export default function AddToFolioModal({
               <FirstCollectCelebration
                 title={title}
                 posterUrl={posterUrl}
-                onContinue={onClose}
+                onContinue={handleClose}
                 onGoToCollection={goToCollection}
               />
             )}
 
             {/* Success State：訪客登入引導 */}
             {mode === 'success' && successVariant === 'guest' && (
-              <GuestSaveCard title={title} posterUrl={posterUrl} onLater={goToCollection} onLoggedIn={onClose} />
+              <GuestSaveCard title={title} posterUrl={posterUrl} onLater={goToCollection} onLoggedIn={handleClose} />
             )}
 
             {/* Success State：簡單版（第二部起的已登入用戶） */}
@@ -205,7 +220,7 @@ export default function AddToFolioModal({
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
                   <button
-                    onClick={onClose}
+                    onClick={handleClose}
                     className="py-4 bg-white/5 text-white rounded-2xl font-bold text-xs uppercase tracking-widest border border-white/10 hover:bg-white/10 transition-all"
                   >
                     {t.modals.continueBrowsing}
