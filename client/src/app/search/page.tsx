@@ -81,6 +81,14 @@ function SearchContent() {
     }
   }, [initialQuery]);
 
+  // 從首頁引導區進入（?focus=1）時，掛載後對焦當前搜尋模式的輸入框；無此參數則維持原行為
+  const shouldFocusOnMount = searchParams.get('focus') === '1';
+  useEffect(() => {
+    if (shouldFocusOnMount) inputRef.current?.focus();
+    // 只在掛載時執行一次
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Filter results based on category
   const filteredResults = results.filter(item => {
     if (filter === 'movie' || filter === 'tv') {

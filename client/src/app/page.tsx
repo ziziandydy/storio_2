@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { User, Menu, Search, Layers, Plus, ArrowRight } from 'lucide-react';
+import { User, Menu, Search, Layers, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
-import HomeStats from '@/components/HomeStats';
+import { HomeCollectionArea } from '@/components/FirstCollectGuide';
 import AddToFolioModal from '@/components/AddToFolioModal';
 import { useTranslation } from '@/hooks/useTranslation';
 import SectionSlider from '@/components/SectionSlider';
@@ -208,15 +208,7 @@ export default function Home() {
         </div>
 
         {/* Stats Section */}
-        <div className="flex flex-col items-center gap-12">
-          <HomeStats />
-
-          <div className="flex gap-4">
-            <Link href="/collection" className="group px-8 py-4 bg-accent-gold text-folio-black rounded-full font-black uppercase tracking-widest text-xs hover:bg-white transition-all shadow-[0_0_30px_rgba(233,108,38,0.4)] flex items-center gap-2">
-              {t.home.viewStorio} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-        </div>
+        <HomeCollectionArea />
 
         {/* Trending Sections */}
         <div className="space-y-16">
