@@ -75,7 +75,14 @@ export default function AddToFolioModal({
 
   // Reset mode when modal opens。TV 作品一律先進季數勾選（不限重複收藏才出現），
   // 讓「這是第一次收藏這部劇」也能指定看了哪幾季，而不是只有重複收藏時才問。
-  useEffect(() => {
+  // 呼叫端只切換 isOpen、不卸載本元件，所以在「render 期間」偵測開啟（與原 effect 相同的 [isOpen, hasSeasonPicker]
+  // 變化）就立刻重置：若放在 effect 裡，重開的第一個畫格會沿用上次的 success／celebrate 狀態，
+  // 重新掛載慶祝而重播觸覺與彩帶。關閉時不重置，讓退場動畫仍顯示原本的成功畫面。
+  // 初值用 null，確保「掛載時就是開啟」也會跑一次重置（與原 effect 行為一致）。
+  const resetKey = `${isOpen}|${hasSeasonPicker}`;
+  const [prevResetKey, setPrevResetKey] = useState<string | null>(null);
+  if (resetKey !== prevResetKey) {
+    setPrevResetKey(resetKey);
     if (isOpen) {
       setShowMode(hasSeasonPicker ? 'season_pick' : 'add');
       setNewlyCreatedId(undefined);
@@ -86,7 +93,7 @@ export default function AddToFolioModal({
       setSuccessVariant('simple');
       setGuestAfterCelebrate(false);
     }
-  }, [isOpen, hasSeasonPicker]);
+  }
 
   // 慶祝 → 訪客卡的切換計時器；關閉（isOpen=false）或卸載時清掉，不殘留 setState
   useEffect(() => {
@@ -128,10 +135,8 @@ export default function AddToFolioModal({
       // 讀 store 現值，避免 async 流程裡拿到 stale 的 user
       const isAnonymous = useUserStore.getState().user?.is_anonymous === true;
       const variant = pickSuccessVariant(result?.total_count, isAnonymous);
-      // 這次是否播了慶祝（Task 5 評價視窗以此排除）
-      const celebrated = variant === 'celebrate';
       setSuccessVariant(variant);
-      setGuestAfterCelebrate(celebrated && isAnonymous);
+      setGuestAfterCelebrate(variant === 'celebrate' && isAnonymous);
       setShowMode('success');
 
       // 通知：記錄行為信號（iOS only）

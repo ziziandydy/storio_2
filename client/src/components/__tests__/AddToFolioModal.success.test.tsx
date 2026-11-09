@@ -2,6 +2,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, act } from '@testing-library/react';
+import { MotionGlobalConfig } from 'framer-motion';
 
 const m = vi.hoisted(() => ({
   push: vi.fn(),
@@ -169,6 +170,36 @@ describe('AddToFolioModal 成功畫面選擇', () => {
     );
     await act(async () => { vi.advanceTimersByTime(10000); });
     expect(q.guest()).toBeNull();
+    expect(vi.getTimerCount()).toBe(0);
+    // 重開後也不得出現訪客卡（切換計時器沒有偷偷改掉狀態）或殘留的慶祝
+    rerender(
+      <AddToFolioModal isOpen onClose={onClose} onSave={onSave} onViewDetails={vi.fn()} title="奧德賽" external_id="tmdb-1" />,
+    );
+    expect(q.guest()).toBeNull();
+    expect(q.celebration()).toBeNull();
+    expect(screen.getByText('mock-save')).toBeTruthy();
+  });
+
+  it('重開視窗不重播慶祝與觸覺（呼叫端只切換 isOpen、不卸載）', async () => {
+    // 讓 AnimatePresence 的退場立即完成，模擬真實瀏覽器中關閉後內容已卸載
+    MotionGlobalConfig.skipAnimations = true;
+    try {
+      const { rerender, onSave, onClose } = await saveWith({ id: 's1', total_count: 1 });
+      expect(m.haptics).toHaveBeenCalledTimes(1);
+      const props = { onClose, onSave, onViewDetails: vi.fn(), title: '奧德賽', external_id: 'tmdb-1', posterUrl: 'https://image.example/poster.jpg' };
+      rerender(<AddToFolioModal isOpen={false} {...props} />);
+      await act(async () => { vi.advanceTimersByTime(1000); });
+      expect(q.celebration()).toBeNull(); // 退場已完成、慶祝已卸載
+      rerender(<AddToFolioModal isOpen {...props} />);
+      await act(async () => { vi.advanceTimersByTime(0); });
+      expect(m.haptics).toHaveBeenCalledTimes(1);
+      expect(q.celebration()).toBeNull();
+      expect(q.burst().length).toBe(0);
+      expect(q.fall().length).toBe(0);
+      expect(screen.getByText('mock-save')).toBeTruthy();
+    } finally {
+      MotionGlobalConfig.skipAnimations = false;
+    }
   });
 
   it('total_count 缺漏（已登入）→ 簡單版，且從未出現慶祝', async () => {
