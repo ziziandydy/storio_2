@@ -159,6 +159,7 @@ function DetailsPageContent() {
         external_id={item.external_id}
         media_type={item.media_type}
         seasons={item.seasons}
+        posterUrl={item.poster_path}
       />
     </>
   );

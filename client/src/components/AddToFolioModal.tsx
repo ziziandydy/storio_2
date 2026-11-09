@@ -18,6 +18,26 @@ import { useToast } from '@/components/ToastProvider';
 import { recordEngagement } from '@/lib/notifications';
 import { isNativePlatform } from '@/lib/appleAuth';
 import { emitStoryAdded } from '@/lib/notification-events';
+import { useUserStore } from '@/store/userStore';
+import FirstCollectCelebration from './FirstCollectCelebration';
+import GuestSaveCard from './GuestSaveCard';
+
+/** 第一部且為訪客：慶祝播完後切換為訪客卡的延遲（毫秒） */
+const GUEST_CARD_SWITCH_MS = 3500;
+
+type SuccessVariant = 'celebrate' | 'guest' | 'simple';
+
+/**
+ * 依 POST 回應的 total_count 與是否為訪客，一次決定成功畫面（不另請求 /stats）。
+ * - total_count === 1 → 慶祝（訪客則慶祝後再換訪客卡）
+ * - 訪客且非第一部（含 total_count 缺漏）→ 訪客卡；訪客卡不依賴數量
+ * - 其餘（含已登入但 total_count 缺漏／非數字）→ 簡單版，避免誤判成第一部
+ */
+function pickSuccessVariant(totalCount: unknown, isAnonymous: boolean): SuccessVariant {
+  if (typeof totalCount === 'number' && totalCount === 1) return 'celebrate';
+  if (isAnonymous) return 'guest';
+  return 'simple';
+}
 
 interface AddToFolioModalProps {
   isOpen: boolean;
@@ -29,10 +49,12 @@ interface AddToFolioModalProps {
   overview?: string; // Add overview prop
   media_type?: 'movie' | 'book' | 'tv';
   seasons?: { season_number: number; name: string }[];
+  /** 慶祝與訪客卡顯示的海報 */
+  posterUrl?: string;
 }
 
 export default function AddToFolioModal({
-  isOpen, onClose, onSave, onViewDetails, title, external_id, overview, media_type, seasons,
+  isOpen, onClose, onSave, onViewDetails, title, external_id, overview, media_type, seasons, posterUrl,
 }: AddToFolioModalProps) {
   const [mode, setShowMode] = useState<'add' | 'prompt' | 'season_pick' | 'view_existing' | 'success'>('add');
   const [showGuestLimit, setShowGuestLimit] = useState(false);
@@ -42,6 +64,9 @@ export default function AddToFolioModal({
   const [selectedSeasons, setSelectedSeasons] = useState<number[]>([]);
   const [existingSeasons, setExistingSeasons] = useState<number[]>([]);
   const [isDuplicateFlow, setIsDuplicateFlow] = useState(false);
+  const [successVariant, setSuccessVariant] = useState<SuccessVariant>('simple');
+  // 第一部且為訪客：慶祝後要切換為訪客卡
+  const [guestAfterCelebrate, setGuestAfterCelebrate] = useState(false);
   const { t } = useTranslation();
   const { showToast } = useToast();
   const router = useRouter();
@@ -58,8 +83,22 @@ export default function AddToFolioModal({
       setSelectedSeasons([]);
       setExistingSeasons([]);
       setIsDuplicateFlow(false);
+      setSuccessVariant('simple');
+      setGuestAfterCelebrate(false);
     }
   }, [isOpen, hasSeasonPicker]);
+
+  // 慶祝 → 訪客卡的切換計時器；關閉（isOpen=false）或卸載時清掉，不殘留 setState
+  useEffect(() => {
+    if (!isOpen || mode !== 'success' || successVariant !== 'celebrate' || !guestAfterCelebrate) return;
+    const id = setTimeout(() => setSuccessVariant('guest'), GUEST_CARD_SWITCH_MS);
+    return () => clearTimeout(id);
+  }, [isOpen, mode, successVariant, guestAfterCelebrate]);
+
+  const goToCollection = () => {
+    onClose();
+    router.push('/collection');
+  };
 
   const handleSave = async (rating: number, notes: string, date?: string) => {
     setIsSubmitting(true);
@@ -86,6 +125,13 @@ export default function AddToFolioModal({
       if (result && result.id) {
         setNewlyCreatedId(result.id);
       }
+      // 讀 store 現值，避免 async 流程裡拿到 stale 的 user
+      const isAnonymous = useUserStore.getState().user?.is_anonymous === true;
+      const variant = pickSuccessVariant(result?.total_count, isAnonymous);
+      // 這次是否播了慶祝（Task 5 評價視窗以此排除）
+      const celebrated = variant === 'celebrate';
+      setSuccessVariant(variant);
+      setGuestAfterCelebrate(celebrated && isAnonymous);
       setShowMode('success');
 
       // 通知：記錄行為信號（iOS only）
@@ -104,13 +150,14 @@ export default function AddToFolioModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6">
+        <div key="add-to-folio" className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
+            data-testid="modal-backdrop"
             className="absolute inset-0 bg-black/90 backdrop-blur-md"
           />
 
@@ -119,16 +166,34 @@ export default function AddToFolioModal({
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full max-w-lg bg-folio-card border border-white/10 rounded-[32px] overflow-hidden shadow-2xl flex flex-col"
+            // 慶祝時不裁切，讓炸開的彩帶能飛出卡片
+            className={`relative w-full max-w-lg bg-folio-card border border-white/10 rounded-[32px] shadow-2xl flex flex-col ${
+              mode === 'success' && successVariant === 'celebrate' ? '' : 'overflow-hidden'
+            }`}
           >
-            {/* Success State */}
-            {mode === 'success' && (
-              <div className="p-10 flex flex-col items-center text-center gap-8">
+            {/* Success State：第一部慶祝 */}
+            {mode === 'success' && successVariant === 'celebrate' && (
+              <FirstCollectCelebration
+                title={title}
+                posterUrl={posterUrl}
+                onContinue={onClose}
+                onGoToCollection={goToCollection}
+              />
+            )}
+
+            {/* Success State：訪客登入引導 */}
+            {mode === 'success' && successVariant === 'guest' && (
+              <GuestSaveCard title={title} posterUrl={posterUrl} onLater={goToCollection} onLoggedIn={onClose} />
+            )}
+
+            {/* Success State：簡單版（第二部起的已登入用戶） */}
+            {mode === 'success' && successVariant === 'simple' && (
+              <div data-testid="success-simple" className="p-10 flex flex-col items-center text-center gap-8">
                 <div className="w-20 h-20 bg-accent-gold/20 rounded-full flex items-center justify-center text-accent-gold">
                   <CheckCircle2 size={40} />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white mb-2 font-serif">Successfully add to storio</h2>
+                  <h2 className="text-2xl font-bold text-white mb-2 font-serif">{t.modals.successTitle}</h2>
                   <p className="text-text-desc text-sm">
                     <span className="text-accent-gold font-bold">&quot;{title}&quot;</span> {t.modals.successMessage}
                   </p>
@@ -141,10 +206,7 @@ export default function AddToFolioModal({
                     {t.modals.continueBrowsing}
                   </button>
                   <button
-                    onClick={() => {
-                      onClose();
-                      router.push('/collection');
-                    }}
+                    onClick={goToCollection}
                     className="py-4 bg-accent-gold text-folio-black rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white transition-all flex items-center justify-center gap-2"
                   >
                     {t.modals.goToMyStorio} <ArrowRight size={14} />
@@ -298,7 +360,9 @@ export default function AddToFolioModal({
       )}
 
       {/* Guest Limit Modal overlay */}
+      {/* AnimatePresence 子節點需有 key，否則兩個無 key 子節點會觸發重複 key 警告 */}
       <GuestLimitModal
+        key="guest-limit"
         isOpen={showGuestLimit}
         onClose={() => setShowGuestLimit(false)}
         onLogin={(provider) => {
