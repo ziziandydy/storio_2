@@ -91,16 +91,21 @@ interface FirstCollectCelebrationProps {
   onGoToCollection: () => void;
   /** 彩帶播完（約 3 秒）時呼叫 */
   onDone?: () => void;
+  /**
+   * 灑落彩帶的容器：由 modal 放在遮罩與卡片之間（全螢幕、pointer-events-none），
+   * 讓彩帶從卡片後方經過。未提供時不渲染灑落彩帶。
+   */
+  fallLayerTarget?: HTMLElement | null;
 }
 
 /**
  * 第一部收藏的慶祝畫面（mockup 9c「強」）：整張卡閃金光、彩帶從海報炸開 58 片、
- * 畫面上方灑落 44 片，約 3 秒後卸載彩帶節點；開始時觸發成功觸覺。
+ * 畫面上方灑落 44 片（在卡片後方），約 3 秒後卸載彩帶節點；開始時觸發成功觸覺。
  * 動畫只用 CSS keyframes（transform／opacity），定義於 globals.css 的 `fc-*`。
  * prefers-reduced-motion：只留靜態光暈與勾勾，不渲染彩帶。
  */
 export default function FirstCollectCelebration({
-  title, posterUrl, onContinue, onGoToCollection, onDone,
+  title, posterUrl, onContinue, onGoToCollection, onDone, fallLayerTarget,
 }: FirstCollectCelebrationProps) {
   const { t } = useTranslation();
   const [reducedMotion] = useState(prefersReducedMotion);
@@ -174,25 +179,23 @@ export default function FirstCollectCelebration({
         </button>
       </div>
 
-      {/* 上方灑落的彩帶蓋滿整個畫面：卡片有 transform，fixed 會失效，故 portal 到 body */}
-      {showConfetti && typeof document !== 'undefined' &&
+      {/* 灑落彩帶 portal 到 modal 在卡片後方預留的層：蓋滿畫面、在遮罩之上，但被卡片遮住 */}
+      {showConfetti && fallLayerTarget &&
         createPortal(
-          <div aria-hidden className="fixed inset-0 z-[151] pointer-events-none overflow-hidden">
-            {FALL_PIECES.map((p, k) => (
-              <i
-                key={k}
-                data-confetti="fall"
-                className="fc-fall absolute -top-6 w-2 h-[14px] rounded-[2px]"
-                style={{
-                  background: p.background,
-                  left: `${p.left}%`,
-                  ['--r' as string]: `${p.r}deg`,
-                  animationDelay: `${p.delay}s`,
-                }}
-              />
-            ))}
-          </div>,
-          document.body,
+          FALL_PIECES.map((p, k) => (
+            <i
+              key={k}
+              data-confetti="fall"
+              className="fc-fall absolute -top-6 w-2 h-[14px] rounded-[2px]"
+              style={{
+                background: p.background,
+                left: `${p.left}%`,
+                ['--r' as string]: `${p.r}deg`,
+                animationDelay: `${p.delay}s`,
+              }}
+            />
+          )),
+          fallLayerTarget,
         )}
     </div>
   );

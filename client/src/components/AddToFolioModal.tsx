@@ -61,6 +61,8 @@ export default function AddToFolioModal({
   const [showGuestLimit, setShowGuestLimit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newlyCreatedId, setNewlyCreatedId] = useState<string | undefined>(undefined);
+  // 慶祝灑落彩帶的 portal 目標（callback ref 存成 state，掛上後才 render 彩帶）
+  const [fallLayerEl, setFallLayerEl] = useState<HTMLDivElement | null>(null);
   const [forceAdd, setForceAdd] = useState(false);
   const [selectedSeasons, setSelectedSeasons] = useState<number[]>([]);
   const [existingSeasons, setExistingSeasons] = useState<number[]>([]);
@@ -183,6 +185,9 @@ export default function AddToFolioModal({
             className="absolute inset-0 bg-black/90 backdrop-blur-md"
           />
 
+          {/* 慶祝灑落彩帶層：排在遮罩之後、卡片之前，彩帶從卡片後方經過；不攔截點擊 */}
+          <div ref={setFallLayerEl} aria-hidden className="absolute inset-0 overflow-hidden pointer-events-none" />
+
           {/* Modal Content */}
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -200,6 +205,7 @@ export default function AddToFolioModal({
                 posterUrl={posterUrl}
                 onContinue={handleClose}
                 onGoToCollection={goToCollection}
+                fallLayerTarget={fallLayerEl}
               />
             )}
 

@@ -277,6 +277,32 @@ describe('AddToFolioModal 成功畫面選擇', () => {
     expect(q.celebration()).toBeTruthy();
   });
 
+  it('灑落彩帶在卡片後方：位於 modal root、遮罩之後卡片之前，不攔截點擊', async () => {
+    const { onClose } = await saveWith({ id: 's1', total_count: 1 });
+    const pieces = q.fall();
+    expect(pieces.length).toBe(44);
+    const layer = pieces[0].parentElement!;
+    // 44 片都在同一層
+    expect(layer.querySelectorAll('[data-confetti="fall"]').length).toBe(44);
+    // 不在慶祝卡內
+    expect(q.celebration()!.contains(layer)).toBe(false);
+    // 是 modal root 的直接子節點，排在遮罩之後、卡片之前（同層 DOM 順序決定堆疊：卡片蓋在彩帶上）
+    const backdrop = screen.getByTestId('modal-backdrop');
+    const root = backdrop.parentElement!;
+    expect(layer.parentElement).toBe(root);
+    const children = Array.from(root.children);
+    const card = children.find((c) => c.contains(q.celebration()))!;
+    expect(children.indexOf(backdrop)).toBeLessThan(children.indexOf(layer));
+    expect(children.indexOf(layer)).toBeLessThan(children.indexOf(card));
+    // 不自帶 z-index、不用 fixed（避免跳出 root 的堆疊順序），且不攔截點擊
+    expect(layer.className).toContain('pointer-events-none');
+    expect(layer.className).toContain('absolute');
+    expect(layer.className).not.toMatch(/\bz-|\bfixed\b/);
+    // 點遮罩仍可關閉
+    fireEvent.click(backdrop);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it('彩帶位置為固定演算：兩次渲染完全相同', async () => {
     const first = await saveWith({ id: 's1', total_count: 1 });
     const a = Array.from(q.burst()).map((n) => n.getAttribute('style'));
