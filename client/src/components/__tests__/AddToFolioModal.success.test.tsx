@@ -16,6 +16,8 @@ const m = vi.hoisted(() => ({
   reduced: false,
   arm: vi.fn(),
   flush: vi.fn(),
+  engage: vi.fn(),
+  emit: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: m.push }) }));
@@ -28,8 +30,8 @@ vi.mock('@/hooks/useTranslation', async () => {
   return { useTranslation: () => ({ t: translations[m.locale.current] }) };
 });
 vi.mock('@/components/ToastProvider', () => ({ useToast: () => ({ showToast: vi.fn() }) }));
-vi.mock('@/lib/notifications', () => ({ recordEngagement: vi.fn() }));
-vi.mock('@/lib/notification-events', () => ({ emitStoryAdded: vi.fn() }));
+vi.mock('@/lib/notifications', () => ({ recordEngagement: (...a: unknown[]) => m.engage(...a) }));
+vi.mock('@/lib/notification-events', () => ({ emitStoryAdded: (...a: unknown[]) => m.emit(...a) }));
 vi.mock('@/lib/haptics', () => ({ playSuccessHaptics: (...a: unknown[]) => m.haptics(...a) }));
 vi.mock('@/lib/appleAuth', () => ({
   isNativePlatform: () => m.native,
@@ -106,6 +108,8 @@ describe('AddToFolioModal 成功畫面選擇', () => {
     m.google.mockReset();
     m.arm.mockReset();
     m.flush.mockReset();
+    m.engage.mockReset();
+    m.emit.mockReset();
     setAnonymous(false);
     window.matchMedia = ((query: string) => ({
       matches: m.reduced && query.includes('prefers-reduced-motion'),
@@ -409,6 +413,28 @@ describe('AddToFolioModal 成功畫面選擇', () => {
       fireEvent.click(screen.getByTestId('modal-backdrop'));
       expect(onClose).toHaveBeenCalledTimes(1);
       expect(m.flush).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('新增事件（首頁館藏數即時更新）', () => {
+    it('網頁（非原生）儲存成功 → emitStoryAdded，但不 recordEngagement', async () => {
+      await saveWith({ id: 's1', total_count: 1 });
+      expect(m.emit).toHaveBeenCalledTimes(1);
+      expect(m.engage).not.toHaveBeenCalled();
+    });
+
+    it('原生儲存成功 → emitStoryAdded 與 recordEngagement(2) 都呼叫', async () => {
+      m.native = true;
+      await saveWith({ id: 's2', total_count: 2 });
+      expect(m.emit).toHaveBeenCalledTimes(1);
+      expect(m.engage).toHaveBeenCalledWith(2);
+    });
+
+    it('duplicate／capacity_reached → 不 emit', async () => {
+      await saveWith({ status: 'duplicate' });
+      cleanup();
+      await saveWith({ status: 'capacity_reached' });
+      expect(m.emit).not.toHaveBeenCalled();
     });
   });
 });

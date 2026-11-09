@@ -154,10 +154,12 @@ export default function AddToFolioModal({
       setGuestAfterCelebrate(variant === 'celebrate' && isAnonymous);
       setShowMode('success');
 
+      // 每次儲存成功都廣播：首頁館藏數靜默更新（網頁與原生皆需）；
+      // 既有唯一訂閱者（AppOpenReset 升級 Banner）自身只在原生註冊，網頁上不受影響
+      emitStoryAdded();
       // 通知：記錄行為信號（iOS only）
       if (isNativePlatform()) {
         recordEngagement(2);
-        emitStoryAdded();
       }
     } catch (err: any) {
       console.error(err);

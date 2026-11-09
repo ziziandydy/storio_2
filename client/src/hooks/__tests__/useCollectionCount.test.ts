@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act, cleanup } from '@testing-library/react';
 
 const auth = vi.hoisted(() => ({ current: { token: 'tok' as string | null, loading: false } }));
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => auth.current }));
 vi.mock('@/lib/api', () => ({ getApiUrl: (p: string) => `http://api${p}` }));
 
 import { useCollectionCount } from '../useCollectionCount';
+import { emitStoryAdded } from '@/lib/notification-events';
 
 const okJson = (total_count: number) =>
   Promise.resolve({ ok: true, json: () => Promise.resolve({ total_count }) } as Response);
@@ -15,7 +16,10 @@ describe('useCollectionCount', () => {
   beforeEach(() => {
     auth.current = { token: 'tok', loading: false };
   });
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    cleanup(); // 卸載前一個測試的 hook，避免殘留的事件監聽干擾
+    vi.unstubAllGlobals();
+  });
 
   it('請求進行中 loading 為 true、count 為 null', () => {
     vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
@@ -63,5 +67,36 @@ describe('useCollectionCount', () => {
     vi.stubGlobal('fetch', vi.fn());
     const { result } = renderHook(() => useCollectionCount());
     expect(result.current.loading).toBe(true);
+  });
+
+  it('收到新增事件 → 重新讀取，count 0 → 1，且過程中 loading 不會翻回 true', async () => {
+    const f = vi.fn().mockImplementationOnce(() => okJson(0));
+    vi.stubGlobal('fetch', f);
+    const { result } = renderHook(() => useCollectionCount());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.count).toBe(0);
+
+    let resolve!: (r: Response) => void;
+    f.mockImplementationOnce(() => new Promise<Response>((r) => { resolve = r; }));
+    act(() => { emitStoryAdded(); });
+    expect(f).toHaveBeenCalledTimes(2);
+    // 新數量回來前維持現有畫面：不閃空白
+    expect(result.current).toEqual({ count: 0, loading: false });
+
+    await act(async () => {
+      resolve({ ok: true, json: () => Promise.resolve({ total_count: 1 }) } as Response);
+    });
+    await waitFor(() => expect(result.current.count).toBe(1));
+    expect(result.current.loading).toBe(false);
+  });
+
+  it('卸載後移除監聽：再收到事件不會重新讀取', async () => {
+    const f = vi.fn(() => okJson(0));
+    vi.stubGlobal('fetch', f);
+    const { result, unmount } = renderHook(() => useCollectionCount());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    unmount();
+    emitStoryAdded();
+    expect(f).toHaveBeenCalledTimes(1);
   });
 });
