@@ -158,6 +158,7 @@ class CollectionRepository:
         
         # Initialize counters
         stats = {
+            "total_count": len(response.data),  # 所有列，含重複收藏
             "last_7_days": 0,
             "last_14_days": 0,
             "last_30_days": 0,

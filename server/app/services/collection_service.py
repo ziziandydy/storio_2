@@ -97,7 +97,10 @@ class CollectionService:
                 detail="Story already in collection"
             )
 
-        return self.repo.create_story(user_id, story_in)
+        story = self.repo.create_story(user_id, story_in)
+        # 回傳新增後的總收藏數，供前端判斷「第一筆收藏」
+        story.total_count = self.repo.count_user_stories(user_id)
+        return story
 
     def update_collection_item(self, user_id: str, story_id: UUID, story_update: dict) -> StoryResponse:
         allowed_updates = {k: v for k, v in story_update.items() if k in ["rating", "notes", "created_at", "archived_date"]}

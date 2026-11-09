@@ -181,3 +181,26 @@ def test_failed_add_does_not_record_event():
         MockEventService.return_value.record_safely.assert_not_called()
 
     app.dependency_overrides = {}
+
+def test_post_collection_returns_total_count():
+    """POST /collection 回應透出 total_count，原欄位不變"""
+    user_id = str(uuid4())
+    _setup_auth(user_id)
+    client = TestClient(app)
+    payload = _story_payload()
+
+    with pytest.MonkeyPatch.context() as mp:
+        svc = MagicMock()
+        svc.add_story.return_value = {**_story_result(payload, user_id), "total_count": 1}
+        mp.setattr("app.api.v1.endpoints.collection.CollectionService", MagicMock(return_value=svc))
+        mp.setattr("app.api.v1.endpoints.collection.EventService", MagicMock())
+
+        response = client.post("/api/v1/collection/", json=payload)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total_count"] == 1
+        assert data["title"] == "Inception"
+        assert data["external_id"] == "555"
+
+    app.dependency_overrides = {}
