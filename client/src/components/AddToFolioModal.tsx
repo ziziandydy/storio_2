@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, CheckCircle2, Bookmark, ExternalLink,
@@ -171,7 +172,13 @@ export default function AddToFolioModal({
     }
   };
 
-  return (
+  // 整個 overlay 透過 portal 掛到 body：呼叫端常把本元件放在建立堆疊脈絡的容器內
+  // （例如首頁 <main className="relative z-10">），否則 z-[150] 會被壓在 z-10 之下，
+  // 讓 z-50 的 NavigationFAB 蓋過遮罩與按鈕（ISSUE-001）。
+  // SSR 時沒有 document，直接不渲染（首次 render 視窗必為關閉，伺服器端本來就沒有內容）。
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <div key="add-to-folio" className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6">
@@ -399,6 +406,7 @@ export default function AddToFolioModal({
           router.push(`/auth?provider=${provider}`);
         }}
       />
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
