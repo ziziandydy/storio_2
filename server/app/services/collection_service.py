@@ -99,7 +99,12 @@ class CollectionService:
 
         story = self.repo.create_story(user_id, story_in)
         # 回傳新增後的總收藏數，供前端判斷「第一筆收藏」
-        story.total_count = self.repo.count_user_stories(user_id)
+        # 項目已寫入：計數失敗不可讓整個 POST 變 500（用戶重試會撞 409），改回 None 讓前端走簡單版／訪客卡
+        try:
+            story.total_count = self.repo.count_user_stories(user_id)
+        except Exception as e:
+            logger.warning("新增後計數失敗（user %s），total_count 回 None：%s", user_id, e)
+            story.total_count = None
         return story
 
     def update_collection_item(self, user_id: str, story_id: UUID, story_update: dict) -> StoryResponse:

@@ -79,6 +79,25 @@ def test_add_story_returns_total_count():
     assert result.total_count == 2
 
 
+def test_add_story_count_failure_still_returns_saved_story():
+    """項目已寫入後計數失敗 → 仍回傳已儲存的項目，total_count 為 None，不拋例外（避免 500 → 重試 409）"""
+    mock_repo = MagicMock()
+    mock_repo.check_duplicate.return_value = False
+    created = MagicMock()
+    created.title = "Dune 2"
+    mock_repo.create_story.return_value = created
+    mock_repo.count_user_stories.side_effect = RuntimeError("count query failed")
+
+    service = CollectionService()
+    service.repo = mock_repo
+
+    result = service.add_story("u", _story_in())
+    assert result is created
+    assert result.title == "Dune 2"
+    assert result.total_count is None
+    mock_repo.create_story.assert_called_once()
+
+
 def test_guest_11th_still_403():
     """訪客第 11 筆仍回 403（回歸）"""
     mock_repo = MagicMock()
