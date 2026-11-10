@@ -36,6 +36,7 @@ class StoryResponse(StoryBase):
     archived_date: Optional[date] = None  # 純日期收藏日（回填前可能為 null）
     seasons: Optional[List[int]] = None
     related_instances: List[StoryInstance] = []
+    total_count: Optional[int] = None  # 僅 POST 新增時回傳：使用者目前總收藏數
 
     class Config:
         from_attributes = True

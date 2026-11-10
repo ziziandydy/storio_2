@@ -62,7 +62,7 @@ export const translations = {
     onboardingGuide: {
       skip: 'Skip',
       next: 'Next',
-      getStarted: 'Get Started',
+      getStarted: 'Collect my first story',
       card1Title: 'Storio',
       card1Desc: 'Collect stories from movies, series & books in My Storio',
       card2Title: 'Explore & Collect',
@@ -144,7 +144,19 @@ export const translations = {
         tv: 'Series',
       }
     },
+    firstCollect: {
+      eyebrow: 'FIRST STORY',
+      title: 'Collect your first story',
+      searchButton: 'Search what you watched lately',
+      hint: 'Or tap a trending poster below',
+    },
+    guestSave: {
+      title: 'Log in to keep your stories',
+      body: "You're a guest: limited to 10 Stories, and they're lost if you switch phones or reinstall. Log in to keep them for good, with no limit.",
+      later: 'Maybe later, go to My Storio',
+    },
     modals: {
+      successTitle: 'Saved',
       addToFolio: 'Add to Storio',
       alreadyCollected: 'Already Collected',
       yourMemories: 'Your Memories',
@@ -347,7 +359,7 @@ export const translations = {
     onboardingGuide: {
       skip: '略過',
       next: '下一步',
-      getStarted: '開始使用',
+      getStarted: '開始收藏第一部',
       card1Title: 'Storio',
       card1Desc: '將你觀看並喜歡的書籍、電影、影集等作品加入 My Storio',
       card2Title: '探索與收藏',
@@ -429,7 +441,19 @@ export const translations = {
         tv: '影集',
       }
     },
+    firstCollect: {
+      eyebrow: 'FIRST STORY',
+      title: '收藏你的第一部作品',
+      searchButton: '搜尋你近期看過的作品',
+      hint: '或直接點下方的熱門海報收藏',
+    },
+    guestSave: {
+      title: '登入後，收藏不會消失',
+      body: '你現在是訪客，最多只能收藏 10 部，換手機或重裝 App 收藏就會消失。登入後永久保存，也不限數量。',
+      later: '稍後再說，前往 My Storio',
+    },
     modals: {
+      successTitle: '收藏成功',
       addToFolio: '加入 Storio',
       alreadyCollected: '已經收藏過了',
       yourMemories: '你的記憶',

@@ -239,6 +239,7 @@ export default function SectionSlider({ title, endpoint, viewAllLink }: SectionS
           external_id={selectedStory.external_id}
           media_type={selectedStory.media_type}
           seasons={selectedDetail?.seasons}
+          posterUrl={selectedStory.poster_path}
         />
       )}
     </section>

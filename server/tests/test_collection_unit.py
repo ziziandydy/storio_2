@@ -40,7 +40,9 @@ def test_add_story_success(service, mock_repo):
 
     # Assert
     assert result.title == "Dune"
-    mock_repo.count_user_stories.assert_not_called()
+    # 非訪客不做上限檢查，但新增後會計數以回傳 total_count（僅一次）
+    mock_repo.count_user_stories.assert_called_once_with(user_id)
+    assert result.total_count == 5
     mock_repo.create_story.assert_called_once()
 
 def test_add_story_limit_reached(service, mock_repo):

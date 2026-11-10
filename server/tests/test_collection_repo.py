@@ -315,3 +315,37 @@ def test_get_monthly_stats_item_date_prefers_archived_date_over_created_at(mock_
     by_id = {item["id"]: item for item in result["items"]}
     assert by_id["item-1"]["created_at"] == "2026-07-31"
     assert by_id["item-2"]["created_at"] == "2026-07-15T09:00:00Z"
+
+
+# --- total_count（首次收藏引導用） ---
+
+def _mock_stats_rows(mock_supabase, rows):
+    mock_table = MagicMock()
+    mock_supabase.table.return_value = mock_table
+    mock_response = MagicMock()
+    mock_response.data = rows
+    mock_table.select.return_value.eq.return_value.execute.return_value = mock_response
+
+
+def test_stats_returns_total_count_zero(mock_supabase):
+    """無任何收藏 → total_count == 0，既有欄位不變"""
+    _mock_stats_rows(mock_supabase, [])
+    result = CollectionRepository().get_collection_stats("user-123")
+    assert result["total_count"] == 0
+    for key in ("last_7_days", "last_14_days", "last_30_days", "this_week",
+                "this_month", "this_year"):
+        assert result[key] == 0
+    assert len(result["daily_counts_7d"]) == 7
+    assert len(result["daily_counts_30d"]) == 30
+
+
+def test_stats_total_count_counts_all_rows(mock_supabase):
+    """total_count 計入所有列（含重複收藏、created_at 異常者）"""
+    _mock_stats_rows(mock_supabase, [
+        {"created_at": "2024-01-15T10:00:00+00:00"},
+        {"created_at": "2024-01-15T10:00:00+00:00"},  # 重複收藏
+        {"created_at": None},
+    ])
+    result = CollectionRepository().get_collection_stats("user-123")
+    assert result["total_count"] == 3
+    assert result["this_year"] == 0  # 舊資料不影響既有統計
