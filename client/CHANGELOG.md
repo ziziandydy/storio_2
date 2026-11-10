@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.21.0](https://github.com/ziziandydy/storio_2/compare/v1.20.0...v1.21.0) (2026-11-10)
+
+
+### 新功能 (Features)
+
+* **collect:** 第一部慶祝、訪客登入卡、成功標題在地化 ([2669a1b](https://github.com/ziziandydy/storio_2/commit/2669a1b8bd0ed1c2027bb1286c352259f3c60857))
+* **collection:** stats 與 POST 回應新增 total_count ([1358629](https://github.com/ziziandydy/storio_2/commit/1358629e6250b66f34a3163aa5ac4cd88f0bb586))
+* **home:** 館藏為 0 的首次收藏引導區與搜尋對焦 ([16f5070](https://github.com/ziziandydy/storio_2/commit/16f507054b2cb0d533d71dd11436f5fde60742bf))
+* **i18n:** 首次收藏文案與外掛依賴 ([cd76462](https://github.com/ziziandydy/storio_2/commit/cd764627f02e34f7f0773eb7014a903b53389b5f))
+* **marketing:** 16:9 creative asset 改用虛構作品的分享卡，不含真實劇照 ([ac32216](https://github.com/ziziandydy/storio_2/commit/ac32216bc27dc882d33d9db9df23c826a6af9b80))
+* **marketing:** App Store 16:9 creative asset 產線（頁首＋搜尋結果共用，中英文） ([4d0e8a4](https://github.com/ziziandydy/storio_2/commit/4d0e8a49cfa984017612aa41b1d399cbe753e567))
+* **review:** iOS 系統評價視窗與 90 天節流 ([c918067](https://github.com/ziziandydy/storio_2/commit/c9180679772e3769f632582905f4a1c6c1472309))
+
+
+### Bug 修復 (Bug Fixes)
+
+* **collect:** 慶祝彩帶灑落層改到卡片後方 ([cdd15b4](https://github.com/ziziandydy/storio_2/commit/cdd15b4e57b020abb7f216984c732ddee38601ec))
+* **collect:** 關閉視窗時重置成功狀態，避免重開時重播慶祝與觸覺 ([ca90bf5](https://github.com/ziziandydy/storio_2/commit/ca90bf553996988f480a6d70e51efb87abcb5f99))
+* **collection:** 計數失敗時 POST 仍回傳已儲存的項目 ([2d4647a](https://github.com/ziziandydy/storio_2/commit/2d4647a1cefc3d8e6f20e0ee722513e4f6516484))
+* **events:** 限流改取最右邊 XFF、訪客事件每日上限 5000、pg_cron 清理 365 天前訪客列 ([e36b20b](https://github.com/ziziandydy/storio_2/commit/e36b20b2e1d5502670688000fbfb23492ad633fe))
+* **home:** 首次收藏後即時更新館藏數，收起引導區 ([76825ea](https://github.com/ziziandydy/storio_2/commit/76825eaf1981ee4eab3fb4ed09773be8e0a08068))
+* **qa:** ISSUE-001 — 成功視窗改用 portal，避免被首頁 FAB 蓋住 ([739f602](https://github.com/ziziandydy/storio_2/commit/739f602f6d60e3c51cdac5483284c6c11ffecb25))
+
 ## [1.20.0](https://github.com/ziziandydy/storio_2/compare/v1.19.0...v1.20.0) (2026-10-29)
 
 
