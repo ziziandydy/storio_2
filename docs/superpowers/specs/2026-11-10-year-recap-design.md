@@ -132,7 +132,7 @@
 
 - **風險**：Capacitor Share 一次傳多張圖在 iOS／Android 的行為需先驗證；不支援時要有備案（逐張儲存）。
 - **風險**：舊收藏補抓可能很慢（Google Books／TMDB 速率限制），需分批與快取。
-- **風險**：時區。`created_at` 是時間戳記，年份／月份邊界以用戶所在時區為準，Builder 決定實作方式。
+- **日期與時區**：年份／月份一律用 `archived_date` 純日期字串判斷，為空時退回 `created_at` 的日期部分（沿用 `collection-date-model` 規格），不經時區轉換，沒有時區邊界問題。
 - **留給 Builder**：場景版面細節、動畫曲線、稱號演算法的權重與同分處理、補抓的並行數量。
 - **現有資源可沿用**：`MonthlyRecapModal`／`MonthlyRecapTemplate`、Puppeteer 分享服務、`useProgressiveRenderQueue`、`lib/haptics.ts`。
 
