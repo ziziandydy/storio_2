@@ -154,6 +154,16 @@ describe('RecapProfileRow', () => {
       expect(screen.queryByTestId('recap-dismiss-hint')).toBeNull();
     });
 
+    it('關閉卡片後把這一列捲到畫面中央（這一列在長頁面中段，否則提示會在螢幕外）', () => {
+      const scroll = vi.fn();
+      Element.prototype.scrollIntoView = scroll;
+      set(yearsData([2026], 5));
+      render(<RecapProfileRow today={IN} />);
+      expect(scroll).not.toHaveBeenCalled();
+      act(() => dismiss(2026));
+      expect(scroll).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' });
+    });
+
     it('提示 6 秒後自動消失', () => {
       vi.useFakeTimers();
       try {

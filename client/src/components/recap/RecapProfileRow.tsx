@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronRight, Sparkles } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -24,12 +24,15 @@ export default function RecapProfileRow({ today }: { today?: Date }) {
   const { active: cardShowing } = useRecapEntry(today);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [hint, setHint] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const r = t.recap;
 
   // 同一頁關閉置頂卡片時，在這一列上方提示「以後可以從這裡查看」，6 秒後自動消失
   useEffect(() => subscribeDismissed(() => setHint(true)), []);
   useEffect(() => {
     if (!hint) return;
+    // 這一列在長頁面的中段，用戶是在最上方關閉卡片的：捲到畫面中央才看得到提示
+    wrapperRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
     const id = setTimeout(() => setHint(false), HINT_MS);
     return () => clearTimeout(id);
   }, [hint]);
@@ -56,7 +59,7 @@ export default function RecapProfileRow({ today }: { today?: Date }) {
 
   return (
     <>
-      <div className="relative border-b border-white/5 last:border-0">
+      <div ref={wrapperRef} className="relative border-b border-white/5 last:border-0">
       {hint && (
         <button
           type="button"
