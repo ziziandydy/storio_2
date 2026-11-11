@@ -13,15 +13,15 @@
 
 ## 1. 階段 1：資料基礎（後端）
 
-- [ ] 1.1 新增 `server/migrations/009_recap_metadata.sql`（`runtime_minutes`、`episode_total`、`genres text[]`、`page_count`，`IF NOT EXISTS`，附驗證查詢）
-- [ ] 1.2 `item` schema 與 `collection_repo` 支援新欄位（皆可為 null）；測試：舊資料與舊版 App 回應不變
-- [ ] 1.3 `collection_service.add_story` 收藏時寫入已取得的片長、集數、類別、頁數；取不到時留 null 且不阻擋收藏（先寫測試）
-- [ ] 1.4 補抓服務：找出缺資料的收藏，有限並行（5）向 TMDB／Google Books 取詳情並寫回；時間預算與 `metadata_pending`；失敗視為無資料（先寫測試，外部 API 用 mock）
-- [ ] 1.5 統計模組：年份歸屬（`archived_date`，退回 `created_at` 日期）、時間估算（電影、影集、書每小時 40 頁，只加總有資料者）、類別前三、故事年齡與最愛年代、每月計數與最高月、收藏月數、年度之最、開始與結束、心得挑選
-- [ ] 1.6 稱號：規則式稱號表（中英文草案約 8–12 個）與決定性選取；測試同輸入同輸出
-- [ ] 1.7 `canViewRecapYear` 單一函式（恆 true）與測試
-- [ ] 1.8 `GET /api/v1/collection/recap?year=`：門檻 404（含 `needed`）、權限 403、15 個場景資料或 null（controller → service → repository）
-- [ ] 1.9 `GET /api/v1/collection/recap/years`：達標年份與部數
+- [x] 1.1 新增 `server/migrations/009_recap_metadata.sql`（`runtime_minutes`、`episode_total`、`genres text[]`、`page_count`，`IF NOT EXISTS`，附驗證查詢）
+- [x] 1.2 `item` schema 與 `collection_repo` 支援新欄位（皆可為 null）；測試：舊資料與舊版 App 回應不變
+- [x] 1.3 `collection_service.add_story` 收藏時寫入已取得的片長、集數、類別、頁數；取不到時留 null 且不阻擋收藏（先寫測試）
+- [x] 1.4 補抓服務：找出缺資料的收藏，有限並行（5）向 TMDB／Google Books 取詳情並寫回；時間預算與 `metadata_pending`；失敗視為無資料（先寫測試，外部 API 用 mock）
+- [x] 1.5 統計模組：年份歸屬（`archived_date`，退回 `created_at` 日期）、時間估算（電影、影集、書每小時 40 頁，只加總有資料者）、類別前三、故事年齡與最愛年代、每月計數與最高月、收藏月數、年度之最、開始與結束、心得挑選
+- [x] 1.6 稱號：規則式稱號表（中英文草案約 8–12 個）與決定性選取；測試同輸入同輸出
+- [x] 1.7 `canViewRecapYear` 單一函式（恆 true）與測試
+- [x] 1.8 `GET /api/v1/collection/recap?year=`：門檻 404（含 `needed`）、權限 403、15 個場景資料或 null（controller → service → repository）
+- [x] 1.9 `GET /api/v1/collection/recap/years`：達標年份與部數
 - [ ] 1.10 後端全套 pytest 通過（CI dummy env）；Tu 在 Supabase dev 再 prod 執行 migration 009（Tu 操作）
 
 ## 2. 階段 2：Recap 前端

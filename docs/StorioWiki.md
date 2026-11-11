@@ -47,6 +47,7 @@ Storio 2 是一個強調「沉浸式行動優先 (Mobile-First)」的個人典�
     *   `gemini_service.py` (整合 Google Gemini API 的底層服務)
     *   `search_service.py` (跨來源/語意搜尋的核心邏輯)
     *   `collection_service.py` (使用者館藏 CRUD 邏輯)
+    *   `recap_service.py` (年度 Recap：讀收藏列 → 補抓缺資料 → 算 15 個場景；統計規則在不碰 DB 的純函式 `recap_stats.py`、稱號表 `recap_titles.py`、補抓 `recap_backfill.py`、往年權限判斷點 `recap_access.py`)
     *   `trending_service.py` (處理熱門趨勢與排行)
 *   **`app/repositories/` (Repository Layer)**: 資料存取層。
     *   `collection_repo.py`: 負責與 Supabase 資料庫進行直接的資料讀寫。
