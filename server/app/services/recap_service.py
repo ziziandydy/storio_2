@@ -61,14 +61,20 @@ class RecapService:
         pending = await self._backfill(user_id, rows, fetch, budget_seconds)
         return self._compose(rows, year, today, pending)
 
-    def list_years(self, user_id: str) -> dict:
+    def list_years(self, user_id: str, today: Optional[date] = None) -> dict:
+        """達標（≥ 門檻）的年份與部數；另回報「當年」目前幾部（不受門檻限制），供「再收藏 N 部」使用。"""
+        current_year = (today or date.today()).year
         counts = Counter(y for y in (stats.year_of(r) for r in self.repo.get_recap_rows(user_id)) if y)
         years = [
             {"year": y, "count": c}
             for y, c in sorted(counts.items(), reverse=True)
             if c >= stats.RECAP_THRESHOLD and can_view_recap_year(user_id, y)
         ]
-        return {"threshold": stats.RECAP_THRESHOLD, "years": years}
+        return {
+            "threshold": stats.RECAP_THRESHOLD,
+            "years": years,
+            "current": {"year": current_year, "count": counts.get(current_year, 0)},
+        }
 
     # ---------- 內部 ----------
 

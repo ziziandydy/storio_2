@@ -298,10 +298,36 @@ def test_list_years_threshold_sorted_desc(repo):
         + [make_row(id=f"b{i}", archived_date="2025-05-01") for i in range(3)]
         + [make_row(id=f"c{i}", archived_date="2026-05-01") for i in range(5)]
     )
-    assert service().list_years("u1") == {
-        "threshold": 3,
-        "years": [{"year": 2026, "count": 5}, {"year": 2025, "count": 3}],
-    }
+    result = service().list_years("u1", today=TODAY)
+    assert result["threshold"] == 3
+    assert result["years"] == [{"year": 2026, "count": 5}, {"year": 2025, "count": 3}]
+
+
+def test_list_years_reports_current_year_count_even_below_threshold(repo):
+    repo.get_recap_rows.return_value = (
+        [make_row(id="a", archived_date="2026-05-01")]
+        + [make_row(id=f"b{i}", archived_date="2025-05-01") for i in range(4)]
+    )
+    result = service().list_years("u1", today=TODAY)
+    assert result["current"] == {"year": 2026, "count": 1}
+    assert [y["year"] for y in result["years"]] == [2025]  # 當年不足門檻，不在清單
+
+
+def test_list_years_current_year_with_no_stories_is_zero(repo):
+    repo.get_recap_rows.return_value = []
+    assert service().list_years("u1", today=TODAY)["current"] == {"year": 2026, "count": 0}
+
+
+def test_list_years_current_year_at_threshold_is_listed_and_current(repo):
+    repo.get_recap_rows.return_value = [make_row(id=str(i), archived_date="2026-05-01") for i in range(3)]
+    result = service().list_years("u1", today=TODAY)
+    assert result["current"] == {"year": 2026, "count": 3}
+    assert result["years"] == [{"year": 2026, "count": 3}]
+
+
+def test_list_years_current_year_follows_today_argument(repo):
+    repo.get_recap_rows.return_value = [make_row(id="a", archived_date="2027-01-05")]
+    assert service().list_years("u1", today=date(2027, 1, 10))["current"] == {"year": 2027, "count": 1}
 
 
 def test_list_years_excludes_forbidden_years(repo):
@@ -310,4 +336,4 @@ def test_list_years_excludes_forbidden_years(repo):
         + [make_row(id=f"c{i}", archived_date="2026-05-01") for i in range(3)]
     )
     with patch("app.services.recap_service.can_view_recap_year", side_effect=lambda u, y: y != 2025):
-        assert service().list_years("u1")["years"] == [{"year": 2026, "count": 3}]
+        assert service().list_years("u1", today=TODAY)["years"] == [{"year": 2026, "count": 3}]

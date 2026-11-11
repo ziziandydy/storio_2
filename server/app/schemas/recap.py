@@ -32,6 +32,13 @@ class RecapYear(BaseModel):
     count: int
 
 
+class RecapCurrent(BaseModel):
+    """伺服器今天所在年份與該年目前部數（不受門檻限制）。"""
+    year: int
+    count: int
+
+
 class RecapYearsResponse(BaseModel):
     threshold: int
     years: List[RecapYear]
+    current: RecapCurrent
