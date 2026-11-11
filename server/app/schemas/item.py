@@ -19,6 +19,11 @@ class StoryCreate(StoryBase):
     archived_date: Optional[date] = None  # 使用者選定的收藏日（純日期，無時區）
     seasons: Optional[List[int]] = None  # 使用者勾選涵蓋的季數（僅 tv 有意義）
     force_add: Optional[bool] = False
+    # 年度 Recap 用的作品資料（皆可為 null；genres 必須是英文名）
+    runtime_minutes: Optional[int] = None  # 電影單部片長／影集單集片長
+    episode_total: Optional[int] = None  # 影集該筆收藏涵蓋的總集數
+    genres: Optional[List[str]] = None
+    page_count: Optional[int] = None
 
 class StoryInstance(BaseModel):
     id: UUID
@@ -37,6 +42,10 @@ class StoryResponse(StoryBase):
     seasons: Optional[List[int]] = None
     related_instances: List[StoryInstance] = []
     total_count: Optional[int] = None  # 僅 POST 新增時回傳：使用者目前總收藏數
+    runtime_minutes: Optional[int] = None
+    episode_total: Optional[int] = None
+    genres: Optional[List[str]] = None
+    page_count: Optional[int] = None
 
     class Config:
         from_attributes = True

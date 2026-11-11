@@ -9,6 +9,13 @@ from app.schemas.item import StoryCreate, StoryResponse
 
 T = TypeVar("T")
 
+# 年度 Recap 用的作品資料欄位（migration 009）
+RECAP_METADATA_FIELDS = ("runtime_minutes", "episode_total", "genres", "page_count")
+RECAP_ROW_COLUMNS = (
+    "id, external_id, title, media_type, subtype, year, poster_path, rating, notes, "
+    "created_at, archived_date, seasons, " + ", ".join(RECAP_METADATA_FIELDS)
+)
+
 class CollectionRepository:
     def __init__(self, token: str = None):
         self.client = get_supabase_client()
@@ -90,6 +97,10 @@ class CollectionRepository:
         else:
             # 無 archived_date 時不送欄位，避免 migration 未跑時 insert 失敗
             data.pop("archived_date", None)
+        # Recap 作品資料：None 不送，讓後端可先於 migration 009 部署
+        for key in RECAP_METADATA_FIELDS:
+            if data.get(key) is None:
+                data.pop(key, None)
 
         # Map to DB schema constraints
         data = self._map_to_db(data)
@@ -120,6 +131,22 @@ class CollectionRepository:
         if response.data:
             return StoryResponse(**self._map_from_db(response.data[0]))
         return None
+
+    def get_recap_rows(self, user_id: str) -> List[dict]:
+        """取得該用戶全部收藏列（Recap 統計用）；media_type 已還原成應用層類型（tv）。"""
+        response = self._execute_with_retry(
+            lambda: self.table.select(RECAP_ROW_COLUMNS).eq("user_id", user_id).execute()
+        )
+        return [self._map_from_db(dict(item)) for item in response.data]
+
+    def update_recap_metadata(self, user_id: str, story_id: str, fields: dict) -> None:
+        """寫回補抓到的作品資料；只接受 RECAP_METADATA_FIELDS，且限定該用戶的列。"""
+        allowed = {k: v for k, v in fields.items() if k in RECAP_METADATA_FIELDS}
+        if not allowed:
+            return
+        self._execute_with_retry(
+            lambda: self.table.update(allowed).eq("id", str(story_id)).eq("user_id", user_id).execute()
+        )
 
     def delete_story(self, user_id: str, story_id: UUID) -> bool:
         response = self._execute_with_retry(
