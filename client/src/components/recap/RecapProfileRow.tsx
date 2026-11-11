@@ -78,7 +78,7 @@ export default function RecapProfileRow({ today }: { today?: Date }) {
         onClick={open}
         className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors group disabled:opacity-80 disabled:hover:bg-transparent"
       >
-        <div className="flex items-center gap-4 min-w-0">
+        <div className="flex items-center gap-3 min-[360px]:gap-4 min-w-0">
           <div className="p-2 rounded-xl bg-white/5 text-accent-gold group-hover:scale-110 transition-transform">
             <Sparkles size={18} />
           </div>
