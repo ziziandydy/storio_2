@@ -26,6 +26,7 @@ Storio 2 是一個強調「沉浸式行動優先 (Mobile-First)」的個人典�
 *   **`src/components/`**: 可複用的 UI 元件 (Components)。
     *   **核心視覺與功能元件**: `StoryCard` (卡片), `StoryDetailsView` (獨立詳情展示), `RateAndReflectForm` (評分與心得表單)。
     *   **互動模態框 (Modals)**: `AddFolioModal`, `AddToFolioModal`, `GuestLimitModal`, `MonthlyRecapModal`, `OnboardingModal` (登入引導), `OnboardingGuideModal` (首次使用功能學習卡，4 張卡片輪播), `ShareModal`。
+    *   **年度 Recap（前端）**: `components/recap/`（純展示的場景元件：不用 hook、固定 400×711／400×500，預覽與 2B 的分享圖渲染共用；`RecapScene` 依場景鍵分派、`RecapHomeCard` 首頁限時卡片、`RecapProfileRow` Profile 入口與年份選單、`RecapGuestHint` 訪客登入提示）、`lib/recap/`（型別、窗口與關閉狀態、場景清單、格式、心得挑選等純函式）、`hooks/useRecap.ts`（`useRecap`、`useRecapYears`）、預覽頁 `app/recap/page.tsx`（`/recap?year=`）。
     *   **分享圖片渲染頁**: `app/share/render/page.tsx` — Puppeteer 截圖目標頁，接受 `window.__RENDER_DATA__` 注入，載入字型後設定 `window.__RENDER_READY__`。
     *   **導覽與佈局 (Navigation & Layout)**: `NavigationFAB` (浮動操作按鈕，取代傳統底部導覽列), `ViewSwitcher`, `SectionSlider`, `HeroStats`, `HomeStats`。
     *   **本機通知 (Local Notifications, v1.14.0)**: `AppOpenReset` (掛於 layout，app 開啟時記錄 engagement、重排程通知、判斷 Primer/Banner 顯示), `NotificationPrimerCard` (新用戶權限請求底部卡片), `NotificationBanner` (舊用戶升級引導 Banner)。

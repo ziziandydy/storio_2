@@ -26,13 +26,13 @@
 
 ## 2. 階段 2：Recap 前端
 
-- [ ] 2.1 `i18n/locales.ts` 新增 Recap 全部文案（zh-TW／en），含稱號表、估算標示、鼓勵文案
-- [ ] 2.2 API client 與 `useRecap(year)`、`useRecapYears()` hooks（含 `metadata_pending` 重取一次）
-- [ ] 2.3 場景元件：15 個場景（開場、總數、電影、影集、書、偏愛類別、故事年齡、稱號、每月節奏、月最投入、收藏月數、年度之最、開始與結束、心得、結尾），背景海報依類型；數字計數動畫，`prefers-reduced-motion` 時直接顯示
-- [ ] 2.4 Recap 預覽頁：橫向瀏覽、11–12 月「到目前為止」標示、心得換句、訪客登入提示、最後一頁「繼續收藏」（導向 `/search?focus=1`，不輸出為圖）
-- [ ] 2.5 首頁限時卡片：窗口（11/1–2 月底）、年份對應、達標才顯示、依年份關閉記在 localStorage（try/catch）
-- [ ] 2.6 Profile「年度 Recap」常駐一列與年份選單；不足門檻顯示鼓勵文案
-- [ ] 2.7 元件與 hook 的 Vitest 測試（窗口邊界日期、關閉狀態、不足門檻、場景為 null 時跳過）
+- [x] 2.1 `i18n/locales.ts` 新增 Recap 全部文案（zh-TW／en），含稱號表、估算標示、鼓勵文案
+- [x] 2.2 API client 與 `useRecap(year)`、`useRecapYears()` hooks（含 `metadata_pending` 重取一次）
+- [x] 2.3 場景元件：15 個場景（開場、總數、電影、影集、書、偏愛類別、故事年齡、稱號、每月節奏、月最投入、收藏月數、年度之最、開始與結束、心得、結尾），背景海報依類型；數字計數動畫，`prefers-reduced-motion` 時直接顯示
+- [x] 2.4 Recap 預覽頁：橫向瀏覽、11–12 月「到目前為止」標示、心得換句、訪客登入提示、最後一頁「繼續收藏」（導向 `/search?focus=1`，不輸出為圖）
+- [x] 2.5 首頁限時卡片：窗口（11/1–2 月底）、年份對應、達標才顯示、依年份關閉記在 localStorage（try/catch）
+- [x] 2.6 Profile「年度 Recap」常駐一列與年份選單；不足門檻顯示鼓勵文案
+- [x] 2.7 元件與 hook 的 Vitest 測試（窗口邊界日期、關閉狀態、不足門檻、場景為 null 時跳過）
 
 ## 3. 階段 2：圖片分享
 
