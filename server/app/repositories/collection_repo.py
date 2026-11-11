@@ -11,9 +11,12 @@ T = TypeVar("T")
 
 # 年度 Recap 用的作品資料欄位（migration 009）
 RECAP_METADATA_FIELDS = ("runtime_minutes", "episode_total", "genres", "page_count")
+# 補抓時間戳記：向外部取過詳情就記錄，避免外部沒有欄位的作品每次都重打（只由補抓寫入，收藏時不送）
+RECAP_FETCHED_AT_FIELD = "metadata_fetched_at"
+RECAP_WRITABLE_FIELDS = RECAP_METADATA_FIELDS + (RECAP_FETCHED_AT_FIELD,)
 RECAP_ROW_COLUMNS = (
     "id, external_id, title, media_type, subtype, year, poster_path, rating, notes, "
-    "created_at, archived_date, seasons, " + ", ".join(RECAP_METADATA_FIELDS)
+    "created_at, archived_date, seasons, " + ", ".join(RECAP_WRITABLE_FIELDS)
 )
 
 class CollectionRepository:
@@ -140,8 +143,8 @@ class CollectionRepository:
         return [self._map_from_db(dict(item)) for item in response.data]
 
     def update_recap_metadata(self, user_id: str, story_id: str, fields: dict) -> None:
-        """寫回補抓到的作品資料；只接受 RECAP_METADATA_FIELDS，且限定該用戶的列。"""
-        allowed = {k: v for k, v in fields.items() if k in RECAP_METADATA_FIELDS}
+        """寫回補抓到的作品資料；只接受 RECAP_WRITABLE_FIELDS，且限定該用戶的列。"""
+        allowed = {k: v for k, v in fields.items() if k in RECAP_WRITABLE_FIELDS}
         if not allowed:
             return
         self._execute_with_retry(

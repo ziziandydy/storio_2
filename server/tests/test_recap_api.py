@@ -97,6 +97,17 @@ def test_recap_requires_authorization():
 
 
 @patch("app.api.v1.endpoints.collection.RecapService")
+def test_recap_is_rate_limited_to_ten_per_minute(mock_cls, user):
+    mock_cls.return_value.build_recap = AsyncMock(return_value=recap_payload())
+    headers = {**AUTH, "X-Forwarded-For": "10.9.0.1"}
+
+    statuses = [client.get("/api/v1/collection/recap?year=2026", headers=headers).status_code for _ in range(11)]
+
+    assert statuses[:10] == [200] * 10
+    assert statuses[10] == 429
+
+
+@patch("app.api.v1.endpoints.collection.RecapService")
 def test_anonymous_user_can_view_recap(mock_cls, user):
     user.is_anonymous = True
     mock_cls.return_value.build_recap = AsyncMock(return_value=recap_payload())

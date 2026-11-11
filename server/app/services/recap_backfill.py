@@ -7,6 +7,7 @@
 import asyncio
 import logging
 import re
+from datetime import datetime, timedelta, timezone
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 from app.schemas.item import ItemDetailResponse
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_CONCURRENCY = 5
 DEFAULT_BUDGET_SECONDS = 8.0
+BACKFILL_RETRY_DAYS = 30  # 取過詳情但外部沒有欄位時，隔多久才再試
 
 _GENERIC_TOP_LEVEL = {"fiction", "nonfiction", "non-fiction"}
 
@@ -32,7 +34,23 @@ def normalize_book_category(path: str) -> Optional[str]:
     return leaf
 
 
-def needs_backfill(row: dict) -> bool:
+def _recently_fetched(row: dict, now: datetime) -> bool:
+    """30 天內已向外部取過詳情（不論取到幾個欄位）就不再重打：外部常沒有片長／集數。"""
+    raw = row.get("metadata_fetched_at")
+    if not raw:
+        return False
+    try:
+        fetched_at = datetime.fromisoformat(str(raw))
+    except ValueError:
+        return False
+    if fetched_at.tzinfo is None:
+        fetched_at = fetched_at.replace(tzinfo=timezone.utc)
+    return now - fetched_at < timedelta(days=BACKFILL_RETRY_DAYS)
+
+
+def needs_backfill(row: dict, now: Optional[datetime] = None) -> bool:
+    if _recently_fetched(row, now or datetime.now(timezone.utc)):
+        return False
     media_type = row.get("media_type")
     if media_type == "book":
         # 類別可能被正規化濾空，不可據此重複補抓
@@ -88,15 +106,19 @@ async def backfill_rows(
     save: Callable[[str, dict], Awaitable[None]],
     concurrency: int = DEFAULT_CONCURRENCY,
     budget_seconds: float = DEFAULT_BUDGET_SECONDS,
+    now: Optional[datetime] = None,
 ) -> int:
     """補抓缺資料的列並就地更新；回傳「超過預算而尚未完成」的列數（失敗不計入）。
 
-    fetch(row) 回傳要寫的欄位 dict（None 或例外 = 無資料）；save(row_id, fields) 寫回 DB。
-    已有值的欄位不覆蓋。
+    fetch(row) 回傳要寫的欄位 dict（None 或例外 = 失敗 = 無資料，下次再試；
+    {} 表示取到詳情但外部沒有可用欄位，仍記錄 metadata_fetched_at 避免每次重打）；
+    save(row_id, fields) 寫回 DB。已有值的欄位不覆蓋。
     """
+    now = now or datetime.now(timezone.utc)
+    stamp = now.isoformat()
     groups: Dict[Tuple, List[dict]] = {}
     for row in rows:
-        if needs_backfill(row):
+        if needs_backfill(row, now):
             groups.setdefault(_group_key(row), []).append(row)
     if not groups:
         return 0
@@ -109,12 +131,11 @@ async def backfill_rows(
                 fetched = await fetch(members[0])
             except Exception:
                 return  # 失敗視為無資料
-            if not fetched:
+            if fetched is None:
                 return
             for row in members:
                 applied = {k: v for k, v in fetched.items() if not row.get(k)}
-                if not applied:
-                    continue
+                applied["metadata_fetched_at"] = stamp
                 row.update(applied)  # 即使寫回失敗，本次統計仍用取到的資料
                 try:
                     await save(row["id"], applied)

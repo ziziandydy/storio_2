@@ -91,6 +91,24 @@ def test_update_recap_metadata_whitelists_keys(mock_supabase):
     assert ("user_id", user_id) in eq_args
 
 
+def test_update_recap_metadata_accepts_fetch_timestamp(mock_supabase):
+    mock_table = MagicMock()
+    mock_supabase.table.return_value = mock_table
+    repo = CollectionRepository()
+
+    repo.update_recap_metadata("u", "s", {"metadata_fetched_at": "2026-11-10T12:00:00+00:00", "rating": 1})
+
+    mock_table.update.assert_called_once_with({"metadata_fetched_at": "2026-11-10T12:00:00+00:00"})
+
+
+def test_create_story_never_sends_fetch_timestamp(mock_supabase):
+    repo, table = _repo_with_insert(mock_supabase)
+
+    repo.create_story(str(uuid4()), StoryCreate(title="Dune", media_type="movie", external_id="123", source="tmdb"))
+
+    assert "metadata_fetched_at" not in table.insert.call_args[0][0]
+
+
 def test_update_recap_metadata_ignores_empty_update(mock_supabase):
     mock_table = MagicMock()
     mock_supabase.table.return_value = mock_table
@@ -116,6 +134,6 @@ def test_get_recap_rows_maps_tv_and_selects_needed_columns(mock_supabase):
     assert [r["media_type"] for r in rows] == ["tv", "movie"]
     selected = mock_table.select.call_args[0][0]
     for col in ("id", "external_id", "title", "media_type", "year", "poster_path", "rating", "notes",
-                "created_at", "archived_date", "seasons", *NEW_FIELDS):
+                "created_at", "archived_date", "seasons", "metadata_fetched_at", *NEW_FIELDS):
         assert col in selected
     mock_table.select.return_value.eq.assert_called_once_with("user_id", "user-1")

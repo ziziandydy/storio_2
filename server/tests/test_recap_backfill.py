@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -67,6 +68,26 @@ def test_needs_backfill_tv_missing_episode_total_is_true():
 def test_needs_backfill_book_only_looks_at_page_count():
     assert needs_backfill(make_row(media_type="book")) is True
     assert needs_backfill(make_row(media_type="book", page_count=300)) is False  # 沒有 genres 也不再補抓
+
+
+NOW = datetime(2026, 11, 10, 12, 0, tzinfo=timezone.utc)
+
+
+def test_needs_backfill_recently_fetched_is_false_even_if_fields_missing():
+    # 外部沒有片長（TMDB runtime=0 之類）→ 欄位仍空，但 30 天內不重打外部
+    recent = (NOW - timedelta(days=3)).isoformat()
+    assert needs_backfill(make_row(metadata_fetched_at=recent), now=NOW) is False
+    assert needs_backfill(make_row(media_type="book", metadata_fetched_at=recent), now=NOW) is False
+
+
+def test_needs_backfill_stale_fetch_is_retried_after_thirty_days():
+    stale = (NOW - timedelta(days=31)).isoformat()
+    assert needs_backfill(make_row(metadata_fetched_at=stale), now=NOW) is True
+
+
+def test_needs_backfill_handles_z_suffix_and_garbage_timestamps():
+    assert needs_backfill(make_row(metadata_fetched_at="2026-11-09T00:00:00Z"), now=NOW) is False
+    assert needs_backfill(make_row(metadata_fetched_at="not-a-date"), now=NOW) is True
 
 
 # ---------- extract_metadata ----------
@@ -170,7 +191,51 @@ async def test_existing_values_are_not_overwritten():
 
     assert rows[0]["runtime_minutes"] == 100
     assert rows[0]["genres"] == ["Drama"]
-    assert rec.saves == [("id-1", {"genres": ["Drama"]})]
+    assert len(rec.saves) == 1
+    row_id, fields = rec.saves[0]
+    assert row_id == "id-1"
+    assert fields["genres"] == ["Drama"] and "runtime_minutes" not in fields
+
+
+@pytest.mark.asyncio
+async def test_successful_fetch_stamps_metadata_fetched_at():
+    rows = [make_row()]
+    rec = Recorder()
+
+    await backfill_rows(rows, rec.fetch, rec.save, now=NOW)
+
+    assert rows[0]["metadata_fetched_at"] == NOW.isoformat()
+    assert rec.saves[0][1]["metadata_fetched_at"] == NOW.isoformat()
+
+
+@pytest.mark.asyncio
+async def test_fetch_with_no_usable_fields_still_stamps_so_it_is_not_retried():
+    rows = [make_row()]
+    rec = Recorder(result={})  # 取到詳情，但外部沒有任何可用欄位
+
+    async def fetch(row):
+        return {}
+
+    await backfill_rows(rows, fetch, rec.save, now=NOW)
+
+    assert rec.saves == [("id-1", {"metadata_fetched_at": NOW.isoformat()})]
+    assert needs_backfill(rows[0], now=NOW) is False
+
+
+@pytest.mark.asyncio
+async def test_failed_or_missing_fetch_does_not_stamp():
+    rows = [make_row(id="a", external_id="bad"), make_row(id="b", external_id="none")]
+    rec = Recorder(fail_for=("bad",))
+
+    async def fetch(row):
+        if row["external_id"] == "none":
+            return None
+        return await rec.fetch(row)
+
+    await backfill_rows(rows, fetch, rec.save, now=NOW)
+
+    assert all(r.get("metadata_fetched_at") is None for r in rows)
+    assert rec.saves == []
 
 
 @pytest.mark.asyncio

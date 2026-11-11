@@ -51,7 +51,9 @@ class RecapService:
         if not can_view_recap_year(user_id, year):
             raise RecapForbidden()
 
-        all_rows = self.repo.get_recap_rows(user_id)
+        # 同步 supabase 呼叫不可直接在 event loop 上跑（單 worker 會卡住所有請求）
+        loop = asyncio.get_running_loop()
+        all_rows = await loop.run_in_executor(None, self.repo.get_recap_rows, user_id)
         rows = stats.rows_in_year(all_rows, year)
         if len(rows) < stats.RECAP_THRESHOLD:
             raise NotEnoughStories(needed=stats.RECAP_THRESHOLD - len(rows), count=len(rows))

@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.security import HTTPAuthorizationCredentials
 from app.schemas.item import StoryCreate, StoryResponse, StoryCheckResponse
+from app.core.limiter import limiter
 from app.schemas.recap import RecapResponse, RecapYearsResponse
 from app.services.collection_service import CollectionService
 from app.services.recap_service import NotEnoughStories, RecapForbidden, RecapService
@@ -70,7 +71,9 @@ def get_recap_years(
     return RecapService(token=credentials.credentials).list_years(user.id)
 
 @router.get("/recap", response_model=RecapResponse)
+@limiter.limit("10/minute")  # 可能觸發多筆外部 API 補抓，成本與 /search/ai 同級
 async def get_recap(
+    request: Request,
     year: int = Query(ge=1970, le=2100),
     user = Depends(get_current_user),
     credentials: HTTPAuthorizationCredentials = Depends(security),

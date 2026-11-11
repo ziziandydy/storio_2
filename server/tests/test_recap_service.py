@@ -1,9 +1,11 @@
 import asyncio
-from datetime import date
-from unittest.mock import MagicMock, patch
+import threading
+from datetime import date, datetime, timezone
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from app.schemas.item import ItemDetailResponse
 from app.services.recap_service import NotEnoughStories, RecapForbidden, RecapService
 
 TODAY = date(2026, 11, 10)
@@ -145,7 +147,65 @@ async def test_backfill_fills_missing_data_and_saves_with_user_id(repo):
 
     assert result.metadata_pending == 0
     assert result.movies["minutes"] == 90 + 100 + 100
-    repo.update_recap_metadata.assert_called_once_with("u1", "a", {"runtime_minutes": 90})
+    repo.update_recap_metadata.assert_called_once()
+    user_arg, row_arg, fields = repo.update_recap_metadata.call_args.args
+    assert (user_arg, row_arg) == ("u1", "a")
+    assert fields["runtime_minutes"] == 90 and "metadata_fetched_at" in fields
+
+
+@pytest.mark.asyncio
+async def test_recently_fetched_rows_are_not_fetched_again(repo):
+    recently = datetime.now(timezone.utc).isoformat()
+    repo.get_recap_rows.return_value = [
+        make_row(id=str(i), external_id=f"e{i}", runtime_minutes=None, metadata_fetched_at=recently)
+        for i in range(3)
+    ]
+    calls = []
+
+    async def fetch(row):
+        calls.append(row["id"])
+        return {"runtime_minutes": 90}
+
+    await service().build_recap("u1", 2026, TODAY, fetch=fetch)
+
+    assert calls == []
+
+
+@pytest.mark.asyncio
+async def test_default_fetch_wires_search_service_in_english_and_applies_result(repo):
+    repo.get_recap_rows.return_value = [
+        make_row(id="a", external_id="e1", runtime_minutes=None),
+        make_row(id="b", external_id="e2"),
+        make_row(id="c", external_id="e3"),
+    ]
+    details = ItemDetailResponse(
+        title="T", media_type="movie", external_id="e1", source="tmdb", runtime="90m", genres=["Drama"]
+    )
+    with patch("app.services.recap_service.SearchService.get_item_details", new_callable=AsyncMock) as get_details:
+        get_details.return_value = details
+        result = await service().build_recap("u1", 2026, TODAY)
+
+    get_details.assert_awaited_once()
+    args = get_details.await_args.args
+    assert args[1:] == ("movie", "e1", "en-US")
+    assert result.movies["minutes"] == 90 + 100 + 100
+    fields = repo.update_recap_metadata.call_args.args[2]
+    assert fields["runtime_minutes"] == 90
+
+
+@pytest.mark.asyncio
+async def test_default_fetch_without_details_leaves_row_unchanged(repo):
+    repo.get_recap_rows.return_value = [
+        make_row(id="a", external_id="e1", runtime_minutes=None),
+        make_row(id="b", external_id="e2"),
+        make_row(id="c", external_id="e3"),
+    ]
+    with patch("app.services.recap_service.SearchService.get_item_details", new_callable=AsyncMock) as get_details:
+        get_details.return_value = None
+        result = await service().build_recap("u1", 2026, TODAY)
+
+    assert result.movies["minutes"] == 200  # a 無資料不計入
+    repo.update_recap_metadata.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -163,6 +223,22 @@ async def test_budget_exceeded_still_returns_with_pending(repo):
     assert result.metadata_pending == 3
     assert result.total["items_with_data"] == 0
     repo.update_recap_metadata.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_get_recap_rows_does_not_block_the_event_loop_thread(repo):
+    loop_thread = threading.current_thread()
+    seen = {}
+
+    def fake_get_rows(user_id):
+        seen["thread"] = threading.current_thread()
+        return [make_row(id=str(i)) for i in range(3)]
+
+    repo.get_recap_rows.side_effect = fake_get_rows
+
+    await service().build_recap("u1", 2026, TODAY, fetch=no_fetch)
+
+    assert seen["thread"] is not loop_thread
 
 
 def test_list_years_threshold_sorted_desc(repo):
