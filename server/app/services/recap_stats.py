@@ -57,11 +57,29 @@ def estimate_minutes(row: dict) -> Optional[int]:
     return None
 
 
+def legacy_overlap_ids(rows: List[dict]) -> set:
+    """沒記季數的舊影集收藏（episode_total 是整部影集），若同一部影集在同一批列裡另有「標了季數」的收藏，
+    舊收藏的集數已經包含那些季，會重複計算——回傳這類舊收藏的 id，時間與集數一律不計入（寧可少算，文案本來就是「至少」）。"""
+    seasoned = {
+        r.get("external_id")
+        for r in rows
+        if r.get("media_type") == "tv" and r.get("seasons")
+    }
+    return {
+        r.get("id")
+        for r in rows
+        if r.get("media_type") == "tv" and not r.get("seasons") and r.get("external_id") in seasoned
+    }
+
+
 def time_summary(rows: List[dict]) -> dict:
     minutes = 0
     with_data = 0
     estimated = False
+    overlapping = legacy_overlap_ids(rows)
     for row in rows:
+        if row.get("id") in overlapping:
+            continue
         m = estimate_minutes(row)
         if m is None:
             continue

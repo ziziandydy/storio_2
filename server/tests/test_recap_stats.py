@@ -98,6 +98,53 @@ def test_rewatch_counts_each_row():
     assert summary["minutes"] == 200
 
 
+# ---------- 影集：分季收藏的時間 ----------
+
+def tv_row(rid, seasons, episodes, runtime=22, external_id="show1"):
+    return make_row(
+        id=rid, media_type="tv", external_id=external_id,
+        seasons=seasons, episode_total=episodes, runtime_minutes=runtime,
+    )
+
+
+def test_season_rows_are_summed_per_season_not_as_whole_show_each():
+    # 例：Modern Family 每一季各存一筆。每筆只算自己那一季的集數，不可每筆都當成整部影集
+    rows = [tv_row("a", [1], 24), tv_row("b", [2], 24), tv_row("c", [3], 22)]
+    summary = rs.time_summary(rows)
+    assert summary["minutes"] == (24 + 24 + 22) * 22
+    assert summary["items_with_data"] == 3
+
+
+def test_legacy_whole_show_row_overlapping_season_rows_is_not_double_counted():
+    # 舊收藏沒記季數（整部影集 72 集，已含第 3 季），同年又有一筆「第 3 季」：不可把第 3 季算兩次
+    legacy = tv_row("legacy", None, 72)
+    season3 = tv_row("s3", [3], 24)
+    summary = rs.time_summary([legacy, season3])
+    assert summary["count"] == 2
+    assert summary["minutes"] == 24 * 22  # 只算明確標了季數的那筆
+    assert summary["items_with_data"] == 1
+
+
+def test_legacy_row_alone_still_counts_as_whole_show():
+    assert rs.time_summary([tv_row("legacy", None, 72)])["minutes"] == 72 * 22
+
+
+def test_legacy_rows_of_different_shows_are_unaffected():
+    legacy = tv_row("legacy", None, 72, external_id="show1")
+    other = tv_row("other", [1], 10, external_id="show2")
+    assert rs.time_summary([legacy, other])["minutes"] == 72 * 22 + 10 * 22
+
+
+def test_two_season_rows_of_the_same_season_both_count_as_rewatch():
+    rows = [tv_row("a", [1], 24), tv_row("b", [1], 24)]
+    assert rs.time_summary(rows)["minutes"] == 2 * 24 * 22
+
+
+def test_legacy_overlap_ids_marks_only_overlapping_legacy_tv_rows():
+    rows = [tv_row("legacy", None, 72), tv_row("s3", [3], 24), tv_row("solo", None, 10, external_id="x")]
+    assert rs.legacy_overlap_ids(rows) == {"legacy"}
+
+
 # ---------- 類別 ----------
 
 def test_top_genres_counts_every_genre_case_insensitively():

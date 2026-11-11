@@ -146,6 +146,33 @@ async def test_works_without_posters_give_empty_lists_not_errors(repo):
 
 
 @pytest.mark.asyncio
+async def test_series_episodes_and_minutes_do_not_double_count_legacy_whole_show_row(repo):
+    repo.get_recap_rows.return_value = [
+        make_row(id="legacy", media_type="tv", external_id="show1", seasons=None, episode_total=72, runtime_minutes=22),
+        make_row(id="s3", media_type="tv", external_id="show1", seasons=[3], episode_total=24, runtime_minutes=22),
+        make_row(id="m", media_type="movie", external_id="m1"),
+    ]
+    result = await service().build_recap("u1", 2026, TODAY, fetch=no_fetch)
+
+    assert result.series["count"] == 2
+    assert result.series["episodes"] == 24
+    assert result.series["minutes"] == 24 * 22
+    assert result.total["minutes"] == 24 * 22 + 100
+
+
+@pytest.mark.asyncio
+async def test_season_by_season_rows_sum_each_seasons_own_episodes(repo):
+    repo.get_recap_rows.return_value = [
+        make_row(id=f"s{n}", media_type="tv", external_id="show1", seasons=[n], episode_total=eps, runtime_minutes=22)
+        for n, eps in [(1, 24), (2, 24), (3, 22)]
+    ]
+    result = await service().build_recap("u1", 2026, TODAY, fetch=no_fetch)
+
+    assert result.series["episodes"] == 70
+    assert result.series["minutes"] == 70 * 22
+
+
+@pytest.mark.asyncio
 async def test_no_runtime_or_pages_gives_zero_minutes_not_error(repo):
     repo.get_recap_rows.return_value = [
         make_row(id=str(i), runtime_minutes=None, genres=None) for i in range(3)

@@ -103,6 +103,7 @@ class RecapService:
             return [r for r in rows if r.get("media_type") == media_type]
 
         movies, series, books = of_type("movie"), of_type("tv"), of_type("book")
+        series_overlap = stats.legacy_overlap_ids(series)
         counts = stats.monthly_counts(rows)
         active = stats.months_active(counts)
         genres = stats.top_genres(rows)
@@ -133,7 +134,15 @@ class RecapService:
             total=with_posters(rows),
             movies=with_posters(movies) if movies else None,
             series=(
-                {**with_posters(series), "episodes": sum(r.get("episode_total") or 0 for r in series)}
+                {
+                    **with_posters(series),
+                    # 與 time_summary 一致：和分季收藏重疊的舊「整部影集」收藏不重複計入集數
+                    "episodes": sum(
+                        r.get("episode_total") or 0
+                        for r in series
+                        if r.get("id") not in series_overlap
+                    ),
+                }
                 if series else None
             ),
             books=(
