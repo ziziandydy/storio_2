@@ -23,6 +23,7 @@ import { getTitleKeyByCount, TitleTranslationKey } from '@/utils/leveling';
 import packageJson from '../../../package.json';
 import { motion, AnimatePresence } from 'framer-motion';
 import { App } from '@capacitor/app';
+import RecapProfileRow from '@/components/recap/RecapProfileRow';
 
 interface ProfileSectionProps {
   title: string;
@@ -960,6 +961,7 @@ export default function ProfilePage() {
             onClick={() => setShowRegionSettings(true)}
           />
           <ProfileItem icon={<Layers size={18} />} label={t.profile.items.statistics} onClick={() => setShowStatisticsSettings(true)} />
+          <RecapProfileRow />
           {!isAnonymous && (
             <ProfileItem
               icon={<Shield size={18} />}
