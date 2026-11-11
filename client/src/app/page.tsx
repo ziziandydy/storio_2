@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { User, Menu, Search, Layers, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { HomeCollectionArea } from '@/components/FirstCollectGuide';
+import RecapHomeCard from '@/components/recap/RecapHomeCard';
 import AddToFolioModal from '@/components/AddToFolioModal';
 import { useTranslation } from '@/hooks/useTranslation';
 import SectionSlider from '@/components/SectionSlider';
@@ -209,6 +210,9 @@ export default function Home() {
 
         {/* Stats Section */}
         <HomeCollectionArea />
+
+        {/* 年度 Recap 限時卡片（11 月至隔年 2 月、對應年份達門檻才出現） */}
+        <RecapHomeCard />
 
         {/* Trending Sections */}
         <div className="space-y-16">
