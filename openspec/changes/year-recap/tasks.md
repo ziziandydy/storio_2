@@ -36,7 +36,7 @@
 
 ## 3. 階段 2：圖片分享
 
-- [ ] 3.1（程式、模板與 30 張真實渲染煙霧測試已完成；**結尾場景的 QR 圖 `client/public/image/recap/download-qr.png` 尚未產生**，需先產生才算完成）分享圖服務：Recap 場景渲染路由與模板（9:16、4:5），遵循 `share-render-route`（不建帳號、不記事件）；角落 Storio 標誌；結尾場景含標語與下載線索（中英文）
+- [x] 3.1分享圖服務：Recap 場景渲染路由與模板（9:16、4:5），遵循 `share-render-route`（不建帳號、不記事件）；角落 Storio 標誌；結尾場景含標語與下載線索（中英文）
 - [x] 3.2 分享面板：比例切換、逐張勾選（預設全選）、產生進度（沿用 `useProgressiveRenderQueue`）
 - [x] 3.3 原生分享：寫入檔案後走系統分享面板傳多張，依 0.2 的結論處理備案；網頁桌面保留下載；不使用 `<a download>`
 - [x] 3.4 事件：`recap_opened`、`recap_shared`（確認 events API 白名單與報表 views 是否需登錄）
@@ -45,6 +45,6 @@
 ## 4. 驗證與發佈
 
 - [x] 4.1 前端 `npx next lint`、`tsc`、Vitest 全過；後端 pytest 全過
-- [ ] 4.2 `/qa`：390px 手機寬度，中英文，資料多／少／無心得／無書各一種帳號
+- [x] 4.2 `/qa`：390px 手機寬度，中英文，資料多／少／無心得／無書各一種帳號
 - [ ] 4.3 iOS 真機：分享多張、觸覺、計數動畫（Tu 操作）
 - [ ] 4.4 `/review` → `openspec-archive-change` → `npm run release` → `ios:sync` → `build:ios`（階段 1 與 2 同一版）
