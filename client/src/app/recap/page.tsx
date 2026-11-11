@@ -1,8 +1,10 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Loader2, RefreshCw, Search } from 'lucide-react';
+import { ArrowLeft, Loader2, RefreshCw, Search, Share2 } from 'lucide-react';
+import { track } from '@/lib/analytics';
+import RecapShareSheet from '@/components/recap/RecapShareSheet';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/hooks/useAuth';
 import { useRecap } from '@/hooks/useRecap';
@@ -33,10 +35,20 @@ function RecapPageInner() {
   const [reflectionIndex, setReflectionIndex] = useState(0);
   const [active, setActive] = useState(0);
   const [scale, setScale] = useState(1);
+  const [shareOpen, setShareOpen] = useState(false);
+  const openedYear = useRef<number | null>(null);
 
   useEffect(() => {
     if (year == null) router.replace('/profile');
   }, [year, router]);
+
+  // 每次進入且資料 ready 時只記錄一次 recap_opened（metadata_pending 重取換新資料物件也不重複）
+  useEffect(() => {
+    if (status === 'ready' && year != null && openedYear.current !== year) {
+      openedYear.current = year;
+      track('recap_opened', { year });
+    }
+  }, [status, year]);
 
   // 場景固定 400px 寬，預覽以縮放貼合手機寬度（輸出圖不受影響）
   useEffect(() => {
@@ -161,8 +173,22 @@ function RecapPageInner() {
             <span key={i} data-testid="recap-dot" className={`h-1.5 rounded-full transition-all ${i === active ? 'w-5 bg-accent-gold' : 'w-1.5 bg-white/25'}`} />
           ))}
         </div>
-        {/* 階段 2B 在此掛分享入口 */}
-        <div data-testid="recap-footer-slot" />
+        <div data-testid="recap-footer-slot" className="flex justify-center px-4">
+          <button
+            type="button"
+            onClick={() => setShareOpen(true)}
+            className="flex items-center gap-2 px-8 h-12 rounded-full bg-white/10 border border-white/15 text-xs font-black tracking-widest active:scale-95 transition-transform"
+          >
+            <Share2 size={16} /> {r.share}
+          </button>
+        </div>
+        <RecapShareSheet
+          isOpen={shareOpen}
+          onClose={() => setShareOpen(false)}
+          recap={data}
+          reflectionIndex={reflectionIndex}
+          locale={locale}
+        />
       </>
     );
   }

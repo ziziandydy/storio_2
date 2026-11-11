@@ -29,6 +29,8 @@ vi.mock('@/hooks/useTranslation', async () => {
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: m.user.current }) }));
 vi.mock('@/hooks/useRecap', () => ({ useRecap: () => ({ ...m.recap.current, retry: m.retry }) }));
 vi.mock('@/components/recap/RecapGuestHint', () => ({ default: () => <div data-testid="guest-hint" /> }));
+vi.mock('@/lib/analytics', () => ({ track: vi.fn() }));
+vi.mock('@/components/recap/RecapShareSheet', () => ({ default: () => null }));
 
 import RecapPage from '../page';
 
