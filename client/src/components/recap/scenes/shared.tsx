@@ -1,0 +1,87 @@
+'use client';
+
+import React from 'react';
+import type { translations } from '@/i18n/locales';
+import type { RecapAspect, RecapLocale } from '@/lib/recap/types';
+import SceneFrame from '../SceneFrame';
+import CountUp from '../CountUp';
+
+export const GOLD = '#c5a059';
+
+/** 場景文案（兩語系鍵相同，用聯集型別讓元件可直接讀取屬性）。元件內不使用 hook，文案由呼叫端傳入。 */
+export type RecapCopy =
+  | (typeof translations)['en-US']['recap']
+  | (typeof translations)['zh-TW']['recap'];
+
+export interface SceneProps<T> {
+  data: T;
+  copy: RecapCopy;
+  locale: RecapLocale;
+  aspectRatio: RecapAspect;
+  /** 2B 的渲染服務傳 false：數字直接顯示終值 */
+  animate: boolean;
+  year: number;
+  isPartial: boolean;
+}
+
+/** 把含 `{n}` 的文案拆開，數字用計數動畫（例如「{n} 部電影」→ 5 部電影）。 */
+export function CountText({ template, value, animate }: { template: string; value: number; animate: boolean }) {
+  const [before, after = ''] = template.split('{n}');
+  return (
+    <>
+      {before}
+      <CountUp value={value} animate={animate} />
+      {after}
+    </>
+  );
+}
+
+export function Eyebrow({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="text-[11px] font-black uppercase tracking-[0.35em]" style={{ color: GOLD }}>
+      {children}
+    </div>
+  );
+}
+
+export function Pill({ children }: { children: React.ReactNode }) {
+  return (
+    <span
+      className="inline-block rounded-full border px-3 py-1 text-[11px] font-bold tracking-widest"
+      style={{ borderColor: 'rgba(197,160,89,0.5)', color: GOLD }}
+    >
+      {children}
+    </span>
+  );
+}
+
+interface StatLayoutProps {
+  aspectRatio: RecapAspect;
+  posters?: string[];
+  filmEdge?: boolean;
+  testId: string;
+  eyebrow?: React.ReactNode;
+  /** 主要大字（通常含 CountText） */
+  headline?: React.ReactNode;
+  /** 其下的說明行；falsy 項目會被略過 */
+  lines?: (React.ReactNode | false | null | undefined)[];
+  badge?: React.ReactNode;
+}
+
+/** 數據型場景的共同版面：垂直置中，眉標＋大字＋說明行＋徽章。 */
+export function StatLayout({ aspectRatio, posters, filmEdge, testId, eyebrow, headline, lines = [], badge }: StatLayoutProps) {
+  return (
+    <SceneFrame aspectRatio={aspectRatio} posters={posters} filmEdge={filmEdge}>
+      <div data-testid={testId} className="h-full flex flex-col items-center justify-center text-center gap-4">
+        {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+        {headline && <div className="text-[56px] leading-tight font-black">{headline}</div>}
+        {lines.filter(Boolean).map((line, i) => (
+          <div key={i} className="text-[18px] font-medium text-white/85">
+            {line}
+          </div>
+        ))}
+        {badge}
+      </div>
+    </SceneFrame>
+  );
+}
