@@ -20,7 +20,8 @@
 - 書的時間 = 頁數 ÷ 每小時 40 頁（`BOOK_PAGES_PER_HOUR = 40`，集中定義）；只加總有資料的作品。
 - 補抓：並行 5、時間預算 8 秒、成功寫回、失敗視為無資料；不用背景 job（Railway fire-and-forget 不可靠，寫入一律 `await`）。
 - 稱號：規則式、決定性、不呼叫 AI、全部正面；中英文各 12 個以內的草案（文案待 Tu 審閱）。
-- `genres` 一律存**英文原名**（補抓以 `en-US` 取 TMDB）；之後前端若在收藏時回傳 `genres`，必須送英文名（本計畫不改前端）。
+- `genres` 一律存**英文名**（補抓以 `en-US` 取 TMDB；Google Books 的類別實測即使是中文書也回英文）；之後前端若在收藏時回傳 `genres`，必須送英文名（本計畫不改前端）。
+- Google Books 類別是階層路徑（如 `Fiction / Mystery & Detective / General`），存入前要正規化成單一名稱（見 Task 5 `normalize_book_category`）；實測 prod 29 本書皆有類別與頁數。
 - 後端測試用 dummy env 執行、不連真實 Supabase；會走 Gemini／OpenAI 備援的測試需 patch 清空 `OPENAI_API_KEY`（本計畫的測試不會走到）。
 - 新路由 `/recap`、`/recap/years` 必須註冊在 `/{story_id}` 之前。
 - 不在 main 上開發；本計畫在分支 `worktree-year-recap-impl`。migration 009 由 Tu 在 Supabase dev 再 prod 執行，Claude 不執行。
@@ -167,7 +168,7 @@
 
 | 順序 | id | zh | en | 條件 |
 |---|---|---|---|---|
-| 1 | `midnight_wanderer` | 午夜漫遊者 | The Midnight Wanderer | 第一名類別（不分大小寫）為 `horror` 或 `thriller` 或 `mystery` |
+| 1 | `midnight_wanderer` | 午夜漫遊者 | The Midnight Wanderer | 第一名類別（不分大小寫，以「包含」比對）含 `horror`、`thriller`、`mystery` 之一（書類別如 `Mystery & Detective` 因此也符合） |
 | 2 | `star_voyager` | 星際旅人 | The Star Voyager | `science fiction`、`sci-fi & fantasy`、`fantasy` |
 | 3 | `joy_maker` | 快樂製造機 | The Joy Maker | `comedy` |
 | 4 | `heart_collector` | 情感收藏家 | The Heart Collector | `drama` |
@@ -183,7 +184,7 @@
 媒體類型同數量時優先序 `movie > tv > book`。「最投入月份」未納入規則（設計列為輸入，但草案不需要它；Tu 若要再加）。
 
 - [ ] **Step 1: 寫失敗測試**
-  - 5 列、第一名類別 Horror → `id == "midnight_wanderer"`；類別大小寫 `HORROR` 同結果。
+  - 5 列、第一名類別 Horror → `id == "midnight_wanderer"`；類別大小寫 `HORROR` 同結果；第一名為 `Mystery & Detective`（書）同為 `midnight_wanderer`。
   - 無類別資料、平均年份使 `age == 21` → `old_soul`；無類別、近年作品、書最多 → `bookworm`；全部無類別無年份、電影 2 部 tv 2 部 → `cinephile`（同數量優先序）。
   - 4 列 → None。
   - 決定性：同輸入兩次結果相等；每個 `TITLES` 值都有非空 `zh` 與 `en`；`len(TITLES) == 12`。
@@ -204,11 +205,13 @@
 
 **Interfaces:**
 - Produces：
-  - `needs_backfill(row: dict) -> bool`：`genres` 為 None／空；或 movie／tv 缺 `runtime_minutes`；或 tv 缺 `episode_total`；或 book 缺 `page_count`
-  - `extract_metadata(details: ItemDetailResponse, row: dict) -> dict`：只回傳取得到的鍵（`runtime_minutes`、`episode_total`、`genres`、`page_count`）。電影／影集的 `details.runtime` 形如 `"129m"`，以正規式取數字；書用 `details.page_count`；tv 的 `episode_total`＝`row["seasons"]` 有值時加總 `details.seasons` 中對應 `season_number` 的 `episode_count`，沒有 `seasons` 時加總全部季；任何 `episode_count` 為 None 則 `episode_total` 不回傳；`genres` 取 `details.genres`
+  - `needs_backfill(row: dict) -> bool`：movie／tv：`genres` 為 None／空，或缺 `runtime_minutes`；tv 另需 `episode_total`；book：只看缺 `page_count`（類別可能被正規化濾空，不可據此重複補抓）
+  - `extract_metadata(details: ItemDetailResponse, row: dict) -> dict`：只回傳取得到的鍵（`runtime_minutes`、`episode_total`、`genres`、`page_count`）。電影／影集的 `details.runtime` 形如 `"129m"`，以正規式取數字；書用 `details.page_count`；tv 的 `episode_total`＝`row["seasons"]` 有值時加總 `details.seasons` 中對應 `season_number` 的 `episode_count`，沒有 `seasons` 時加總全部季；任何 `episode_count` 為 None 則 `episode_total` 不回傳；`genres`：影視取 `details.genres`；書對 `details.genres` 的每個路徑字串套用 `normalize_book_category`，去重後保序
+  - `normalize_book_category(path: str) -> Optional[str]`：以 `" / "` 切段，取**最後一個不是 `General` 的段落**；若結果只剩第一段且為泛稱 `Fiction`／`Nonfiction`（不分大小寫）則回 None（沒有資訊量，不納入排名）。例：`"Fiction / Mystery & Detective / General"` → `"Mystery & Detective"`；`"Young Adult Fiction / Dystopian"` → `"Dystopian"`；`"Business & Economics / Personal Finance / General"` → `"Personal Finance"`；`"Fiction / General"` → None；`"Self-Help / Motivational & Inspirational"` → `"Motivational & Inspirational"`
   - `async backfill_rows(rows: List[dict], fetch: Callable[[dict], Awaitable[Optional[dict]]], save: Callable[[str, dict], Awaitable[None]], concurrency: int = 5, budget_seconds: float = 8.0) -> int`：對需要補抓的列依 `(media_type, external_id, tuple(seasons or []))` 分組、每組只 `fetch` 一次；`fetch` 回傳要寫的欄位 dict（None 或例外＝失敗＝無資料）；成功時**就地更新**組內每列的缺值欄位（已有值不覆蓋）並對每列 `await save(row["id"], fields)`；整體超過預算時取消未完成者，回傳**尚未完成的列數**（失敗者不計入）
 
 - [ ] **Step 1: 寫失敗測試**（`fetch`／`save` 用 `AsyncMock`／自製 async 函式）
+  - `normalize_book_category`：上列五個例子各一個斷言；`"Fiction"` 單段 → None；`"Juvenile Fiction / Fantasy / Dragons, Unicorns & Mythical Creatures"` → `"Dragons, Unicorns & Mythical Creatures"`。書 `details.genres=["Fiction / General", "Fiction / Mystery & Detective / General"]` → `extract_metadata` 的 `genres == ["Mystery & Detective"]`；全部都被濾掉（只有 `Fiction / General`）→ 不含 `genres` 鍵（書仍有 `page_count`，補抓不會因為類別為空而每次重打：`needs_backfill` 對書只看 `page_count`，不看 `genres`）。
   - `needs_backfill`：電影有 runtime 與 genres → False；電影缺 genres → True；tv 有 runtime 缺 episode_total → True；書缺 page_count → True。
   - `extract_metadata`：`runtime="129m"` → `runtime_minutes == 129`；tv `seasons=[2]` 且 details.seasons 為 S1 8 集、S2 10 集 → `episode_total == 10`；tv `seasons=None` → 18；任一季 `episode_count=None` → 不含 `episode_total`；書 → `page_count`；`runtime="? pages"` 之類無法解析 → 不含 `runtime_minutes`。
   - 同一作品兩列（重看）→ `fetch` 只被呼叫 1 次、`save` 被呼叫 2 次，兩列 in-place 更新（Review Focus 4）。
