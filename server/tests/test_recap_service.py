@@ -95,6 +95,57 @@ async def test_scenes_present_or_none_by_data(repo):
 
 
 @pytest.mark.asyncio
+async def test_scene_posters_are_split_by_media_type(repo):
+    repo.get_recap_rows.return_value = [
+        make_row(id="a", media_type="movie", poster_path="/m1.jpg", archived_date="2026-03-01"),
+        make_row(id="b", media_type="movie", poster_path="/m2.jpg", archived_date="2026-03-02"),
+        make_row(id="c", media_type="book", poster_path="/b1.jpg", archived_date="2026-03-03", runtime_minutes=None, page_count=300),
+    ]
+    result = await service().build_recap("u1", 2026, TODAY, fetch=no_fetch)
+
+    assert result.movies["posters"] == ["/m2.jpg", "/m1.jpg"]
+    assert result.books["posters"] == ["/b1.jpg"]
+    assert set(result.total["posters"]) == {"/m1.jpg", "/m2.jpg", "/b1.jpg"}
+    assert len(result.total["posters"]) <= 6
+
+
+@pytest.mark.asyncio
+async def test_genre_scene_posters_only_include_top_genre_works(repo):
+    repo.get_recap_rows.return_value = [
+        make_row(id="a", genres=["Drama"], poster_path="/d1.jpg", archived_date="2026-03-01"),
+        make_row(id="b", genres=["drama", "Crime"], poster_path="/d2.jpg", archived_date="2026-03-02"),
+        make_row(id="c", genres=["Comedy"], poster_path="/c1.jpg", archived_date="2026-03-03"),
+    ]
+    result = await service().build_recap("u1", 2026, TODAY, fetch=no_fetch)
+
+    assert result.genres["top"][0]["name"] == "Drama"
+    assert result.genres["posters"] == ["/d2.jpg", "/d1.jpg"]
+
+
+@pytest.mark.asyncio
+async def test_peak_month_posters_only_include_that_months_works(repo):
+    repo.get_recap_rows.return_value = [
+        make_row(id="a", poster_path="/m1.jpg", archived_date="2026-03-01"),
+        make_row(id="b", poster_path="/m2.jpg", archived_date="2026-03-02"),
+        make_row(id="c", poster_path="/m3.jpg", archived_date="2026-03-03"),
+        make_row(id="d", poster_path="/jul.jpg", archived_date="2026-07-01"),
+    ]
+    result = await service().build_recap("u1", 2026, TODAY, fetch=no_fetch)
+
+    assert result.peak_month["month"] == 3
+    assert result.peak_month["posters"] == ["/m3.jpg", "/m2.jpg", "/m1.jpg"]
+
+
+@pytest.mark.asyncio
+async def test_works_without_posters_give_empty_lists_not_errors(repo):
+    repo.get_recap_rows.return_value = [make_row(id=str(i)) for i in range(3)]
+    result = await service().build_recap("u1", 2026, TODAY, fetch=no_fetch)
+
+    assert result.total["posters"] == []
+    assert result.movies["posters"] == []
+
+
+@pytest.mark.asyncio
 async def test_no_runtime_or_pages_gives_zero_minutes_not_error(repo):
     repo.get_recap_rows.return_value = [
         make_row(id=str(i), runtime_minutes=None, genres=None) for i in range(3)
@@ -111,7 +162,7 @@ async def test_monthly_scenes_need_two_active_months(repo):
     ]
     one_month = await service().build_recap("u1", 2026, TODAY, fetch=no_fetch)
     assert one_month.monthly is None and one_month.months_active is None
-    assert one_month.peak_month == {"month": 3, "count": 3}
+    assert one_month.peak_month == {"month": 3, "count": 3, "posters": []}
 
     repo.get_recap_rows.return_value = [
         make_row(id="a", archived_date="2026-03-05"),

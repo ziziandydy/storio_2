@@ -139,10 +139,35 @@ def peak_month(counts: List[int]) -> Optional[dict]:
     return {"month": counts.index(top) + 1, "count": top}
 
 
-# ---------- 年度之最 ----------
+# ---------- 海報清單 ----------
 
 def _sort_key(row: dict):
     return (effective_date(row) or "", str(row.get("created_at") or ""))
+
+
+def recent_posters(rows: List[dict], limit: int = 6) -> List[str]:
+    """場景背景用海報：只取有 poster_path 者，由近到遠，不重複，最多 limit 個；沒有就回 []。"""
+    posters: List[str] = []
+    for row in sorted(rows, key=_sort_key, reverse=True):
+        path = row.get("poster_path")
+        if path and path not in posters:
+            posters.append(path)
+            if len(posters) >= limit:
+                break
+    return posters
+
+
+def rows_in_month(rows: List[dict], month: int) -> List[dict]:
+    """effective_date 落在指定月份（1–12）的列。"""
+    selected = []
+    for row in rows:
+        date = effective_date(row)
+        if date and date[5:7].isdigit() and int(date[5:7]) == month:
+            selected.append(row)
+    return selected
+
+
+# ---------- 年度之最 ----------
 
 
 def top_rated(rows: List[dict]) -> Optional[dict]:

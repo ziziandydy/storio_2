@@ -100,6 +100,23 @@ class RecapService:
         counts = stats.monthly_counts(rows)
         active = stats.months_active(counts)
         genres = stats.top_genres(rows)
+        peak = stats.peak_month(counts)
+
+        def with_posters(group: List[dict]) -> dict:
+            return {**stats.time_summary(group), "posters": stats.recent_posters(group)}
+
+        genre_scene = None
+        if genres:
+            top_name = genres[0]["name"].casefold()
+            top_genre_rows = [
+                r for r in rows
+                if any((g or "").strip().casefold() == top_name for g in r.get("genres") or [])
+            ]
+            genre_scene = {"top": genres, "posters": stats.recent_posters(top_genre_rows)}
+
+        peak_scene = None
+        if peak:
+            peak_scene = {**peak, "posters": stats.recent_posters(stats.rows_in_month(rows, peak["month"]))}
 
         return RecapResponse(
             year=year,
@@ -107,21 +124,21 @@ class RecapService:
             total_count=len(rows),
             metadata_pending=pending,
             opening={"year": year},
-            total=stats.time_summary(rows),
-            movies=stats.time_summary(movies) if movies else None,
+            total=with_posters(rows),
+            movies=with_posters(movies) if movies else None,
             series=(
-                {**stats.time_summary(series), "episodes": sum(r.get("episode_total") or 0 for r in series)}
+                {**with_posters(series), "episodes": sum(r.get("episode_total") or 0 for r in series)}
                 if series else None
             ),
             books=(
-                {**stats.time_summary(books), "pages": sum(r.get("page_count") or 0 for r in books)}
+                {**with_posters(books), "pages": sum(r.get("page_count") or 0 for r in books)}
                 if books else None
             ),
-            genres={"top": genres} if genres else None,
+            genres=genre_scene,
             story_age=stats.story_age(rows, year),
             title=select_title(rows, year),
             monthly={"counts": counts} if active else None,
-            peak_month=stats.peak_month(counts),
+            peak_month=peak_scene,
             months_active=active,
             top_rated=stats.top_rated(rows),
             first_last=stats.first_last(rows),

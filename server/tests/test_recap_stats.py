@@ -249,3 +249,36 @@ def test_reflection_short_text_unchanged_and_candidates_capped_at_ten():
     assert result["count"] == 12
     assert len(result["candidates"]) == 10
     assert result["candidates"][0]["text"].startswith("心得")
+
+
+# ---------- 海報清單 ----------
+
+def test_recent_posters_skips_missing_dedupes_and_orders_recent_first():
+    rows = [
+        make_row(poster_path="/a.jpg", archived_date="2026-01-01"),
+        make_row(poster_path=None, archived_date="2026-05-01"),
+        make_row(poster_path="", archived_date="2026-04-01"),
+        make_row(poster_path="/b.jpg", archived_date="2026-03-01"),
+        make_row(poster_path="/a.jpg", archived_date="2026-06-01"),
+    ]
+    assert rs.recent_posters(rows) == ["/a.jpg", "/b.jpg"]
+
+
+def test_recent_posters_respects_limit_and_defaults_to_six():
+    rows = [make_row(poster_path=f"/p{i}.jpg", archived_date=f"2026-01-{i + 1:02d}") for i in range(8)]
+    assert len(rs.recent_posters(rows)) == 6
+    assert rs.recent_posters(rows, limit=2) == ["/p7.jpg", "/p6.jpg"]
+
+
+def test_recent_posters_without_any_poster_is_empty_list():
+    assert rs.recent_posters([make_row(), make_row(poster_path=None)]) == []
+
+
+def test_rows_in_month_uses_effective_date_month():
+    rows = [
+        make_row(id="a", archived_date="2026-03-02"),
+        make_row(id="b", archived_date="2026-07-01"),
+        make_row(id="c", archived_date=None, created_at="2026-03-30T00:00:00+00:00"),
+    ]
+    assert [r["id"] for r in rs.rows_in_month(rows, 3)] == ["a", "c"]
+    assert rs.rows_in_month(rows, 12) == []
