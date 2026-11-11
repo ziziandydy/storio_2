@@ -5,9 +5,8 @@ import Image from 'next/image';
 import { ShieldCheck } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useToast } from '@/components/ToastProvider';
-import { supabase, getURL } from '@/lib/supabase';
-import { isNativePlatform, isIOSPlatform, nativeAppleSignIn } from '@/lib/appleAuth';
-import { nativeGoogleSignIn } from '@/lib/googleAuth';
+import { isNativePlatform, isIOSPlatform } from '@/lib/appleAuth';
+import { loginWithProvider } from '@/lib/providerLogin';
 import { PosterWithCheck, SuccessHeading } from './FirstCollectCelebration';
 
 interface GuestSaveCardProps {
@@ -29,31 +28,17 @@ export default function GuestSaveCard({ title, posterUrl, onLater, onLoggedIn }:
   const { t } = useTranslation();
   const { showToast } = useToast();
 
-  // 分派邏輯與 app/page.tsx 的 handleLogin 相同
+  // 分派邏輯集中在 lib/providerLogin（與首頁 handleLogin 相同）
   const handleLogin = async (provider: 'apple' | 'google') => {
-    try {
-      if (provider === 'apple' && isIOSPlatform()) {
-        const { error, cancelled } = await nativeAppleSignIn();
-        if (cancelled) return;
-        if (error) throw error;
-        onLoggedIn();
-      } else if (provider === 'google' && isNativePlatform()) {
-        const { error, cancelled } = await nativeGoogleSignIn();
-        if (cancelled) return;
-        if (error) throw error;
-        onLoggedIn();
-      } else {
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider,
-          options: { redirectTo: getURL('/auth/callback') },
-        });
-        if (error) throw error;
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error('Login failed:', message);
-      showToast(`${t.common.error}：${message}`, 'error');
+    const result = await loginWithProvider(provider);
+    if (result.cancelled) return;
+    if (result.error) {
+      console.error('Login failed:', result.error.message);
+      showToast(`${t.common.error}：${result.error.message}`, 'error');
+      return;
     }
+    // 原生登入成功才由這裡關閉視窗；OAuth 轉址會離開頁面
+    if (!result.redirected) onLoggedIn();
   };
 
   return (
