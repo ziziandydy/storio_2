@@ -156,6 +156,13 @@ def test_tie_broken_by_specificity_not_alphabet():
     assert title_id(rows) == "cosmic_thinker"  # scifi 第一、drama 第二
 
 
+def test_common_drama_pairs_have_their_own_titles():
+    # dev 真實資料顯示「劇情＋驚悚」最常見，不可全部落到單一的情感收藏家
+    assert title_id(rows_of(3, genres=["Drama"]) + rows_of(2, genres=["Thriller"])) == "tension_watcher"
+    assert title_id(rows_of(3, genres=["Drama"]) + rows_of(2, genres=["Mystery"])) == "plot_detective"
+    assert title_id(rows_of(3, genres=["Drama"]) + rows_of(2, genres=["Comedy"])) == "bittersweet_heart"
+
+
 def test_distinct_pairs_give_distinct_titles():
     combos = [
         ("Science Fiction", "Fantasy"), ("Animation", "Comedy"), ("Horror", "Thriller"),
