@@ -106,3 +106,102 @@ def story_age(rows: List[dict], year: int) -> Optional[dict]:
     decades = Counter((y // 10) * 10 for y in years)
     favorite = max(decades.items(), key=lambda kv: (kv[1], kv[0]))[0]
     return {"avg_year": avg_year, "age": year - avg_year, "favorite_decade": favorite}
+
+
+# ---------- 月份節奏 ----------
+
+def monthly_counts(rows: List[dict]) -> List[int]:
+    """12 個月各收藏幾部（依 effective_date 的月份字串）。"""
+    counts = [0] * 12
+    for row in rows:
+        date = effective_date(row)
+        if not date:
+            continue
+        try:
+            month = int(date[5:7])
+        except ValueError:
+            continue
+        if 1 <= month <= 12:
+            counts[month - 1] += 1
+    return counts
+
+
+def months_active(counts: List[int]) -> Optional[dict]:
+    active = sum(1 for c in counts if c > 0)
+    return {"count": active} if active >= 2 else None
+
+
+def peak_month(counts: List[int]) -> Optional[dict]:
+    """最高月份（同分取較早）；最高月不到 2 部不算。"""
+    top = max(counts) if counts else 0
+    if top < 2:
+        return None
+    return {"month": counts.index(top) + 1, "count": top}
+
+
+# ---------- 年度之最 ----------
+
+def _sort_key(row: dict):
+    return (effective_date(row) or "", str(row.get("created_at") or ""))
+
+
+def top_rated(rows: List[dict]) -> Optional[dict]:
+    """最高評分（評分 0 表未評分，不參與）；顯示最多 3 筆，取最近收藏者。"""
+    rated = [r for r in rows if (r.get("rating") or 0) > 0]
+    if not rated:
+        return None
+    best = max(r["rating"] for r in rated)
+    winners = sorted((r for r in rated if r["rating"] == best), key=_sort_key, reverse=True)
+    return {
+        "rating": best,
+        "count": len(winners),
+        "items": [{"title": r.get("title"), "poster_path": r.get("poster_path")} for r in winners[:3]],
+    }
+
+
+# ---------- 開始與結束 ----------
+
+def first_last(rows: List[dict]) -> Optional[dict]:
+    if len(rows) < 2:
+        return None
+    ordered = sorted(rows, key=_sort_key)
+
+    def item(row: dict) -> dict:
+        return {"title": row.get("title"), "poster_path": row.get("poster_path"), "date": effective_date(row)}
+
+    return {"first": item(ordered[0]), "last": item(ordered[-1])}
+
+
+# ---------- 心得 ----------
+
+REFLECTION_MAX_CHARS = 40
+REFLECTION_MAX_CANDIDATES = 10
+
+
+def pick_reflection(rows: List[dict]) -> Optional[dict]:
+    """有心得（去除空白後非空）才出現。候選排序：評分高 → 心得長 → 較近收藏。"""
+    with_notes = [r for r in rows if (r.get("notes") or "").strip()]
+    if not with_notes:
+        return None
+    ordered = sorted(
+        with_notes,
+        key=lambda r: (r.get("rating") or 0, len((r["notes"]).strip()), _sort_key(r)),
+        reverse=True,
+    )
+
+    def candidate(row: dict) -> dict:
+        text = row["notes"].strip()
+        if len(text) > REFLECTION_MAX_CHARS:
+            text = text[:REFLECTION_MAX_CHARS] + "…"
+        return {
+            "id": row.get("id"),
+            "title": row.get("title"),
+            "poster_path": row.get("poster_path"),
+            "rating": row.get("rating") or 0,
+            "text": text,
+        }
+
+    return {
+        "count": len(with_notes),
+        "candidates": [candidate(r) for r in ordered[:REFLECTION_MAX_CANDIDATES]],
+    }

@@ -150,3 +150,102 @@ def test_stats_are_deterministic():
     rows = [make_row(genres=["Drama", "Comedy"], year=2001 + i) for i in range(6)]
     assert rs.top_genres(rows) == rs.top_genres(list(rows))
     assert rs.story_age(rows, 2026) == rs.story_age(list(rows), 2026)
+
+
+# ---------- 月份節奏 ----------
+
+def test_monthly_counts_by_effective_date_month():
+    rows = [make_row(archived_date="2026-03-02"), make_row(archived_date="2026-03-30"), make_row(archived_date="2026-07-01")]
+    counts = rs.monthly_counts(rows)
+    assert len(counts) == 12
+    assert counts[2] == 2 and counts[6] == 1 and sum(counts) == 3
+
+
+def test_months_active_needs_two_months():
+    assert rs.months_active([0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0]) == {"count": 2}
+    assert rs.months_active([0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]) is None
+
+
+def test_peak_month_needs_two_items():
+    assert rs.peak_month([1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]) is None
+
+
+def test_peak_month_tie_picks_earlier_month():
+    counts = [0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0]
+    assert rs.peak_month(counts) == {"month": 3, "count": 2}
+
+
+# ---------- 年度之最 ----------
+
+def test_top_rated_counts_highest_rating_and_limits_items_to_three():
+    rows = [make_row(rating=r, archived_date=f"2026-01-{i + 1:02d}", title=f"T{i}")
+            for i, r in enumerate([0, 0, 8, 10, 10, 10, 10])]
+    result = rs.top_rated(rows)
+    assert result["rating"] == 10
+    assert result["count"] == 4
+    assert len(result["items"]) == 3
+    assert result["items"][0]["title"] == "T6"  # 最近的優先
+
+
+def test_top_rated_all_unrated_is_none():
+    assert rs.top_rated([make_row(rating=0), make_row(rating=0)]) is None
+
+
+# ---------- 開始與結束 ----------
+
+def test_first_last_needs_two_rows():
+    assert rs.first_last([make_row()]) is None
+
+
+def test_first_last_orders_by_date_then_created_at():
+    rows = [
+        make_row(title="mid", archived_date="2026-05-01"),
+        make_row(title="last", archived_date="2026-09-01"),
+        make_row(title="first", archived_date="2026-02-01"),
+    ]
+    result = rs.first_last(rows)
+    assert result["first"]["title"] == "first" and result["first"]["date"] == "2026-02-01"
+    assert result["last"]["title"] == "last"
+
+
+def test_first_last_same_day_uses_created_at():
+    rows = [
+        make_row(title="later", archived_date="2026-05-01", created_at="2026-05-01T10:00:00+00:00"),
+        make_row(title="earlier", archived_date="2026-05-01", created_at="2026-05-01T08:00:00+00:00"),
+    ]
+    result = rs.first_last(rows)
+    assert result["first"]["title"] == "earlier" and result["last"]["title"] == "later"
+
+
+# ---------- 心得 ----------
+
+def test_reflection_ignores_blank_notes():
+    assert rs.pick_reflection([make_row(notes="   "), make_row(notes=None)]) is None
+
+
+def test_reflection_prefers_highest_rating():
+    rows = [
+        make_row(id="short9", notes="好看", rating=9),
+        make_row(id="long7", notes="這部電影很長很長的心得內容", rating=7),
+    ]
+    result = rs.pick_reflection(rows)
+    assert result["count"] == 2
+    assert result["candidates"][0]["id"] == "short9"
+
+
+def test_reflection_unrated_picks_longest():
+    rows = [make_row(id="a", notes="短", rating=0), make_row(id="b", notes="比較長的心得", rating=0)]
+    assert rs.pick_reflection(rows)["candidates"][0]["id"] == "b"
+
+
+def test_reflection_text_truncated_to_forty_chars_with_ellipsis():
+    result = rs.pick_reflection([make_row(notes="字" * 60)])
+    assert result["candidates"][0]["text"] == "字" * 40 + "…"
+
+
+def test_reflection_short_text_unchanged_and_candidates_capped_at_ten():
+    rows = [make_row(id=str(i), notes=f"心得{i}") for i in range(12)]
+    result = rs.pick_reflection(rows)
+    assert result["count"] == 12
+    assert len(result["candidates"]) == 10
+    assert result["candidates"][0]["text"].startswith("心得")
