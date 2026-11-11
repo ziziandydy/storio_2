@@ -15,6 +15,7 @@ from app.services.recap_backfill import (
     DEFAULT_CONCURRENCY,
     backfill_rows,
     extract_metadata,
+    season_runtime_totals,
 )
 from app.services.recap_titles import select_title
 from app.services.search_service import SearchService
@@ -93,7 +94,21 @@ class RecapService:
                 details = await SearchService.get_item_details(
                     client, row["media_type"], row["external_id"], METADATA_LANGUAGE
                 )
-                return extract_metadata(details, row) if details else None
+                if not details:
+                    return None
+                result = extract_metadata(details, row)
+                if row["media_type"] == "tv" and row.get("seasons"):
+                    # 影集依「所選各季」的實際集數與片長算，不用整部影集的單集片長
+                    payloads = await asyncio.gather(*[
+                        SearchService.get_tv_season(client, row["external_id"], n)
+                        for n in row["seasons"]
+                    ])
+                    totals = season_runtime_totals(list(payloads))
+                    if totals:
+                        episodes, minutes = totals
+                        result["episode_total"] = episodes
+                        result["runtime_minutes"] = max(1, round(minutes / episodes))  # 每集平均，使 集數×片長 = 各季加總
+                return result
 
             return await backfill_rows(rows, default_fetch, save, DEFAULT_CONCURRENCY, budget_seconds)
 
