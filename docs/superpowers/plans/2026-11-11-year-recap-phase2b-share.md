@@ -99,7 +99,7 @@
 
 ### Task 4: 事件 `recap_opened`、`recap_shared`（含年份與場景數）（3.4）
 
-**Files:** Create `server/migrations/010_recap_events.sql`；Modify `server/app/schemas/event.py`、`server/app/services/event_service.py`、`server/app/api/v1/endpoints/events.py`、`client/src/lib/analytics.ts`；Test `server/tests/test_events_api.py`、`client/src/lib/__tests__/analytics.test.ts`
+**Files:** （`server/migrations/010_recap_events.sql` 已於 2026-11-11 提前建立並交給 Tu 執行，本任務不重做，只在 Step 3 對照它實作後端與前端）Modify `server/app/schemas/event.py`、`server/app/services/event_service.py`、`server/app/api/v1/endpoints/events.py`、`client/src/lib/analytics.ts`；Test `server/tests/test_events_api.py`、`client/src/lib/__tests__/analytics.test.ts`
 
 **Interfaces:**
 - Produces（migration 010，冪等，先 dev 再 prod，由 Tu 執行）：`engagement_events` 新增 `year smallint null`、`scene_count smallint null`（`year` 限 1970–2100、`scene_count` 限 1–30，皆可為 null）；放寬 `event` 的 CHECK（約束名 `engagement_events_event_check`：`drop constraint if exists` 後重建，清單含原 6 個再加 `'recap_opened'`、`'recap_shared'`）；新增 CHECK：recap 事件必須有 `year`、`recap_shared` 必須有 `scene_count`；**去重索引改版**：先 `create unique index if not exists engagement_events_dedupe_v2 on public.engagement_events (coalesce(user_id, visitor_id), event, platform, day, coalesce(year, 0), coalesce(scene_count, 0))`，再 `drop index if exists engagement_events_dedupe`（既有資料 `year`／`scene_count` 皆 null，不會衝突）。報表 view（`ops.v_engagement_daily`、`v_engagement_rate_weekly`）不列舉事件名，會自動多出這兩個事件；Looker 若有固定事件清單需 Tu 手動加。
