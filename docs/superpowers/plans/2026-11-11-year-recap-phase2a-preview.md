@@ -29,7 +29,8 @@
 2. **關閉狀態以年份記**：關閉 2026 不影響 2027；localStorage 拋例外時不報錯且每次顯示（Task 3、10）。
 3. **場景為 null 一律跳過**：只有 1 筆心得、無書、無評分、只有 1 個月有收藏、少於 5 部有年份等組合，預覽頁不得出現空白場景或 `undefined`（Task 7–9、11 測試）。
 4. **Profile 不足門檻**：當年 0／1／2 部各顯示正確的「再收藏 N 部」；有往年達標時仍可點入；`/recap/years` 失敗時不崩潰（Task 12）。
-5. **資料載入中／失敗／404／403**：預覽頁各有明確狀態，不得停在無限轉圈；`metadata_pending > 0` 只自動重取一次（Task 5、11）。
+5. **稱號決定性與區分度**：同輸入同稱號、前兩名不分先後、第二名只有 1 部時不亂混搭、類別資料不足走保底（Task 2.5）。
+6. **資料載入中／失敗／404／403**：預覽頁各有明確狀態，不得停在無限轉圈；`metadata_pending > 0` 只自動重取一次（Task 5、11）。
 
 ---
 
@@ -76,6 +77,62 @@
 - [ ] **Step 1: 寫失敗測試**：當年 1 筆 → `current == {"year": Y, "count": 1}` 且 `years` 不含 Y；當年 0 筆 → `count == 0`；當年 5 筆 → 同時出現在 `years`；endpoint 回應含 `current`；舊欄位 `threshold`、`years` 不變。
 - [ ] **Step 2–4:** 紅 → 實作 → 綠，後端全套。
 - [ ] **Step 5: Commit** — `feat(recap): 年份清單回報當年部數`
+
+### Task 2.5: 後端補強——稱號改版（前兩名類別混搭）
+
+**問題（Tu 回饋 2026-11-11）：** 現行 12 個稱號只看第一名類別，鑑別度不足；科幻與奇幻應分開、動畫要依其他類別細分、不要「童心未泯」；稱號可以更多，要有混搭。
+
+**Files:** Modify `server/app/services/recap_titles.py`；Test `server/tests/test_recap_titles.py`（整檔改寫）
+
+**Interfaces:**
+- Produces：
+  - `GENRE_FAMILIES: Dict[str, Tuple[str, ...]]`——類別「家族」→ 正規式（對小寫化後的類別名稱 `re.search`），見下表。
+  - `genre_families(genres: List[str]) -> Set[str]`：一部作品的所有類別對應到的家族集合（一個類別可屬多個家族，例如 TMDB 影集的 `Sci-Fi & Fantasy` 同時屬 `scifi` 與 `fantasy`、`Action & Adventure` 同時屬 `action` 與 `adventure`）。
+  - `ranked_families(rows: List[dict]) -> List[Tuple[str, int]]`：每部作品對每個所屬家族各計 1；依「數量多 → 家族優先序（見下）」排序（決定性）。
+  - `TITLES`、`SINGLE_TITLES: Dict[str, str]`（家族 → 稱號 id）、`PAIR_TITLES: Dict[FrozenSet[str], str]`（兩個家族 → 稱號 id，**不分先後**）。
+  - `select_title(rows, year) -> Optional[dict]`（簽名不變，回 `{"id","zh","en"}`）。
+- **選取演算法（依序，第一個命中者勝）：**
+  1. 作品數 < 5 → `None`。
+  2. 至少 3 部作品有類別資料時才看類別：`ranked = ranked_families(rows)`；`top1` 為第一名；`second` 為第二名且**數量 ≥ 2** 才採用。若有 `second` 且 `{top1, second}` 在 `PAIR_TITLES` → 回該混搭稱號；否則回 `SINGLE_TITLES[top1]`。
+  3. 類別資料不足或沒有任何類別對應到家族：作品平均發行年份比當年早 ≥ 20 年（`story_age`）→ `old_soul`；否則數量最多的媒體類型（同數量時 movie > tv > book）→ `cinephile`／`series_voyager`／`bookworm`；其餘 → `story_keeper`。
+- **家族優先序（同數量時，越專門越優先，避免被 Action／Drama 這類泛類別吃掉；我的決定）：** `horror, scifi, fantasy, animation, mystery, crime, thriller, war, western, documentary, history, music, romance, comedy, family, selfhelp, business, literary, drama, action, adventure`。
+
+**家族對照（正規式；`family` 與 `kids` 用整串比對，避免誤中書類別 "Family Life"／"Family & Relationships"）：**
+
+| 家族 | 正規式 | 家族 | 正規式 |
+|---|---|---|---|
+| action | `\baction` | mystery | `\bmystery` |
+| adventure | `\badventure` | romance | `\bromance` |
+| animation | `\banimation` | scifi | `science fiction\|sci-fi\|\bdystopian` |
+| comedy | `\bcomedy` | thriller | `\bthriller` |
+| crime | `\bcrime` | war | `^war\b` |
+| documentary | `\bdocumentary` | western | `\bwestern` |
+| drama | `\bdrama` | selfhelp | `self-help\|inspiration\|personal growth\|motivational\|personal success` |
+| family | `^(family\|kids)$` | business | `\bbusiness\|\bfinance\|\bmoney\|\beconomics\|\binvesting` |
+| fantasy | `\bfantasy` | literary | `^classics$\|\bliterary\|\bliterature\|ancient & classical` |
+| history | `\bhistory` | music | `^music` |
+| horror | `\bhorror` | | |
+
+**單一家族稱號（21）：** action 熱血先鋒 / The Adrenaline Chaser（`adrenaline_chaser`）；adventure 冒險探路人 / The Pathfinder（`pathfinder`）；animation 繪夢旅人 / The Dream Painter（`dream_painter`）；comedy 快樂製造機 / The Joy Maker（`joy_maker`）；crime 罪案觀察家 / The Crime Watcher（`crime_watcher`）；documentary 真實探索者 / The Truth Seeker（`truth_seeker`）；drama 情感收藏家 / The Heart Collector（`heart_collector`）；family 溫暖守護者 / The Warm Hearth（`warm_hearth`）；fantasy 魔法旅人 / The Spellbound Traveler（`spellbound_traveler`）；history 時光考古家 / The Time Archaeologist（`time_archaeologist`）；horror 午夜漫遊者 / The Midnight Wanderer（`midnight_wanderer`）；music 旋律收藏家 / The Melody Keeper（`melody_keeper`）；mystery 謎題解碼員 / The Puzzle Solver（`puzzle_solver`）；romance 浪漫派 / The Romantic（`romantic`）；scifi 星際旅人 / The Star Voyager（`star_voyager`）；thriller 心跳加速者 / The Edge-Sitter（`edge_sitter`）；war 戰場見證者 / The War Witness（`war_witness`）；western 荒野浪人 / The Frontier Drifter（`frontier_drifter`）；selfhelp 自我成長實踐家 / The Self-Builder（`self_builder`）；business 財富思考家 / The Wealth Thinker（`wealth_thinker`）；literary 文學靈魂 / The Literary Soul（`literary_soul`）。
+
+**混搭稱號（33，兩家族不分先後）：** scifi+fantasy 跨次元旅人 / The Dimension Hopper（`dimension_hopper`）；scifi+action 星際戰士 / The Space Warrior（`space_warrior`）；scifi+thriller 反烏托邦觀察員 / The Dystopia Watcher（`dystopia_watcher`）；scifi+drama 宇宙思想家 / The Cosmic Thinker（`cosmic_thinker`）；scifi+animation 銀河動畫迷 / The Galactic Animator（`galactic_animator`）；scifi+adventure 星海探險家 / The Star-Sea Explorer（`star_sea_explorer`）；fantasy+adventure 史詩冒險家 / The Epic Adventurer（`epic_adventurer`）；fantasy+animation 魔法繪夢者 / The Storybook Wizard（`storybook_wizard`）；fantasy+romance 童話信徒 / The Fairytale Believer（`fairytale_believer`）；fantasy+drama 傳說吟遊者 / The Legend Bard（`legend_bard`）；animation+comedy 歡樂動畫迷 / The Cartoon Jester（`cartoon_jester`）；animation+action 熱血動漫魂 / The Hero at Heart（`hero_at_heart`）；animation+family 闔家動畫夜 / The Movie-Night Regular（`movie_night_regular`）；animation+adventure 夢想冒險團 / The Dream Chaser（`dream_chaser`）；animation+drama 治癒系動畫迷 / The Gentle Animator（`gentle_animator`）；horror+thriller 午夜驚魂客 / The Nightmare Seeker（`nightmare_seeker`）；horror+mystery 暗夜解謎人 / The Dark Sleuth（`dark_sleuth`）；horror+comedy 笑著尖叫的人 / The Scream-Laugher（`scream_laugher`）；crime+mystery 偵探筆記本 / The Detective's Notebook（`detective_notebook`）；crime+thriller 暗巷追兇者 / The Alley Tracker（`alley_tracker`）；crime+drama 黑色故事家 / The Noir Storyteller（`noir_storyteller`）；action+thriller 腎上腺素飆升者 / The Edge-of-Seat Runner（`edge_runner`）；action+comedy 爆笑動作迷 / The Action Jester（`action_jester`）；action+adventure 無畏冒險者 / The Fearless（`fearless`）；drama+romance 愛情故事收藏家 / The Love-Story Keeper（`love_story_keeper`）；drama+history 歲月說書人 / The Chronicler（`chronicler`）；drama+war 烽火見證人 / The Wartime Witness（`wartime_witness`）；comedy+romance 甜蜜喜劇迷 / The Rom-Com Devotee（`romcom_devotee`）；comedy+family 歡樂一家人 / The Family Laugher（`family_laugher`）；documentary+history 歷史研究員 / The Archivist（`archivist`）；mystery+thriller 燒腦懸疑迷 / The Brain-Teaser（`brain_teaser`）；literary+history 古今讀書人 / The Reader of Ages（`reader_of_ages`）；selfhelp+business 人生成長投資家 / The Growth Investor（`growth_investor`）。
+
+**保底稱號（5，沿用）：** `old_soul` 老靈魂 / The Old Soul、`bookworm` 書海漫遊者 / The Bookworm、`series_voyager` 追劇旅人 / The Series Voyager、`cinephile` 銀幕常客 / The Cinephile、`story_keeper` 故事守護者 / The Story Keeper。移除：`star_voyager` 以外的舊科幻／奇幻合併規則、`forever_young`（童心未泯，Tu 不喜歡）、`explorer`（改為 `truth_seeker`）。全部文案為草案，**交 Tu 審閱**。
+
+- [ ] **Step 1: 寫失敗測試**（以 `rows_of(n, genres=…)` 工廠建 5 部以上的作品）：
+  - 單一家族：全 `["Science Fiction"]` → `star_voyager`；全 `["Fantasy"]` → `spellbound_traveler`（科幻與奇幻分開）；`["Animation"]` → `dream_painter`；全 `["Horror"]` 與 `["HORROR"]` 結果相同。
+  - 混搭：影集類別 `["Sci-Fi & Fantasy"]` 的作品 → `dimension_hopper`（一個類別同時算 scifi 與 fantasy）；`["Action & Adventure"]` → `fearless`；3 部 `["Animation","Comedy"]`＋2 部 `["Animation","Action"]` → 第一 animation、第二 comedy → `cartoon_jester`；前兩名為 fantasy、scifi 與 scifi、fantasy 結果相同（不分先後）。
+  - 第二名數量只有 1 → 退回單一稱號（例如 4 部 horror＋1 部 comedy → `midnight_wanderer`，不是 `scream_laugher`）。
+  - 同數量決勝：scifi 與 drama 各 3 部 → 第一名為 scifi（優先序）；結果穩定（同輸入跑兩次相同）。
+  - 書類別：`["Mystery & Detective"]` ×5 且 media_type book → `puzzle_solver`；`["Family Life"]` 不屬 family 家族 → 沒有任何家族 → 退回 `bookworm`；`["Personal Finance"]` ×3＋`["Inspiration & Personal Growth"]` ×2 → `growth_investor`（business＋selfhelp）。
+  - 類別資料不足：只有 2 部有類別 → 走保底（`old_soul`／媒體類型）；4 部作品 → `None`；有類別但無一對應家族（例如 `["Reality"]`）→ 保底。
+  - 資料完整性：`TITLES` 每個值 `zh`、`en` 非空；`id` 不重複、`zh` 名稱不重複；`SINGLE_TITLES`／`PAIR_TITLES` 引用的 id 都在 `TITLES`；`len(TITLES) == len(SINGLE_TITLES) + len(PAIR_TITLES) + 5`；`PAIR_TITLES` 的每個鍵都是 2 個不同家族且都在 `GENRE_FAMILIES`。
+  - 區分度：用 10 組不同的前兩名類別組合，至少產出 8 個不同稱號。
+- [ ] **Step 2: 跑測試確認失敗。**
+- [ ] **Step 3: 實作**（資料表用資料結構定義，不寫成一長串 if；`select_title` 簽名與回傳格式不變，所以 `RecapService`、API、前端不需改）。
+- [ ] **Step 4: 跑測試確認通過**，後端全套通過。
+- [ ] **Step 5: Commit** — `feat(recap): 稱號改版——前兩名類別混搭、科幻奇幻分開、動畫細分`
+- [ ] **Step 6: 用 dev 帳號驗證分佈**（唯讀）：對 dev 每個有 ≥ 5 部收藏的帳號以真實資料計算稱號，列出分佈（只印稱號 id 與次數，不印個資），確認不是集中在少數幾個；結果回報 Tu。
 
 ### Task 3: 前端型別與純函式（窗口、場景清單、關閉狀態、格式）
 

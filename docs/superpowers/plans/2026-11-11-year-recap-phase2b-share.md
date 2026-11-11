@@ -18,8 +18,8 @@
 - **不得使用 `<a download>` 於原生 App**（WKWebView 無效）；網頁桌面可下載；任何路徑**不得顯示假成功**（只有系統分享面板實際回報「儲存到相簿」才說「已儲存到相簿」，其餘情況用中性文案或不宣稱）。
 - 階段 2 的分享面板**不得顯示影片選項**。
 - 心得內容不得在用戶不知情下送出：心得場景在面板中以實際輸出圖預覽；取消勾選必須排除；換句後輸出同步更新。
-- 事件走既有 `engagement_events`：去重（主體＋事件＋平台＋UTC 日）、平台由後端依 Origin 判斷；`recap_*` 事件需登入（訪客只准 `open`，Recap 本來就需 token）。
-- 下載線索常數集中在 `client/src/lib/recap/download.ts`（`DOWNLOAD_URL`、`STORE_LABELS`），預設 `DOWNLOAD_URL = 'https://apps.apple.com/app/id6761919955'`、`STORE_LABELS = ['App Store']`（官網 `index.html` 目前只有 App Store 連結，Google Play 尚未上架）；**待 Tu 確認**要 QR 指向 App Store、官網落地頁或雙平台導流頁，以及 Google Play 上架後是否加入。
+- 事件走既有 `engagement_events`，**並記錄年份與場景數**（Tu 要求）：新增 `year`、`scene_count` 欄位，去重鍵加入這兩者（同一用戶同一天開啟不同年份的 Recap、或以不同張數分享，各記一筆；完全相同的重複事件才去重）；平台由後端依 Origin 判斷；`recap_*` 事件需登入（訪客只准 `open`，Recap 本來就需 token）。
+- 下載線索常數集中在 `client/src/lib/recap/download.ts`（`DOWNLOAD_URL`、`STORE_LABELS`）。**Tu 已決定：QR 先指向 App Store**（`DOWNLOAD_URL = 'https://apps.apple.com/app/id6761919955'`、`STORE_LABELS = ['App Store']`；官網 `index.html` 目前只有 App Store 連結，Google Play 尚未上架）；**長期目標是雙平台導流頁**（依裝置導向 App Store／Google Play），之後只需改 `DOWNLOAD_URL` 並重新產生 QR PNG，此事項記入 `docs/BACKLOG.md`（Task 1 最後一步）。
 - 前端 push 前必跑 `cd client && npx next lint && npx tsc --noEmit && npm test`；後端 pytest 用 dummy env。
 - migration 010 由 Tu 在 Supabase dev 再 prod 執行，Claude 不執行（只做唯讀驗證）。
 - 本計畫在分支 `worktree-year-recap-phase2`（與 2A 同一分支，2A 先完成）。
@@ -60,6 +60,7 @@
 - [ ] **Step 3: 實作**元件、常數與 QR 檔（執行上述指令；用瀏覽器或 `file` 確認 PNG 為 512×512，並以手機相機掃描確認指向 `DOWNLOAD_URL`——Tu 可在 Task 7 驗證）。
 - [ ] **Step 4: 跑測試確認通過。**
 - [ ] **Step 5: Commit** — `feat(recap): 結尾場景與下載 QR`
+- [ ] **Step 6: 記入 BACKLOG**：在 `docs/BACKLOG.md` 新增一項「雙平台導流頁（Recap 結尾 QR 的長期目標）：依裝置導向 App Store／Google Play；上線後更新 `DOWNLOAD_URL` 並重產 `download-qr.png`」，優先級 P3；Commit — `docs: BACKLOG 加入雙平台導流頁`。
 
 ### Task 2: 渲染路由支援 `recap-scene`（3.1 後半）
 
@@ -96,20 +97,21 @@
 - [ ] **Step 4: 跑測試確認通過。**
 - [ ] **Step 5: Commit** — `feat(recap): 儲存全部與分享單張的原生／網頁編排`
 
-### Task 4: 事件 `recap_opened`、`recap_shared`（3.4）
+### Task 4: 事件 `recap_opened`、`recap_shared`（含年份與場景數）（3.4）
 
-**Files:** Create `server/migrations/010_recap_events.sql`；Modify `server/app/schemas/event.py`、`client/src/lib/analytics.ts`、`openspec/changes/year-recap/specs/recap-share/spec.md`；Test `server/tests/test_events_api.py`、`client/src/lib/__tests__/analytics.test.ts`
+**Files:** Create `server/migrations/010_recap_events.sql`；Modify `server/app/schemas/event.py`、`server/app/services/event_service.py`、`server/app/api/v1/endpoints/events.py`、`client/src/lib/analytics.ts`；Test `server/tests/test_events_api.py`、`client/src/lib/__tests__/analytics.test.ts`
 
 **Interfaces:**
-- Produces：`ApiEvent` 與 `ClientEvent` 新增 `'recap_opened' | 'recap_shared'`；migration 010 放寬 `engagement_events.event` 的 CHECK（約束名 `engagement_events_event_check`，先 `drop constraint if exists` 再 `add constraint`，清單含原 6 個加 2 個，冪等）。報表 view（`ops.v_engagement_daily`、`v_engagement_rate_weekly`）不列舉事件名，會自動多出這兩個事件；Looker 若有固定事件清單需 Tu 手動加。
-- **Ruling（我的決定，需寫入 spec）**：既有事件表沒有承載欄位、且每日去重，無法記錄「年份」「場景數」；spec 改為「記錄是否開啟／分享（用戶數）」，年份與場景數不記錄（若日後需要，另開 migration 加 `meta jsonb`）。
+- Produces（migration 010，冪等，先 dev 再 prod，由 Tu 執行）：`engagement_events` 新增 `year smallint null`、`scene_count smallint null`（`year` 限 1970–2100、`scene_count` 限 1–30，皆可為 null）；放寬 `event` 的 CHECK（約束名 `engagement_events_event_check`：`drop constraint if exists` 後重建，清單含原 6 個再加 `'recap_opened'`、`'recap_shared'`）；新增 CHECK：recap 事件必須有 `year`、`recap_shared` 必須有 `scene_count`；**去重索引改版**：先 `create unique index if not exists engagement_events_dedupe_v2 on public.engagement_events (coalesce(user_id, visitor_id), event, platform, day, coalesce(year, 0), coalesce(scene_count, 0))`，再 `drop index if exists engagement_events_dedupe`（既有資料 `year`／`scene_count` 皆 null，不會衝突）。報表 view（`ops.v_engagement_daily`、`v_engagement_rate_weekly`）不列舉事件名，會自動多出這兩個事件；Looker 若有固定事件清單需 Tu 手動加。
+- Produces（後端）：`ApiEvent` 新增兩個事件；`EventCreate` 新增 `year: Optional[int] = Field(None, ge=1970, le=2100)`、`scene_count: Optional[int] = Field(None, ge=1, le=15)`；`POST /api/v1/events`：`recap_opened`／`recap_shared` 缺 `year` → 422、`recap_shared` 缺 `scene_count` → 422；其他事件即使帶了這兩個欄位也一律存 null；`EventService.record(..., year=None, scene_count=None)` 把兩者寫進列。
+- Produces（前端）：`ClientEvent` 新增兩個事件；`track(event: ClientEvent, meta?: {year?: number; sceneCount?: number}): void`——body 帶 `year`、`scene_count`（有值才帶）；本機去重 key 納入年份與場景數（`storio_evt_<event>_<subject>_<year>_<count>`），同日同年份同張數不重送。
 
-- [ ] **Step 1: 寫失敗測試**：後端——登入用戶 POST `{"event":"recap_opened"}` → 204 且 `record` 以該事件呼叫；`recap_shared` 同；未登入送 `recap_opened` → 401（訪客只准 `open`）；未知事件仍 422；`add_collection` 仍 422。前端——`track('recap_opened')` 送出 `{event: 'recap_opened'}` 並帶 Authorization；同日同事件第二次不再送（去重 key 沿用）；無 token 時不送（非 `open`）。
+- [ ] **Step 1: 寫失敗測試**：後端——登入用戶 POST `{"event":"recap_opened","year":2026}` → 204 且 `record` 收到 `year=2026`；`recap_shared` 帶 `year` 與 `scene_count: 12` → 204 且兩者都被記錄；`recap_opened` 缺 `year` → 422；`recap_shared` 缺 `scene_count` → 422；`year: 1900`、`scene_count: 0`、`scene_count: 16` → 422；未登入送 `recap_opened` → 401；`open` 事件帶了 `year` → 204 但記錄的 `year` 為 None；未知事件、`add_collection` 仍 422。前端——`track('recap_opened', {year: 2026})` 送出 `{event:'recap_opened', year: 2026}` 並帶 Authorization；`track('recap_shared', {year: 2026, sceneCount: 12})` 送出 `scene_count: 12`；同日同年份同張數第二次不再送；同日 `sceneCount` 改成 5 會再送；同日 `year` 改 2025 會再送；無 token 不送；既有事件（`share` 等）行為與 body 不變。
 - [ ] **Step 2: 跑測試確認失敗。**
-- [ ] **Step 3: 實作** migration（檔頭說明背景、先 dev 再 prod、冪等、附驗證查詢：`select pg_get_constraintdef(oid) from pg_constraint where conname = 'engagement_events_event_check';`）、後端 Literal、前端型別；改 spec 文字（兩個 Scenario 與 Requirement 去掉年份與場景數）。實作前用 dev 的唯讀 MCP 確認約束名稱確實是 `engagement_events_event_check`；不一致就以實際名稱為準並記錄。
-- [ ] **Step 4: 跑測試確認通過**（後端全套、前端 `analytics.test.ts`）。
-- [ ] **Step 5: Commit** — `feat(recap): 新增 recap_opened／recap_shared 事件與 migration 010`
-- [ ] **Step 6（Tu）:** 在 Supabase dev 執行 `010_recap_events.sql` 並跑驗證查詢；通過後 prod 再執行。**未執行前不得讓前端送這兩個事件到對應環境**（會被 CHECK 擋成 500；`track` 會吞錯，但請先跑 migration 再測）。
+- [ ] **Step 3: 實作** migration（檔頭說明背景、先 dev 再 prod、冪等、驗證查詢：`select pg_get_constraintdef(oid) from pg_constraint where conname = 'engagement_events_event_check';` 與 `select column_name from information_schema.columns where table_name = 'engagement_events' and column_name in ('year','scene_count');`）、後端、前端。實作前用 dev 的唯讀 MCP 確認約束與索引名稱確實是 `engagement_events_event_check`、`engagement_events_dedupe`；不一致就以實際名稱為準並記錄。
+- [ ] **Step 4: 跑測試確認通過**（後端全套、前端 `analytics.test.ts` 與 `npm test` 全套）。
+- [ ] **Step 5: Commit** — `feat(recap): 新增 recap_opened／recap_shared 事件（含年份與場景數）與 migration 010`
+- [ ] **Step 6（Tu）:** 在 Supabase dev 執行 `010_recap_events.sql` 並跑驗證查詢；通過後 prod 再執行。**未執行前不要讓前端送這兩個事件到對應環境**（會被約束擋成 500；`track` 會吞錯，但請先跑 migration 再測）。
 
 ### Task 5: 分享面板（3.2、3.5）
 
@@ -123,10 +125,10 @@
   - 渲染：`allTemplates` 為目前勾選的場景鍵；`settings = recapRenderSettings({aspectRatio, locale, reflectionIndex})`；勾選一個尚未渲染的場景時 `prioritize(key)`；比例、語系或 `reflectionIndex` 改變 → 快取自動失效並重排（沿用 queue 的 settings hash 行為）。
   - 進度「已產生 n/m」（m＝勾選數）。
   - 主按鈕：原生「儲存全部到相簿」、網頁「下載全部」；只在所有**勾選**場景都已渲染時可按；每張縮圖旁「分享這一張」（原生）。
-  - 結果提示：依 `ShareOutcome`——`saved` 才顯示「已儲存到相簿」；`shared` 顯示中性「已完成」；`cancelled` 不顯示成功；`error` 顯示錯誤與重試。`saved`／`shared` 時 `track('recap_shared')`。
+  - 結果提示：依 `ShareOutcome`——`saved` 才顯示「已儲存到相簿」；`shared` 顯示中性「已完成」；`cancelled` 不顯示成功；`error` 顯示錯誤與重試。`saved`／`shared` 時 `track('recap_shared', {year, sceneCount: 勾選張數})`。
   - 關閉時 `cleanup()`。勾選為 0 時主按鈕停用。
 
-- [ ] **Step 1: 寫失敗測試**（mock `useProgressiveRenderQueue`、`shareImages`、`analytics`、`getRenderServiceHealth`）：預設全選且數量等於 `buildScenes(forShare:true)`；不含「繼續收藏」；沒有影片相關文字；取消心得 → 傳給 `saveAllImages` 的 images 不含心得、`allTemplates` 不含 `reflection`（**即使 `getCacheEntry('reflection')` 仍回傳舊快取**，Review Focus 2）；切 4:5 後 settings 的 `aspectRatio` 為 `'4:5'`；`reflectionIndex` 由 0 變 1 → settings 的 `recapReflectionIndex` 變為 1；有勾選場景尚未渲染 → 主按鈕停用；`saveAllImages` 回 `cancelled` → 不顯示「已儲存」且不呼叫 `track('recap_shared')`；回 `saved` → 顯示「已儲存到相簿」並 `track('recap_shared')` 一次；回 `shared` → 中性文案；回 `error` → 錯誤與可重試；單張分享呼叫 `shareOneImage` 且只傳該場景；關閉時呼叫 `cleanup`；服務逾時顯示重試而非無限轉圈。
+- [ ] **Step 1: 寫失敗測試**（mock `useProgressiveRenderQueue`、`shareImages`、`analytics`、`getRenderServiceHealth`）：預設全選且數量等於 `buildScenes(forShare:true)`；不含「繼續收藏」；沒有影片相關文字；取消心得 → 傳給 `saveAllImages` 的 images 不含心得、`allTemplates` 不含 `reflection`（**即使 `getCacheEntry('reflection')` 仍回傳舊快取**，Review Focus 2）；切 4:5 後 settings 的 `aspectRatio` 為 `'4:5'`；`reflectionIndex` 由 0 變 1 → settings 的 `recapReflectionIndex` 變為 1；有勾選場景尚未渲染 → 主按鈕停用；`saveAllImages` 回 `cancelled` → 不顯示「已儲存」且不呼叫 `track('recap_shared', {year, sceneCount: 勾選張數})`；回 `saved` → 顯示「已儲存到相簿」並 `track('recap_shared', {year, sceneCount: 勾選張數})` 一次；回 `shared` → 中性文案；回 `error` → 錯誤與可重試；單張分享呼叫 `shareOneImage` 且只傳該場景；關閉時呼叫 `cleanup`；服務逾時顯示重試而非無限轉圈。
 - [ ] **Step 2: 跑測試確認失敗。**
 - [ ] **Step 3: 實作**（版面參考 `MonthlyRecapModal` 的底部抽屜與冷啟動 UI，但場景清單為縮圖格；文案寫入 `locales.ts` 兩語系並加入 `recapLocales` 鍵集合測試）。
 - [ ] **Step 4: 跑測試確認通過**，`npm test` 全套。
@@ -138,9 +140,9 @@
 
 **Interfaces:**
 - Consumes：2A 預覽頁的 `reflectionIndex` state 與 `recap-footer-slot`、`RecapShareSheet`、`track`。
-- Produces：`ready` 時頁尾顯示「分享」按鈕（`copy.share`）開啟 `RecapShareSheet`；預覽頁**每次進入且資料 `ready` 時只呼叫一次** `track('recap_opened')`（重取 `metadata_pending` 不重複；`not_enough`／`error` 不呼叫）；`reflectionIndex` 與 `locale` 傳入面板。
+- Produces：`ready` 時頁尾顯示「分享」按鈕（`copy.share`）開啟 `RecapShareSheet`；預覽頁**每次進入且資料 `ready` 時只呼叫一次** `track('recap_opened', {year})`（重取 `metadata_pending` 不重複；`not_enough`／`error` 不呼叫）；`reflectionIndex` 與 `locale` 傳入面板。
 
-- [ ] **Step 1: 寫失敗測試**：`ready` → 呼叫 `track('recap_opened')` 恰一次，即使 `metadata_pending` 觸發重取導致 `data` 換新物件；`not_enough`、`error`、`loading` 不呼叫；按「分享」→ 面板開啟並收到目前的 `reflectionIndex`；在預覽換句（索引 0→1）後開面板 → 收到 1；`forbidden` 不顯示分享按鈕。
+- [ ] **Step 1: 寫失敗測試**：`ready` → 呼叫 `track('recap_opened', {year})` 恰一次，即使 `metadata_pending` 觸發重取導致 `data` 換新物件；`not_enough`、`error`、`loading` 不呼叫；按「分享」→ 面板開啟並收到目前的 `reflectionIndex`；在預覽換句（索引 0→1）後開面板 → 收到 1；`forbidden` 不顯示分享按鈕。
 - [ ] **Step 2–4:** 紅 → 實作 → 綠。
 - [ ] **Step 5: Commit** — `feat(recap): 預覽頁接上分享面板與 recap_opened 事件`
 
