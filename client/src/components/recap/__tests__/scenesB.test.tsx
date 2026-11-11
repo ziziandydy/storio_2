@@ -41,7 +41,7 @@ describe('StoryAgeScene', () => {
     expect(text(container)).toContain('你的故事年齡');
     expect(text(container)).toContain('17 歲');
     expect(text(container)).toContain('作品發行年份的中位數：2009');
-    expect(text(container)).toContain('最愛的年代：90 年代');
+    expect(text(container)).toContain('最愛的年代：1990 年代');
   });
 
   it('英文版年代為 1990s', () => {

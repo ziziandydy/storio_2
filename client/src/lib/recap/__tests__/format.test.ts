@@ -56,9 +56,9 @@ describe('formatDuration', () => {
 
 describe('decadeLabel', () => {
   it('zh-TW：1990 → 90 年代、2010 → 10 年代、2000 → 00 年代', () => {
-    expect(decadeLabel(1990, 'zh-TW')).toBe('90 年代');
-    expect(decadeLabel(2010, 'zh-TW')).toBe('10 年代');
-    expect(decadeLabel(2000, 'zh-TW')).toBe('00 年代');
+    expect(decadeLabel(1990, 'zh-TW')).toBe('1990 年代');
+    expect(decadeLabel(2010, 'zh-TW')).toBe('2010 年代');
+    expect(decadeLabel(2000, 'zh-TW')).toBe('2000 年代');
   });
 
   it('en-US：2010 → 2010s、1990 → 1990s', () => {

@@ -38,7 +38,7 @@ export function CountText({ template, value, animate }: { template: string; valu
 
 export function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-[11px] font-black uppercase tracking-[0.35em]" style={{ color: GOLD }}>
+    <div className="font-black" style={{ color: GOLD, fontSize: '22px', lineHeight: 1.3, letterSpacing: '0.12em' }}>
       {children}
     </div>
   );

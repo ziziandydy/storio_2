@@ -26,8 +26,8 @@ export function durationText(copy: DurationCopy, minutes: number): string {
   return fill(template, { n: value });
 }
 
-/** 年代標籤：zh-TW「90 年代」、en-US「1990s」。 */
+/** 年代標籤：zh-TW「1990 年代」、en-US「1990s」（完整年份，避免「00 年代」「10 年代」含糊）。 */
 export function decadeLabel(decade: number, locale: RecapLocale): string {
-  if (locale === 'zh-TW') return `${String(decade % 100).padStart(2, '0')} 年代`;
+  if (locale === 'zh-TW') return `${decade} 年代`;
   return `${decade}s`;
 }

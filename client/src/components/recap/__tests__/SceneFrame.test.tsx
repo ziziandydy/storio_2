@@ -17,11 +17,24 @@ describe('SceneFrame', () => {
     expect([style.width, style.height]).toEqual(['400px', '500px']);
   });
 
-  it('角落有 Storio 標誌', () => {
+  it('Storio 標誌置中在最上方（標題之上），不再擠在右上角', () => {
     render(<SceneFrame aspectRatio="9:16">x</SceneFrame>);
     const logo = screen.getByTestId('scene-logo') as HTMLImageElement;
     expect(logo.getAttribute('src')).toBe('/image/logo/logo.png');
     expect(logo.alt).toBe('Storio');
+    expect(logo.style.left).toBe('50%');
+    expect(logo.style.transform).toContain('translateX(-50%)');
+    expect(logo.style.right).toBe('');
+    expect(parseInt(logo.style.width, 10)).toBeGreaterThanOrEqual(36);
+  });
+
+  it('海報背景要清楚（不透明度 ≥ 0.75），並用文字襯底與陰影維持文字可讀', () => {
+    render(<SceneFrame aspectRatio="9:16" posters={['/image/p.png']}>x</SceneFrame>);
+    const grid = screen.getByTestId('scene-poster').parentElement as HTMLElement;
+    expect(parseFloat(grid.style.opacity)).toBeGreaterThanOrEqual(0.75);
+    expect(screen.getByTestId('scene-scrim')).toBeTruthy();
+    const content = screen.getByTestId('scene-content') as HTMLElement;
+    expect(content.style.textShadow).not.toBe('');
   });
 
   it('渲染 children', () => {

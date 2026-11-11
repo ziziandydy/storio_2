@@ -35,6 +35,14 @@ describe('OpeningScene', () => {
   });
 });
 
+describe('場景標題（Eyebrow）', () => {
+  it('字級至少 20px：「這一年，你收藏了」在手機上要看得清楚', () => {
+    render(<TotalScene {...base} data={recap.total} copy={zh} locale="zh-TW" />);
+    const title = screen.getByText('這一年，你收藏了') as HTMLElement;
+    expect(parseInt(title.style.fontSize, 10)).toBeGreaterThanOrEqual(20);
+  });
+});
+
 describe('TotalScene', () => {
   it('顯示作品總數與「至少 N 小時」', () => {
     const { container } = render(<TotalScene {...base} data={recap.total} copy={zh} locale="zh-TW" />);
