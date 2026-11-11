@@ -17,6 +17,7 @@ import MonthsActiveScene from './scenes/MonthsActiveScene';
 import TopRatedScene from './scenes/TopRatedScene';
 import FirstLastScene from './scenes/FirstLastScene';
 import ReflectionScene from './scenes/ReflectionScene';
+import ClosingScene from './scenes/ClosingScene';
 
 interface RecapSceneProps {
   sceneKey: SceneKey;
@@ -48,7 +49,7 @@ export default function RecapScene({ sceneKey, recap, copy, locale, aspectRatio,
     case 'first_last': return recap.first_last ? <FirstLastScene {...common} data={recap.first_last} /> : null;
     case 'reflection':
       return recap.reflection ? <ReflectionScene {...common} data={recap.reflection} reflectionIndex={reflectionIndex} /> : null;
-    case 'closing': return null; // 2B 實作
+    case 'closing': return <ClosingScene {...common} data={recap.closing} />;
     default: return null;
   }
 }

@@ -35,6 +35,7 @@
 | ✅ | `nixpacks.toml` 失效 → 改用 `railpack.json` | 2026-10-28 確認 Railway 改用 Railpack，`nixpacks.toml` 未被讀取；改以 `railpack.json` 的 `deploy.aptPackages: ["...", "fonts-noto-cjk"]` 安裝中文備援字型。⚠️ 必須保留 `"..."`，否則會取代 Railpack 偵測的 Chrome 系統函式庫（第一版漏掉，分享圖約 2～3 分鐘無法產生，已修） |
 | ✅ | v1.16.0 人物搜尋 4 個 Minor findings | 2026-10-28（`e1d39ad`）：#1 details 遇缺 id／name 的人物、類型改為略過該筆；#2 AI 搜尋 fallback 的人名偵測保留並補測試；#4 類型 chip 依 TMDB 電影／影集類型表對應（原本電影類型查影集永遠 0 筆，線上已驗證科幻 878 現在影集有結果）；#3 見下一列 |
 | P3 | 觀察 Google Books 配額 | 自由輸入搜尋會對 Google Books 打兩次（一般＋inauthor），用量翻倍；以目前每週約 34 位上線用戶與前端 debounce，遠低於免費額度，先不改。若 Google Cloud 配額頁接近上限，再改成只在偵測到作者名時才查 inauthor |
+| P3 | 雙平台導流頁（Recap 結尾 QR 的長期目標） | 2026-11-11 Tu 決定：年度 Recap 結尾場景的 QR 先指向 App Store（`client/src/lib/recap/download.ts` 的 `DOWNLOAD_URL`）；日後做一頁依裝置導向 App Store／Google Play 的導流頁，上線後更新 `DOWNLOAD_URL` 與 `STORE_LABELS`，並重新產生 `client/public/image/recap/download-qr.png` |
 | P3 | 觀察 keepalive 有效性 | keepalive 只讀；若收到 Supabase「即將暫停」警告信，補寫入（做法見維運手冊） |
 | P3 | 監控成本複查 | 約 2026-11-24 到 Railway Usage 頁確認監控沒有讓用量明顯增加 |
 

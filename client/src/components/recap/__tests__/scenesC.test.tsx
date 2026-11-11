@@ -131,9 +131,9 @@ describe('RecapScene 分派元件', () => {
     }
   });
 
-  it('結尾場景在 2B 實作前回傳 null', () => {
+  it('結尾場景也渲染出 scene-frame（2B）', () => {
     const { container } = render(<RecapScene {...props} sceneKey="closing" />);
-    expect(container.firstChild).toBeNull();
+    expect(container.querySelector('[data-testid="scene-frame"]')).not.toBeNull();
   });
 
   it('reflectionIndex 傳到心得場景', () => {
