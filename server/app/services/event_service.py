@@ -38,6 +38,8 @@ class EventService:
         visitor_id: Optional[UUID] = None,
         is_suspected_bot: bool = False,
         bot_reason: Optional[str] = None,
+        year: Optional[int] = None,
+        scene_count: Optional[int] = None,
     ) -> None:
         day = datetime.now(timezone.utc).date().isoformat()
         if user_id is None and self._visitor_cap_reached(day):
@@ -52,6 +54,11 @@ class EventService:
             "is_suspected_bot": is_suspected_bot,
             "bot_reason": bot_reason,
         }
+        # Recap 事件的年份與場景數：有值才送，讓後端可先於 migration 010 部署（既有事件的列不變）
+        if year is not None:
+            row["year"] = year
+        if scene_count is not None:
+            row["scene_count"] = scene_count
         self.repo.insert_event(row)
 
     def _visitor_cap_reached(self, day: str) -> bool:
