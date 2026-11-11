@@ -1,7 +1,15 @@
 ## 0. 前置
 
-- [ ] 0.1 確認 PR #2（first-collect-activation）已合併回 main，並從最新 main 開實作分支
-- [ ] 0.2 Spike：Capacitor Share 一次傳 15 張圖在 iOS 與 Android 的行為與上限；記錄結果並決定備案（分批或先存相簿）
+- [x] 0.1 確認 PR #2（first-collect-activation）已合併回 main，並從最新 main 開實作分支（PR #2、#3 已合併；v1.21.0 已送審；實作分支 `worktree-year-recap-impl`）
+- [x] 0.2 Spike：Capacitor Share 一次傳 15 張圖在 iOS 與 Android 的行為與上限；記錄結果並決定備案（分批或先存相簿）
+  - 結果（2026-11-10，iPhone XR、Capacitor Share 7.0.4，`files` 傳 Filesystem Cache 的 file URI）：
+    - 分享面板一次傳 1／5／15／30 張（最大 111MB）皆無錯誤、無崩潰；「儲存影像」全數存入相簿。
+    - 訊息 App 收到 15 張。
+    - Instagram 出現在分享面板，但只收到第 1 張。
+    - Threads、FB、X：未測（無測試條件）。Android：未測（無測試機）。
+    - 產 15 張 1080×1920 約 5–6 秒、30 張約 11 秒（canvas 加雜訊的測試圖，非真實渲染，僅供參考）。
+  - 決定（備案）：主按鈕「儲存全部到相簿」（文案提醒 Instagram 貼文一次最多 10 張，此上限未驗證）；每個場景另有「分享這一張」走既有單張分享；多張一次分享不作主流程。
+  - 待補：Android 與 Threads／FB／X 的多張行為，階段 2 前或上線後補測。
 
 ## 1. 階段 1：資料基礎（後端）
 
