@@ -45,7 +45,7 @@ export default function RecapWindowCard({ today }: { today?: Date }) {
           type="button"
           aria-label={r.dismiss}
           onClick={() => dismiss(year)}
-          className="absolute top-3 right-3 p-2 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+          className="absolute top-1 right-1 flex h-11 w-11 items-center justify-center rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-colors"
         >
           <X size={16} />
         </button>
