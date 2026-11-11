@@ -18,6 +18,7 @@ type ServiceStatus = 'idle' | 'checking' | 'cold' | 'ready' | 'timeout';
 
 const HEALTH_INTERVAL_MS = 3000;
 const HEALTH_TIMEOUT_MS = 60000;
+const MAX_HEALS = 2;
 
 interface RecapShareSheetProps {
   isOpen: boolean;
@@ -67,7 +68,10 @@ export default function RecapShareSheet({ isOpen, onClose, recap, reflectionInde
   const [status, setStatus] = useState<ServiceStatus>('idle');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<ShareOutcome | null>(null);
+  const [notice, setNotice] = useState<'refreshing' | null>(null);
   const healthTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const healCount = useRef<Record<string, number>>({});
+  const sawRendering = useRef(false);
 
   const selectedOrdered = useMemo(() => scenes.filter((k) => selected.includes(k)), [scenes, selected]);
 
@@ -77,7 +81,7 @@ export default function RecapShareSheet({ isOpen, onClose, recap, reflectionInde
   );
   const getPayload = useCallback((id: string) => buildRecapPayload(recap, id as SceneKey), [recap]);
 
-  const { getCacheEntry, prioritize, cleanup } = useProgressiveRenderQueue({
+  const { getCacheEntry, prioritize, cleanup, isRendering, queue } = useProgressiveRenderQueue({
     allTemplates: selectedOrdered,
     currentTemplate: selectedOrdered[0] ?? scenes[0],
     getPayload,
@@ -119,11 +123,34 @@ export default function RecapShareSheet({ isOpen, onClose, recap, reflectionInde
       stopHealth();
       setStatus('idle');
       setResult(null);
+      setNotice(null);
+      healCount.current = {};
+      sawRendering.current = false;
       return;
     }
     startHealth();
     return stopHealth;
   }, [isOpen, cleanup, startHealth, stopHealth]);
+
+  // 自癒：渲染中切比例等情況，舊渲染完成後會從新佇列被移除而沒人補渲染（hook 的已知缺口）。
+  // 渲染全部結束、佇列已空，但仍有勾選的場景沒有快取時，重新排入；同一場景同一組設定最多補 2 次，
+  // 避免圖片服務壞掉時無限重試。
+  useEffect(() => {
+    if (isRendering) {
+      sawRendering.current = true;
+      return;
+    }
+    if (!isOpen || status !== 'ready' || !sawRendering.current || queue.length > 0) return;
+    const settingsKey = `${aspectRatio}|${locale}|${reflectionIndex}`;
+    for (const key of selectedOrdered) {
+      if (getCacheEntry(key)) continue;
+      const id = `${settingsKey}:${key}`;
+      const used = healCount.current[id] ?? 0;
+      if (used >= MAX_HEALS) continue;
+      healCount.current[id] = used + 1;
+      prioritize(key);
+    }
+  }, [isOpen, status, isRendering, queue, selectedOrdered, aspectRatio, locale, reflectionIndex, getCacheEntry, prioritize]);
 
   if (!isOpen) return null;
 
@@ -132,6 +159,7 @@ export default function RecapShareSheet({ isOpen, onClose, recap, reflectionInde
 
   const toggle = (key: SceneKey) => {
     setResult(null);
+    setNotice(null);
     if (selected.includes(key)) {
       setSelected(selected.filter((k) => k !== key));
     } else {
@@ -141,8 +169,9 @@ export default function RecapShareSheet({ isOpen, onClose, recap, reflectionInde
   };
 
   const finish = (outcome: ShareOutcome, sceneCount: number) => {
+    setNotice(null);
     setResult(outcome);
-    if (outcome.status === 'saved' || outcome.status === 'shared') {
+    if (outcome.status === 'saved' || outcome.status === 'shared' || outcome.status === 'downloaded') {
       track('recap_shared', { year: recap.year, sceneCount });
     }
   };
@@ -152,6 +181,16 @@ export default function RecapShareSheet({ isOpen, onClose, recap, reflectionInde
       const entry = getCacheEntry(key);
       return entry ? [{ name: key, blob: entry.blob }] : [];
     });
+    // 快取有 5 分鐘 TTL：停留過久後按儲存，可能有場景的快取已過期。不可少張就送出還顯示成功。
+    if (images.length !== selectedOrdered.length) {
+      selectedOrdered.forEach((key) => {
+        if (!getCacheEntry(key)) prioritize(key);
+      });
+      setResult(null);
+      setNotice('refreshing');
+      return;
+    }
+    setNotice(null);
     setBusy(true);
     try {
       finish(await saveAllImages(images, { title: `${recap.year} Recap` }), images.length);
@@ -172,7 +211,9 @@ export default function RecapShareSheet({ isOpen, onClose, recap, reflectionInde
   };
 
   const resultText =
-    result?.status === 'saved' ? c.savedToAlbum
+    notice === 'refreshing' ? c.refreshing
+      : result?.status === 'saved' ? c.savedToAlbum
+      : result?.status === 'downloaded' ? c.downloadStarted
       : result?.status === 'shared' ? c.done
       : result?.status === 'error' ? c.failed
       : null;
@@ -248,10 +289,13 @@ export default function RecapShareSheet({ isOpen, onClose, recap, reflectionInde
                         onChange={() => toggle(key)}
                         className="absolute top-2 left-2 z-10 h-4 w-4 accent-[#c5a059]"
                       />
-                      <div className="aspect-[9/16] bg-white/5 flex items-center justify-center">
+                      <div
+                        data-testid={`scene-thumb-${key}`}
+                        className={`${aspectRatio === '9:16' ? 'aspect-[9/16]' : 'aspect-[4/5]'} bg-white/5 flex items-center justify-center`}
+                      >
                         {entry ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={entry.objectUrl} alt={label} className="w-full h-full object-cover" />
+                          <img src={entry.objectUrl} alt={label} className="w-full h-full object-contain" />
                         ) : checked ? (
                           <Loader2 className="animate-spin text-accent-gold" size={18} />
                         ) : null}

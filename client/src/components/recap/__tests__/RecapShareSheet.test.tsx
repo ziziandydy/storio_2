@@ -15,6 +15,8 @@ const m = vi.hoisted(() => ({
   cleanup: vi.fn(),
   cache: { current: {} as Record<string, { blob: Blob; objectUrl: string }> },
   optionCalls: [] as { allTemplates: string[]; settings: Record<string, unknown>; enabled: boolean }[],
+  rendering: { current: false },
+  queue: { current: [] as string[] },
 }));
 
 vi.mock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: m.isNative } }));
@@ -31,8 +33,8 @@ vi.mock('@/hooks/useProgressiveRenderQueue', () => ({
     return {
       getCacheEntry: (id: string) => m.cache.current[id] ?? null,
       prioritize: m.prioritize,
-      isRendering: false,
-      queue: [],
+      isRendering: m.rendering.current,
+      queue: m.queue.current,
       reset: vi.fn(),
       cleanup: m.cleanup,
     };
@@ -57,6 +59,8 @@ describe('RecapShareSheet', () => {
   beforeEach(() => {
     Object.values({ a: m.isNative, b: m.health, c: m.saveAll, d: m.shareOne, e: m.track, f: m.prioritize, g: m.cleanup }).forEach((f) => f.mockReset());
     m.optionCalls.length = 0;
+    m.rendering.current = false;
+    m.queue.current = [];
     m.isNative.mockReturnValue(true);
     m.health.mockResolvedValue(true);
     fillCache(allKeys);
@@ -135,6 +139,70 @@ describe('RecapShareSheet', () => {
     m.prioritize.mockClear();
     fireEvent.click(screen.getByTestId('scene-check-books')); // 再勾回來
     expect(m.prioritize).toHaveBeenCalledWith('books');
+  });
+
+  // ---- 審查修正 ----
+
+  it('I-1 自癒：渲染結束後，勾選的場景沒有快取且不在佇列時重新排入（渲染途中切比例的卡死情境）', async () => {
+    m.rendering.current = true;
+    const view = open();
+    await waitFor(() => expect(screen.getByTestId('share-sheet')).toBeTruthy());
+    m.prioritize.mockClear();
+
+    fillCache(allKeys.filter((k) => k !== 'movies'));
+    m.rendering.current = false;
+    view.rerender(<RecapShareSheet isOpen onClose={() => {}} recap={recap} reflectionIndex={0} locale="zh-TW" />);
+    await waitFor(() => expect(m.prioritize).toHaveBeenCalledWith('movies'));
+  });
+
+  it('I-1 自癒有上限：同一場景最多補排 2 次，避免圖片服務壞掉時無限重試', async () => {
+    const view = open();
+    await waitFor(() => expect(screen.getByTestId('share-sheet')).toBeTruthy());
+    m.prioritize.mockClear();
+    fillCache(allKeys.filter((k) => k !== 'movies'));
+    for (let i = 0; i < 5; i++) {
+      m.rendering.current = true;
+      view.rerender(<RecapShareSheet isOpen onClose={() => {}} recap={recap} reflectionIndex={0} locale="zh-TW" />);
+      m.rendering.current = false;
+      view.rerender(<RecapShareSheet isOpen onClose={() => {}} recap={recap} reflectionIndex={0} locale="zh-TW" />);
+    }
+    expect(m.prioritize.mock.calls.filter(([k]) => k === 'movies').length).toBeLessThanOrEqual(2);
+  });
+
+  it('I-2 快取過期後按儲存：不呼叫儲存、重排缺的場景並提示重新準備（不顯示成功、不記錄事件）', async () => {
+    m.saveAll.mockResolvedValue({ status: 'saved' });
+    open();
+    await readyMain();
+    fillCache(allKeys.filter((k) => k !== 'genres')); // TTL 過期：genres 的快取消失，面板尚未重繪
+    m.prioritize.mockClear();
+
+    fireEvent.click(screen.getByTestId('share-main'));
+
+    expect(m.saveAll).not.toHaveBeenCalled();
+    expect(m.prioritize).toHaveBeenCalledWith('genres');
+    await waitFor(() => expect(screen.getByTestId('share-result').textContent).toContain('重新準備'));
+    expect(screen.getByTestId('share-result').textContent).not.toContain('已儲存');
+    expect(m.track).not.toHaveBeenCalled();
+  });
+
+  it('I-3 網頁下載：downloaded 顯示中性文案（不說「相簿」），仍記錄事件', async () => {
+    m.isNative.mockReturnValue(false);
+    m.saveAll.mockResolvedValue({ status: 'downloaded' });
+    open();
+    await readyMain();
+    fireEvent.click(screen.getByTestId('share-main'));
+    await waitFor(() => expect(screen.getByTestId('share-result').textContent).toContain('已開始下載'));
+    expect(screen.getByTestId('share-result').textContent).not.toContain('相簿');
+    expect(m.track).toHaveBeenCalledTimes(1);
+  });
+
+  it('I-4 縮圖框比例跟著輸出比例（4:5 不被 9:16 框裁切）', async () => {
+    open();
+    await waitFor(() => expect(screen.getByTestId('scene-thumb-total')).toBeTruthy());
+    expect(screen.getByTestId('scene-thumb-total').className).toContain('aspect-[9/16]');
+    fireEvent.click(screen.getByTestId('ratio-4:5'));
+    expect(screen.getByTestId('scene-thumb-total').className).toContain('aspect-[4/5]');
+    expect(screen.getByTestId('scene-thumb-total').className).not.toContain('aspect-[9/16]');
   });
 
   it('cancelled：不顯示「已儲存」，也不記錄 recap_shared', async () => {

@@ -9,7 +9,8 @@ import { blobToBase64 } from '@/lib/share-api';
  * 依 spike 0.2：多張一次傳給 Instagram 只會收到第 1 張，所以主動作是「儲存全部」，另有「分享這一張」。
  * 原生 App 不得使用 `<a download>`（WKWebView 無效）。
  */
-export type ShareOutcomeStatus = 'saved' | 'shared' | 'cancelled' | 'error';
+// downloaded：網頁以 <a download> 觸發下載。瀏覽器是否真的存檔無法驗證（桌面瀏覽器常攔截連續多檔下載），所以不算 saved。
+export type ShareOutcomeStatus = 'saved' | 'shared' | 'downloaded' | 'cancelled' | 'error';
 export interface ShareOutcome {
   status: ShareOutcomeStatus;
   message?: string;
@@ -74,7 +75,7 @@ async function webShareOrDownload(images: ShareImage[], title: string, text?: st
   }
   try {
     await download(images);
-    return { status: 'saved' };
+    return { status: 'downloaded' };
   } catch (e) {
     return errorOutcome(e);
   }

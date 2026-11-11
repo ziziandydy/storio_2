@@ -130,10 +130,10 @@ describe('shareImages — 網頁', () => {
     Object.defineProperty(navigator, 'share', { value: undefined, configurable: true });
   });
 
-  it('不支援檔案分享 → 依序下載每張，回 saved', async () => {
+  it('不支援檔案分享 → 依序下載每張，回 downloaded（瀏覽器是否真的存了無法驗證，所以不是 saved）', async () => {
     Object.defineProperty(navigator, 'canShare', { value: () => false, configurable: true });
     const result = await saveAllImages(images(3), { title: 'Recap' });
-    expect(result.status).toBe('saved');
+    expect(result.status).toBe('downloaded');
     expect(clicks).toBe(3);
     expect(m.share).not.toHaveBeenCalled();
   });
