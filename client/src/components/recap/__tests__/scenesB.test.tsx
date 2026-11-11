@@ -35,19 +35,35 @@ describe('GenresScene', () => {
 });
 
 describe('StoryAgeScene', () => {
-  it('顯示故事年齡與最愛年代（中文）', () => {
-    const data = { avg_year: 2009, age: 17, favorite_decade: 1990 };
+  it('顯示故事年齡、作品年份中位數與最愛年代（中文）', () => {
+    const data = { median_year: 2009, age: 17, favorite_decade: 1990 };
     const { container } = render(<StoryAgeScene {...base} data={data} copy={zh} locale="zh-TW" />);
     expect(text(container)).toContain('你的故事年齡');
     expect(text(container)).toContain('17 歲');
+    expect(text(container)).toContain('作品發行年份的中位數：2009');
     expect(text(container)).toContain('最愛的年代：90 年代');
   });
 
   it('英文版年代為 1990s', () => {
-    const data = { avg_year: 2009, age: 17, favorite_decade: 1990 };
+    const data = { median_year: 2009, age: 17, favorite_decade: 1990 };
     const { container } = render(<StoryAgeScene {...base} data={data} copy={en} locale="en-US" />);
     expect(text(container)).toContain('17 years old');
+    expect(text(container)).toContain('Median release year: 2009');
     expect(text(container)).toContain('Favorite era: 1990s');
+  });
+
+  it('沒有集中的年代（favorite_decade 為 null）：不顯示最愛年代那一行', () => {
+    const data = { median_year: 2009, age: 17, favorite_decade: null };
+    const { container } = render(<StoryAgeScene {...base} data={data} copy={zh} locale="zh-TW" />);
+    expect(text(container)).not.toContain('最愛的年代');
+    expect(text(container)).toContain('作品發行年份的中位數：2009');
+  });
+
+  it('年齡 0～1 歲：用「新鮮出爐」取代尷尬的「0 歲」', () => {
+    const data = { median_year: 2026, age: 0, favorite_decade: 2020 };
+    const { container } = render(<StoryAgeScene {...base} data={data} copy={zh} locale="zh-TW" />);
+    expect(text(container)).toContain('新鮮出爐');
+    expect(text(container)).not.toContain('0 歲');
   });
 });
 

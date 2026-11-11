@@ -115,15 +115,27 @@ def top_genres(rows: List[dict], limit: int = 3) -> Optional[List[dict]]:
 
 # ---------- 故事年齡 ----------
 
+MIN_ERA_WORKS = 5  # 故事年齡至少要有幾部有年份的電影／影集
+MIN_DECADE_WORKS = 3  # 「最愛的年代」至少要有幾部集中在同一個十年
+
+
 def story_age(rows: List[dict], year: int) -> Optional[dict]:
-    """故事年齡 = 當年 − 作品平均發行年份；最愛年代 = 出現最多的十年（同數取較近的十年）。"""
-    years = [r["year"] for r in rows if r.get("year")]
-    if len(years) < 5:
+    """故事年齡 = 當年 − 作品發行年份的「中位數」（取偏低者，所以一定是真實存在的年份；
+    平均數會被一部老片或新片拉偏成沒有任何作品屬於的年份）；最愛年代 = 作品最多的十年，
+    至少 3 部才算「最愛」，否則回 None。只算電影與影集：書的 year 是版本出版年，不代表作品年代。"""
+    years = sorted(
+        r["year"] for r in rows if r.get("year") and r.get("media_type") in ("movie", "tv")
+    )
+    if len(years) < MIN_ERA_WORKS:
         return None
-    avg_year = round(sum(years) / len(years))
+    median_year = years[(len(years) - 1) // 2]
     decades = Counter((y // 10) * 10 for y in years)
-    favorite = max(decades.items(), key=lambda kv: (kv[1], kv[0]))[0]
-    return {"avg_year": avg_year, "age": year - avg_year, "favorite_decade": favorite}
+    favorite, count = max(decades.items(), key=lambda kv: (kv[1], kv[0]))
+    return {
+        "median_year": median_year,
+        "age": max(0, year - median_year),
+        "favorite_decade": favorite if count >= MIN_DECADE_WORKS else None,
+    }
 
 
 # ---------- 月份節奏 ----------

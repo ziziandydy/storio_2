@@ -20,7 +20,7 @@ export function makeRecap(overrides: Partial<RecapData> = {}): RecapData {
       ],
       posters: ['/d1.jpg'],
     },
-    story_age: { avg_year: 2009, age: 17, favorite_decade: 2000 },
+    story_age: { median_year: 2009, age: 17, favorite_decade: 2000 },
     title: { id: 'joy_maker', zh: '快樂製造機', en: 'The Joy Maker' },
     monthly: { counts: [1, 0, 2, 0, 3, 0, 0, 1, 0, 0, 4, 1] },
     peak_month: { month: 11, count: 4, posters: ['/p1.jpg'] },

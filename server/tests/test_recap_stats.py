@@ -173,9 +173,34 @@ def test_top_genres_needs_three_rows_with_genres():
 
 # ---------- 故事年齡 ----------
 
-def test_story_age_is_year_minus_average_release_year():
+def test_story_age_is_year_minus_median_release_year():
     rows = [make_row(year=y) for y in (2009, 2009, 2009, 2009, 2009)]
-    assert rs.story_age(rows, 2026) == {"avg_year": 2009, "age": 17, "favorite_decade": 2000}
+    assert rs.story_age(rows, 2026) == {"median_year": 2009, "age": 17, "favorite_decade": 2000}
+
+
+def test_story_age_uses_median_so_one_old_classic_does_not_skew_it():
+    # 平均會是 2006（沒有任何一部是那年的作品）；中位數 2020 才貼近這份收藏
+    rows = [make_row(year=y) for y in (1950, 2020, 2020, 2021, 2022)]
+    result = rs.story_age(rows, 2026)
+    assert result["median_year"] == 2020 and result["age"] == 6
+
+
+def test_story_age_median_is_always_a_real_work_year():
+    rows = [make_row(year=y) for y in (2000, 2002, 2010, 2012, 2020, 2022)]
+    assert rs.story_age(rows, 2026)["median_year"] == 2010  # 取偏低的中位數，不會是不存在的年份
+
+
+def test_story_age_counts_movies_and_series_only():
+    # 書的 year 是版本出版年，不代表作品年代；只有 4 部電影影集 + 1 本書 → 資料不足
+    rows = [make_row(year=2010)] * 3 + [make_row(year=2011, media_type="tv"), make_row(year=1990, media_type="book")]
+    assert rs.story_age(rows, 2026) is None
+    rows.append(make_row(year=2012, media_type="tv"))
+    assert rs.story_age(rows, 2026)["median_year"] == 2010
+
+
+def test_story_age_is_never_negative():
+    rows = [make_row(year=y) for y in (2027, 2027, 2027, 2027, 2027)]
+    assert rs.story_age(rows, 2026)["age"] == 0
 
 
 def test_story_age_favorite_decade_is_most_common():
@@ -184,8 +209,15 @@ def test_story_age_favorite_decade_is_most_common():
 
 
 def test_story_age_decade_tie_prefers_more_recent():
-    rows = [make_row(year=y) for y in (1990, 1991, 2010, 2011, 2000)]
+    rows = [make_row(year=y) for y in (1990, 1991, 1992, 2010, 2011, 2012, 2000)]
     assert rs.story_age(rows, 2026)["favorite_decade"] == 2010
+
+
+def test_story_age_favorite_decade_needs_three_works_else_none():
+    # 每個十年都只有 2 部，談不上「最愛」：只回傳故事年齡，不給最愛年代
+    rows = [make_row(year=y) for y in (1990, 1995, 2001, 2003, 2010, 2012)]
+    result = rs.story_age(rows, 2026)
+    assert result is not None and result["favorite_decade"] is None
 
 
 def test_story_age_needs_five_rows_with_year():

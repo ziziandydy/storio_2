@@ -23,7 +23,7 @@ export interface TimeSummary {
 export interface SeriesScene extends TimeSummary { episodes: number }
 export interface BooksScene extends TimeSummary { pages: number }
 export interface GenreScene { top: { name: string; count: number }[]; posters: string[] }
-export interface StoryAgeScene { avg_year: number; age: number; favorite_decade: number }
+export interface StoryAgeScene { median_year: number; age: number; favorite_decade: number | null }
 export interface TitleScene { id: string; zh: string; en: string }
 export interface MonthlyScene { counts: number[] }
 export interface PeakMonthScene { month: number; count: number; posters: string[] }
