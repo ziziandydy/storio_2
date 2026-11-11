@@ -3,7 +3,7 @@
  */
 
 /**
- * 首頁限時卡片對應的年份（本地日期，月份由 0 起算）：
+ * 限時入口（頭像外框、Profile 置頂卡片）對應的年份（本地日期，月份由 0 起算）：
  * 11、12 月 → 當年；1、2 月 → 去年；其他月份 → null（窗口外）。
  */
 export function recapWindowYear(today: Date): number | null {
@@ -26,10 +26,21 @@ export function isDismissed(year: number): boolean {
   }
 }
 
+const dismissListeners = new Set<(year: number) => void>();
+
+/** 同一頁的 Recap 卡片、頭像外框、Profile 列要同步反應「關閉」。回傳取消訂閱函式。 */
+export function subscribeDismissed(listener: (year: number) => void): () => void {
+  dismissListeners.add(listener);
+  return () => {
+    dismissListeners.delete(listener);
+  };
+}
+
 export function dismiss(year: number): void {
   try {
     localStorage.setItem(dismissKey(year), '1');
   } catch {
-    // 寫入失敗就算了：本次工作階段內由元件狀態隱藏
+    // 寫入失敗就算了：本次工作階段內由訂閱者（元件狀態）隱藏
   }
+  dismissListeners.forEach((listener) => listener(year));
 }

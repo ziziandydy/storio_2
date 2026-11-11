@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { User, Menu, Search, Layers, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { HomeCollectionArea } from '@/components/FirstCollectGuide';
-import RecapHomeCard from '@/components/recap/RecapHomeCard';
+import RecapAvatarLink from '@/components/recap/RecapAvatarLink';
 import AddToFolioModal from '@/components/AddToFolioModal';
 import { useTranslation } from '@/hooks/useTranslation';
 import SectionSlider from '@/components/SectionSlider';
@@ -186,13 +186,7 @@ export default function Home() {
           <span className={`text-sm font-bold tracking-widest uppercase text-white/90 ${scrollY > 20 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'} transition-all duration-500`}>Storio</span>
         </div>
 
-        <Link href="/profile" className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 backdrop-blur border border-white/10 flex items-center justify-center transition-all hover:scale-105 active:scale-95 group overflow-hidden">
-          {user?.user_metadata?.avatar_url ? (
-            <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-          ) : (
-            <User size={16} className="text-white/70 group-hover:text-white transition-colors" />
-          )}
-        </Link>
+        <RecapAvatarLink avatarUrl={user?.user_metadata?.avatar_url} />
       </header>
 
       {/* Main Content */}
@@ -210,9 +204,6 @@ export default function Home() {
 
         {/* Stats Section */}
         <HomeCollectionArea />
-
-        {/* 年度 Recap 限時卡片（11 月至隔年 2 月、對應年份達門檻才出現） */}
-        <RecapHomeCard />
 
         {/* Trending Sections */}
         <div className="space-y-16">

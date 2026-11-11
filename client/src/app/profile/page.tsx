@@ -24,6 +24,7 @@ import packageJson from '../../../package.json';
 import { motion, AnimatePresence } from 'framer-motion';
 import { App } from '@capacitor/app';
 import RecapProfileRow from '@/components/recap/RecapProfileRow';
+import RecapWindowCard from '@/components/recap/RecapWindowCard';
 
 interface ProfileSectionProps {
   title: string;
@@ -757,6 +758,9 @@ export default function ProfilePage() {
       </header>
 
       <main className="max-w-md mx-auto p-6">
+        {/* 年度 Recap 限時卡片（置頂；11 月至隔年 2 月、對應年份達門檻、未關閉才出現） */}
+        <RecapWindowCard />
+
         {/* User Card */}
         <div className="bg-gradient-to-br from-folio-card to-black p-8 rounded-3xl border border-white/10 mb-10 shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-accent-gold/10 blur-[60px] rounded-full -mr-16 -mt-16 transition-all group-hover:bg-accent-gold/20" />

@@ -1,11 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronRight, Sparkles } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useRecapYears } from '@/hooks/useRecap';
+import { useRecapEntry } from '@/hooks/useRecapEntry';
+import { subscribeDismissed } from '@/lib/recap/entry';
 import { fill } from '@/lib/recap/format';
+
+const HINT_MS = 6000;
 
 /**
  * Profile 的「年度 Recap」常駐一列（全年可見），樣式比照 Profile 的 ProfileItem。
@@ -13,12 +17,25 @@ import { fill } from '@/lib/recap/format';
  * - 當年未達門檻：副標顯示「再收藏 N 部，就能看到你的 {year}」（不責備）；若沒有任何達標年份則不可點入。
  * - 載入中或失敗：只顯示列，點擊無反應。
  */
-export default function RecapProfileRow() {
+export default function RecapProfileRow({ today }: { today?: Date }) {
   const router = useRouter();
   const { t } = useTranslation();
   const { years } = useRecapYears();
+  const { active: cardShowing } = useRecapEntry(today);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [hint, setHint] = useState(false);
   const r = t.recap;
+
+  // 同一頁關閉置頂卡片時，在這一列上方提示「以後可以從這裡查看」，6 秒後自動消失
+  useEffect(() => subscribeDismissed(() => setHint(true)), []);
+  useEffect(() => {
+    if (!hint) return;
+    const id = setTimeout(() => setHint(false), HINT_MS);
+    return () => clearTimeout(id);
+  }, [hint]);
+
+  // 置頂卡片還在時，卡片就是入口，這一列先隱藏避免重複
+  if (cardShowing) return null;
 
   const list = years?.years ?? [];
   const clickable = list.length > 0;
@@ -39,24 +56,40 @@ export default function RecapProfileRow() {
 
   return (
     <>
+      <div className="relative border-b border-white/5 last:border-0">
+      {hint && (
+        <button
+          type="button"
+          data-testid="recap-dismiss-hint"
+          onClick={() => setHint(false)}
+          className="absolute right-3 bottom-full mb-2 z-20 max-w-[260px] rounded-2xl bg-accent-gold px-4 py-2.5 text-left text-xs font-bold leading-snug text-folio-black shadow-xl animate-in fade-in slide-in-from-bottom-1 duration-300"
+        >
+          {r.dismissHint}
+          <span className="absolute -bottom-1 right-8 h-2.5 w-2.5 rotate-45 bg-accent-gold" aria-hidden="true" />
+        </button>
+      )}
       <button
         type="button"
         data-testid="recap-profile-row"
         disabled={!clickable}
         onClick={open}
-        className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors group border-b border-white/5 last:border-0 disabled:opacity-80 disabled:hover:bg-transparent"
+        className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors group disabled:opacity-80 disabled:hover:bg-transparent"
       >
         <div className="flex items-center gap-4 min-w-0">
           <div className="p-2 rounded-xl bg-white/5 text-accent-gold group-hover:scale-110 transition-transform">
             <Sparkles size={18} />
           </div>
           <div className="flex flex-col items-start text-left min-w-0">
-            <span className="text-sm font-medium text-text-primary">{r.profileRow}</span>
+            <span className="flex items-baseline gap-2">
+              <span className="text-sm font-medium text-text-primary">{r.profileRow}</span>
+              <span className="text-[10px] tracking-[0.12em] text-text-desc">{r.profileRowAlt}</span>
+            </span>
             {encourage && <span className="text-xs text-text-desc">{encourage}</span>}
           </div>
         </div>
         {clickable && <ChevronRight size={16} className="text-text-desc opacity-40 group-hover:opacity-100 transition-opacity" />}
       </button>
+      </div>
 
       {pickerOpen && (
         <div className="fixed inset-0 z-[120] flex items-end justify-center">
