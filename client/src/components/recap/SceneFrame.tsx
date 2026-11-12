@@ -222,13 +222,17 @@ export default function SceneFrame({ aspectRatio, posters, frame, heroLogo, chil
         />
       ) : (
         <>
-          {/* 菱形柔化襯底：跟 logo 的菱形同形，只把它後方的海報壓暗一點、邊緣羽化，不做光暈或圓盤 */}
+          {/* 菱形柔化襯底：跟 logo 的菱形同形，只把它後方的海報模糊、邊緣羽化，不填黑、不做光暈或圓盤 */}
           <div
             data-testid="scene-logo-backdrop"
             aria-hidden="true"
             style={{
               position: 'absolute', top: '44px', left: '50%', width: '50px', height: '50px', zIndex: 2,
-              transform: 'translateX(-50%) rotate(45deg) scale(1.15)', background: 'rgba(0,0,0,0.62)', filter: 'blur(11px)',
+              transform: 'translateX(-50%) rotate(45deg) scale(1.3)',
+              // 只模糊 logo 後方的海報（不填黑色）；邊緣羽化讓菱形範圍自然融進背景
+              backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+              WebkitMaskImage: 'radial-gradient(closest-side, #000 55%, transparent 100%)',
+              maskImage: 'radial-gradient(closest-side, #000 55%, transparent 100%)',
             }}
           />
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -237,10 +241,9 @@ export default function SceneFrame({ aspectRatio, posters, frame, heroLogo, chil
             src="/image/logo/logo.png"
             alt="Storio"
             style={{
-              position: 'absolute', top: '26px', left: '50%', transform: 'translateX(-50%)', width: '68px', height: '68px', zIndex: 3, borderRadius: '50%',
-              // 邊緣羽化：素材底色比場景略亮，不柔化會留下一圈圓盤；不用 screen 混合（會在亮海報上淡掉）
-              WebkitMaskImage: 'radial-gradient(circle closest-side, #000 84%, transparent 100%)',
-              maskImage: 'radial-gradient(circle closest-side, #000 84%, transparent 100%)',
+              position: 'absolute', top: '26px', left: '50%', transform: 'translateX(-50%)', width: '68px', height: '68px', zIndex: 3,
+              // 素材自帶圓形黑底：裁成菱形（跟 logo 本體同形），黑色圓角就不會露出來；不用 screen 混合（會在亮海報上淡掉）
+              clipPath: 'polygon(50% 5%, 95% 50%, 50% 95%, 5% 50%)',
             }}
           />
         </>

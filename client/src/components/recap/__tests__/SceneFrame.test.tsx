@@ -36,9 +36,14 @@ describe('SceneFrame', () => {
     expect(logo.style.mixBlendMode).toBe('');
     expect(logo.style.border).toBe('');
     expect(logo.style.boxShadow).toBe('');
+    expect(logo.getAttribute('style')).toContain('clip-path'); // 裁成菱形，素材自帶的圓形黑底不露出
     const backdrop = screen.getByTestId('scene-logo-backdrop') as HTMLElement;
     expect(backdrop.style.transform).toContain('rotate(45deg)');
-    expect(backdrop.style.filter).toContain('blur');
+    // 只模糊後方的海報，不填黑色
+    expect(backdrop.getAttribute('style')).toContain('backdrop-filter');
+    expect(backdrop.getAttribute('style')).toContain('blur');
+    expect(backdrop.style.background).toBe('');
+    expect(backdrop.getAttribute('style')).not.toMatch(/rgba\(0,\s*0,\s*0/);
   });
 
   it('海報背景要清楚（不透明度 ≥ 0.75），並用文字襯底與陰影維持文字可讀', () => {
