@@ -7,7 +7,8 @@ const auth = vi.hoisted(() => ({ current: { token: 'tok' as string | null, loadi
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => auth.current }));
 vi.mock('@/lib/api', () => ({ getApiUrl: (p: string) => `http://api${p}` }));
 
-import { useRecap, useRecapYears } from '../useRecap';
+import { useRecap, useRecapYears, clearRecapCache } from '../useRecap';
+import { emitStoryAdded } from '@/lib/notification-events';
 
 const json = (status: number, body: unknown) =>
   Promise.resolve({ ok: status >= 200 && status < 300, status, json: () => Promise.resolve(body) } as Response);
@@ -15,6 +16,7 @@ const json = (status: number, body: unknown) =>
 describe('useRecap', () => {
   beforeEach(() => {
     auth.current = { token: 'tok', loading: false };
+    clearRecapCache();
   });
   afterEach(() => {
     cleanup();
@@ -154,9 +156,97 @@ describe('useRecap', () => {
   });
 });
 
+describe('useRecap 記憶體快取（重複進出 Recap 不重打後端）', () => {
+  beforeEach(() => {
+    auth.current = { token: 'tok', loading: false };
+    clearRecapCache();
+  });
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it('第二次打開同一年：直接用快取，不請求、也不經過 loading', async () => {
+    const f = vi.fn(() => json(200, makeRecap({ year: 2026 })));
+    vi.stubGlobal('fetch', f);
+    const first = renderHook(() => useRecap(2026));
+    await waitFor(() => expect(first.result.current.status).toBe('ready'));
+    first.unmount();
+
+    const second = renderHook(() => useRecap(2026));
+    expect(second.result.current.status).toBe('ready');
+    expect(second.result.current.data?.year).toBe(2026);
+    expect(f).toHaveBeenCalledTimes(1);
+  });
+
+  it('快取 5 分鐘後過期，重新請求', async () => {
+    vi.useFakeTimers();
+    const f = vi.fn(() => json(200, makeRecap()));
+    vi.stubGlobal('fetch', f);
+    const first = renderHook(() => useRecap(2026));
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    first.unmount();
+    await act(async () => { await vi.advanceTimersByTimeAsync(5 * 60 * 1000 + 1000); });
+    renderHook(() => useRecap(2026));
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(f).toHaveBeenCalledTimes(2);
+  });
+
+  it('新增收藏後快取失效（資料已不是最新），再打開會重新請求', async () => {
+    const f = vi.fn(() => json(200, makeRecap()));
+    vi.stubGlobal('fetch', f);
+    const first = renderHook(() => useRecap(2026));
+    await waitFor(() => expect(first.result.current.status).toBe('ready'));
+    first.unmount();
+
+    act(() => emitStoryAdded());
+    const second = renderHook(() => useRecap(2026));
+    await waitFor(() => expect(second.result.current.status).toBe('ready'));
+    expect(f).toHaveBeenCalledTimes(2);
+  });
+
+  it('不同帳號（token）不共用快取', async () => {
+    const f = vi.fn(() => json(200, makeRecap()));
+    vi.stubGlobal('fetch', f);
+    const a = renderHook(() => useRecap(2026));
+    await waitFor(() => expect(a.result.current.status).toBe('ready'));
+    a.unmount();
+    auth.current = { token: 'other', loading: false };
+    const b = renderHook(() => useRecap(2026));
+    await waitFor(() => expect(b.result.current.status).toBe('ready'));
+    expect(f).toHaveBeenCalledTimes(2);
+  });
+
+  it('metadata_pending > 0 的結果不進快取（還在補資料，下次要重取）', async () => {
+    const f = vi.fn(() => json(200, makeRecap({ metadata_pending: 2 })));
+    vi.stubGlobal('fetch', f);
+    const first = renderHook(() => useRecap(2026));
+    await waitFor(() => expect(first.result.current.status).toBe('ready'));
+    first.unmount();
+    const second = renderHook(() => useRecap(2026));
+    await waitFor(() => expect(f).toHaveBeenCalledTimes(2));
+    second.unmount();
+  });
+
+  it('失敗不進快取；retry() 會略過快取重新請求', async () => {
+    const f = vi
+      .fn()
+      .mockImplementationOnce(() => json(500, {}))
+      .mockImplementation(() => json(200, makeRecap()));
+    vi.stubGlobal('fetch', f);
+    const { result } = renderHook(() => useRecap(2026));
+    await waitFor(() => expect(result.current.status).toBe('error'));
+    act(() => result.current.retry());
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+    expect(f).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe('useRecapYears', () => {
   beforeEach(() => {
     auth.current = { token: 'tok', loading: false };
+    clearRecapCache();
   });
   afterEach(() => {
     cleanup();
@@ -189,6 +279,42 @@ describe('useRecapYears', () => {
     const b = renderHook(() => useRecapYears());
     await waitFor(() => expect(b.result.current.loading).toBe(false));
     expect(b.result.current.error).toBe(true);
+  });
+
+  it('同時多個元件要年份清單：只送一個請求（Profile 一次造訪原本會打 4 次）', async () => {
+    const f = vi.fn(() => json(200, years));
+    vi.stubGlobal('fetch', f);
+    const hooks = [renderHook(() => useRecapYears()), renderHook(() => useRecapYears()), renderHook(() => useRecapYears())];
+    await waitFor(() => hooks.forEach((h) => expect(h.result.current.years).toEqual(years)));
+    expect(f).toHaveBeenCalledTimes(1);
+  });
+
+  it('短時間內再次掛載（頁面來回切換）用快取，不再請求；新增收藏後失效', async () => {
+    const f = vi.fn(() => json(200, years));
+    vi.stubGlobal('fetch', f);
+    const a = renderHook(() => useRecapYears());
+    await waitFor(() => expect(a.result.current.loading).toBe(false));
+    a.unmount();
+    const b = renderHook(() => useRecapYears());
+    await waitFor(() => expect(b.result.current.years).toEqual(years));
+    expect(f).toHaveBeenCalledTimes(1);
+    b.unmount();
+
+    act(() => emitStoryAdded());
+    const c = renderHook(() => useRecapYears());
+    await waitFor(() => expect(c.result.current.years).toEqual(years));
+    expect(f).toHaveBeenCalledTimes(2);
+  });
+
+  it('失敗不快取：下一次掛載會重新請求', async () => {
+    const f = vi.fn().mockImplementationOnce(() => json(500, {})).mockImplementation(() => json(200, years));
+    vi.stubGlobal('fetch', f);
+    const a = renderHook(() => useRecapYears());
+    await waitFor(() => expect(a.result.current.error).toBe(true));
+    a.unmount();
+    const b = renderHook(() => useRecapYears());
+    await waitFor(() => expect(b.result.current.years).toEqual(years));
+    expect(f).toHaveBeenCalledTimes(2);
   });
 
   it('驗證完成但沒有 token → 不請求、loading=false', async () => {

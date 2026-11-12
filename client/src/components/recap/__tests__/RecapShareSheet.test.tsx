@@ -11,12 +11,9 @@ const m = vi.hoisted(() => ({
   saveAll: vi.fn(),
   shareOne: vi.fn(),
   track: vi.fn(),
-  prioritize: vi.fn(),
-  cleanup: vi.fn(),
-  cache: { current: {} as Record<string, { blob: Blob; objectUrl: string }> },
-  optionCalls: [] as { allTemplates: string[]; settings: Record<string, unknown>; enabled: boolean }[],
-  rendering: { current: false },
-  queue: { current: [] as string[] },
+  renderOne: vi.fn(),
+  renderMany: vi.fn(),
+  clearCache: vi.fn(),
 }));
 
 vi.mock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: m.isNative } }));
@@ -27,265 +24,233 @@ vi.mock('@/hooks/useTranslation', async () => {
 vi.mock('@/lib/share-api', () => ({ getRenderServiceHealth: m.health }));
 vi.mock('@/lib/analytics', () => ({ track: m.track }));
 vi.mock('@/lib/recap/shareImages', () => ({ saveAllImages: m.saveAll, shareOneImage: m.shareOne }));
-vi.mock('@/hooks/useProgressiveRenderQueue', () => ({
-  useProgressiveRenderQueue: (opts: { allTemplates: string[]; settings: Record<string, unknown>; enabled: boolean }) => {
-    m.optionCalls.push({ allTemplates: opts.allTemplates, settings: opts.settings, enabled: opts.enabled });
-    return {
-      getCacheEntry: (id: string) => m.cache.current[id] ?? null,
-      prioritize: m.prioritize,
-      isRendering: m.rendering.current,
-      queue: m.queue.current,
-      reset: vi.fn(),
-      cleanup: m.cleanup,
-    };
-  },
+vi.mock('@/lib/recap/renderCache', () => ({
+  renderRecapScene: m.renderOne,
+  renderRecapScenes: m.renderMany,
+  clearRenderCache: m.clearCache,
+}));
+// 縮圖是前端場景元件：這裡換成簡版，記錄它收到的比例與心得索引
+vi.mock('../ScaledScene', () => ({
+  default: ({ sceneKey, aspectRatio, reflectionIndex }: { sceneKey: string; aspectRatio: string; reflectionIndex: number }) => (
+    <div data-testid={`thumb-${sceneKey}`} data-aspect={aspectRatio} data-reflection={reflectionIndex} />
+  ),
 }));
 
 import RecapShareSheet from '../RecapShareSheet';
 
 const recap = makeRecap();
 const allKeys = buildScenes(recap, { forShare: true });
-const fillCache = (keys: string[]) => {
-  m.cache.current = Object.fromEntries(keys.map((k) => [k, { blob: new Blob([k]), objectUrl: `blob:${k}` }]));
-};
-const last = () => m.optionCalls[m.optionCalls.length - 1];
+const blobFor = (key: string) => new Blob([key]);
 const open = (props: Partial<React.ComponentProps<typeof RecapShareSheet>> = {}) =>
   render(<RecapShareSheet isOpen onClose={() => {}} recap={recap} reflectionIndex={0} locale="zh-TW" {...props} />);
-const readyMain = async () => {
-  await waitFor(() => expect((screen.getByTestId('share-main') as HTMLButtonElement).disabled).toBe(false));
-};
+const manyResult = (keys: string[]) => keys.map((sceneKey) => ({ sceneKey, blob: blobFor(sceneKey) }));
+const clickMain = () => act(async () => { fireEvent.click(screen.getByTestId('share-main')); });
+const renderedKeys = () => (m.renderMany.mock.calls[0][0].sceneKeys as string[]);
 
-describe('RecapShareSheet', () => {
+describe('RecapShareSheet（縮圖用前端場景元件；只有儲存／分享時才渲染被勾選的）', () => {
   beforeEach(() => {
-    Object.values({ a: m.isNative, b: m.health, c: m.saveAll, d: m.shareOne, e: m.track, f: m.prioritize, g: m.cleanup }).forEach((f) => f.mockReset());
-    m.optionCalls.length = 0;
-    m.rendering.current = false;
-    m.queue.current = [];
+    Object.values(m).forEach((f) => f.mockReset());
     m.isNative.mockReturnValue(true);
     m.health.mockResolvedValue(true);
-    fillCache(allKeys);
+    m.renderMany.mockImplementation(async ({ sceneKeys }: { sceneKeys: string[] }) => manyResult(sceneKeys));
+    m.renderOne.mockImplementation(async ({ sceneKey }: { sceneKey: string }) => blobFor(sceneKey));
+    m.saveAll.mockResolvedValue({ status: 'saved' });
+    m.shareOne.mockResolvedValue({ status: 'shared' });
   });
   afterEach(() => {
     cleanup();
     vi.useRealTimers();
   });
 
-  it('預設全選，且場景清單不含「繼續收藏」與影片選項', async () => {
+  it('一打開就有全部縮圖與可按的按鈕：不用等圖片服務，開啟當下完全不渲染', () => {
+    open();
+    expect(screen.getAllByRole('checkbox')).toHaveLength(allKeys.length);
+    for (const key of allKeys) expect(screen.getByTestId(`thumb-${key}`)).toBeTruthy();
+    expect((screen.getByTestId('share-main') as HTMLButtonElement).disabled).toBe(false);
+    expect(m.renderMany).not.toHaveBeenCalled();
+    expect(m.renderOne).not.toHaveBeenCalled();
+  });
+
+  it('預設全選，場景清單含結尾場景、不含「繼續收藏」與影片選項', () => {
     const { container } = open();
-    await waitFor(() => expect(screen.getAllByRole('checkbox')).toHaveLength(allKeys.length));
-    for (const box of screen.getAllByRole('checkbox')) expect((box as HTMLInputElement).checked).toBe(true);
+    expect((screen.getAllByRole('checkbox') as HTMLInputElement[]).every((c) => c.checked)).toBe(true);
+    expect(screen.queryByTestId('thumb-closing')).toBeTruthy();
     expect(container.textContent).not.toContain('繼續收藏');
     expect(container.textContent).not.toMatch(/影片|video/i);
   });
 
-  it('取消勾選心得：queue 不再包含它，且儲存時不含心得圖（即使它先前已渲染並快取）', async () => {
-    m.saveAll.mockResolvedValue({ status: 'saved' });
+  it('開啟時在背景叫醒圖片服務（Railway 冷啟動），但不擋畫面', async () => {
     open();
-    await readyMain();
-    fireEvent.click(screen.getByTestId('scene-check-reflection'));
-    expect(last().allTemplates).not.toContain('reflection');
-
-    fireEvent.click(screen.getByTestId('share-main'));
-    await waitFor(() => expect(m.saveAll).toHaveBeenCalled());
-    const names = m.saveAll.mock.calls[0][0].map((i: { name: string }) => i.name);
-    expect(names).not.toContain('reflection');
-    expect(names).toHaveLength(allKeys.length - 1);
+    await waitFor(() => expect(m.health).toHaveBeenCalled());
+    expect(screen.getByTestId('share-main')).toBeTruthy();
   });
 
-  it('輸出順序與場景順序一致', async () => {
-    m.saveAll.mockResolvedValue({ status: 'saved' });
+  it('比例切換：縮圖框跟著 9:16／4:5', () => {
     open();
-    await readyMain();
-    fireEvent.click(screen.getByTestId('share-main'));
-    await waitFor(() => expect(m.saveAll).toHaveBeenCalled());
-    expect(m.saveAll.mock.calls[0][0].map((i: { name: string }) => i.name)).toEqual(allKeys);
-  });
-
-  it('切到 4:5：settings.aspectRatio 為 4:5', async () => {
-    open();
-    await waitFor(() => expect(last()).toBeTruthy());
+    expect(screen.getByTestId('thumb-total').getAttribute('data-aspect')).toBe('9:16');
     fireEvent.click(screen.getByTestId('ratio-4:5'));
-    expect(last().settings.aspectRatio).toBe('4:5');
+    expect(screen.getByTestId('thumb-total').getAttribute('data-aspect')).toBe('4:5');
   });
 
-  it('心得索引改變：settings.recapReflectionIndex 跟著變（快取 key 隨之失效）', async () => {
-    const view = open({ reflectionIndex: 0 });
-    expect(last().settings.recapReflectionIndex).toBe(0);
-    view.rerender(<RecapShareSheet isOpen onClose={() => {}} recap={recap} reflectionIndex={1} locale="zh-TW" />);
-    expect(last().settings.recapReflectionIndex).toBe(1);
-    expect(last().settings.locale).toBe('zh-TW');
+  it('心得換句：縮圖拿到更新後的心得索引（預覽＝縮圖＝輸出）', () => {
+    open({ reflectionIndex: 1 });
+    expect(screen.getByTestId('thumb-reflection').getAttribute('data-reflection')).toBe('1');
   });
 
-  it('勾選的場景尚未渲染完成：主按鈕停用', async () => {
-    fillCache(allKeys.filter((k) => k !== 'total'));
+  it('儲存全部：只渲染被勾選的場景（依場景順序），不含取消勾選的', async () => {
     open();
-    await waitFor(() => expect(screen.getByTestId('share-progress')).toBeTruthy());
+    fireEvent.click(screen.getByTestId('scene-check-reflection'));
+    fireEvent.click(screen.getByTestId('scene-check-books'));
+    await clickMain();
+    const keys = renderedKeys();
+    expect(keys).not.toContain('reflection');
+    expect(keys).not.toContain('books');
+    expect(keys).toEqual(allKeys.filter((k) => k !== 'reflection' && k !== 'books'));
+    expect(m.renderMany.mock.calls[0][0].settings).toEqual({ aspectRatio: '9:16', locale: 'zh-TW', reflectionIndex: 0 });
+    expect(m.saveAll.mock.calls[0][0].map((i: { name: string }) => i.name)).toEqual(keys);
+  });
+
+  it('切到 4:5、心得索引改變：渲染設定跟著變', async () => {
+    open({ reflectionIndex: 1 });
+    fireEvent.click(screen.getByTestId('ratio-4:5'));
+    await clickMain();
+    expect(m.renderMany.mock.calls[0][0].settings).toEqual({ aspectRatio: '4:5', locale: 'zh-TW', reflectionIndex: 1 });
+  });
+
+  it('全部取消勾選：主按鈕停用並提示至少選一張', () => {
+    const { container } = open();
+    for (const key of allKeys) fireEvent.click(screen.getByTestId(`scene-check-${key}`));
     expect((screen.getByTestId('share-main') as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.getByTestId('share-progress').textContent).toContain(`${allKeys.length - 1}/${allKeys.length}`);
+    expect(container.textContent).toContain('請至少選一張');
   });
 
-  it('全部取消勾選：主按鈕停用', async () => {
+  it('渲染中顯示進度（已產生 n/m）並停用按鈕，完成後恢復', async () => {
+    let finish!: () => void;
+    m.renderMany.mockImplementation(({ sceneKeys, onProgress }: { sceneKeys: string[]; onProgress: (d: number, t: number) => void }) =>
+      new Promise((resolve) => {
+        onProgress(3, sceneKeys.length);
+        finish = () => resolve(manyResult(sceneKeys));
+      }),
+    );
     open();
-    await readyMain();
-    for (const box of screen.getAllByRole('checkbox')) fireEvent.click(box);
+    await clickMain();
+    expect(screen.getByTestId('share-progress').textContent).toContain(`已產生 3/${allKeys.length}`);
     expect((screen.getByTestId('share-main') as HTMLButtonElement).disabled).toBe(true);
+    await act(async () => finish());
+    await waitFor(() => expect((screen.getByTestId('share-main') as HTMLButtonElement).disabled).toBe(false));
   });
 
-  it('勾選一個尚未渲染的場景時會插隊渲染', async () => {
-    fillCache(allKeys.filter((k) => k !== 'books'));
-    open();
-    await waitFor(() => expect(screen.getAllByRole('checkbox').length).toBeGreaterThan(0));
-    fireEvent.click(screen.getByTestId('scene-check-books')); // 取消
-    m.prioritize.mockClear();
-    fireEvent.click(screen.getByTestId('scene-check-books')); // 再勾回來
-    expect(m.prioritize).toHaveBeenCalledWith('books');
+  it('關閉面板不清空渲染快取（下次再開、切回同一比例直接用）', () => {
+    const { rerender } = open();
+    rerender(<RecapShareSheet isOpen={false} onClose={() => {}} recap={recap} reflectionIndex={0} locale="zh-TW" />);
+    expect(m.clearCache).not.toHaveBeenCalled();
   });
 
-  // ---- 審查修正 ----
-
-  it('I-1 自癒：渲染結束後，勾選的場景沒有快取且不在佇列時重新排入（渲染途中切比例的卡死情境）', async () => {
-    m.rendering.current = true;
-    const view = open();
-    await waitFor(() => expect(screen.getByTestId('share-sheet')).toBeTruthy());
-    m.prioritize.mockClear();
-
-    fillCache(allKeys.filter((k) => k !== 'movies'));
-    m.rendering.current = false;
-    view.rerender(<RecapShareSheet isOpen onClose={() => {}} recap={recap} reflectionIndex={0} locale="zh-TW" />);
-    await waitFor(() => expect(m.prioritize).toHaveBeenCalledWith('movies'));
-  });
-
-  it('I-1 自癒有上限：同一場景最多補排 2 次，避免圖片服務壞掉時無限重試', async () => {
-    const view = open();
-    await waitFor(() => expect(screen.getByTestId('share-sheet')).toBeTruthy());
-    m.prioritize.mockClear();
-    fillCache(allKeys.filter((k) => k !== 'movies'));
-    for (let i = 0; i < 5; i++) {
-      m.rendering.current = true;
-      view.rerender(<RecapShareSheet isOpen onClose={() => {}} recap={recap} reflectionIndex={0} locale="zh-TW" />);
-      m.rendering.current = false;
-      view.rerender(<RecapShareSheet isOpen onClose={() => {}} recap={recap} reflectionIndex={0} locale="zh-TW" />);
-    }
-    expect(m.prioritize.mock.calls.filter(([k]) => k === 'movies').length).toBeLessThanOrEqual(2);
-  });
-
-  it('I-2 快取過期後按儲存：不呼叫儲存、重排缺的場景並提示重新準備（不顯示成功、不記錄事件）', async () => {
-    m.saveAll.mockResolvedValue({ status: 'saved' });
-    open();
-    await readyMain();
-    fillCache(allKeys.filter((k) => k !== 'genres')); // TTL 過期：genres 的快取消失，面板尚未重繪
-    m.prioritize.mockClear();
-
-    fireEvent.click(screen.getByTestId('share-main'));
-
-    expect(m.saveAll).not.toHaveBeenCalled();
-    expect(m.prioritize).toHaveBeenCalledWith('genres');
-    await waitFor(() => expect(screen.getByTestId('share-result').textContent).toContain('重新準備'));
-    expect(screen.getByTestId('share-result').textContent).not.toContain('已儲存');
-    expect(m.track).not.toHaveBeenCalled();
-  });
-
-  it('I-3 網頁下載：downloaded 顯示中性文案（不說「相簿」），仍記錄事件', async () => {
+  it('網頁下載：downloaded 顯示中性文案（不說「相簿」），仍記錄事件', async () => {
     m.isNative.mockReturnValue(false);
     m.saveAll.mockResolvedValue({ status: 'downloaded' });
     open();
-    await readyMain();
-    fireEvent.click(screen.getByTestId('share-main'));
+    await clickMain();
     await waitFor(() => expect(screen.getByTestId('share-result').textContent).toContain('已開始下載'));
     expect(screen.getByTestId('share-result').textContent).not.toContain('相簿');
     expect(m.track).toHaveBeenCalledTimes(1);
   });
 
-  it('I-4 縮圖框比例跟著輸出比例（4:5 不被 9:16 框裁切）', async () => {
-    open();
-    await waitFor(() => expect(screen.getByTestId('scene-thumb-total')).toBeTruthy());
-    expect(screen.getByTestId('scene-thumb-total').className).toContain('aspect-[9/16]');
-    fireEvent.click(screen.getByTestId('ratio-4:5'));
-    expect(screen.getByTestId('scene-thumb-total').className).toContain('aspect-[4/5]');
-    expect(screen.getByTestId('scene-thumb-total').className).not.toContain('aspect-[9/16]');
-  });
-
   it('cancelled：不顯示「已儲存」，也不記錄 recap_shared', async () => {
     m.saveAll.mockResolvedValue({ status: 'cancelled' });
     const { container } = open();
-    await readyMain();
-    fireEvent.click(screen.getByTestId('share-main'));
-    await waitFor(() => expect(m.saveAll).toHaveBeenCalled());
-    expect(container.textContent).not.toContain('已儲存到相簿');
+    await clickMain();
+    await waitFor(() => expect((screen.getByTestId('share-main') as HTMLButtonElement).disabled).toBe(false));
+    expect(container.textContent).not.toContain('已儲存');
     expect(m.track).not.toHaveBeenCalled();
   });
 
   it('saved：顯示「已儲存到相簿」並記錄 recap_shared（年份與張數）', async () => {
-    m.saveAll.mockResolvedValue({ status: 'saved' });
     open();
-    await readyMain();
-    fireEvent.click(screen.getByTestId('share-main'));
+    await clickMain();
     await waitFor(() => expect(screen.getByTestId('share-result').textContent).toContain('已儲存到相簿'));
-    expect(m.track).toHaveBeenCalledTimes(1);
     expect(m.track).toHaveBeenCalledWith('recap_shared', { year: 2026, sceneCount: allKeys.length });
   });
 
-  it('shared：中性文案「已完成」（不宣稱已存相簿），仍記錄事件', async () => {
+  it('shared：中性文案「已完成」，仍記錄事件', async () => {
     m.saveAll.mockResolvedValue({ status: 'shared' });
     open();
-    await readyMain();
-    fireEvent.click(screen.getByTestId('share-main'));
+    await clickMain();
     await waitFor(() => expect(screen.getByTestId('share-result').textContent).toContain('已完成'));
-    expect(screen.getByTestId('share-result').textContent).not.toContain('相簿');
     expect(m.track).toHaveBeenCalledTimes(1);
   });
 
-  it('error：顯示錯誤、不記錄事件，主按鈕仍可再按（重試）', async () => {
+  it('儲存／分享出錯：顯示錯誤、不記錄事件，主按鈕仍可再按（重試）', async () => {
     m.saveAll.mockResolvedValue({ status: 'error', message: 'x' });
     open();
-    await readyMain();
-    fireEvent.click(screen.getByTestId('share-main'));
+    await clickMain();
     await waitFor(() => expect(screen.getByTestId('share-result').textContent).toContain('沒有成功'));
     expect(m.track).not.toHaveBeenCalled();
     expect((screen.getByTestId('share-main') as HTMLButtonElement).disabled).toBe(false);
   });
 
-  it('「分享這一張」只傳該場景', async () => {
-    m.shareOne.mockResolvedValue({ status: 'shared' });
+  it('任何一張渲染失敗：整批不送出（不可少張還顯示成功）、顯示錯誤、不記錄事件', async () => {
+    m.renderMany.mockRejectedValue(new Error('render failed'));
     open();
-    await readyMain();
-    fireEvent.click(screen.getByTestId('share-one-movies'));
-    await waitFor(() => expect(m.shareOne).toHaveBeenCalled());
-    expect(m.shareOne.mock.calls[0][0].name).toBe('movies');
+    await clickMain();
+    await waitFor(() => expect(screen.getByTestId('share-result').textContent).toContain('沒有成功'));
     expect(m.saveAll).not.toHaveBeenCalled();
+    expect(m.track).not.toHaveBeenCalled();
+    expect((screen.getByTestId('share-main') as HTMLButtonElement).disabled).toBe(false);
   });
 
-  it('單張分享成功時 recap_shared 場景數為 1', async () => {
-    m.shareOne.mockResolvedValue({ status: 'shared' });
+  it('「分享這一張」只渲染該場景並只傳該場景，recap_shared 場景數為 1', async () => {
     open();
-    await readyMain();
-    fireEvent.click(screen.getByTestId('share-one-total'));
-    await waitFor(() => expect(m.track).toHaveBeenCalledWith('recap_shared', { year: 2026, sceneCount: 1 }));
+    await act(async () => { fireEvent.click(screen.getByTestId('share-one-movies')); });
+    expect(m.renderOne).toHaveBeenCalledTimes(1);
+    expect(m.renderOne.mock.calls[0][0].sceneKey).toBe('movies');
+    expect(m.renderMany).not.toHaveBeenCalled();
+    expect(m.shareOne.mock.calls[0][0].name).toBe('movies');
+    expect(m.track).toHaveBeenCalledWith('recap_shared', { year: 2026, sceneCount: 1 });
   });
 
-  it('網頁版主按鈕文案為「下載全部」；原生為「儲存全部到相簿」', async () => {
+  it('單張渲染失敗：顯示錯誤，不呼叫分享', async () => {
+    m.renderOne.mockRejectedValue(new Error('boom'));
+    open();
+    await act(async () => { fireEvent.click(screen.getByTestId('share-one-total')); });
+    await waitFor(() => expect(screen.getByTestId('share-result').textContent).toContain('沒有成功'));
+    expect(m.shareOne).not.toHaveBeenCalled();
+  });
+
+  it('網頁版主按鈕文案為「下載全部」；原生為「儲存全部到相簿」', () => {
     m.isNative.mockReturnValue(false);
     const web = open();
-    await waitFor(() => expect(web.getByTestId('share-main').textContent).toContain('下載全部'));
-    cleanup();
+    expect(web.getByTestId('share-main').textContent).toContain('下載全部');
+    web.unmount();
     m.isNative.mockReturnValue(true);
-    const native = open();
-    await waitFor(() => expect(native.getByTestId('share-main').textContent).toContain('儲存全部到相簿'));
-  });
-
-  it('關閉時呼叫 queue 的 cleanup', async () => {
-    const view = open();
-    await waitFor(() => expect(screen.getByTestId('share-sheet')).toBeTruthy());
-    view.rerender(<RecapShareSheet isOpen={false} onClose={() => {}} recap={recap} reflectionIndex={0} locale="zh-TW" />);
-    expect(m.cleanup).toHaveBeenCalled();
-  });
-
-  it('圖片服務一直沒起來：60 秒後顯示重試而不是無限轉圈', async () => {
-    vi.useFakeTimers();
-    m.health.mockResolvedValue(false);
     open();
-    await act(async () => { await vi.advanceTimersByTimeAsync(61000); });
-    expect(screen.getByTestId('share-retry')).toBeTruthy();
-    expect(screen.getByText('圖片服務暫時無法使用')).toBeTruthy();
+    expect(screen.getByTestId('share-main').textContent).toContain('儲存全部到相簿');
+  });
+
+  describe('圖片服務還沒醒（冷啟動）', () => {
+    it('按儲存時先等服務就緒（顯示準備中），就緒後才渲染', async () => {
+      vi.useFakeTimers();
+      m.health.mockResolvedValueOnce(false).mockResolvedValueOnce(false).mockResolvedValue(true);
+      open();
+      await act(async () => { await Promise.resolve(); });
+      await act(async () => { fireEvent.click(screen.getByTestId('share-main')); });
+      expect(screen.getByTestId('share-main').textContent).toContain('圖片服務準備中');
+      expect(m.renderMany).not.toHaveBeenCalled();
+      await act(async () => { await vi.advanceTimersByTimeAsync(7000); });
+      expect(m.renderMany).toHaveBeenCalledTimes(1);
+    });
+
+    it('一直沒醒：60 秒後顯示不可用與重試，不無限轉圈、不渲染', async () => {
+      vi.useFakeTimers();
+      m.health.mockResolvedValue(false);
+      open();
+      await act(async () => { await Promise.resolve(); });
+      await act(async () => { fireEvent.click(screen.getByTestId('share-main')); });
+      await act(async () => { await vi.advanceTimersByTimeAsync(61000); });
+      expect(screen.getByText('圖片服務暫時無法使用')).toBeTruthy();
+      expect(screen.getByTestId('share-retry')).toBeTruthy();
+      expect(m.renderMany).not.toHaveBeenCalled();
+      expect((screen.getByTestId('share-main') as HTMLButtonElement).disabled).toBe(false);
+    });
   });
 });
