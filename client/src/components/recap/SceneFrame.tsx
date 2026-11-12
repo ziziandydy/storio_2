@@ -1,49 +1,10 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { SCENE_SIZE, type RecapAspect } from '@/lib/recap/types';
-import { posterSrc } from './posterSrc';
+import PosterImage from './PosterImage';
 
 const MAX_POSTERS = 6;
-/** 海報載入失敗（圖片代理偶發失敗、同時載入太多張）時的重試次數與間隔 */
-const MAX_POSTER_RETRIES = 2;
-const POSTER_RETRY_MS = 700;
-
-/**
- * 背景海報：載入失敗會自動重試，不會一直破圖。本機預設海報不重試。
- * 重試網址帶 retry 與時間戳，每次都是全新網址：WebKit 會把失敗／缺 CORS 標頭的舊回應快取下來，
- * 固定字串的重試網址一樣會被它擋掉。
- */
-function PosterImage({ path }: { path: string }) {
-  const [attempt, setAttempt] = useState({ retry: 0, stamp: 0 });
-  const { retry, stamp } = attempt;
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current);
-  }, []);
-
-  const base = posterSrc(path);
-  const retryable = base.src.startsWith('http');
-  const src = retry > 0 && retryable ? `${base.src}${base.src.includes('?') ? '&' : '?'}retry=${retry}&t=${stamp}` : base.src;
-
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      data-testid="scene-poster"
-      alt=""
-      src={src}
-      crossOrigin={base.crossOrigin}
-      onError={() => {
-        if (!retryable || retry >= MAX_POSTER_RETRIES || timer.current) return;
-        timer.current = setTimeout(() => {
-          timer.current = null;
-          setAttempt((a) => ({ retry: a.retry + 1, stamp: Date.now() }));
-        }, POSTER_RETRY_MS);
-      }}
-      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-    />
-  );
-}
 
 interface SceneFrameProps {
   aspectRatio: RecapAspect;
@@ -78,7 +39,8 @@ export default function SceneFrame({ aspectRatio, posters, filmEdge, children }:
           }}
         >
           {backdrop.map((p, i) => (
-            <PosterImage key={`${p}-${i}`} path={p} />
+            // 背景海報：經 posterLoader 驗證成功才顯示（直連 CDN → 代理 → 預設海報），絕不破圖
+            <PosterImage key={`${p}-${i}`} path={p} testId="scene-poster" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ))}
         </div>
       )}

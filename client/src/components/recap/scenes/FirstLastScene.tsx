@@ -4,14 +4,13 @@ import React from 'react';
 import type { FirstLastItem, FirstLastScene as FirstLastData } from '@/lib/recap/types';
 import { formatArchivedDate } from '@/lib/dateUtils';
 import SceneFrame from '../SceneFrame';
-import { posterSrc } from '../posterSrc';
+import PosterImage from '../PosterImage';
 import { Eyebrow, GOLD, type SceneProps } from './shared';
 
 function Entry({ label, item, locale }: { label: string; item: FirstLastItem; locale: 'zh-TW' | 'en-US' }) {
   return (
     <div className="flex items-center gap-4">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img alt={item.title ?? ''} {...posterSrc(item.poster_path)}
+      <PosterImage alt={item.title ?? ''} path={item.poster_path}
         style={{ width: '72px', height: '108px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }} />
       <div className="flex flex-col gap-1 text-left min-w-0">
         <span className="text-[11px] font-black uppercase tracking-[0.3em]" style={{ color: GOLD }}>{label}</span>

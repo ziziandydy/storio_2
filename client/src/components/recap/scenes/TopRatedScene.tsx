@@ -4,7 +4,7 @@ import React from 'react';
 import type { TopRatedScene as TopRatedData } from '@/lib/recap/types';
 import { fill } from '@/lib/recap/format';
 import SceneFrame from '../SceneFrame';
-import { posterSrc } from '../posterSrc';
+import PosterImage from '../PosterImage';
 import { Eyebrow, GOLD, type SceneProps } from './shared';
 
 const MAX_ITEMS = 3;
@@ -21,8 +21,7 @@ export default function TopRatedScene({ data, copy, aspectRatio, backdrop }: Sce
         </div>
         <div className="flex gap-3 justify-center">
           {data.items.slice(0, MAX_ITEMS).map((item, i) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={i} data-testid="top-rated-poster" alt={item.title ?? ''} {...posterSrc(item.poster_path)}
+            <PosterImage key={i} testId="top-rated-poster" alt={item.title ?? ''} path={item.poster_path}
               style={{ width: '96px', height: '144px', objectFit: 'cover', borderRadius: '8px' }} />
           ))}
         </div>

@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { render, screen, cleanup, fireEvent, act } from '@testing-library/react';
+import { render, screen, cleanup, waitFor } from '@testing-library/react';
 import SceneFrame from '../SceneFrame';
+import { __resetPosterLoader } from '../posterLoader';
+import { FakeImage } from './fakeImage';
 
 describe('SceneFrame', () => {
   afterEach(cleanup);
@@ -54,54 +56,43 @@ describe('SceneFrame', () => {
     expect(screen.queryAllByTestId('scene-poster')).toHaveLength(0);
   });
 
-  it('海報載入失敗會自動重試（最多 2 次、網址帶重試參數、間隔後才重送），不會一直破圖', () => {
-    vi.useFakeTimers();
+  it('遠端海報：驗證載入成功前 <img> 沒有 src（不破圖），成功後直連 CDN 小尺寸、不帶 crossOrigin', async () => {
+    FakeImage.install();
+    __resetPosterLoader();
     try {
       render(<SceneFrame aspectRatio="9:16" posters={['https://image.tmdb.org/t/p/w500/a.jpg']}>x</SceneFrame>);
-      const img = () => screen.getByTestId('scene-poster') as HTMLImageElement;
-      const original = img().getAttribute('src') as string;
-      expect(original).not.toContain('retry=');
-
-      fireEvent.error(img());
-      expect(img().getAttribute('src')).toBe(original); // 還沒到重試時間
-      act(() => {
-        vi.advanceTimersByTime(800);
-      });
-      expect(img().getAttribute('src')).toContain('retry=1');
-      const first = img().getAttribute('src');
-      expect(first).toMatch(/[?&]t=\d+/); // 帶時間戳：不會撞上瀏覽器已快取的失敗回應
-
-      fireEvent.error(img());
-      act(() => {
-        vi.advanceTimersByTime(800);
-      });
-      expect(img().getAttribute('src')).toContain('retry=2');
-      expect(img().getAttribute('src')).not.toBe(first);
-
-      fireEvent.error(img()); // 超過上限：不再重試
-      act(() => {
-        vi.advanceTimersByTime(5000);
-      });
-      expect(img().getAttribute('src')).toContain('retry=2');
+      const img = screen.getByTestId('scene-poster') as HTMLImageElement;
+      expect(img.hasAttribute('src')).toBe(false);
+      await waitFor(() => expect(img.getAttribute('src')).toBe('https://image.tmdb.org/t/p/w342/a.jpg'));
+      expect(img.getAttribute('crossorigin')).toBeNull();
     } finally {
-      vi.useRealTimers();
+      vi.unstubAllGlobals();
     }
   });
 
-  it('預設海報（本機 svg）不重試', () => {
-    vi.useFakeTimers();
+  it('同一批海報在多個場景重複出現時只真的載入一次', async () => {
+    FakeImage.install();
+    __resetPosterLoader();
     try {
-      render(<SceneFrame aspectRatio="9:16" posters={['/image/defaultMoviePoster.svg']}>x</SceneFrame>);
-      const img = screen.getByTestId('scene-poster') as HTMLImageElement;
-      const before = img.getAttribute('src');
-      fireEvent.error(img);
-      act(() => {
-        vi.advanceTimersByTime(2000);
-      });
-      expect(img.getAttribute('src')).toBe(before);
+      const posters = ['https://image.tmdb.org/t/p/w500/a.jpg', 'https://image.tmdb.org/t/p/w500/b.jpg'];
+      render(
+        <>
+          <SceneFrame aspectRatio="9:16" posters={posters}>x</SceneFrame>
+          <SceneFrame aspectRatio="9:16" posters={posters}>y</SceneFrame>
+          <SceneFrame aspectRatio="4:5" posters={posters}>z</SceneFrame>
+        </>,
+      );
+      await waitFor(() => expect(screen.getAllByTestId('scene-poster').every((i) => i.hasAttribute('src'))).toBe(true));
+      expect(FakeImage.created).toHaveLength(2);
     } finally {
-      vi.useRealTimers();
+      vi.unstubAllGlobals();
     }
+  });
+
+  it('預設海報（本機 svg）直接顯示', () => {
+    render(<SceneFrame aspectRatio="9:16" posters={['/image/defaultMoviePoster.svg']}>x</SceneFrame>);
+    const img = screen.getByTestId('scene-poster') as HTMLImageElement;
+    expect(img.getAttribute('src')).toBe('/image/defaultMoviePoster.svg');
   });
 
   it('filmEdge 才有底片邊標記', () => {
