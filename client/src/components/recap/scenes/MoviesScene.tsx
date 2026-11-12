@@ -12,7 +12,7 @@ export default function MoviesScene({ data, copy, aspectRatio, animate }: SceneP
     <StatLayout
       aspectRatio={aspectRatio}
       posters={data.posters}
-      filmEdge
+      frame="film"
       testId="scene-movies"
       eyebrow={copy.scene.movies.title}
       headline={<CountText template={copy.scene.movies.count} value={data.count} animate={animate} />}

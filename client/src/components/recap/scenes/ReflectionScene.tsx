@@ -5,7 +5,7 @@ import type { ReflectionScene as ReflectionData } from '@/lib/recap/types';
 import { fill } from '@/lib/recap/format';
 import { reflectionCandidate } from '@/lib/recap/reflection';
 import SceneFrame from '../SceneFrame';
-import { Eyebrow, GOLD, type SceneProps } from './shared';
+import { Eyebrow, GOLD, type SceneProps, pickPosters } from './shared';
 
 export default function ReflectionScene({
   data, copy, aspectRatio, backdrop, reflectionIndex = 0,
@@ -14,7 +14,7 @@ export default function ReflectionScene({
   const countText = data.count === 1 ? copy.scene.reflection.countOne : fill(copy.scene.reflection.count, { n: data.count });
 
   return (
-    <SceneFrame aspectRatio={aspectRatio} posters={backdrop}>
+    <SceneFrame aspectRatio={aspectRatio} posters={pickPosters(pick?.poster_path ? [pick.poster_path] : undefined, backdrop)}>
       <div data-testid="scene-reflection" className="h-full flex flex-col items-center justify-center text-center gap-6">
         <Eyebrow>{copy.scene.reflection.title}</Eyebrow>
         {pick && (

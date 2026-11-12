@@ -12,6 +12,7 @@ export default function BooksScene({ data, copy, aspectRatio, animate }: ScenePr
     <StatLayout
       aspectRatio={aspectRatio}
       posters={data.posters}
+      frame="book"
       testId="scene-books"
       eyebrow={copy.scene.books.title}
       headline={<CountText template={copy.scene.books.count} value={data.count} animate={animate} />}

@@ -4,7 +4,7 @@ import React from 'react';
 import type { EraScene as EraData } from '@/lib/recap/types';
 import { eraRange, fill } from '@/lib/recap/format';
 import SceneFrame from '../SceneFrame';
-import { Eyebrow, GOLD, type SceneProps } from './shared';
+import { Eyebrow, GOLD, type SceneProps, pickPosters } from './shared';
 
 /** 最多顯示幾列；十年太多時，最舊的幾個合併成一列「更早」。 */
 const MAX_ROWS = 6;
@@ -34,7 +34,7 @@ export default function EraScene({ data, copy, aspectRatio, backdrop }: ScenePro
   const max = Math.max(...rows.map((r) => r.count), 1);
 
   return (
-    <SceneFrame aspectRatio={aspectRatio} posters={backdrop}>
+    <SceneFrame aspectRatio={aspectRatio} posters={pickPosters(data.posters, backdrop)}>
       <div data-testid="scene-eras" className="h-full flex flex-col justify-center gap-7">
         <div className="text-center">
           <Eyebrow>{copy.scene.eras.title}</Eyebrow>

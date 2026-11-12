@@ -21,9 +21,20 @@ describe('ClosingScene', () => {
     ['en-US', en],
   ] as const)('%s：品牌、標語與商店名稱', (locale, copy) => {
     const { container } = render(<ClosingScene {...base} copy={copy} locale={locale} />);
-    expect(text(container)).toContain('STORIO');
     expect(text(container)).toContain('Collect stories in your Folio');
     for (const label of STORE_LABELS) expect(text(container)).toContain(label);
+  });
+
+  it('Storio logo 放大成主視覺（9:16 至少 240px、4:5 至少 140px），不再放角落小標誌', () => {
+    const { unmount } = render(<ClosingScene {...base} copy={zh} locale="zh-TW" />);
+    const big = screen.getByTestId('closing-logo') as HTMLImageElement;
+    expect(big.getAttribute('src')).toBe('/image/logo/logo.png');
+    expect(big.alt).toBe('Storio');
+    expect(parseInt(big.style.width, 10)).toBeGreaterThanOrEqual(240);
+    expect(screen.queryByTestId('scene-logo')).toBeNull();
+    unmount();
+    render(<ClosingScene {...base} aspectRatio="4:5" copy={zh} locale="zh-TW" />);
+    expect(parseInt((screen.getByTestId('closing-logo') as HTMLImageElement).style.width, 10)).toBeGreaterThanOrEqual(140);
   });
 
   it('有 QR 圖（含 alt）', () => {

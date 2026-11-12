@@ -2,12 +2,12 @@
 
 import React from 'react';
 import type { MonthsActiveScene as MonthsActiveData } from '@/lib/recap/types';
-import { CountText, StatLayout, type SceneProps } from './shared';
+import { CountText, StatLayout, type SceneProps, pickPosters } from './shared';
 
 export default function MonthsActiveScene({ data, copy, aspectRatio, animate, backdrop }: SceneProps<MonthsActiveData>) {
   return (
     <StatLayout
-      posters={backdrop}
+      posters={pickPosters(data.posters, backdrop)}
       aspectRatio={aspectRatio}
       testId="scene-months-active"
       headline={

@@ -5,7 +5,7 @@ import type { FirstLastItem, FirstLastScene as FirstLastData } from '@/lib/recap
 import { formatArchivedDate } from '@/lib/dateUtils';
 import SceneFrame from '../SceneFrame';
 import PosterImage from '../PosterImage';
-import { Eyebrow, GOLD, type SceneProps } from './shared';
+import { Eyebrow, GOLD, type SceneProps, pickPosters } from './shared';
 
 function Entry({ label, item, locale }: { label: string; item: FirstLastItem; locale: 'zh-TW' | 'en-US' }) {
   return (
@@ -23,7 +23,10 @@ function Entry({ label, item, locale }: { label: string; item: FirstLastItem; lo
 
 export default function FirstLastScene({ data, copy, locale, aspectRatio, backdrop }: SceneProps<FirstLastData>) {
   return (
-    <SceneFrame aspectRatio={aspectRatio} posters={backdrop}>
+    <SceneFrame aspectRatio={aspectRatio} posters={pickPosters(
+        [data.first.poster_path, data.last.poster_path].filter((p): p is string => !!p),
+        backdrop,
+      )}>
       <div data-testid="scene-first-last" className="h-full flex flex-col justify-center gap-8">
         <div className="text-center">
           <Eyebrow>{copy.scene.firstLast.title}</Eyebrow>

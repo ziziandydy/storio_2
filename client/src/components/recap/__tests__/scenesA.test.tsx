@@ -43,6 +43,14 @@ describe('場景標題（Eyebrow）', () => {
   });
 });
 
+describe('數據型場景的大字', () => {
+  it('長句平均換行（避免「故事」兩個字單獨一行）', () => {
+    const { container } = render(<TotalScene {...base} data={recap.total} copy={zh} locale="zh-TW" />);
+    const headline = container.querySelector('[data-testid="scene-total"] .text-\\[56px\\]') as HTMLElement;
+    expect(headline.style.textWrap).toBe('balance');
+  });
+});
+
 describe('TotalScene', () => {
   it('顯示作品總數與「至少 N 小時」', () => {
     const { container } = render(<TotalScene {...base} data={recap.total} copy={zh} locale="zh-TW" />);

@@ -3,7 +3,7 @@
 import React from 'react';
 import type { MonthlyScene as MonthlyData } from '@/lib/recap/types';
 import SceneFrame from '../SceneFrame';
-import { Eyebrow, GOLD, type SceneProps } from './shared';
+import { Eyebrow, GOLD, type SceneProps, pickPosters } from './shared';
 
 const MIN_BAR_PERCENT = 4; // 0 部的月份仍畫一小段，避免長條消失
 
@@ -12,7 +12,7 @@ export default function MonthlyScene({ data, copy, aspectRatio, backdrop }: Scen
   const peakIndex = max > 0 ? data.counts.indexOf(max) : -1;
 
   return (
-    <SceneFrame aspectRatio={aspectRatio} posters={backdrop}>
+    <SceneFrame aspectRatio={aspectRatio} posters={pickPosters(data.posters, backdrop)}>
       <div data-testid="scene-monthly" className="h-full flex flex-col justify-center gap-8">
         <div className="text-center">
           <Eyebrow>{copy.scene.monthly.title}</Eyebrow>

@@ -628,7 +628,7 @@ export const translations = {
         title: { eyebrow: '你的稱號' },
         monthly: { title: '每個月的故事節奏' },
         peakMonth: { title: '最投入的月份', count: '收藏了 {n} 部' },
-        monthsActive: { text: '這一年有 {n} 個月留下了故事' },
+        monthsActive: { text: '這一年有 {n} 個月\n留下了故事' },
         topRated: {
           title: '年度之最',
           count: '{n} 部作品拿下你的最高分',

@@ -3,7 +3,7 @@
 import React from 'react';
 import type { translations } from '@/i18n/locales';
 import type { RecapAspect, RecapLocale } from '@/lib/recap/types';
-import SceneFrame from '../SceneFrame';
+import SceneFrame, { type RecapFrame } from '../SceneFrame';
 import CountUp from '../CountUp';
 
 export const GOLD = '#c5a059';
@@ -24,6 +24,11 @@ export interface SceneProps<T> {
   isPartial: boolean;
   /** 沒有自己海報資料的場景用的背景海報（今年收藏的海報）；沒有就是純黑底 */
   backdrop?: string[];
+}
+
+/** 場景自己的背景海報（後端依場景挑好的）優先；沒有才退回今年的海報（backdrop）。 */
+export function pickPosters(own: string[] | undefined | null, fallback?: string[]): string[] | undefined {
+  return own && own.length > 0 ? own : fallback;
 }
 
 /** 把含 `{n}` 的文案拆開，數字用計數動畫（例如「{n} 部電影」→ 5 部電影）。 */
@@ -60,7 +65,7 @@ export function Pill({ children }: { children: React.ReactNode }) {
 interface StatLayoutProps {
   aspectRatio: RecapAspect;
   posters?: string[];
-  filmEdge?: boolean;
+  frame?: RecapFrame;
   testId: string;
   eyebrow?: React.ReactNode;
   /** 主要大字（通常含 CountText） */
@@ -71,12 +76,12 @@ interface StatLayoutProps {
 }
 
 /** 數據型場景的共同版面：垂直置中，眉標＋大字＋說明行＋徽章。 */
-export function StatLayout({ aspectRatio, posters, filmEdge, testId, eyebrow, headline, lines = [], badge }: StatLayoutProps) {
+export function StatLayout({ aspectRatio, posters, frame, testId, eyebrow, headline, lines = [], badge }: StatLayoutProps) {
   return (
-    <SceneFrame aspectRatio={aspectRatio} posters={posters} filmEdge={filmEdge}>
+    <SceneFrame aspectRatio={aspectRatio} posters={posters} frame={frame}>
       <div data-testid={testId} className="h-full flex flex-col items-center justify-center text-center gap-4">
         {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
-        {headline && <div className="text-[56px] leading-tight font-black">{headline}</div>}
+        {headline && <div className="text-[56px] leading-tight font-black" style={{ textWrap: 'balance', whiteSpace: 'pre-line' }}>{headline}</div>}
         {lines.filter(Boolean).map((line, i) => (
           <div key={i} className="text-[18px] font-medium text-white/85">
             {line}

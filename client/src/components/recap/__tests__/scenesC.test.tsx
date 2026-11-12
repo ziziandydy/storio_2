@@ -22,7 +22,9 @@ afterEach(cleanup);
 describe('MonthsActiveScene', () => {
   it('顯示「這一年有 N 個月留下了故事」', () => {
     const { container } = render(<MonthsActiveScene {...base} data={recap.months_active!} copy={zh} locale="zh-TW" />);
-    expect(text(container)).toContain('這一年有 6 個月留下了故事');
+    expect(text(container).replace(/\s+/g, '')).toContain('這一年有6個月留下了故事');
+    // 中文在「個月」之後換行，避免自動換行把「個月」拆開
+    expect(text(container)).toContain('這一年有 6 個月\n留下了故事');
   });
 });
 

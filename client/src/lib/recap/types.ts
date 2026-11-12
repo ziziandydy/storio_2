@@ -23,11 +23,11 @@ export interface TimeSummary {
 export interface SeriesScene extends TimeSummary { episodes: number }
 export interface BooksScene extends TimeSummary { pages: number }
 export interface GenreScene { top: { name: string; count: number }[]; posters: string[] }
-export interface EraScene { decades: { decade: number; count: number }[] }
-export interface TitleScene { id: string; zh: string; en: string }
-export interface MonthlyScene { counts: number[] }
+export interface EraScene { decades: { decade: number; count: number }[]; posters?: string[] }
+export interface TitleScene { id: string; zh: string; en: string; posters?: string[] }
+export interface MonthlyScene { counts: number[]; posters?: string[] }
 export interface PeakMonthScene { month: number; count: number; posters: string[] }
-export interface MonthsActiveScene { count: number }
+export interface MonthsActiveScene { count: number; posters?: string[] }
 export interface RatedItem { title: string | null; poster_path: string | null }
 export interface TopRatedScene { rating: number; count: number; items: RatedItem[] }
 export interface FirstLastItem { title: string | null; poster_path: string | null; date: string | null }

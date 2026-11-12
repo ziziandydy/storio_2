@@ -12,6 +12,7 @@ export default function SeriesScene({ data, copy, aspectRatio, animate }: SceneP
     <StatLayout
       aspectRatio={aspectRatio}
       posters={data.posters}
+      frame="tv"
       testId="scene-series"
       eyebrow={copy.scene.series.title}
       headline={<CountText template={copy.scene.series.count} value={data.count} animate={animate} />}
