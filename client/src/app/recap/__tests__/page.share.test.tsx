@@ -3,6 +3,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { makeRecap } from '@/lib/recap/__tests__/fixtures';
+import { buildScenes } from '@/lib/recap/scenes';
 import type { RecapData } from '@/lib/recap/types';
 
 const m = vi.hoisted(() => ({
@@ -68,8 +69,11 @@ describe('Recap 預覽頁：分享與事件', () => {
   });
 
   it('預覽換句後再開面板，收到更新後的心得索引', () => {
-    ready(makeRecap());
+    const recap = makeRecap();
+    ready(recap);
     render(<RecapPage />);
+    const reflectionAt = buildScenes(recap, { forShare: false }).indexOf('reflection');
+    for (let i = 0; i < reflectionAt; i++) fireEvent.click(screen.getByTestId('story-stage'), { clientX: 900 });
     fireEvent.click(screen.getByRole('button', { name: '換一句' }));
     fireEvent.click(screen.getByRole('button', { name: '分享' }));
     expect(screen.getByTestId('share-sheet-mock').getAttribute('data-reflection')).toBe('1');

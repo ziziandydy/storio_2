@@ -35,6 +35,13 @@ vi.mock('@/components/recap/RecapShareSheet', () => ({ default: () => null }));
 import RecapPage from '../page';
 
 const ready = (data: RecapData) => (m.recap.current = { data, status: 'ready', needed: null });
+const stage = () => screen.getByTestId('story-stage');
+/** 像用戶一樣點右側翻頁，翻到指定場景（'continue' 為最後一頁） */
+const goTo = (recap: RecapData, key: string) => {
+  const scenes = buildScenes(recap, { forShare: false });
+  const target = key === 'continue' ? scenes.length : scenes.indexOf(key as never);
+  for (let i = 0; i < target; i++) fireEvent.click(stage(), { clientX: 900 });
+};
 
 describe('Recap 預覽頁', () => {
   beforeEach(() => {
@@ -81,8 +88,10 @@ describe('Recap 預覽頁', () => {
   });
 
   it('點「繼續收藏」導向 /search?focus=1', () => {
-    ready(makeRecap());
+    const recap = makeRecap();
+    ready(recap);
     render(<RecapPage />);
+    goTo(recap, 'continue');
     fireEvent.click(screen.getByRole('button', { name: /繼續收藏/ }));
     expect(m.push).toHaveBeenCalledWith('/search?focus=1');
   });
@@ -122,8 +131,10 @@ describe('Recap 預覽頁', () => {
   });
 
   it('心得「換一句」：兩則時顯示並切換，只有一則時沒有按鈕', () => {
-    ready(makeRecap());
+    const recap = makeRecap();
+    ready(recap);
     const { container } = render(<RecapPage />);
+    goTo(recap, 'reflection');
     expect(container.textContent).toContain('很棒');
     fireEvent.click(screen.getByRole('button', { name: '換一句' }));
     expect(container.textContent).toContain('還行');
@@ -131,8 +142,10 @@ describe('Recap 預覽頁', () => {
     expect(container.textContent).toContain('很棒'); // 循環
     cleanup();
 
-    ready(makeRecap({ reflection: { count: 1, candidates: [{ id: 'r1', title: 'T', poster_path: null, rating: 9, text: '唯一' }] } }));
+    const single = makeRecap({ reflection: { count: 1, candidates: [{ id: 'r1', title: 'T', poster_path: null, rating: 9, text: '唯一' }] } });
+    ready(single);
     render(<RecapPage />);
+    goTo(single, 'reflection');
     expect(screen.queryByRole('button', { name: '換一句' })).toBeNull();
   });
 
@@ -145,6 +158,33 @@ describe('Recap 預覽頁', () => {
     m.user.current = { is_anonymous: false };
     const b = render(<RecapPage />);
     expect(b.queryByTestId('guest-hint')).toBeNull();
+  });
+
+  it('限時動態式：整頁固定不可上下捲動，頂端有分段進度條（每場景＋最後一頁各一段），不再有圓點', () => {
+    const recap = makeRecap();
+    ready(recap);
+    render(<RecapPage />);
+    expect(screen.getByTestId('story-viewer').className).toContain('overflow-hidden');
+    expect(screen.getAllByTestId('story-progress-fill')).toHaveLength(buildScenes(recap, { forShare: false }).length + 1);
+    expect(screen.queryAllByTestId('recap-dot')).toHaveLength(0);
+  });
+
+  it('點右側翻頁、點左側回上一頁（回到開場）', () => {
+    const recap = makeRecap();
+    ready(recap);
+    render(<RecapPage />);
+    expect(screen.getByTestId('story-slide-0').style.visibility).toBe('visible');
+    fireEvent.click(stage(), { clientX: 900 });
+    expect(screen.getByTestId('story-slide-1').style.visibility).toBe('visible');
+    fireEvent.click(stage(), { clientX: 5 });
+    expect(screen.getByTestId('story-slide-0').style.visibility).toBe('visible');
+  });
+
+  it('頁首的返回與頁尾的分享按鈕不會被當成翻頁點擊', () => {
+    ready(makeRecap());
+    render(<RecapPage />);
+    fireEvent.click(screen.getByRole('button', { name: '分享' }), { clientX: 900 });
+    expect(screen.getByTestId('story-slide-0').style.visibility).toBe('visible');
   });
 
   it('預留分享入口位置（2B 接上）', () => {

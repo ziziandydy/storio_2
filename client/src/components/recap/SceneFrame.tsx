@@ -91,7 +91,7 @@ export default function SceneFrame({ aspectRatio, posters, filmEdge, children }:
         data-testid="scene-logo"
         src="/image/logo/logo.png"
         alt="Storio"
-        style={{ position: 'absolute', top: '24px', left: '50%', transform: 'translateX(-50%)', width: '44px', height: '44px', zIndex: 3, mixBlendMode: 'screen' }}
+        style={{ position: 'absolute', top: '24px', left: '50%', transform: 'translateX(-50%)', width: '44px', height: '44px', zIndex: 3, mixBlendMode: 'screen', borderRadius: '50%' }}
       />
     </div>
   );
