@@ -1,7 +1,7 @@
 export const DEFAULT_POSTER = '/image/defaultMoviePoster.svg';
 
 /** TMDB 尺寸：背景有壓暗、前景海報最大 96×144（@2x 192×288），w342 已足夠，不必抓 w500 原圖 */
-export type PosterSize = 'w185' | 'w342' | 'w500';
+export type PosterSize = 'w154' | 'w185' | 'w342' | 'w500';
 export const DEFAULT_POSTER_SIZE: PosterSize = 'w342';
 
 /** 只有 http(s) 才算遠端海報：需要非同步載入、驗證成功才交給 <img>，並有備援來源 */

@@ -19,6 +19,9 @@ import FirstLastScene from './scenes/FirstLastScene';
 import ReflectionScene from './scenes/ReflectionScene';
 import ClosingScene from './scenes/ClosingScene';
 
+/** 其他場景借用今年的海報當背景時只借前幾張（總數場景自己才是密集牆） */
+const BACKDROP_LOAN = 6;
+
 interface RecapSceneProps {
   sceneKey: SceneKey;
   recap: RecapData;
@@ -31,7 +34,7 @@ interface RecapSceneProps {
 
 /** 依場景鍵渲染對應場景；該場景資料為 null 時回傳 null（不渲染空框）。結尾場景在階段 2B 實作。 */
 export default function RecapScene({ sceneKey, recap, copy, locale, aspectRatio, animate, reflectionIndex = 0 }: RecapSceneProps) {
-  const common = { copy, locale, aspectRatio, animate, year: recap.year, isPartial: recap.is_partial, backdrop: recap.total.posters };
+  const common = { copy, locale, aspectRatio, animate, year: recap.year, isPartial: recap.is_partial, backdrop: recap.total.posters.slice(0, BACKDROP_LOAN) };
 
   switch (sceneKey) {
     case 'opening': return <OpeningScene {...common} data={recap.opening} />;

@@ -364,3 +364,26 @@ def test_list_years_excludes_forbidden_years(repo):
     )
     with patch("app.services.recap_service.can_view_recap_year", side_effect=lambda u, y: y != 2025):
         assert service().list_years("u1", today=TODAY)["years"] == [{"year": 2026, "count": 3}]
+
+
+@pytest.mark.asyncio
+async def test_total_posters_cover_as_many_works_as_possible_capped_at_48_most_recent_first(repo):
+    rows = [
+        make_row(id=f"r{i}", external_id=f"e{i}", poster_path=f"/p{i:03d}.jpg",
+                 archived_date=f"2026-{(i % 12) + 1:02d}-{(i % 27) + 1:02d}")
+        for i in range(60)
+    ]
+    repo.get_recap_rows.return_value = rows
+    result = await service().build_recap("u1", 2026, TODAY, fetch=no_fetch)
+    assert len(result.total["posters"]) == 48
+    assert len(set(result.total["posters"])) == 48  # 不重複
+    # 其他場景仍然只給少量海報（它們是「該類別的代表」，不是全部）
+    assert len(result.movies["posters"]) <= 6
+
+
+@pytest.mark.asyncio
+async def test_total_posters_use_every_work_when_fewer_than_the_cap(repo):
+    rows = [make_row(id=f"r{i}", external_id=f"e{i}", poster_path=f"/p{i}.jpg") for i in range(20)]
+    repo.get_recap_rows.return_value = rows
+    result = await service().build_recap("u1", 2026, TODAY, fetch=no_fetch)
+    assert len(result.total["posters"]) == 20

@@ -21,6 +21,7 @@ from app.services.recap_titles import select_title
 from app.services.search_service import SearchService
 
 METADATA_LANGUAGE = "en-US"  # genres 一律存英文名
+TOTAL_POSTER_LIMIT = 48  # 總數場景海報牆上限：6 欄 × 8 列，每張約 67×89，w154 縮圖已足夠；再多每張太小
 
 
 class NotEnoughStories(Exception):
@@ -146,7 +147,8 @@ class RecapService:
             total_count=len(rows),
             metadata_pending=pending,
             opening={"year": year},
-            total=with_posters(rows),
+            # 「這一年你收藏了」的背景：盡可能排滿今年所有作品的海報（最近的優先），上限 48（6×8 的牆）
+            total={**stats.time_summary(rows), "posters": stats.recent_posters(rows, limit=TOTAL_POSTER_LIMIT)},
             movies=with_posters(movies) if movies else None,
             series=(
                 {

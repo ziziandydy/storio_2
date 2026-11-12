@@ -4,14 +4,16 @@ import React from 'react';
 import { SCENE_SIZE, type RecapAspect } from '@/lib/recap/types';
 import PosterImage from './PosterImage';
 
-const MAX_POSTERS = 12; // 每月一張時最多 12 個月
+const MAX_POSTERS = 48; // 總數場景的海報牆：6 欄 × 8 列，每張約 67×89；再多每張太小
+/** 超過這個張數就算「密集牆」：改用較小的縮圖（w154）並依畫面比例挑欄數 */
+const DENSE_AFTER = 12;
 /** 文字帶的失焦程度與範圍（百分比是畫面高度）：約 34%～78% 完整失焦，上下各約 18% 羽化 */
 const FOCUS_BLUR_PX = 10;
 const FOCUS_MASK = 'linear-gradient(180deg, transparent 16%, #000 34%, #000 78%, transparent 92%)';
 
 interface SceneFrameProps {
   aspectRatio: RecapAspect;
-  /** 背景海報（最多 12 張；沒有就只有純黑底） */
+  /** 背景海報（最多 48 張；沒有就只有純黑底） */
   posters?: string[];
   /** 媒體專屬外框：電影＝底片邊、影集＝電視螢幕、書＝書本；其他場景不加 */
   frame?: RecapFrame;
@@ -29,6 +31,26 @@ const CONTENT_PADDING: Record<RecapFrame | 'none', string> = {
   tv: '88px 44px 48px',
   book: '84px 40px 40px 56px',
 };
+
+/**
+ * 海報牆的欄數：
+ * - 12 張以內：1 張滿版、2／4 張兩欄、3 與 5～9 張三欄、10 張以上四欄（每張都夠大）。
+ * - 超過 12 張（密集牆）：挑讓每格最接近海報比例（高／寬 = 1.5）的欄數，所以矮的 4:5 畫面欄數會比 9:16 多。
+ */
+function gridColumns(count: number, w: number, h: number): number {
+  if (count <= 1) return 1;
+  if (count <= DENSE_AFTER) return count === 2 || count === 4 ? 2 : count <= 9 ? 3 : 4;
+  let best = 4;
+  let bestDiff = Infinity;
+  for (let c = 4; c <= 9; c++) {
+    const diff = Math.abs(h / Math.ceil(count / c) / (w / c) - 1.5);
+    if (diff < bestDiff) {
+      best = c;
+      bestDiff = diff;
+    }
+  }
+  return best;
+}
 
 function FrameOverlay({ frame }: { frame: RecapFrame }) {
   if (frame === 'film') {
@@ -116,8 +138,7 @@ function FrameOverlay({ frame }: { frame: RecapFrame }) {
 export default function SceneFrame({ aspectRatio, posters, frame, heroLogo, children }: SceneFrameProps) {
   const { w, h } = SCENE_SIZE[aspectRatio];
   const unique = (posters ?? []).slice(0, MAX_POSTERS);
-  // 欄數：1 張滿版、2／4 張兩欄、3 與 5～9 張三欄、10 張以上四欄
-  const columns = unique.length <= 1 ? 1 : unique.length === 2 || unique.length === 4 ? 2 : unique.length <= 9 ? 3 : 4;
+  const columns = gridColumns(unique.length, w, h);
   // 最後一列不滿時用前面的海報循環補滿，不留空格
   const total = unique.length === 0 ? 0 : Math.ceil(unique.length / columns) * columns;
   const backdrop = Array.from({ length: total }, (_, i) => unique[i % unique.length]);
@@ -139,7 +160,7 @@ export default function SceneFrame({ aspectRatio, posters, frame, heroLogo, chil
         >
           {backdrop.map((p, i) => (
             // 背景海報：經 posterLoader 驗證成功才顯示（直連 CDN → 代理 → 預設海報），絕不破圖
-            <PosterImage key={`${p}-${i}`} path={p} testId="scene-poster" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <PosterImage key={`${p}-${i}`} path={p} size={unique.length > DENSE_AFTER ? 'w154' : undefined} testId="scene-poster" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ))}
         </div>
       )}

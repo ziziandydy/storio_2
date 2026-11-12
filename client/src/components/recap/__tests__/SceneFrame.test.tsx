@@ -44,10 +44,10 @@ describe('SceneFrame', () => {
     expect(screen.getByText('內容')).toBeTruthy();
   });
 
-  it('背景海報最多 12 張（每月一張時最多 12 個月），沒有海報時不渲染海報', () => {
-    const many = Array.from({ length: 15 }, (_, i) => `/image/p${i}.png`);
+  it('背景海報最多 48 張（總數場景的海報牆），沒有海報時不渲染海報', () => {
+    const many = Array.from({ length: 60 }, (_, i) => `/image/p${i}.png`);
     const { rerender } = render(<SceneFrame aspectRatio="9:16" posters={many}>x</SceneFrame>);
-    expect(screen.getAllByTestId('scene-poster')).toHaveLength(12);
+    expect(screen.getAllByTestId('scene-poster')).toHaveLength(48);
 
     rerender(<SceneFrame aspectRatio="9:16" posters={[]}>x</SceneFrame>);
     expect(screen.queryAllByTestId('scene-poster')).toHaveLength(0);
