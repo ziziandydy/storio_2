@@ -22,7 +22,7 @@
 - [x] 1.7 `canViewRecapYear` 單一函式（恆 true）與測試
 - [x] 1.8 `GET /api/v1/collection/recap?year=`：門檻 404（含 `needed`）、權限 403、15 個場景資料或 null（controller → service → repository）
 - [x] 1.9 `GET /api/v1/collection/recap/years`：達標年份與部數
-- [ ] 1.10 後端全套 pytest 通過（CI dummy env）；Tu 在 Supabase dev 再 prod 執行 migration 009（Tu 操作）
+- [x] 1.10 後端全套 pytest 通過（CI dummy env）；Tu 在 Supabase dev 再 prod 執行 migration 009（Tu 操作）
 
 ## 2. 階段 2：Recap 前端
 
@@ -46,5 +46,5 @@
 
 - [x] 4.1 前端 `npx next lint`、`tsc`、Vitest 全過；後端 pytest 全過
 - [x] 4.2 `/qa`：390px 手機寬度，中英文，資料多／少／無心得／無書各一種帳號
-- [ ] 4.3 iOS 真機：分享多張、觸覺、計數動畫（Tu 操作）
-- [ ] 4.4 `/review` → `openspec-archive-change` → `npm run release` → `ios:sync` → `build:ios`（階段 1 與 2 同一版）
+- [ ] 4.3 iOS 真機：分享多張、觸覺、計數動畫（Tu 操作；Tu 決定先上版，上版後驗證）
+- [x] 4.4 `/review` → `openspec-archive-change` → `npm run release` → `ios:sync` → `build:ios`（階段 1 與 2 同一版）
