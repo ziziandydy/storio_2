@@ -14,6 +14,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useHydrated } from '@/hooks/useHydrated';
 import OnboardingModal from '@/components/OnboardingModal';
 import { supabase, getURL } from '@/lib/supabase';
 import { isNativePlatform, isIOSPlatform, nativeAppleSignIn } from '@/lib/appleAuth';
@@ -23,6 +24,8 @@ import { getTitleKeyByCount, TitleTranslationKey } from '@/utils/leveling';
 import packageJson from '../../../package.json';
 import { motion, AnimatePresence } from 'framer-motion';
 import { App } from '@capacitor/app';
+import RecapProfileRow from '@/components/recap/RecapProfileRow';
+import RecapWindowCard from '@/components/recap/RecapWindowCard';
 
 interface ProfileSectionProps {
   title: string;
@@ -55,13 +58,13 @@ const ProfileItem = ({ icon, label, value, onClick, danger = false, toggle = fal
     onClick={onClick}
     className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors group border-b border-white/5 last:border-0"
   >
-    <div className="flex items-center gap-4">
-      <div className={`p-2 rounded-xl bg-white/5 ${danger ? 'text-red-500' : 'text-accent-gold'} group-hover:scale-110 transition-transform`}>
+    <div className="flex items-center gap-3 min-[360px]:gap-4 min-w-0">
+      <div className={`p-2 rounded-xl bg-white/5 shrink-0 ${danger ? 'text-red-500' : 'text-accent-gold'} group-hover:scale-110 transition-transform`}>
         {icon}
       </div>
-      <span className={`text-sm font-medium ${danger ? 'text-red-500' : 'text-text-primary'}`}>{label}</span>
+      <span className={`text-sm font-medium truncate ${danger ? 'text-red-500' : 'text-text-primary'}`}>{label}</span>
     </div>
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1.5 min-[360px]:gap-2 shrink-0 pl-1 min-[360px]:pl-2">
       {toggle ? (
         <div className={`w-10 h-6 rounded-full transition-colors relative flex items-center px-1 ${checked ? 'bg-accent-gold' : 'bg-white/10'}`}>
           <div className={`w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${checked ? 'translate-x-4' : 'translate-x-0'}`} />
@@ -82,6 +85,8 @@ export default function ProfilePage() {
   const { language, region, notificationsEnabled, setLanguage, setRegion, toggleNotifications,
     notifEnabled, notifPrimerSeen } = useSettingsStore();
   const { t } = useTranslation();
+  // 地區、語言、通知狀態來自 localStorage（persist），第一次 render 先不顯示，避免與預先產生的 HTML 不一致
+  const hydrated = useHydrated();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // UI States
@@ -756,6 +761,9 @@ export default function ProfilePage() {
       </header>
 
       <main className="max-w-md mx-auto p-6">
+        {/* 年度 Recap 限時卡片（置頂；11 月至隔年 2 月、對應年份達門檻、未關閉才出現） */}
+        <RecapWindowCard />
+
         {/* User Card */}
         <div className="bg-gradient-to-br from-folio-card to-black p-8 rounded-3xl border border-white/10 mb-10 shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-accent-gold/10 blur-[60px] rounded-full -mr-16 -mt-16 transition-all group-hover:bg-accent-gold/20" />
@@ -933,33 +941,36 @@ export default function ProfilePage() {
             icon={<Bell size={18} />}
             label={t.profile.items.notifications}
             value={
-              <div className="flex items-center gap-2">
-                {!notifPrimerSeen && (
-                  <span className="text-[9px] font-black uppercase tracking-widest bg-accent-gold text-folio-black px-1.5 py-0.5 rounded-full">NEW</span>
-                )}
-                <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${notifEnabled ? 'bg-accent-gold/20 text-accent-gold' : 'bg-white/10 text-text-desc'}`}>
-                  {notifEnabled ? 'ON' : 'OFF'}
-                </span>
-              </div>
+              hydrated ? (
+                <div className="flex items-center gap-1.5 min-[360px]:gap-2">
+                  {!notifPrimerSeen && (
+                    <span className="text-[9px] font-black uppercase tracking-widest bg-accent-gold text-folio-black px-1.5 py-0.5 rounded-full">NEW</span>
+                  )}
+                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${notifEnabled ? 'bg-accent-gold/20 text-accent-gold' : 'bg-white/10 text-text-desc'}`}>
+                    {notifEnabled ? 'ON' : 'OFF'}
+                  </span>
+                </div>
+              ) : undefined
             }
             onClick={() => router.push('/profile/notifications')}
           />
           <ProfileItem
             icon={<Globe size={18} />}
             label={t.profile.items.language}
-            value={getLanguageLabel(language)}
+            value={hydrated ? getLanguageLabel(language) : undefined}
             onClick={() => setShowLanguageSettings(true)}
           />
           <ProfileItem
             icon={<Globe size={18} />}
             label={t.profile.items.region}
-            value={(() => {
+            value={hydrated ? (() => {
               const opt = REGION_OPTIONS.find(o => o.code === region);
               return opt ? `${opt.flag} ${language === 'zh-TW' ? opt.zhName : opt.enName}` : region;
-            })()}
+            })() : undefined}
             onClick={() => setShowRegionSettings(true)}
           />
           <ProfileItem icon={<Layers size={18} />} label={t.profile.items.statistics} onClick={() => setShowStatisticsSettings(true)} />
+          <RecapProfileRow />
           {!isAnonymous && (
             <ProfileItem
               icon={<Shield size={18} />}

@@ -89,9 +89,87 @@ async def test_scenes_present_or_none_by_data(repo):
     assert result.books["count"] == 1 and result.books["pages"] == 400
     assert result.total["count"] == 3
     assert result.genres is None  # 類別資料不足
-    assert result.story_age is None and result.title is None
+    assert result.eras is None and result.title is None
     assert result.first_last is not None  # ≥ 2 列
     assert result.reflection is None and result.top_rated is None
+
+
+@pytest.mark.asyncio
+async def test_scene_posters_are_split_by_media_type(repo):
+    repo.get_recap_rows.return_value = [
+        make_row(id="a", media_type="movie", poster_path="/m1.jpg", archived_date="2026-03-01"),
+        make_row(id="b", media_type="movie", poster_path="/m2.jpg", archived_date="2026-03-02"),
+        make_row(id="c", media_type="book", poster_path="/b1.jpg", archived_date="2026-03-03", runtime_minutes=None, page_count=300),
+    ]
+    result = await service().build_recap("u1", 2026, TODAY, fetch=no_fetch)
+
+    assert result.movies["posters"] == ["/m2.jpg", "/m1.jpg"]
+    assert result.books["posters"] == ["/b1.jpg"]
+    assert set(result.total["posters"]) == {"/m1.jpg", "/m2.jpg", "/b1.jpg"}
+    assert len(result.total["posters"]) <= 6
+
+
+@pytest.mark.asyncio
+async def test_genre_scene_posters_only_include_top_genre_works(repo):
+    repo.get_recap_rows.return_value = [
+        make_row(id="a", genres=["Drama"], poster_path="/d1.jpg", archived_date="2026-03-01"),
+        make_row(id="b", genres=["drama", "Crime"], poster_path="/d2.jpg", archived_date="2026-03-02"),
+        make_row(id="c", genres=["Comedy"], poster_path="/c1.jpg", archived_date="2026-03-03"),
+    ]
+    result = await service().build_recap("u1", 2026, TODAY, fetch=no_fetch)
+
+    assert result.genres["top"][0]["name"] == "Drama"
+    assert result.genres["posters"] == ["/d2.jpg", "/d1.jpg"]
+
+
+@pytest.mark.asyncio
+async def test_peak_month_posters_only_include_that_months_works(repo):
+    repo.get_recap_rows.return_value = [
+        make_row(id="a", poster_path="/m1.jpg", archived_date="2026-03-01"),
+        make_row(id="b", poster_path="/m2.jpg", archived_date="2026-03-02"),
+        make_row(id="c", poster_path="/m3.jpg", archived_date="2026-03-03"),
+        make_row(id="d", poster_path="/jul.jpg", archived_date="2026-07-01"),
+    ]
+    result = await service().build_recap("u1", 2026, TODAY, fetch=no_fetch)
+
+    assert result.peak_month["month"] == 3
+    assert result.peak_month["posters"] == ["/m3.jpg", "/m2.jpg", "/m1.jpg"]
+
+
+@pytest.mark.asyncio
+async def test_works_without_posters_give_empty_lists_not_errors(repo):
+    repo.get_recap_rows.return_value = [make_row(id=str(i)) for i in range(3)]
+    result = await service().build_recap("u1", 2026, TODAY, fetch=no_fetch)
+
+    assert result.total["posters"] == []
+    assert result.movies["posters"] == []
+
+
+@pytest.mark.asyncio
+async def test_series_episodes_and_minutes_do_not_double_count_legacy_whole_show_row(repo):
+    repo.get_recap_rows.return_value = [
+        make_row(id="legacy", media_type="tv", external_id="show1", seasons=None, episode_total=72, runtime_minutes=22),
+        make_row(id="s3", media_type="tv", external_id="show1", seasons=[3], episode_total=24, runtime_minutes=22),
+        make_row(id="m", media_type="movie", external_id="m1"),
+    ]
+    result = await service().build_recap("u1", 2026, TODAY, fetch=no_fetch)
+
+    assert result.series["count"] == 2
+    assert result.series["episodes"] == 24
+    assert result.series["minutes"] == 24 * 22
+    assert result.total["minutes"] == 24 * 22 + 100
+
+
+@pytest.mark.asyncio
+async def test_season_by_season_rows_sum_each_seasons_own_episodes(repo):
+    repo.get_recap_rows.return_value = [
+        make_row(id=f"s{n}", media_type="tv", external_id="show1", seasons=[n], episode_total=eps, runtime_minutes=22)
+        for n, eps in [(1, 24), (2, 24), (3, 22)]
+    ]
+    result = await service().build_recap("u1", 2026, TODAY, fetch=no_fetch)
+
+    assert result.series["episodes"] == 70
+    assert result.series["minutes"] == 70 * 22
 
 
 @pytest.mark.asyncio
@@ -111,7 +189,7 @@ async def test_monthly_scenes_need_two_active_months(repo):
     ]
     one_month = await service().build_recap("u1", 2026, TODAY, fetch=no_fetch)
     assert one_month.monthly is None and one_month.months_active is None
-    assert one_month.peak_month == {"month": 3, "count": 3}
+    assert one_month.peak_month == {"month": 3, "count": 3, "posters": []}
 
     repo.get_recap_rows.return_value = [
         make_row(id="a", archived_date="2026-03-05"),
@@ -120,7 +198,7 @@ async def test_monthly_scenes_need_two_active_months(repo):
     ]
     two_months = await service().build_recap("u1", 2026, TODAY, fetch=no_fetch)
     assert two_months.monthly["counts"][2] == 2 and len(two_months.monthly["counts"]) == 12
-    assert two_months.months_active == {"count": 2}
+    assert two_months.months_active == {"count": 2, "posters": []}
 
 
 @pytest.mark.asyncio
@@ -247,10 +325,36 @@ def test_list_years_threshold_sorted_desc(repo):
         + [make_row(id=f"b{i}", archived_date="2025-05-01") for i in range(3)]
         + [make_row(id=f"c{i}", archived_date="2026-05-01") for i in range(5)]
     )
-    assert service().list_years("u1") == {
-        "threshold": 3,
-        "years": [{"year": 2026, "count": 5}, {"year": 2025, "count": 3}],
-    }
+    result = service().list_years("u1", today=TODAY)
+    assert result["threshold"] == 3
+    assert result["years"] == [{"year": 2026, "count": 5}, {"year": 2025, "count": 3}]
+
+
+def test_list_years_reports_current_year_count_even_below_threshold(repo):
+    repo.get_recap_rows.return_value = (
+        [make_row(id="a", archived_date="2026-05-01")]
+        + [make_row(id=f"b{i}", archived_date="2025-05-01") for i in range(4)]
+    )
+    result = service().list_years("u1", today=TODAY)
+    assert result["current"] == {"year": 2026, "count": 1}
+    assert [y["year"] for y in result["years"]] == [2025]  # 當年不足門檻，不在清單
+
+
+def test_list_years_current_year_with_no_stories_is_zero(repo):
+    repo.get_recap_rows.return_value = []
+    assert service().list_years("u1", today=TODAY)["current"] == {"year": 2026, "count": 0}
+
+
+def test_list_years_current_year_at_threshold_is_listed_and_current(repo):
+    repo.get_recap_rows.return_value = [make_row(id=str(i), archived_date="2026-05-01") for i in range(3)]
+    result = service().list_years("u1", today=TODAY)
+    assert result["current"] == {"year": 2026, "count": 3}
+    assert result["years"] == [{"year": 2026, "count": 3}]
+
+
+def test_list_years_current_year_follows_today_argument(repo):
+    repo.get_recap_rows.return_value = [make_row(id="a", archived_date="2027-01-05")]
+    assert service().list_years("u1", today=date(2027, 1, 10))["current"] == {"year": 2027, "count": 1}
 
 
 def test_list_years_excludes_forbidden_years(repo):
@@ -259,4 +363,27 @@ def test_list_years_excludes_forbidden_years(repo):
         + [make_row(id=f"c{i}", archived_date="2026-05-01") for i in range(3)]
     )
     with patch("app.services.recap_service.can_view_recap_year", side_effect=lambda u, y: y != 2025):
-        assert service().list_years("u1")["years"] == [{"year": 2026, "count": 3}]
+        assert service().list_years("u1", today=TODAY)["years"] == [{"year": 2026, "count": 3}]
+
+
+@pytest.mark.asyncio
+async def test_total_posters_cover_as_many_works_as_possible_capped_at_48_most_recent_first(repo):
+    rows = [
+        make_row(id=f"r{i}", external_id=f"e{i}", poster_path=f"/p{i:03d}.jpg",
+                 archived_date=f"2026-{(i % 12) + 1:02d}-{(i % 27) + 1:02d}")
+        for i in range(60)
+    ]
+    repo.get_recap_rows.return_value = rows
+    result = await service().build_recap("u1", 2026, TODAY, fetch=no_fetch)
+    assert len(result.total["posters"]) == 48
+    assert len(set(result.total["posters"])) == 48  # 不重複
+    # 其他場景仍然只給少量海報（它們是「該類別的代表」，不是全部）
+    assert len(result.movies["posters"]) <= 6
+
+
+@pytest.mark.asyncio
+async def test_total_posters_use_every_work_when_fewer_than_the_cap(repo):
+    rows = [make_row(id=f"r{i}", external_id=f"e{i}", poster_path=f"/p{i}.jpg") for i in range(20)]
+    repo.get_recap_rows.return_value = rows
+    result = await service().build_recap("u1", 2026, TODAY, fetch=no_fetch)
+    assert len(result.total["posters"]) == 20

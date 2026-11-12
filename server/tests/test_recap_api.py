@@ -76,12 +76,20 @@ def test_recap_forbidden_is_403(mock_cls, user):
 
 @patch("app.api.v1.endpoints.collection.RecapService")
 def test_recap_years_route_is_not_shadowed_by_story_id(mock_cls, user):
-    mock_cls.return_value.list_years.return_value = {"threshold": 3, "years": [{"year": 2026, "count": 5}]}
+    mock_cls.return_value.list_years.return_value = {
+        "threshold": 3,
+        "years": [{"year": 2026, "count": 5}],
+        "current": {"year": 2026, "count": 5},
+    }
 
     response = client.get("/api/v1/collection/recap/years", headers=AUTH)
 
     assert response.status_code == 200
-    assert response.json() == {"threshold": 3, "years": [{"year": 2026, "count": 5}]}
+    assert response.json() == {
+        "threshold": 3,
+        "years": [{"year": 2026, "count": 5}],
+        "current": {"year": 2026, "count": 5},
+    }
 
 
 @patch("app.api.v1.endpoints.collection.RecapService")

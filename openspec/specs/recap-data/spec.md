@@ -1,0 +1,69 @@
+# recap-data Specification
+
+## Purpose
+年度 Recap（change: year-recap，歸檔於 2026-11-11）。
+
+## Requirements
+### Requirement: 作品資料欄位
+
+系統 SHALL 在 `collections` 表儲存可供 Recap 統計的作品資料：`runtime_minutes`（電影單部片長，或影集單集片長）、`episode_total`（影集該筆收藏涵蓋的總集數）、`genres`（類別文字陣列）、`page_count`（書的頁數）。所有欄位 SHALL 可為 null，且新增欄位 MUST NOT 影響既有 API 回應與舊版 App。
+
+#### Scenario: Migration 冪等
+- **WHEN** 重複執行 `009_recap_metadata.sql`
+- **THEN** 不得出錯，且既有資料不變
+
+#### Scenario: 舊版 App 相容
+- **WHEN** 舊版 App 呼叫既有收藏 API
+- **THEN** 回應內容與升級前相同，不因新欄位而失敗
+
+### Requirement: 新收藏寫入作品資料
+
+系統 SHALL 在加入收藏時，把已取得的片長、集數、類別、頁數一併寫入；取不到時 SHALL 留 null，且 MUST NOT 因此阻擋或延遲收藏成功。
+
+#### Scenario: 收藏電影
+- **WHEN** 用戶收藏一部電影且詳情可取得片長與類別
+- **THEN** 該筆收藏的 `runtime_minutes` 與 `genres` 被寫入
+
+#### Scenario: 取不到資料
+- **WHEN** 加入收藏時外部 API 回傳失敗
+- **THEN** 收藏仍成功，相關欄位為 null
+
+### Requirement: 舊收藏補抓與快取
+
+系統 SHALL 在計算某年 Recap 時，找出該年缺作品資料的收藏，以有限並行向 TMDB／Google Books 取詳情並寫回欄位。補抓 SHALL 有時間預算，超過時 SHALL 先以已有資料計算，並回報尚未補完的數量；失敗的作品 SHALL 視為無資料，下次請求再試。
+
+#### Scenario: 補抓成功並寫回
+- **WHEN** 用戶第一次開啟某年 Recap，且有 3 部舊收藏缺片長
+- **THEN** 系統向外部取得片長並寫回；再次開啟時不再重複向外部取得
+
+#### Scenario: 超過時間預算
+- **WHEN** 補抓超過時間預算
+- **THEN** 回應 SHALL 以已有資料計算並帶 `metadata_pending` 大於 0，不回傳錯誤
+
+#### Scenario: 補抓失敗
+- **WHEN** 某部作品的外部 API 失敗
+- **THEN** 該作品被視為無資料，不影響其他作品的統計
+
+### Requirement: 時間估算規則
+
+系統 SHALL 以下列規則估算花在作品上的時間，且只加總有資料的作品：電影 = 片長；影集 = 該筆收藏涵蓋的集數 × 單集片長（舊收藏沒有季數時以全劇估算）；書 = 頁數 ÷ 每小時 40 頁。文案 SHALL 使用「至少」或「約」，書與影集的時間 SHALL 標示為估算。
+
+#### Scenario: 缺資料的作品不計入
+- **WHEN** 一部電影沒有片長資料
+- **THEN** 它不計入總時間，且總時間文案為「至少」而非精確值
+
+#### Scenario: 書的時間
+- **WHEN** 用戶該年讀了頁數合計 1,200 頁的書
+- **THEN** 書的時間為 30 小時，並標示估算
+
+### Requirement: 類別、年代分佈與稱號
+
+系統 SHALL 統計類別（每部作品的所有類別都計入，取前三名）；年代分佈 = 電影與影集（不含書）依發行年份分到十年、各十年幾部，由舊到新；稱號 SHALL 以規則式從預先寫好的中英文稱號表選出，同樣輸入 MUST 得到同樣輸出，且 MUST NOT 呼叫 AI。所有稱號 SHALL 為正面。
+
+#### Scenario: 決定性
+- **WHEN** 同一份資料被計算兩次
+- **THEN** 兩次的類別排名、年代分佈與稱號相同
+
+#### Scenario: 年代分佈
+- **WHEN** 用戶收藏的電影與影集發行年份為 1994、1999、2003、2012、2015、2018，另有一本書
+- **THEN** 年代分佈為 1990 年代 2 部、2000 年代 1 部、2010 年代 3 部（由舊到新），書不計入

@@ -104,6 +104,27 @@ class SearchService:
             return await SearchService._fetch_gbooks_details(client, external_id, language=language)
         return None
 
+    @staticmethod
+    async def get_tv_season(client: httpx.AsyncClient, external_id: str, season_number: int) -> Optional[dict]:
+        """TMDB 單季詳情（含每集片長 episodes[].runtime）；取不到回 None。供 Recap 依季計算時間。"""
+        headers = {}
+        params = {"language": "en-US"}
+        if settings.TMDB_ACCESS_TOKEN:
+            headers["Authorization"] = f"Bearer {settings.TMDB_ACCESS_TOKEN}"
+        elif settings.TMDB_API_KEY:
+            params["api_key"] = settings.TMDB_API_KEY
+        else:
+            return None
+        try:
+            response = await client.get(
+                f"{SearchService.BASE_URL_TMDB}/tv/{external_id}/season/{season_number}",
+                params=params, headers=headers,
+            )
+            response.raise_for_status()
+            return response.json()
+        except Exception:
+            return None
+
     # --- Public Trending Methods (Cached via TrendingService) ---
 
     @staticmethod

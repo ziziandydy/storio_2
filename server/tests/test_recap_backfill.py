@@ -308,3 +308,63 @@ async def test_nothing_to_backfill_makes_no_calls():
 
     assert await backfill_rows(rows, rec.fetch, rec.save) == 0
     assert rec.fetch_calls == []
+
+
+# ---------- 每季各自計算片長 ----------
+
+from app.services.recap_backfill import needs_season_runtime, season_runtime_totals  # noqa: E402
+
+OLD_STAMP = "2026-11-01T00:00:00+00:00"
+NEW_STAMP = "2026-11-20T00:00:00+00:00"
+AFTER = datetime(2026, 11, 21, tzinfo=timezone.utc)
+
+
+def season_json(*runtimes):
+    return {"episodes": [{"runtime": r} for r in runtimes]}
+
+
+def test_season_totals_sum_each_season_separately():
+    # 第 1 季 3 集 × 60 分、第 2 季 2 集 × 30 分：不可當成每季都 60 分
+    assert season_runtime_totals([season_json(60, 60, 60), season_json(30, 30)]) == (5, 240)
+
+
+def test_season_totals_fill_missing_runtime_with_same_season_average():
+    # 同季有一集沒片長 → 用該季已知集數的平均（40）補
+    assert season_runtime_totals([season_json(30, 50, None)]) == (3, 120)
+
+
+def test_season_totals_unknown_when_any_season_has_no_runtime():
+    assert season_runtime_totals([season_json(None, None)]) is None
+    assert season_runtime_totals([]) is None
+    assert season_runtime_totals([season_json(60), None]) is None
+
+
+def test_needs_season_runtime_only_for_seasoned_tv_with_old_or_no_stamp():
+    tv = dict(media_type="tv", seasons=[1, 2], runtime_minutes=45, episode_total=20, genres=["Drama"])
+    assert needs_season_runtime(make_row(**tv), AFTER) is True
+    assert needs_season_runtime(make_row(**tv, metadata_fetched_at=OLD_STAMP), AFTER) is True
+    assert needs_season_runtime(make_row(**tv, metadata_fetched_at=NEW_STAMP), AFTER) is False
+    assert needs_season_runtime(make_row(**{**tv, "seasons": None}), AFTER) is False
+    assert needs_season_runtime(make_row(media_type="movie", seasons=[1]), AFTER) is False
+
+
+def test_needs_backfill_old_show_level_season_row_is_recomputed_even_if_complete():
+    row = make_row(media_type="tv", seasons=[3], runtime_minutes=45, episode_total=10,
+                   genres=["Drama"], metadata_fetched_at=OLD_STAMP)
+    assert needs_backfill(row, AFTER) is True
+
+
+@pytest.mark.asyncio
+async def test_backfill_overwrites_stale_season_runtime_once():
+    row = make_row(media_type="tv", seasons=[1, 2], runtime_minutes=60, episode_total=20, genres=["Drama"])
+    saved = {}
+
+    async def fetch(_row):
+        return {"runtime_minutes": 48, "episode_total": 5}
+
+    async def save(row_id, fields):
+        saved[row_id] = fields
+
+    await backfill_rows([row], fetch, save, now=AFTER)
+    assert saved["id-1"]["runtime_minutes"] == 48 and saved["id-1"]["episode_total"] == 5
+    assert needs_backfill(row, AFTER) is False

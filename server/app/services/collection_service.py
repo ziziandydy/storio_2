@@ -80,6 +80,22 @@ class CollectionService:
         instances = [StoryInstance(**i) for i in instances_data]
         return StoryCheckResponse(exists=len(instances) > 0, instances=instances)
 
+    def _is_duplicate(self, user_id: str, story_in: StoryCreate) -> bool:
+        """已收藏過這部作品才可能重複；影集若指定了季數，只有「季數與既有收藏重疊」才算重複，
+        所以已收藏第 5 季再收藏第 6 季可直接存。沒記季數的舊收藏代表整部影集，視為涵蓋所有季。"""
+        if not self.repo.check_duplicate(user_id, story_in.external_id):
+            return False
+        requested = set(story_in.seasons or [])
+        if story_in.media_type != "tv" or not requested:
+            return True
+        covered: set = set()
+        for instance in self.repo.get_instances_by_external_id(user_id, story_in.external_id):
+            seasons = instance.get("seasons")
+            if not seasons:
+                return True
+            covered.update(seasons)
+        return bool(requested & covered)
+
     def add_story(self, user_id: str, story_in: StoryCreate, is_anonymous: bool = False) -> StoryResponse:
         # Check limit only for anonymous users
         if is_anonymous:
@@ -91,7 +107,7 @@ class CollectionService:
                 )
 
         # Check for duplicate unless user explicitly force-adding (re-watch)
-        if not story_in.force_add and self.repo.check_duplicate(user_id, story_in.external_id):
+        if not story_in.force_add and self._is_duplicate(user_id, story_in):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Story already in collection"

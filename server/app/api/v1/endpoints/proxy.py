@@ -27,8 +27,11 @@ async def proxy_image(request: Request, url: str = Query(..., description="The U
             # CORS is handled by CORSMiddleware — do NOT set Access-Control-Allow-Origin here.
             # Mixing manual "*" with CORSMiddleware's credential-aware origin mapping
             # violates the W3C spec and causes Safari to reject the response.
+            # Vary: Origin 一律要帶：沒帶 Origin 的請求（一般 <img>）回應沒有 CORS 標頭，若不標 Vary，
+            # iOS WebKit 會把它快取後給之後帶 crossOrigin 的 <img> 重用，CORS 檢查失敗而一直破圖。
             headers = {
                 "Cache-Control": "public, max-age=86400",
+                "Vary": "Origin",
             }
             return Response(content=res.content, media_type=content_type, headers=headers)
 

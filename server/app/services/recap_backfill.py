@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_CONCURRENCY = 5
 DEFAULT_BUDGET_SECONDS = 8.0
 BACKFILL_RETRY_DAYS = 30  # 取過詳情但外部沒有欄位時，隔多久才再試
+SEASON_RUNTIME_SINCE = datetime(2026, 11, 12, tzinfo=timezone.utc)  # 此日期起的影集片長才是依季計算
 
 _GENERIC_TOP_LEVEL = {"fiction", "nonfiction", "non-fiction"}
 
@@ -48,7 +49,46 @@ def _recently_fetched(row: dict, now: datetime) -> bool:
     return now - fetched_at < timedelta(days=BACKFILL_RETRY_DAYS)
 
 
+def needs_season_runtime(row: dict, now: Optional[datetime] = None) -> bool:
+    """標了季數的影集收藏，片長要依「所選各季」的實際集數與片長算；
+    此日期前寫入的是整部影集的單集片長 × 所選集數（不分季），要重算一次（重算後會蓋上新的時間戳）。"""
+    if row.get("media_type") != "tv" or not row.get("seasons"):
+        return False
+    raw = row.get("metadata_fetched_at")
+    if not raw:
+        return True
+    try:
+        fetched_at = datetime.fromisoformat(str(raw))
+    except ValueError:
+        return True
+    if fetched_at.tzinfo is None:
+        fetched_at = fetched_at.replace(tzinfo=timezone.utc)
+    return fetched_at < SEASON_RUNTIME_SINCE
+
+
+def season_runtime_totals(season_payloads: List[Optional[dict]]) -> Optional[Tuple[int, int]]:
+    """各季 TMDB 季詳情（含 episodes[].runtime）→ (總集數, 總分鐘)。
+    每季分開加總；某集沒片長就用同季已知集數的平均補；任一季完全沒片長或取不到 → None（整筆視為沒資料）。"""
+    if not season_payloads:
+        return None
+    episodes_total = 0
+    minutes_total = 0
+    for payload in season_payloads:
+        if not payload:
+            return None
+        runtimes = [e.get("runtime") for e in payload.get("episodes") or []]
+        known = [r for r in runtimes if r]
+        if not known:
+            return None
+        average = sum(known) / len(known)
+        episodes_total += len(runtimes)
+        minutes_total += sum(known) + round(average * (len(runtimes) - len(known)))
+    return episodes_total, minutes_total
+
+
 def needs_backfill(row: dict, now: Optional[datetime] = None) -> bool:
+    if needs_season_runtime(row, now):
+        return True
     if _recently_fetched(row, now or datetime.now(timezone.utc)):
         return False
     media_type = row.get("media_type")
@@ -134,7 +174,10 @@ async def backfill_rows(
             if fetched is None:
                 return
             for row in members:
-                applied = {k: v for k, v in fetched.items() if not row.get(k)}
+                if needs_season_runtime(row, now):
+                    applied = dict(fetched)  # 舊的整部影集片長要被依季計算的結果覆蓋
+                else:
+                    applied = {k: v for k, v in fetched.items() if not row.get(k)}
                 applied["metadata_fetched_at"] = stamp
                 row.update(applied)  # 即使寫回失敗，本次統計仍用取到的資料
                 try:

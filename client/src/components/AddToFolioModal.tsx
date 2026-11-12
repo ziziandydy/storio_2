@@ -68,6 +68,8 @@ export default function AddToFolioModal({
   const [selectedSeasons, setSelectedSeasons] = useState<number[]>([]);
   const [existingSeasons, setExistingSeasons] = useState<number[]>([]);
   const [isDuplicateFlow, setIsDuplicateFlow] = useState(false);
+  // 後端回報「這幾季已收藏過」時，暫存剛填的內容，讓用戶一鍵確認後原樣再送一次
+  const [pendingDuplicate, setPendingDuplicate] = useState<{ rating: number; notes: string; date?: string } | null>(null);
   const [successVariant, setSuccessVariant] = useState<SuccessVariant>('simple');
   // 第一部且為訪客：慶祝後要切換為訪客卡
   const [guestAfterCelebrate, setGuestAfterCelebrate] = useState(false);
@@ -94,6 +96,7 @@ export default function AddToFolioModal({
       setSelectedSeasons([]);
       setExistingSeasons([]);
       setIsDuplicateFlow(false);
+      setPendingDuplicate(null);
       setSuccessVariant('simple');
       setGuestAfterCelebrate(false);
     }
@@ -117,17 +120,17 @@ export default function AddToFolioModal({
     router.push('/collection');
   };
 
-  const handleSave = async (rating: number, notes: string, date?: string) => {
+  const handleSave = async (rating: number, notes: string, date?: string, force: boolean = forceAdd) => {
     setIsSubmitting(true);
     try {
-      const result = await onSave(rating, notes, date, forceAdd, hasSeasonPicker ? selectedSeasons : undefined);
+      const result = await onSave(rating, notes, date, force, hasSeasonPicker ? selectedSeasons : undefined);
 
-      if (result && result.status === 'duplicate' && !forceAdd) {
+      if (result && result.status === 'duplicate' && !force) {
         if (hasSeasonPicker) {
+          // 季數與既有收藏重疊：留在表單（已填的評分、心得不丟），在表單上方請用戶確認要不要再記一筆
           setExistingSeasons(result.existingSeasons || []);
           setIsDuplicateFlow(true);
-          setShowMode('season_pick');
-          showToast('這部作品已經收藏過了，請確認季數後繼續', 'success');
+          setPendingDuplicate({ rating, notes, date });
         } else {
           setShowMode('prompt');
         }
@@ -379,6 +382,48 @@ export default function AddToFolioModal({
                       </div>
                     )}
                   </div>
+
+                  {pendingDuplicate && (() => {
+                    const overlap = selectedSeasons.filter((n) => existingSeasons.includes(n)).sort((a, b) => a - b);
+                    const message = overlap.length > 0
+                      ? t.modals.duplicateSeasons.replace('{seasons}', overlap.map((n) => `S${n}`).join('、'))
+                      : t.modals.duplicateWhole;
+                    return (
+                      <div
+                        data-testid="duplicate-notice"
+                        className="mb-6 rounded-2xl border border-accent-gold/30 bg-accent-gold/10 p-4 flex flex-col gap-3"
+                      >
+                        <p className="text-sm text-white leading-snug">{message}</p>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            data-testid="duplicate-confirm"
+                            disabled={isSubmitting}
+                            onClick={() => {
+                              const pending = pendingDuplicate;
+                              setForceAdd(true);
+                              setPendingDuplicate(null);
+                              handleSave(pending.rating, pending.notes, pending.date, true);
+                            }}
+                            className="flex-1 py-3 bg-accent-gold text-folio-black rounded-xl font-black text-xs uppercase tracking-widest disabled:opacity-50"
+                          >
+                            {t.modals.duplicateConfirm}
+                          </button>
+                          <button
+                            type="button"
+                            data-testid="duplicate-change-seasons"
+                            onClick={() => {
+                              setPendingDuplicate(null);
+                              setShowMode('season_pick');
+                            }}
+                            className="flex-1 py-3 bg-white/5 text-white rounded-xl font-bold text-xs uppercase tracking-widest border border-white/10"
+                          >
+                            {t.modals.duplicateChangeSeasons}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   <RateAndReflectForm
                     onSave={handleSave}

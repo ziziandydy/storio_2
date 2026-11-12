@@ -2,7 +2,13 @@ import { detectBot } from '@/lib/botDetection';
 import { getApiUrl } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 
-export type ClientEvent = 'open' | 'browse' | 'detail_view' | 'search' | 'share';
+export type ClientEvent = 'open' | 'browse' | 'detail_view' | 'search' | 'share' | 'recap_opened' | 'recap_shared';
+
+/** 年度 Recap 事件的附帶資料：recap_opened 帶 year；recap_shared 帶 year 與實際分享的場景數 */
+export interface EventMeta {
+  year?: number;
+  sceneCount?: number;
+}
 
 const VISITOR_KEY = 'storio_visitor_id';
 let memoryVisitorId: string | null = null;
@@ -48,7 +54,7 @@ function clearKey(key: string): void {
   }
 }
 
-async function send(event: ClientEvent): Promise<void> {
+async function send(event: ClientEvent, meta?: EventMeta): Promise<void> {
   const bot = detectBot();
   if (bot.reason === 'render_service') return;
 
@@ -63,6 +69,8 @@ async function send(event: ClientEvent): Promise<void> {
   if (token) {
     subject = session?.user?.id ?? 'user';
     headers.Authorization = `Bearer ${token}`;
+    if (meta?.year !== undefined) body.year = meta.year;
+    if (meta?.sceneCount !== undefined) body.scene_count = meta.sceneCount;
   } else if (event === 'open') {
     subject = getVisitorId();
     body = { event, visitor_id: subject, is_suspected_bot: bot.isBot };
@@ -71,7 +79,8 @@ async function send(event: ClientEvent): Promise<void> {
     return;
   }
 
-  const key = dedupeKey(event, subject);
+  // Recap 事件的去重鍵納入年份與場景數（與後端 migration 010 的去重索引一致）
+  const key = dedupeKey(event, meta ? `${subject}_${meta.year ?? ''}_${meta.sceneCount ?? ''}` : subject);
   if (alreadySentToday(key)) return;
 
   try {
@@ -87,6 +96,6 @@ async function send(event: ClientEvent): Promise<void> {
 }
 
 /** 上報互動事件；不回 Promise、永不丟例外、不阻塞 UI */
-export function track(event: ClientEvent): void {
-  send(event).catch(() => {});
+export function track(event: ClientEvent, meta?: EventMeta): void {
+  send(event, meta).catch(() => {});
 }

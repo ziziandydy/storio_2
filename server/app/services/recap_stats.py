@@ -57,11 +57,29 @@ def estimate_minutes(row: dict) -> Optional[int]:
     return None
 
 
+def legacy_overlap_ids(rows: List[dict]) -> set:
+    """沒記季數的舊影集收藏（episode_total 是整部影集），若同一部影集在同一批列裡另有「標了季數」的收藏，
+    舊收藏的集數已經包含那些季，會重複計算——回傳這類舊收藏的 id，時間與集數一律不計入（寧可少算，文案本來就是「至少」）。"""
+    seasoned = {
+        r.get("external_id")
+        for r in rows
+        if r.get("media_type") == "tv" and r.get("seasons")
+    }
+    return {
+        r.get("id")
+        for r in rows
+        if r.get("media_type") == "tv" and not r.get("seasons") and r.get("external_id") in seasoned
+    }
+
+
 def time_summary(rows: List[dict]) -> dict:
     minutes = 0
     with_data = 0
     estimated = False
+    overlapping = legacy_overlap_ids(rows)
     for row in rows:
+        if row.get("id") in overlapping:
+            continue
         m = estimate_minutes(row)
         if m is None:
             continue
@@ -95,17 +113,41 @@ def top_genres(rows: List[dict], limit: int = 3) -> Optional[List[dict]]:
     return [{"name": display[key], "count": count} for key, count in ranked[:limit]]
 
 
-# ---------- 故事年齡 ----------
+# ---------- 年代分佈 ----------
 
-def story_age(rows: List[dict], year: int) -> Optional[dict]:
-    """故事年齡 = 當年 − 作品平均發行年份；最愛年代 = 出現最多的十年（同數取較近的十年）。"""
-    years = [r["year"] for r in rows if r.get("year")]
-    if len(years) < 5:
+MIN_ERA_WORKS = 3  # 年代分佈至少要有幾部有年份的電影／影集
+MIN_MEDIAN_AGE_WORKS = 5  # 內部用的「作品年齡」至少要有幾部
+
+
+def _release_years(rows: List[dict]) -> List[int]:
+    """電影與影集的發行年份。書的 year 是版本出版年，不代表作品年代，所以不算。"""
+    return sorted(r["year"] for r in rows if r.get("year") and r.get("media_type") in ("movie", "tv"))
+
+
+def era_counts(rows: List[dict]) -> Optional[dict]:
+    """年代分佈：電影與影集依發行年份分到十年（1990、2000…），回傳各十年的部數（由舊到新）與第一名年代的海報。
+    有年份的作品不足 3 部回 None。"""
+    years = _release_years(rows)
+    if len(years) < MIN_ERA_WORKS:
         return None
-    avg_year = round(sum(years) / len(years))
-    decades = Counter((y // 10) * 10 for y in years)
-    favorite = max(decades.items(), key=lambda kv: (kv[1], kv[0]))[0]
-    return {"avg_year": avg_year, "age": year - avg_year, "favorite_decade": favorite}
+    counts = Counter((y // 10) * 10 for y in years)
+    top_decade = max(counts, key=lambda d: (counts[d], d))  # 作品最多的十年；同數取較近的
+    top_rows = [
+        r for r in rows
+        if r.get("year") and r.get("media_type") in ("movie", "tv") and (r["year"] // 10) * 10 == top_decade
+    ]
+    return {
+        "decades": [{"decade": d, "count": counts[d]} for d in sorted(counts)],
+        "posters": recent_posters(top_rows),  # 背景用：第一名年代的作品海報
+    }
+
+
+def median_release_age(rows: List[dict], year: int) -> Optional[int]:
+    """作品發行年份中位數距今幾年（取偏低的中位數，不被一部老片拉偏）；只給稱號判斷用，不對外顯示。"""
+    years = _release_years(rows)
+    if len(years) < MIN_MEDIAN_AGE_WORKS:
+        return None
+    return max(0, year - years[(len(years) - 1) // 2])
 
 
 # ---------- 月份節奏 ----------
@@ -139,10 +181,53 @@ def peak_month(counts: List[int]) -> Optional[dict]:
     return {"month": counts.index(top) + 1, "count": top}
 
 
-# ---------- 年度之最 ----------
+# ---------- 海報清單 ----------
 
 def _sort_key(row: dict):
     return (effective_date(row) or "", str(row.get("created_at") or ""))
+
+
+def recent_posters(rows: List[dict], limit: int = 6) -> List[str]:
+    """場景背景用海報：只取有 poster_path 者，由近到遠，不重複，最多 limit 個；沒有就回 []。"""
+    posters: List[str] = []
+    for row in sorted(rows, key=_sort_key, reverse=True):
+        path = row.get("poster_path")
+        if path and path not in posters:
+            posters.append(path)
+            if len(posters) >= limit:
+                break
+    return posters
+
+
+def top_month_posters(rows: List[dict], counts: List[int]) -> List[str]:
+    """收藏最多的月份（同數取較早）那些收藏的海報，近→遠，最多 6 個；沒有海報回 []。"""
+    top = max(counts) if counts else 0
+    if top < 1:
+        return []
+    return recent_posters(rows_in_month(rows, counts.index(top) + 1))
+
+
+def one_poster_per_month(rows: List[dict]) -> List[str]:
+    """有收藏的每個月各取 1 個作品海報（該月最近的一部），由 1 月到 12 月；那個月沒有任何海報就跳過。"""
+    posters: List[str] = []
+    for month in range(1, 13):
+        picked = recent_posters(rows_in_month(rows, month), limit=1)
+        if picked:
+            posters.append(picked[0])
+    return posters
+
+
+def rows_in_month(rows: List[dict], month: int) -> List[dict]:
+    """effective_date 落在指定月份（1–12）的列。"""
+    selected = []
+    for row in rows:
+        date = effective_date(row)
+        if date and date[5:7].isdigit() and int(date[5:7]) == month:
+            selected.append(row)
+    return selected
+
+
+# ---------- 年度之最 ----------
 
 
 def top_rated(rows: List[dict]) -> Optional[dict]:

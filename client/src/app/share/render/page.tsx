@@ -3,6 +3,10 @@
 import { useEffect, useState } from 'react';
 import MemoryCardTemplate from '@/components/share/MemoryCardTemplate';
 import MonthlyRecapTemplate from '@/components/share/MonthlyRecapTemplate';
+import RecapScene from '@/components/recap/RecapScene';
+import { whenPostersSettled } from '@/components/recap/posterLoader';
+import { translations } from '@/i18n/locales';
+import type { RecapData, SceneKey } from '@/lib/recap/types';
 
 // TypeScript 型別宣告
 declare global {
@@ -20,10 +24,13 @@ export interface RenderSettings {
   showReflection?: boolean;
   customLogoPath?: string | null;
   customDeskBg?: string | null;
+  // 年度 Recap 場景
+  locale?: 'zh-TW' | 'en-US';
+  recapReflectionIndex?: number;
 }
 
 export interface RenderPayload {
-  template: 'memory-card' | 'monthly-recap';
+  template: 'memory-card' | 'monthly-recap' | 'recap-scene';
   item: {
     // MemoryCard 欄位
     title?: string;
@@ -40,6 +47,9 @@ export interface RenderPayload {
       summary: { movie: number; book: number; tv: number };
       items: unknown[];
     };
+    // 年度 Recap 欄位
+    recap?: RecapData;
+    sceneKey?: SceneKey;
   };
   settings: RenderSettings;
 }
@@ -94,6 +104,8 @@ export default function ShareRenderPage() {
             item.title,
             item.reflection,
             item.monthName,
+            // Recap 場景的文字散在各處，直接取整頁文字以觸發對應的 CJK 子集下載
+            renderData.template === 'recap-scene' ? document.body.innerText ?? '' : '',
           ].filter(Boolean).join('');
 
           if (contentText) {
@@ -104,6 +116,11 @@ export default function ShareRenderPage() {
               document.fonts.load(`900 16px ${notoFamily}`, contentText),
             ]).catch(() => {});
           }
+        }
+
+        // Recap 場景的海報先經 posterLoader 驗證載入成功才交給 <img>：等它們都落定（上限 15 秒）再宣告 ready
+        if (renderData.template === 'recap-scene') {
+          await Promise.race([whenPostersSettled(), new Promise<void>(resolve => setTimeout(resolve, 15000))]);
         }
 
         // fonts.load() resolve 後等待 300ms 讓瀏覽器完成字型替換與重繪
@@ -134,6 +151,25 @@ export default function ShareRenderPage() {
 
   const { template, item, settings } = renderData;
   const aspectRatio = settings.aspectRatio ?? '9:16';
+
+  if (template === 'recap-scene') {
+    const locale = settings.locale === 'en-US' ? 'en-US' : 'zh-TW';
+    return (
+      <div data-screenshot style={{ display: 'inline-block' }}>
+        {item.recap && item.sceneKey && (
+          <RecapScene
+            sceneKey={item.sceneKey}
+            recap={item.recap}
+            copy={translations[locale].recap}
+            locale={locale}
+            aspectRatio={aspectRatio === '4:5' ? '4:5' : '9:16'}
+            animate={false}
+            reflectionIndex={settings.recapReflectionIndex ?? 0}
+          />
+        )}
+      </div>
+    );
+  }
 
   if (template === 'monthly-recap') {
     return (

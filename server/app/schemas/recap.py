@@ -16,7 +16,7 @@ class RecapResponse(BaseModel):
     series: Optional[dict] = None
     books: Optional[dict] = None
     genres: Optional[dict] = None  # {"top": [{"name", "count"}]}
-    story_age: Optional[dict] = None
+    eras: Optional[dict] = None
     title: Optional[dict] = None  # {"id", "zh", "en"}
     monthly: Optional[dict] = None  # {"counts": [12 個整數]}
     peak_month: Optional[dict] = None
@@ -32,6 +32,13 @@ class RecapYear(BaseModel):
     count: int
 
 
+class RecapCurrent(BaseModel):
+    """伺服器今天所在年份與該年目前部數（不受門檻限制）。"""
+    year: int
+    count: int
+
+
 class RecapYearsResponse(BaseModel):
     threshold: int
     years: List[RecapYear]
+    current: RecapCurrent

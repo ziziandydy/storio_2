@@ -98,6 +98,53 @@ def test_rewatch_counts_each_row():
     assert summary["minutes"] == 200
 
 
+# ---------- 影集：分季收藏的時間 ----------
+
+def tv_row(rid, seasons, episodes, runtime=22, external_id="show1"):
+    return make_row(
+        id=rid, media_type="tv", external_id=external_id,
+        seasons=seasons, episode_total=episodes, runtime_minutes=runtime,
+    )
+
+
+def test_season_rows_are_summed_per_season_not_as_whole_show_each():
+    # 例：Modern Family 每一季各存一筆。每筆只算自己那一季的集數，不可每筆都當成整部影集
+    rows = [tv_row("a", [1], 24), tv_row("b", [2], 24), tv_row("c", [3], 22)]
+    summary = rs.time_summary(rows)
+    assert summary["minutes"] == (24 + 24 + 22) * 22
+    assert summary["items_with_data"] == 3
+
+
+def test_legacy_whole_show_row_overlapping_season_rows_is_not_double_counted():
+    # 舊收藏沒記季數（整部影集 72 集，已含第 3 季），同年又有一筆「第 3 季」：不可把第 3 季算兩次
+    legacy = tv_row("legacy", None, 72)
+    season3 = tv_row("s3", [3], 24)
+    summary = rs.time_summary([legacy, season3])
+    assert summary["count"] == 2
+    assert summary["minutes"] == 24 * 22  # 只算明確標了季數的那筆
+    assert summary["items_with_data"] == 1
+
+
+def test_legacy_row_alone_still_counts_as_whole_show():
+    assert rs.time_summary([tv_row("legacy", None, 72)])["minutes"] == 72 * 22
+
+
+def test_legacy_rows_of_different_shows_are_unaffected():
+    legacy = tv_row("legacy", None, 72, external_id="show1")
+    other = tv_row("other", [1], 10, external_id="show2")
+    assert rs.time_summary([legacy, other])["minutes"] == 72 * 22 + 10 * 22
+
+
+def test_two_season_rows_of_the_same_season_both_count_as_rewatch():
+    rows = [tv_row("a", [1], 24), tv_row("b", [1], 24)]
+    assert rs.time_summary(rows)["minutes"] == 2 * 24 * 22
+
+
+def test_legacy_overlap_ids_marks_only_overlapping_legacy_tv_rows():
+    rows = [tv_row("legacy", None, 72), tv_row("s3", [3], 24), tv_row("solo", None, 10, external_id="x")]
+    assert rs.legacy_overlap_ids(rows) == {"legacy"}
+
+
 # ---------- 類別 ----------
 
 def test_top_genres_counts_every_genre_case_insensitively():
@@ -126,30 +173,52 @@ def test_top_genres_needs_three_rows_with_genres():
 
 # ---------- 故事年齡 ----------
 
-def test_story_age_is_year_minus_average_release_year():
-    rows = [make_row(year=y) for y in (2009, 2009, 2009, 2009, 2009)]
-    assert rs.story_age(rows, 2026) == {"avg_year": 2009, "age": 17, "favorite_decade": 2000}
+def test_era_counts_groups_by_decade_oldest_first():
+    rows = [make_row(year=y) for y in (1994, 1999, 2003, 2012, 2015, 2018)]
+    assert rs.era_counts(rows) == {
+        "decades": [
+            {"decade": 1990, "count": 2},
+            {"decade": 2000, "count": 1},
+            {"decade": 2010, "count": 3},
+        ],
+        "posters": [],
+    }
 
 
-def test_story_age_favorite_decade_is_most_common():
-    rows = [make_row(year=y) for y in (1999, 1994, 2003, 2001, 1995)]
-    assert rs.story_age(rows, 2026)["favorite_decade"] == 1990
+def test_era_counts_counts_movies_and_series_only_and_skips_missing_year():
+    # 書的 year 是版本出版年，不代表作品年代；沒有年份的不算
+    rows = [
+        make_row(year=2010), make_row(year=2011, media_type="tv"), make_row(year=2012),
+        make_row(year=1990, media_type="book"), make_row(year=None),
+    ]
+    assert rs.era_counts(rows) == {"decades": [{"decade": 2010, "count": 3}], "posters": []}
 
 
-def test_story_age_decade_tie_prefers_more_recent():
-    rows = [make_row(year=y) for y in (1990, 1991, 2010, 2011, 2000)]
-    assert rs.story_age(rows, 2026)["favorite_decade"] == 2010
+def test_era_counts_needs_three_works_with_year():
+    rows = [make_row(year=2000), make_row(year=2010), make_row(year=None, media_type="book")]
+    assert rs.era_counts(rows) is None
 
 
-def test_story_age_needs_five_rows_with_year():
-    rows = [make_row(year=2000) for _ in range(4)] + [make_row(year=None)]
-    assert rs.story_age(rows, 2026) is None
+def test_era_counts_includes_the_recap_year_decade():
+    rows = [make_row(year=y) for y in (2026, 2025, 2024, 2005)]
+    assert rs.era_counts(rows)["decades"] == [{"decade": 2000, "count": 1}, {"decade": 2020, "count": 3}]
+
+
+def test_median_release_age_is_year_minus_median_release_year():
+    rows = [make_row(year=y) for y in (1950, 2020, 2020, 2021, 2022)]  # 中位數 2020，不被一部老片拉偏
+    assert rs.median_release_age(rows, 2026) == 6
+
+
+def test_median_release_age_needs_five_movies_or_series_and_is_never_negative():
+    rows = [make_row(year=2000) for _ in range(4)] + [make_row(year=1990, media_type="book")]
+    assert rs.median_release_age(rows, 2026) is None
+    assert rs.median_release_age([make_row(year=2027) for _ in range(5)], 2026) == 0
 
 
 def test_stats_are_deterministic():
     rows = [make_row(genres=["Drama", "Comedy"], year=2001 + i) for i in range(6)]
     assert rs.top_genres(rows) == rs.top_genres(list(rows))
-    assert rs.story_age(rows, 2026) == rs.story_age(list(rows), 2026)
+    assert rs.era_counts(rows) == rs.era_counts(list(rows))
 
 
 # ---------- 月份節奏 ----------
@@ -249,3 +318,88 @@ def test_reflection_short_text_unchanged_and_candidates_capped_at_ten():
     assert result["count"] == 12
     assert len(result["candidates"]) == 10
     assert result["candidates"][0]["text"].startswith("心得")
+
+
+# ---------- 海報清單 ----------
+
+def test_recent_posters_skips_missing_dedupes_and_orders_recent_first():
+    rows = [
+        make_row(poster_path="/a.jpg", archived_date="2026-01-01"),
+        make_row(poster_path=None, archived_date="2026-05-01"),
+        make_row(poster_path="", archived_date="2026-04-01"),
+        make_row(poster_path="/b.jpg", archived_date="2026-03-01"),
+        make_row(poster_path="/a.jpg", archived_date="2026-06-01"),
+    ]
+    assert rs.recent_posters(rows) == ["/a.jpg", "/b.jpg"]
+
+
+def test_recent_posters_respects_limit_and_defaults_to_six():
+    rows = [make_row(poster_path=f"/p{i}.jpg", archived_date=f"2026-01-{i + 1:02d}") for i in range(8)]
+    assert len(rs.recent_posters(rows)) == 6
+    assert rs.recent_posters(rows, limit=2) == ["/p7.jpg", "/p6.jpg"]
+
+
+def test_recent_posters_without_any_poster_is_empty_list():
+    assert rs.recent_posters([make_row(), make_row(poster_path=None)]) == []
+
+
+def test_rows_in_month_uses_effective_date_month():
+    rows = [
+        make_row(id="a", archived_date="2026-03-02"),
+        make_row(id="b", archived_date="2026-07-01"),
+        make_row(id="c", archived_date=None, created_at="2026-03-30T00:00:00+00:00"),
+    ]
+    assert [r["id"] for r in rs.rows_in_month(rows, 3)] == ["a", "c"]
+    assert rs.rows_in_month(rows, 12) == []
+
+
+# ---------- 場景背景海報：各場景用自己的海報 ----------
+
+def poster_row(poster, date="2026-03-05", **kw):
+    return make_row(poster_path=poster, archived_date=date, **kw)
+
+
+def test_era_posters_are_the_works_of_the_top_decade_most_recent_first():
+    rows = [
+        poster_row("/a.jpg", "2026-01-01", year=2012),
+        poster_row("/b.jpg", "2026-05-01", year=2015),
+        poster_row("/c.jpg", "2026-03-01", year=2018),
+        poster_row("/old.jpg", "2026-06-01", year=1994),
+    ]
+    result = rs.era_counts(rows)
+    assert result["posters"] == ["/b.jpg", "/c.jpg", "/a.jpg"]  # 只有 2010 年代（最多）的作品，近→遠
+
+
+def test_era_posters_tie_prefers_the_more_recent_decade():
+    rows = [
+        poster_row("/o1.jpg", year=1994), poster_row("/o2.jpg", year=1995),
+        poster_row("/n1.jpg", year=2011), poster_row("/n2.jpg", year=2012),
+    ]
+    assert set(rs.era_counts(rows)["posters"]) == {"/n1.jpg", "/n2.jpg"}
+
+
+def test_top_month_posters_come_from_the_month_with_most_collections():
+    rows = [
+        poster_row("/jan1.jpg", "2026-01-05"),
+        poster_row("/mar1.jpg", "2026-03-02"), poster_row("/mar2.jpg", "2026-03-20"), poster_row("/mar3.jpg", "2026-03-11"),
+        poster_row("/jul1.jpg", "2026-07-07"), poster_row("/jul2.jpg", "2026-07-08"),
+    ]
+    counts = rs.monthly_counts(rows)
+    assert rs.top_month_posters(rows, counts) == ["/mar2.jpg", "/mar3.jpg", "/mar1.jpg"]
+
+
+def test_top_month_posters_tie_takes_the_earlier_month_and_empty_when_no_posters():
+    rows = [poster_row("/a.jpg", "2026-02-01"), poster_row("/b.jpg", "2026-02-02"),
+            poster_row("/c.jpg", "2026-09-01"), poster_row("/d.jpg", "2026-09-02")]
+    assert set(rs.top_month_posters(rows, rs.monthly_counts(rows))) == {"/a.jpg", "/b.jpg"}
+    assert rs.top_month_posters([poster_row(None, "2026-02-01")], rs.monthly_counts([poster_row(None, "2026-02-01")])) == []
+
+
+def test_one_poster_per_active_month_oldest_month_first_skipping_months_without_poster():
+    rows = [
+        poster_row("/jan-old.jpg", "2026-01-02"), poster_row("/jan-new.jpg", "2026-01-20"),
+        poster_row("/mar.jpg", "2026-03-10"),
+        poster_row(None, "2026-05-10"),  # 這個月有收藏但沒有海報：跳過
+        poster_row("/dec.jpg", "2026-12-01"),
+    ]
+    assert rs.one_poster_per_month(rows) == ["/jan-new.jpg", "/mar.jpg", "/dec.jpg"]  # 同月取最近的一部
