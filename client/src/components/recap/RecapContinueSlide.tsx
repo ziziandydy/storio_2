@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Search } from 'lucide-react';
 import type { RecapCopy } from './scenes/shared';
 
-const LOADER_GIF = '/image/loading.gif';
+const LOADER_GIF = '/image/loading-loop.gif';
 const LOGO_STILL = '/image/logo/logo.png';
 
 function prefersReducedMotion(): boolean {
@@ -26,7 +26,7 @@ interface RecapContinueSlideProps {
 
 /**
  * Recap 的最後一頁（只在 App 內預覽；輸出圖的結尾是 ClosingScene）：
- * 翻到這一頁時播放 App 既有的 Storio 載入動畫（/image/loading.gif，與詳情頁等載入畫面相同），
+ * 翻到這一頁時播放 App 既有的 Storio 載入動畫（/image/loading-loop.gif，與詳情頁等載入畫面相同），
  * 下面是標語與「繼續收藏」。
  * - 所有頁面一開始就掛載，若動畫一直在背景播，翻到時已經播到中途；所以沒翻到時只顯示靜態 logo，
  *   翻到時才換成「全新的」img 元素，GIF 才會從第一格開始完整播一輪（最後一頁不會自動前進，會一直循環）。

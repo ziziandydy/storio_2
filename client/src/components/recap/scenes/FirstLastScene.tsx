@@ -22,9 +22,9 @@ function Entry({ label, item, locale }: { label: string; item: FirstLastItem; lo
   );
 }
 
-export default function FirstLastScene({ data, copy, locale, aspectRatio }: SceneProps<FirstLastData>) {
+export default function FirstLastScene({ data, copy, locale, aspectRatio, backdrop }: SceneProps<FirstLastData>) {
   return (
-    <SceneFrame aspectRatio={aspectRatio}>
+    <SceneFrame aspectRatio={aspectRatio} posters={backdrop}>
       <div data-testid="scene-first-last" className="h-full flex flex-col justify-center gap-8">
         <div className="text-center">
           <Eyebrow>{copy.scene.firstLast.title}</Eyebrow>

@@ -13,7 +13,7 @@ describe('RecapContinueSlide（最後一頁）', () => {
   it('用 App 既有的 Storio 載入動畫（loading.gif），背景與素材一致的純黑', () => {
     render(<RecapContinueSlide copy={copy} onContinue={() => {}} />);
     const loader = screen.getByTestId('recap-loader') as HTMLImageElement;
-    expect(loader.getAttribute('src')).toBe('/image/loading.gif');
+    expect(loader.getAttribute('src')).toBe('/image/loading-loop.gif');
     expect(loader.alt).toBe('Storio');
     const slide = screen.getByTestId('recap-continue-slide') as HTMLElement;
     expect(slide.style.background).toBe('rgb(0, 0, 0)');
@@ -26,7 +26,7 @@ describe('RecapContinueSlide（最後一頁）', () => {
 
     rerender(<RecapContinueSlide copy={copy} onContinue={() => {}} active />);
     const playing = screen.getByTestId('recap-loader') as HTMLImageElement;
-    expect(playing.getAttribute('src')).toBe('/image/loading.gif');
+    expect(playing.getAttribute('src')).toBe('/image/loading-loop.gif');
     expect(playing).not.toBe(before); // 新元素：GIF 才會從頭播
 
     rerender(<RecapContinueSlide copy={copy} onContinue={() => {}} active={false} />);
@@ -46,7 +46,7 @@ describe('RecapContinueSlide（最後一頁）', () => {
     window.Image = FakeImage as never;
     try {
       render(<RecapContinueSlide copy={copy} onContinue={() => {}} active={false} />);
-      expect(sources).toContain('/image/loading.gif');
+      expect(sources).toContain('/image/loading-loop.gif');
     } finally {
       window.Image = OriginalImage;
     }

@@ -22,6 +22,8 @@ export interface SceneProps<T> {
   animate: boolean;
   year: number;
   isPartial: boolean;
+  /** 沒有自己海報資料的場景用的背景海報（今年收藏的海報）；沒有就是純黑底 */
+  backdrop?: string[];
 }
 
 /** 把含 `{n}` 的文案拆開，數字用計數動畫（例如「{n} 部電影」→ 5 部電影）。 */

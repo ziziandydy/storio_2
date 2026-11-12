@@ -9,11 +9,11 @@ import { Eyebrow, GOLD, type SceneProps } from './shared';
 
 const MAX_ITEMS = 3;
 
-export default function TopRatedScene({ data, copy, aspectRatio }: SceneProps<TopRatedData>) {
+export default function TopRatedScene({ data, copy, aspectRatio, backdrop }: SceneProps<TopRatedData>) {
   const countText = data.count === 1 ? copy.scene.topRated.countOne : fill(copy.scene.topRated.count, { n: data.count });
 
   return (
-    <SceneFrame aspectRatio={aspectRatio}>
+    <SceneFrame aspectRatio={aspectRatio} posters={backdrop}>
       <div data-testid="scene-top-rated" className="h-full flex flex-col items-center justify-center text-center gap-5">
         <Eyebrow>{copy.scene.topRated.title}</Eyebrow>
         <div className="text-[72px] leading-none font-black" style={{ color: GOLD }}>

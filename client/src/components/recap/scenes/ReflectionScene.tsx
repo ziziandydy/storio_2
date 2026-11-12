@@ -8,13 +8,13 @@ import SceneFrame from '../SceneFrame';
 import { Eyebrow, GOLD, type SceneProps } from './shared';
 
 export default function ReflectionScene({
-  data, copy, aspectRatio, reflectionIndex = 0,
+  data, copy, aspectRatio, backdrop, reflectionIndex = 0,
 }: SceneProps<ReflectionData> & { reflectionIndex?: number }) {
   const pick = reflectionCandidate(data, reflectionIndex);
   const countText = data.count === 1 ? copy.scene.reflection.countOne : fill(copy.scene.reflection.count, { n: data.count });
 
   return (
-    <SceneFrame aspectRatio={aspectRatio}>
+    <SceneFrame aspectRatio={aspectRatio} posters={backdrop}>
       <div data-testid="scene-reflection" className="h-full flex flex-col items-center justify-center text-center gap-6">
         <Eyebrow>{copy.scene.reflection.title}</Eyebrow>
         {pick && (

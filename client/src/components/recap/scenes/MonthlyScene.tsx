@@ -7,12 +7,12 @@ import { Eyebrow, GOLD, type SceneProps } from './shared';
 
 const MIN_BAR_PERCENT = 4; // 0 部的月份仍畫一小段，避免長條消失
 
-export default function MonthlyScene({ data, copy, aspectRatio }: SceneProps<MonthlyData>) {
+export default function MonthlyScene({ data, copy, aspectRatio, backdrop }: SceneProps<MonthlyData>) {
   const max = Math.max(...data.counts, 0);
   const peakIndex = max > 0 ? data.counts.indexOf(max) : -1;
 
   return (
-    <SceneFrame aspectRatio={aspectRatio}>
+    <SceneFrame aspectRatio={aspectRatio} posters={backdrop}>
       <div data-testid="scene-monthly" className="h-full flex flex-col justify-center gap-8">
         <div className="text-center">
           <Eyebrow>{copy.scene.monthly.title}</Eyebrow>

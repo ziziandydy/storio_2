@@ -4,9 +4,10 @@ import React from 'react';
 import type { MonthsActiveScene as MonthsActiveData } from '@/lib/recap/types';
 import { CountText, StatLayout, type SceneProps } from './shared';
 
-export default function MonthsActiveScene({ data, copy, aspectRatio, animate }: SceneProps<MonthsActiveData>) {
+export default function MonthsActiveScene({ data, copy, aspectRatio, animate, backdrop }: SceneProps<MonthsActiveData>) {
   return (
     <StatLayout
+      posters={backdrop}
       aspectRatio={aspectRatio}
       testId="scene-months-active"
       headline={

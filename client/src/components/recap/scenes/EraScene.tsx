@@ -29,12 +29,12 @@ function buildRows(data: EraData, copy: SceneProps<EraData>['copy']): EraRow[] {
 }
 
 /** 年代分佈：電影與影集依發行年份，每個十年各幾部（由舊到新）。 */
-export default function EraScene({ data, copy, aspectRatio }: SceneProps<EraData>) {
+export default function EraScene({ data, copy, aspectRatio, backdrop }: SceneProps<EraData>) {
   const rows = buildRows(data, copy);
   const max = Math.max(...rows.map((r) => r.count), 1);
 
   return (
-    <SceneFrame aspectRatio={aspectRatio}>
+    <SceneFrame aspectRatio={aspectRatio} posters={backdrop}>
       <div data-testid="scene-eras" className="h-full flex flex-col justify-center gap-7">
         <div className="text-center">
           <Eyebrow>{copy.scene.eras.title}</Eyebrow>
