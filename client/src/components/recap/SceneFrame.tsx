@@ -1,10 +1,44 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { SCENE_SIZE, type RecapAspect } from '@/lib/recap/types';
 import { posterSrc } from './posterSrc';
 
 const MAX_POSTERS = 6;
+/** 海報載入失敗（圖片代理偶發失敗、同時載入太多張）時的重試次數與間隔 */
+const MAX_POSTER_RETRIES = 2;
+const POSTER_RETRY_MS = 700;
+
+/** 背景海報：載入失敗會自動重試（網址加 retry 參數避開失敗的快取），不會一直破圖。本機預設海報不重試。 */
+function PosterImage({ path }: { path: string }) {
+  const [retry, setRetry] = useState(0);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
+
+  const base = posterSrc(path);
+  const retryable = base.src.startsWith('http');
+  const src = retry > 0 && retryable ? `${base.src}${base.src.includes('?') ? '&' : '?'}retry=${retry}` : base.src;
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      data-testid="scene-poster"
+      alt=""
+      src={src}
+      crossOrigin={base.crossOrigin}
+      onError={() => {
+        if (!retryable || retry >= MAX_POSTER_RETRIES || timer.current) return;
+        timer.current = setTimeout(() => {
+          timer.current = null;
+          setRetry((n) => n + 1);
+        }, POSTER_RETRY_MS);
+      }}
+      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+    />
+  );
+}
 
 interface SceneFrameProps {
   aspectRatio: RecapAspect;
@@ -39,9 +73,7 @@ export default function SceneFrame({ aspectRatio, posters, filmEdge, children }:
           }}
         >
           {backdrop.map((p, i) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={`${p}-${i}`} data-testid="scene-poster" alt="" {...posterSrc(p)}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <PosterImage key={`${p}-${i}`} path={p} />
           ))}
         </div>
       )}

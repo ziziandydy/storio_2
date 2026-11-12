@@ -197,7 +197,7 @@ export default function RecapStoryViewer({
           const active = i === index;
           return (
             <div
-              key={`${i}-${active}`}
+              key={i}
               data-testid={`story-slide-${i}`}
               className="absolute inset-0 flex items-center justify-center"
               style={{ visibility: active ? 'visible' : 'hidden' }}

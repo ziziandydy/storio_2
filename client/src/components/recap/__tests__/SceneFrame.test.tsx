@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { describe, it, expect, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import { render, screen, cleanup, fireEvent, act } from '@testing-library/react';
 import SceneFrame from '../SceneFrame';
 
 describe('SceneFrame', () => {
@@ -52,6 +52,53 @@ describe('SceneFrame', () => {
 
     rerender(<SceneFrame aspectRatio="9:16">x</SceneFrame>);
     expect(screen.queryAllByTestId('scene-poster')).toHaveLength(0);
+  });
+
+  it('海報載入失敗會自動重試（最多 2 次、網址帶重試參數、間隔後才重送），不會一直破圖', () => {
+    vi.useFakeTimers();
+    try {
+      render(<SceneFrame aspectRatio="9:16" posters={['https://image.tmdb.org/t/p/w500/a.jpg']}>x</SceneFrame>);
+      const img = () => screen.getByTestId('scene-poster') as HTMLImageElement;
+      const original = img().getAttribute('src') as string;
+      expect(original).not.toContain('retry=');
+
+      fireEvent.error(img());
+      expect(img().getAttribute('src')).toBe(original); // 還沒到重試時間
+      act(() => {
+        vi.advanceTimersByTime(800);
+      });
+      expect(img().getAttribute('src')).toContain('retry=1');
+
+      fireEvent.error(img());
+      act(() => {
+        vi.advanceTimersByTime(800);
+      });
+      expect(img().getAttribute('src')).toContain('retry=2');
+
+      fireEvent.error(img()); // 超過上限：不再重試
+      act(() => {
+        vi.advanceTimersByTime(5000);
+      });
+      expect(img().getAttribute('src')).toContain('retry=2');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('預設海報（本機 svg）不重試', () => {
+    vi.useFakeTimers();
+    try {
+      render(<SceneFrame aspectRatio="9:16" posters={['/image/defaultMoviePoster.svg']}>x</SceneFrame>);
+      const img = screen.getByTestId('scene-poster') as HTMLImageElement;
+      const before = img.getAttribute('src');
+      fireEvent.error(img);
+      act(() => {
+        vi.advanceTimersByTime(2000);
+      });
+      expect(img.getAttribute('src')).toBe(before);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('filmEdge 才有底片邊標記', () => {
