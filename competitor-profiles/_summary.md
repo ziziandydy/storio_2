@@ -1,38 +1,54 @@
-# 競品總覽（quick scan）— Storio
+# 競品總覽（quick scan，兩輪合併）— Storio
 
-**Generated**: 2026-11-12　**範圍**：Letterboxd、Trakt、TV Time、Serializd　**限制**：Firecrawl／DataForSEO 工具不可用；三個官網 WebFetch 失敗（403／Header overflow／轉址），資料多為 WebSearch 摘要（第二手）。**沒有任何 SEO／流量數據**。
+**Generated**: 2026-11-12（第一輪＋第二輪）
+**範圍**：
+- 影視追蹤：Letterboxd、Trakt、Serializd、TV Time（已關閉）
+- 三種媒體並存：Iseenit、Achriom、Sofa、Refract（書與遊戲即將推出）
+- 書籍追蹤：Goodreads、StoryGraph、Hardcover
+
+**限制**：Firecrawl／DataForSEO 不可用，**沒有 SEO／流量數據**。Letterboxd、Trakt、Serializd、Hardcover、StoryGraph 官網抓不到（403／轉址），資料多為 WebSearch 摘要（第二手，且不少是廠商自家或聯盟部落格）。已直接從官網取得的：Iseenit、Achriom、Refract、Sofa、TV Time。
+
+> **更正第一輪結論**：我第一輪說「沒有任何一家同時主打電影、影集、書」。第二輪證明這是錯的——Iseenit、Achriom、Sofa 都已涵蓋，Refract 也宣布書籍即將推出。三合一不是空缺，而是**已有人在做、而且更廣**。
 
 ## 1. 競爭格局
-電影、影集、書這三種媒體，現有競品都只做一部分：Letterboxd 偏電影社群、Serializd 只有影集、Trakt 是電影＋影集的追蹤工具，TV Time 已在 2026-07-15 關閉。四家搜尋摘要都沒有看到書籍支援。（書籍為「未見」，不是已證實沒有。）
+- **影視專精**：Letterboxd（社群、電影）、Trakt（資料深）、Serializd（免費影集）。TV Time 已於 2026-07-15 關閉。
+- **書籍專精**：Goodreads（最大社群）、StoryGraph（統計強）、Hardcover（開放、API）。
+- **跨媒體**：Sofa（Apple 生態整理器）、Achriom（類型最廣、AI）、Refract（成長最快）、Iseenit（定位最像 Storio）。
 
 ## 2. 比較表
-| | Letterboxd | Trakt | Serializd | TV Time |
-|---|---|---|---|---|
-| 狀態 | 營運中，NYT 洽談收購 | 營運中 | 營運中 | **已停止（2026-07-15）** |
-| 媒體 | 電影 | 電影＋影集 | 影集 | 影集＋電影 |
-| 價格 | 免費；Pro $19／Patron $49 | 免費（受限）；VIP **$60**／年 | 免費（有廣告） | — |
-| 年度回顧 | 免費，需 ≥10 部有日記；Pro 全年統計 | VIP 功能，2025 版被批評變薄 | 影集限定，排名邏輯被批評 | — |
-| 規模 | 會員逾 3,000 萬 | 無資料 | 無資料 | 曾稱數百萬至 2,500 萬 |
-| 匯入 | 無資料 | 有 | 有（TV Time、Trakt） | — |
+| App | 媒體 | 價格 | 年度回顧／統計 | 匯入 | 規模／證明 |
+|---|---|---|---|---|---|
+| Storio | 電影＋影集＋書 | 免費（訪客上限 10 部） | **Recap 15 場景、免費**、分享卡片多款模板、分季收藏 | 無 | 流量很小 |
+| Iseenit | 電影＋影集＋書 | 免費 100 部；Premium（未列價） | 無年度回顧；有個人統計 | 無資料 | 無 |
+| Achriom | 書、影視、音樂、遊戲等 | 免費無上限；付費未列價 | 官網未提 | Goodreads／Letterboxd／Trakt | 無 |
+| Sofa | 書、影視、播客、遊戲等 | 免費；Super Sofa $29.99／年 | Logbook 統計；未提年度回顧 | Shortcuts | 3,000+ 評論 |
+| Refract | 影視動畫（書／遊戲即將） | 免費；Pro 與支持者方案 | 有年底回顧 | **TV Time／Letterboxd／Trakt／IMDb 等** | 185,000+ 用戶 |
+| Letterboxd | 電影 | Pro $19／Patron $49 | 免費，需 ≥10 部 | 無資料 | 3,000 萬會員 |
+| Trakt | 電影＋影集 | VIP $60／年 | VIP 功能，2025 版被批評變薄 | 有 | 無資料 |
+| Serializd | 影集 | 免費（廣告） | 影集限定，排名被質疑 | TV Time／Trakt | 無資料 |
+| Goodreads | 書 | 免費 | Year in Books | — | 最大書籍社群 |
+| StoryGraph | 書 | Plus $49.99／年 | 年度總結被稱讚 | — | 無資料 |
+| Hardcover | 書 | 免費或約 $5／月 | 未找到 | — | 無資料 |
 
 ## 3. 定位圖（推論）
-- 社群 ↔ 私人：Letterboxd、Serializd 偏社群；Storio 偏私人典藏。
-- 單一媒體 ↔ 多媒體：Storio 是唯一同時主打電影、影集、書。
-- 免費 ↔ 付費：Trakt 最貴、Letterboxd 中間、Serializd 與 Storio 免費。
+- **專精 ↔ 全包**：Goodreads／Letterboxd 在專精端；Achriom、Sofa 在全包端；Storio 與 Iseenit 在中間（三種）。
+- **整理 ↔ 回顧**：Sofa 偏整理規劃；Storio 偏典藏回顧與分享。
+- **社群 ↔ 私人**：Letterboxd、Goodreads 偏社群；Storio、Sofa、Iseenit 偏私人。
 
 ## 4. 關鍵觀察
-1. **TV Time 關閉釋出一批追蹤者**（推論：機會）；Serializd、Trakt 已有匯入，Storio 沒有，尚無法承接。
-2. **三合一是明顯空缺**：沒有看到任何一家同時主打電影、影集、書。
-3. **年度回顧是競品痛點**：Trakt 付費且被批評變薄，Serializd 排名邏輯被質疑；Letterboxd 有門檻。Storio 的 Recap 免費、15 個場景、含年代與稱號，是可行銷的優勢。
-4. **Trakt 漲價與食言**造成不滿，「免費、不綁訂閱」是可用的訊息。
-5. 流量與搜尋能見度**沒有數據**，不能判斷各家的 SEO 強度。
+1. **Storio 沒有「三合一」這個獨家賣點**，但沒看到競品把「免費年度回顧＋可分享卡片」做成三種媒體共用的體驗；這是目前較可信的差異（推論，需持續觀察）。
+2. **匯入是 Storio 最大的轉換落差**：Refract、Achriom、Serializd、Trakt 都有 TV Time／Letterboxd／Goodreads 等匯入，TV Time 關閉後這點更關鍵。
+3. **Refract 是最需要盯的對手**：免費、成長快、書籍即將上線，且已有匯入與年度回顧。
+4. **Iseenit 最像 Storio**，但免費上限 100 部、無年度回顧；Storio 免費無上限的訊息可用。
+5. 年度回顧在影視與書籍圈都是競品的痛點或付費牆（Trakt VIP、Letterboxd 門檻、Serializd 排名被質疑），Storio 的 Recap 可作行銷主軸，12 月前最有曝光窗口。
 
 ## 5. 缺口與機會（給 Storio）
-- 匯入功能（TV Time／Trakt／Letterboxd 匯出檔）：目前最大的轉換落差。
-- 針對「TV Time 難民」與「Trakt 漲價」的登陸頁與訊息，標語可沿用已定的「看過、讀過的一個都不漏」。
-- 年度回顧時機：競品在 12 月發布，Storio 11 月已上線，可搶先曝光。
+- 匯入功能（TV Time、Letterboxd、Goodreads、Trakt 匯出檔），並針對 TV Time 難民做訊息。
+- 強化「年度 Recap＋分享卡片」的對外訊息（App Store 截圖、落地頁已朝此方向）。
+- 把「免費、無上限（登入後）」與 Iseenit 的 100 部上限做對比（需確認自己的訪客與登入規則描述清楚）。
 
 ## 6. 後續（需要才做）
-- 補 SEO 數據：需要啟用 DataForSEO 與 Firecrawl 工具；或手動用其他工具查各網域流量。
-- 查證：Letterboxd／Trakt 官網標語與書籍支援、Trakt 2026-07 免費限制、TV Time 用戶數。
-- 若要寫比較頁（`/competitors`），目前 Storio 搜尋能見度低，優先度低。
+- 補 SEO 數據：啟用 DataForSEO／Firecrawl 後補跑；或手動查各網域流量。
+- 查證：Iseenit Premium 價格、Achriom 付費價、Refract Pro 內容、Letterboxd／Trakt 官網標語與書籍支援、Hardcover 價格。
+- 深度版 profile：Refract、Iseenit（最需要盯的兩個）。
+- 寫比較頁（`/competitors`）：Storio 搜尋能見度低，優先度低。
