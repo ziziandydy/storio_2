@@ -2,6 +2,85 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.22.0](https://github.com/ziziandydy/storio_2/compare/v1.21.0...v1.22.0) (2026-11-12)
+
+
+### 重構 (Refactoring)
+
+* 抽出 loginWithProvider 供訪客登入卡與 Recap 共用 ([3148185](https://github.com/ziziandydy/storio_2/commit/3148185c342e4766197faddafedecaef2ad4327d))
+
+
+### 效能改善 (Performance)
+
+* **recap:** 分享面板縮圖改用前端場景元件，只在儲存／分享時渲染被勾選的場景；渲染結果與 Recap 資料存記憶體快取 ([62fa545](https://github.com/ziziandydy/storio_2/commit/62fa5453a2bdcfbd5d89bb0321f4eea315cffc4e))
+
+
+### 新功能 (Features)
+
+* **collect:** 重複收藏同一季時停在表單，一鍵確認仍要記錄，不再丟掉已填的心得 ([300d0e7](https://github.com/ziziandydy/storio_2/commit/300d0e767d1232600e2100d8056b8c5dc97951cd))
+* **recap:** 「故事年齡」改為年代分佈場景（各十年幾部作品，由舊到新），移除中位數與最愛年代的顯示 ([751b058](https://github.com/ziziandydy/storio_2/commit/751b058621cd0d687ece17efa438f37e917637bf))
+* **recap:** 「這一年你收藏了」背景排滿今年所有作品（上限 48，密集牆改用 w154 縮圖，依畫面比例挑欄數） ([d443dab](https://github.com/ziziandydy/storio_2/commit/d443dabdf28f605bcbbe78d81ae643c8e3252415))
+* **recap:** 入口改為首頁頭像金框＋Recap 膠囊與 Profile 置頂卡片（可關閉，關閉後提示去常駐列），常駐列中英對照 ([36ae6e5](https://github.com/ziziandydy/storio_2/commit/36ae6e5c6e8cb3814437687ac120371e6c4ad93f))
+* **recap:** 分享渲染頁支援 Recap 場景 ([a1a68cb](https://github.com/ziziandydy/storio_2/commit/a1a68cbda3d105e08370618bce8dc8a2b80cc6ca))
+* **recap:** 月份節奏、年度之最、開始與結束、心得統計 ([0f413a4](https://github.com/ziziandydy/storio_2/commit/0f413a4217a7f85fd67396a7c2777c92ef82e726))
+* **recap:** 各場景用自己的背景海報、影集與書各有專屬外框、結尾場景 logo 放大為主視覺 ([3935f24](https://github.com/ziziandydy/storio_2/commit/3935f245da7314f6155569200a73ad63c08a3c92))
+* **recap:** 年份清單回報當年部數 ([c3b3766](https://github.com/ziziandydy/storio_2/commit/c3b376682f598186a6506daeb1502f434afdfbf8))
+* **recap:** 年份歸屬、時間估算、類別與故事年齡統計 ([5e98b80](https://github.com/ziziandydy/storio_2/commit/5e98b802bfdbb2eff59806fbc3ffc5b75d7a3350))
+* **recap:** 年度 Recap 中英文文案 ([8345a63](https://github.com/ziziandydy/storio_2/commit/8345a63f69292bb722d869e84d1d1d36d430bf94))
+* **recap:** 每頁 logo 改為金框暗襯底的品牌徽章（68px、不再被海報吃掉）；「這一年有 n 個月」的 n 用金色 ([4fb8f24](https://github.com/ziziandydy/storio_2/commit/4fb8f24391a483b3047f2e21e8ac011876a44209))
+* **recap:** 所有場景都有海報背景；最後一頁改用無限循環版載入動畫（loading-loop.gif，只改循環次數） ([285b451](https://github.com/ziziandydy/storio_2/commit/285b45106e0338aa3e6d3a702b94954485a935ad))
+* **recap:** 前端 track 支援 recap 事件與年份、場景數 ([9ae4c50](https://github.com/ziziandydy/storio_2/commit/9ae4c50e07a24c2f39e71a1a100becb1aff49ac7))
+* **recap:** 前端型別、窗口、場景清單與格式純函式 ([cf22a5a](https://github.com/ziziandydy/storio_2/commit/cf22a5ac11caf1e6bff262937fc250f0b5b67edf))
+* **recap:** 後端依場景挑背景海報（第一名年代、最多收藏的月份、每月一張、稱號來源作品） ([c1bf048](https://github.com/ziziandydy/storio_2/commit/c1bf04812eebd880f48bb059c39386dcd351f8f3))
+* **recap:** 首頁限時 Recap 卡片 ([f23ce67](https://github.com/ziziandydy/storio_2/commit/f23ce677f5d630726ac0b8bf98f92947d1c10dc1))
+* **recap:** 規則式稱號表與往年權限判斷點 ([b4b61ba](https://github.com/ziziandydy/storio_2/commit/b4b61bacae7ce90cb72a735341a6968ae998aa27))
+* **recap:** 剩餘場景、心得挑選與場景分派元件 ([82fad77](https://github.com/ziziandydy/storio_2/commit/82fad779f4f74965cfb2dc398afe5056334e725a))
+* **recap:** 場景回應加入海報清單 ([3b7469a](https://github.com/ziziandydy/storio_2/commit/3b7469a9bfaa8e110a9ee4d511b9b4ded1518a97))
+* **recap:** 場景框架、計數動畫、海報來源與格式函式 ([03e6205](https://github.com/ziziandydy/storio_2/commit/03e62056d8d96932bd35d04d986c0775279fcaa2))
+* **recap:** 場景標題放大、標誌置中在標題之上、海報背景更清楚並用襯底與文字陰影維持可讀，年代改用完整年份 ([26b5099](https://github.com/ziziandydy/storio_2/commit/26b50994c540432f1009eece8b1799b575b87cb4))
+* **recap:** 結尾場景下載 QR（指向 App Store） ([1ef66cc](https://github.com/ziziandydy/storio_2/commit/1ef66ccbc518fa5f0790700d6ac75d2166df9d03))
+* **recap:** 結尾場景與下載線索常數（QR 圖待產生）、BACKLOG 加入雙平台導流頁 ([34d6e72](https://github.com/ziziandydy/storio_2/commit/34d6e72cb567fedeb27bd2b67ede97cb4d74c197))
+* **recap:** 開場、總數、電影、影集、書場景 ([5b3e0d4](https://github.com/ziziandydy/storio_2/commit/5b3e0d4f577912509a88273e6507ab8d190e7e5f))
+* **recap:** 新增作品資料欄位 migration 009 與 repo 讀寫 ([6886b4d](https://github.com/ziziandydy/storio_2/commit/6886b4d44402cfe3c13cf4cb70b7df79731b691a))
+* **recap:** 預覽改為限時動態式瀏覽（固定不可捲動、分段進度條、點左右翻頁、按住暫停、自動前進），最後一頁加入 logo 載入動畫 ([aa8f4a5](https://github.com/ziziandydy/storio_2/commit/aa8f4a5d9069f8b8199cc0bdf291141b284d2997))
+* **recap:** 預覽頁海報循序漸進載入（只載目前頁與前 1 後 2 頁），分享圖渲染等海報落定再截圖 ([cea5e3d](https://github.com/ziziandydy/storio_2/commit/cea5e3d5511510d8b7ae5ce9477ff7a1dd4b0368))
+* **recap:** 預覽頁接上分享面板與 recap_opened 事件 ([c9a1243](https://github.com/ziziandydy/storio_2/commit/c9a12430f9f338efe608d21e2f221b4be8a586ea))
+* **recap:** 稱號改版——前兩名類別混搭、科幻奇幻分開、動畫細分 ([b5e5999](https://github.com/ziziandydy/storio_2/commit/b5e5999ff1fbd826edb95cba269d233a02597fa3))
+* **recap:** 稱號補三個劇情系混搭（dev 實測分佈後） ([f74bb71](https://github.com/ziziandydy/storio_2/commit/f74bb710bed3dc460f1366724c4f42226f4e2a60))
+* **recap:** 影集時間依所選各季的實際集數與片長計算，舊資料首次開 Recap 時重算一次 ([0a9f803](https://github.com/ziziandydy/storio_2/commit/0a9f80344b54c9e36d4ddf5576c5cfe3b3b43f3c))
+* **recap:** 儲存全部與分享單張的原生／網頁編排 ([844f195](https://github.com/ziziandydy/storio_2/commit/844f1952966dd4b28cca8fc3754829904d3f2504))
+* **recap:** 舊收藏作品資料補抓（有限並行、時間預算、書類別正規化） ([652a0c3](https://github.com/ziziandydy/storio_2/commit/652a0c36f7d4d1f0b1505c0bfb27652384ad4f85))
+* **recap:** 類別、故事年齡、稱號、每月節奏、月最投入場景 ([a8571b2](https://github.com/ziziandydy/storio_2/commit/a8571b27d8797b42e4c95edc398a74b88cb129f7))
+* **recap:** GET /collection/recap 與 /recap/years ([dd0f1f5](https://github.com/ziziandydy/storio_2/commit/dd0f1f5f749d48a196f53d765a808718350831aa))
+* **recap:** migration 010——recap 事件與年份、場景數欄位 ([43e24fd](https://github.com/ziziandydy/storio_2/commit/43e24fd9a6b1a84656e029d3b8c1565fa2c7d981))
+* **recap:** Profile 年度 Recap 入口與年份選單 ([75506cc](https://github.com/ziziandydy/storio_2/commit/75506cc9eef4c22ffaea6698889e1150a8b15cb6))
+* **recap:** Recap 分享面板（比例、勾選、儲存全部、分享單張） ([422f752](https://github.com/ziziandydy/storio_2/commit/422f752f83cdc6675f0a5454b65e1d8aec26cdf4))
+* **recap:** Recap 預覽頁與訪客登入提示 ([c8990e7](https://github.com/ziziandydy/storio_2/commit/c8990e72512e0e2dcd1bf8ed5f96567c4ebb5976))
+* **recap:** recap_opened／recap_shared 事件後端（含年份與場景數） ([2d7a8c6](https://github.com/ziziandydy/storio_2/commit/2d7a8c62c643a64a5f91de7299886d6e68fa9eb9))
+* **recap:** RecapService 組裝 15 個場景資料 ([63c5346](https://github.com/ziziandydy/storio_2/commit/63c534620e2307e5701957378adf67419b1a8e6c))
+* **recap:** useRecap 與 useRecapYears hooks ([1090158](https://github.com/ziziandydy/storio_2/commit/109015866ec05b701416cc28f2f9f1041d97c31a))
+
+
+### Bug 修復 (Bug Fixes)
+
+* **collection:** 影集只有季數重疊才算重複收藏，已收藏第 5 季再存第 6 季不再先失敗一次 ([6e697a3](https://github.com/ziziandydy/storio_2/commit/6e697a31a68e9b6dc4431f0b8b19431f0810100f))
+* **profile:** 修正地區／語言／通知狀態的 hydration 不一致，320px 下通知列不再擁擠 ([120184a](https://github.com/ziziandydy/storio_2/commit/120184afcbfae71f5c235c6b10fa7ec068a6650e))
+* **qa:** ISSUE-001 — Recap 卡片關閉鈕觸控面積 32px 放大到 44px ([f2ea0ae](https://github.com/ziziandydy/storio_2/commit/f2ea0ae5e2046c62734a331cdc446c58be5fce16))
+* **recap:** 故事年齡改用電影影集發行年份的中位數，最愛年代至少 3 部才顯示，0～1 歲顯示新鮮出爐 ([9b7f0e6](https://github.com/ziziandydy/storio_2/commit/9b7f0e6fb7c772a4d4c54180b0ecb92de5fea069))
+* **recap:** 背景海報改用集中式載入器，直連 CDN 驗證成功才顯示，不再依賴代理與 crossOrigin ([8ae034b](https://github.com/ziziandydy/storio_2/commit/8ae034bdedb8f0495deb164f04e5d95a4c4d0c03))
+* **recap:** 背景海報載入失敗自動重試，切頁不再整頁重新掛載造成圖片反覆被取消 ([5fe7ca7](https://github.com/ziziandydy/storio_2/commit/5fe7ca70ea644d80acf2ee1e9b592f2fb437cb50))
+* **recap:** 海報背景上的文字更清楚——文字帶失焦壓暗（羽化）、次要文字不透明度至少 80%、小字至少 11px ([e07ca0b](https://github.com/ziziandydy/storio_2/commit/e07ca0b5aa308458ac29cf68ffe10e52bae0e621))
+* **recap:** 海報被瀏覽器快取污染而破圖（代理回應加 Vary: Origin、重試網址帶時間戳）；稱號移到年度之最之後；最後一頁翻到時才從頭播動畫 ([608bce4](https://github.com/ziziandydy/storio_2/commit/608bce4ebcbd2ee68e9a68bb312aa08c52a1b3aa))
+* **recap:** 最後一頁改用 App 既有的 Storio 載入動畫（loading.gif），減少動態效果時顯示靜態 logo ([dd0177a](https://github.com/ziziandydy/storio_2/commit/dd0177aaeb0c63f1140bdbd8324423f80e81e35a))
+* **recap:** 審查修正——渲染卡死自癒、快取過期不少張送出、網頁下載不假成功、4:5 縮圖不裁切 ([9b0539a](https://github.com/ziziandydy/storio_2/commit/9b0539aac2045dbe53ab7cf47e5c0f4440fd4e28))
+* **recap:** 審查修正——補抓時間戳記、讀列不阻塞 event loop、/recap 限流、預設補抓接線測試 ([8febeb1](https://github.com/ziziandydy/storio_2/commit/8febeb1d08ebe24c94dcbce805274f512d94876d))
+* **recap:** 舊的整部影集收藏與分季收藏重疊時不重複計算時間與集數 ([3d75b13](https://github.com/ziziandydy/storio_2/commit/3d75b131b9bee2a17b92ef9d5cd19d2c15411cd0))
+* **recap:** 關閉置頂卡片後把常駐列捲到畫面中央，提示才看得到 ([80d530c](https://github.com/ziziandydy/storio_2/commit/80d530c80e2cb30617d477e8718abeff10cc10fe))
+* **recap:** logo 後方只模糊海報、不填黑；logo 裁成菱形去掉圓形黑底 ([1f3bf4b](https://github.com/ziziandydy/storio_2/commit/1f3bf4b2d028c44f53074afa907d3ad3099d593b))
+* **recap:** logo 後方改為菱形柔化襯底，拿掉光暈 ([62d4349](https://github.com/ziziandydy/storio_2/commit/62d434997a11b179a4997cf05ecbe38c04aa0d10))
+* **recap:** logo 拿掉金色圓框，只留暗色光暈與放大 ([397ec27](https://github.com/ziziandydy/storio_2/commit/397ec27cf10a2fc4b0d80141f2ce4fc519dfc5b4))
+* **recap:** Profile 常駐列各語言只顯示自己的名稱（年度回顧／Yearly Recap），不再中英同時出現 ([42a5ea4](https://github.com/ziziandydy/storio_2/commit/42a5ea4f257bb568185a0b469009e41ccacc83dc))
+
 ## [1.21.0](https://github.com/ziziandydy/storio_2/compare/v1.20.0...v1.21.0) (2026-11-10)
 
 
