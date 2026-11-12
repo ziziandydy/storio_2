@@ -3,10 +3,10 @@ import { buildScenes, SCENE_ORDER } from '../scenes';
 import { makeRecap, makeMinimalRecap } from './fixtures';
 
 describe('buildScenes', () => {
-  it('SCENE_ORDER 是固定的 15 個場景鍵', () => {
+  it('SCENE_ORDER 是固定的 15 個場景鍵（稱號在年度之最之後）', () => {
     expect(SCENE_ORDER).toEqual([
-      'opening', 'total', 'movies', 'series', 'books', 'genres', 'eras', 'title',
-      'monthly', 'peak_month', 'months_active', 'top_rated', 'first_last', 'reflection', 'closing',
+      'opening', 'total', 'movies', 'series', 'books', 'genres', 'eras',
+      'monthly', 'peak_month', 'months_active', 'top_rated', 'title', 'first_last', 'reflection', 'closing',
     ]);
   });
 

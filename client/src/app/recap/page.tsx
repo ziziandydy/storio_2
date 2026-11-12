@@ -157,6 +157,7 @@ function RecapPageInner() {
             ) : (
               <div data-testid="recap-continue" style={{ borderRadius: 16, overflow: 'hidden' }}>
                 <RecapContinueSlide
+                  active={isActive}
                   copy={r}
                   onContinue={() => router.push('/search?focus=1')}
                   extra={user?.is_anonymous ? <RecapGuestHint /> : undefined}

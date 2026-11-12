@@ -2,8 +2,8 @@ import type { RecapData, SceneKey } from './types';
 
 /** 場景固定順序（開場 → … → 結尾）。 */
 export const SCENE_ORDER: SceneKey[] = [
-  'opening', 'total', 'movies', 'series', 'books', 'genres', 'eras', 'title',
-  'monthly', 'peak_month', 'months_active', 'top_rated', 'first_last', 'reflection', 'closing',
+  'opening', 'total', 'movies', 'series', 'books', 'genres', 'eras',
+  'monthly', 'peak_month', 'months_active', 'top_rated', 'title', 'first_last', 'reflection', 'closing',
 ];
 
 /**

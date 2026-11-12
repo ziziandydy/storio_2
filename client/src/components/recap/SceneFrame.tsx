@@ -9,9 +9,14 @@ const MAX_POSTERS = 6;
 const MAX_POSTER_RETRIES = 2;
 const POSTER_RETRY_MS = 700;
 
-/** 背景海報：載入失敗會自動重試（網址加 retry 參數避開失敗的快取），不會一直破圖。本機預設海報不重試。 */
+/**
+ * 背景海報：載入失敗會自動重試，不會一直破圖。本機預設海報不重試。
+ * 重試網址帶 retry 與時間戳，每次都是全新網址：WebKit 會把失敗／缺 CORS 標頭的舊回應快取下來，
+ * 固定字串的重試網址一樣會被它擋掉。
+ */
 function PosterImage({ path }: { path: string }) {
-  const [retry, setRetry] = useState(0);
+  const [attempt, setAttempt] = useState({ retry: 0, stamp: 0 });
+  const { retry, stamp } = attempt;
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
@@ -19,7 +24,7 @@ function PosterImage({ path }: { path: string }) {
 
   const base = posterSrc(path);
   const retryable = base.src.startsWith('http');
-  const src = retry > 0 && retryable ? `${base.src}${base.src.includes('?') ? '&' : '?'}retry=${retry}` : base.src;
+  const src = retry > 0 && retryable ? `${base.src}${base.src.includes('?') ? '&' : '?'}retry=${retry}&t=${stamp}` : base.src;
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
@@ -32,7 +37,7 @@ function PosterImage({ path }: { path: string }) {
         if (!retryable || retry >= MAX_POSTER_RETRIES || timer.current) return;
         timer.current = setTimeout(() => {
           timer.current = null;
-          setRetry((n) => n + 1);
+          setAttempt((a) => ({ retry: a.retry + 1, stamp: Date.now() }));
         }, POSTER_RETRY_MS);
       }}
       style={{ width: '100%', height: '100%', objectFit: 'cover' }}

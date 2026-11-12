@@ -68,12 +68,15 @@ describe('SceneFrame', () => {
         vi.advanceTimersByTime(800);
       });
       expect(img().getAttribute('src')).toContain('retry=1');
+      const first = img().getAttribute('src');
+      expect(first).toMatch(/[?&]t=\d+/); // 帶時間戳：不會撞上瀏覽器已快取的失敗回應
 
       fireEvent.error(img());
       act(() => {
         vi.advanceTimersByTime(800);
       });
       expect(img().getAttribute('src')).toContain('retry=2');
+      expect(img().getAttribute('src')).not.toBe(first);
 
       fireEvent.error(img()); // 超過上限：不再重試
       act(() => {

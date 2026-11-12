@@ -19,6 +19,39 @@ describe('RecapContinueSlide（最後一頁）', () => {
     expect(slide.style.background).toBe('rgb(0, 0, 0)');
   });
 
+  it('還沒翻到這一頁（active=false）時只顯示靜態 logo；翻到時換成全新的動畫元素，從第一格開始播一輪', () => {
+    const { rerender } = render(<RecapContinueSlide copy={copy} onContinue={() => {}} active={false} />);
+    const before = screen.getByTestId('recap-loader') as HTMLImageElement;
+    expect(before.getAttribute('src')).toBe('/image/logo/logo.png');
+
+    rerender(<RecapContinueSlide copy={copy} onContinue={() => {}} active />);
+    const playing = screen.getByTestId('recap-loader') as HTMLImageElement;
+    expect(playing.getAttribute('src')).toBe('/image/loading.gif');
+    expect(playing).not.toBe(before); // 新元素：GIF 才會從頭播
+
+    rerender(<RecapContinueSlide copy={copy} onContinue={() => {}} active={false} />);
+    expect((screen.getByTestId('recap-loader') as HTMLImageElement).getAttribute('src')).toBe('/image/logo/logo.png');
+    rerender(<RecapContinueSlide copy={copy} onContinue={() => {}} active />);
+    expect(screen.getByTestId('recap-loader')).not.toBe(playing); // 再翻回來也重新播
+  });
+
+  it('提前預載動畫素材（還沒翻到時就開始下載），翻到時不用等', () => {
+    const sources: string[] = [];
+    const OriginalImage = window.Image;
+    class FakeImage {
+      set src(value: string) {
+        sources.push(value);
+      }
+    }
+    window.Image = FakeImage as never;
+    try {
+      render(<RecapContinueSlide copy={copy} onContinue={() => {}} active={false} />);
+      expect(sources).toContain('/image/loading.gif');
+    } finally {
+      window.Image = OriginalImage;
+    }
+  });
+
   it('用戶開啟「減少動態效果」：改顯示靜態 logo，不播放動畫', () => {
     const original = window.matchMedia;
     window.matchMedia = ((q: string) => ({ matches: q.includes('reduce'), addListener: () => {}, removeListener: () => {} })) as never;
