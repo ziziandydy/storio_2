@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import MemoryCardTemplate from '@/components/share/MemoryCardTemplate';
 import MonthlyRecapTemplate from '@/components/share/MonthlyRecapTemplate';
 import RecapScene from '@/components/recap/RecapScene';
+import { whenPostersSettled } from '@/components/recap/posterLoader';
 import { translations } from '@/i18n/locales';
 import type { RecapData, SceneKey } from '@/lib/recap/types';
 
@@ -115,6 +116,11 @@ export default function ShareRenderPage() {
               document.fonts.load(`900 16px ${notoFamily}`, contentText),
             ]).catch(() => {});
           }
+        }
+
+        // Recap 場景的海報先經 posterLoader 驗證載入成功才交給 <img>：等它們都落定（上限 15 秒）再宣告 ready
+        if (renderData.template === 'recap-scene') {
+          await Promise.race([whenPostersSettled(), new Promise<void>(resolve => setTimeout(resolve, 15000))]);
         }
 
         // fonts.load() resolve 後等待 300ms 讓瀏覽器完成字型替換與重繪

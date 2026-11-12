@@ -67,15 +67,18 @@ export default function RecapStoryViewer({
   const stageRef = useRef<HTMLDivElement>(null);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heldRef = useRef(false);
+  const indexRef = useRef(0);
 
   const go = useCallback(
     (next: number) => {
       const clamped = Math.max(0, Math.min(count - 1, next));
       setCycle((c) => c + 1);
-      setIndex((current) => {
-        if (clamped !== current) onIndexChange?.(clamped);
-        return clamped;
-      });
+      // 通知放在 setState 更新函式之外：更新函式可能在 render 期間執行，裡面呼叫父層 setState 會被 React 警告
+      if (clamped !== indexRef.current) {
+        indexRef.current = clamped;
+        onIndexChange?.(clamped);
+      }
+      setIndex(clamped);
     },
     [count, onIndexChange],
   );

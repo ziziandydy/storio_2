@@ -14,10 +14,14 @@ import RecapScene from '@/components/recap/RecapScene';
 import RecapGuestHint from '@/components/recap/RecapGuestHint';
 import RecapStoryViewer from '@/components/recap/RecapStoryViewer';
 import RecapContinueSlide from '@/components/recap/RecapContinueSlide';
+import { PosterLoadGate } from '@/components/recap/PosterImage';
 
 /** 每頁停留時間；心得是長文字，多給一些時間讀 */
 const SCENE_MS = 5000;
 const REFLECTION_MS = 9000;
+/** 背景海報只先載目前頁、前 1 頁與後 2 頁（已載過的保留），不一次載十幾頁 */
+const POSTER_PRELOAD_BEHIND = 1;
+const POSTER_PRELOAD_AHEAD = 2;
 
 function parseYear(raw: string | null): number | null {
   if (!raw) return null;
@@ -36,6 +40,7 @@ function RecapPageInner() {
   const { data, status, needed, retry } = useRecap(year);
   const [reflectionIndex, setReflectionIndex] = useState(0);
   const [shareOpen, setShareOpen] = useState(false);
+  const [slideIndex, setSlideIndex] = useState(0);
   const openedYear = useRef<number | null>(null);
 
   useEffect(() => {
@@ -113,6 +118,7 @@ function RecapPageInner() {
         <RecapStoryViewer
           count={scenes.length + 1} // 最後一頁是「繼續收藏」
           paused={shareOpen}
+          onIndexChange={setSlideIndex}
           durationMs={(i) => (scenes[i] === 'reflection' ? REFLECTION_MS : SCENE_MS)}
           header={header}
           footer={
@@ -133,15 +139,17 @@ function RecapPageInner() {
                 data-scene={scenes[i]}
                 style={{ position: 'relative', width: 400, height: 711, overflow: 'hidden', borderRadius: 16 }}
               >
-                <RecapScene
-                  sceneKey={scenes[i]}
-                  recap={data}
-                  copy={r}
-                  locale={locale}
-                  aspectRatio="9:16"
-                  animate={isActive}
-                  reflectionIndex={reflectionIndex}
-                />
+                <PosterLoadGate near={i >= slideIndex - POSTER_PRELOAD_BEHIND && i <= slideIndex + POSTER_PRELOAD_AHEAD} active={isActive}>
+                  <RecapScene
+                    sceneKey={scenes[i]}
+                    recap={data}
+                    copy={r}
+                    locale={locale}
+                    aspectRatio="9:16"
+                    animate={isActive}
+                    reflectionIndex={reflectionIndex}
+                  />
+                </PosterLoadGate>
                 {scenes[i] === 'reflection' && candidates.length > 1 && (
                   <button
                     type="button"
