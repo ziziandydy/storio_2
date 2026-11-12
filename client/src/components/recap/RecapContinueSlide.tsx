@@ -1,16 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import type { RecapCopy } from './scenes/shared';
 
-const CSS = `
-@keyframes recap-spin{to{transform:rotate(360deg)}}
-@keyframes recap-breathe{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.07);opacity:1}}
-.recap-loader-ring{animation:recap-spin 1.6s linear infinite}
-.recap-loader-logo{animation:recap-breathe 2.4s ease-in-out infinite}
-@media (prefers-reduced-motion: reduce){.recap-loader-ring,.recap-loader-logo{animation:none}}
-`;
+function prefersReducedMotion(): boolean {
+  try {
+    return typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  } catch {
+    return false;
+  }
+}
 
 interface RecapContinueSlideProps {
   copy: RecapCopy;
@@ -21,34 +21,25 @@ interface RecapContinueSlideProps {
 
 /**
  * Recap 的最後一頁（只在 App 內預覽；輸出圖的結尾是 ClosingScene）：
- * Storio 標誌配轉圈的金色圓環與呼吸感，像載入動畫，下面是標語與「繼續收藏」。
+ * 播放 App 既有的 Storio 載入動畫（/image/loading.gif，與詳情頁等載入畫面相同），
+ * 下面是標語與「繼續收藏」。背景與動畫素材一致的純黑；「減少動態效果」時改顯示靜態 logo。
  */
 export default function RecapContinueSlide({ copy, onContinue, extra }: RecapContinueSlideProps) {
+  const [reduced] = useState(prefersReducedMotion);
+
   return (
     <div
       data-testid="recap-continue-slide"
-      className="flex flex-col items-center justify-center gap-7 text-center"
-      style={{ width: 400, height: 711, background: '#0d0d0d', padding: '0 30px' }}
+      className="flex flex-col items-center justify-center gap-6 text-center"
+      style={{ width: 400, height: 711, background: '#000', padding: '0 24px' }}
     >
-      <style>{CSS}</style>
-      <div style={{ position: 'relative', width: 148, height: 148 }}>
-        <div
-          data-testid="recap-loader-ring"
-          className="recap-loader-ring"
-          style={{
-            position: 'absolute', inset: 0, borderRadius: '50%',
-            border: '3px solid rgba(197,160,89,0.18)', borderTopColor: '#c5a059',
-          }}
-        />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          data-testid="recap-loader-logo"
-          className="recap-loader-logo"
-          src="/image/logo/logo.png"
-          alt="Storio"
-          style={{ position: 'absolute', inset: 22, width: 104, height: 104, mixBlendMode: 'screen', borderRadius: '50%' }}
-        />
-      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        data-testid="recap-loader"
+        src={reduced ? '/image/logo/logo.png' : '/image/loading.gif'}
+        alt="Storio"
+        style={reduced ? { width: 160, height: 160, objectFit: 'contain' } : { width: 352, height: 198, objectFit: 'contain' }}
+      />
       <p className="text-[22px] font-black leading-snug">{copy.scene.closing.tagline}</p>
       <div data-no-nav className="flex w-full flex-col items-center gap-4">
         <button

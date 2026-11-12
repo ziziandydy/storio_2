@@ -10,16 +10,24 @@ const copy = translations['zh-TW'].recap;
 describe('RecapContinueSlide（最後一頁）', () => {
   afterEach(cleanup);
 
-  it('標誌有轉圈與呼吸的載入動畫，並尊重「減少動態效果」', () => {
-    const { container } = render(<RecapContinueSlide copy={copy} onContinue={() => {}} />);
-    const ring = screen.getByTestId('recap-loader-ring') as HTMLElement;
-    const logo = screen.getByTestId('recap-loader-logo') as HTMLImageElement;
-    expect(ring.className).toContain('recap-loader-ring');
-    expect(logo.getAttribute('src')).toBe('/image/logo/logo.png');
-    const css = container.querySelector('style')?.textContent ?? '';
-    expect(css).toContain('@keyframes recap-spin');
-    expect(css).toContain('@keyframes recap-breathe');
-    expect(css).toContain('prefers-reduced-motion');
+  it('用 App 既有的 Storio 載入動畫（loading.gif），背景與素材一致的純黑', () => {
+    render(<RecapContinueSlide copy={copy} onContinue={() => {}} />);
+    const loader = screen.getByTestId('recap-loader') as HTMLImageElement;
+    expect(loader.getAttribute('src')).toBe('/image/loading.gif');
+    expect(loader.alt).toBe('Storio');
+    const slide = screen.getByTestId('recap-continue-slide') as HTMLElement;
+    expect(slide.style.background).toBe('rgb(0, 0, 0)');
+  });
+
+  it('用戶開啟「減少動態效果」：改顯示靜態 logo，不播放動畫', () => {
+    const original = window.matchMedia;
+    window.matchMedia = ((q: string) => ({ matches: q.includes('reduce'), addListener: () => {}, removeListener: () => {} })) as never;
+    try {
+      render(<RecapContinueSlide copy={copy} onContinue={() => {}} />);
+      expect((screen.getByTestId('recap-loader') as HTMLImageElement).getAttribute('src')).toBe('/image/logo/logo.png');
+    } finally {
+      window.matchMedia = original;
+    }
   });
 
   it('顯示標語與「繼續收藏」，按下呼叫 onContinue（互動元素標記 data-no-nav，不會被當成換頁點擊）', () => {
