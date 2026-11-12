@@ -8,7 +8,7 @@
 | 標語 | 「Everything you read, watch, play and listen to.」 |
 | 媒體 | 書、電影、影集、專輯、動畫、漫畫、podcast、遊戲、桌遊 |
 | 平台 | iOS、Android、ChatGPT 整合（另有連接 Claude 的頁面） |
-| 價格 | 免費：收藏無上限、每月 10 則 librarian 訊息；付費版價格未在頁面列出 |
+| 價格 | 免費：收藏無上限、每月 10 則 librarian 訊息；Pro $9.99／月或 $99／年、每月 200 則訊息（2026-11-12 查證：achriom.com/terms 與 /compare 的搜尋摘要） |
 | 匯入 | Goodreads、Letterboxd、Trakt |
 | 年度回顧／分享 | 官網未提 |
 | 公司 | TMAI, LLC（頁尾） |

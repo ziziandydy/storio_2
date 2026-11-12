@@ -5,8 +5,8 @@
 | | Goodreads | StoryGraph | Hardcover |
 |---|---|---|---|
 | 媒體 | 書 | 書 | 書 |
-| 價格 | 免費，少量廣告，Amazon 擁有 | 免費為主；Plus $4.99／月或 $49.99／年（30 天試用） | 說法不一：免費，或約 $5／月 Supporter |
-| 年度回顧 | Year in Books 2025（需至少 2 本有完讀日期，並以標籤鼓勵分享） | 年度總結被評為讀者會看；Plus 有年度對比 | 未找到資料；統計被評「Good」，低於 StoryGraph |
+| 價格 | 免費，少量廣告，Amazon 擁有 | 免費為主；Plus $4.99／月或 $49.99／年（30 天試用） | 免費；Supporter $4.99／月或 $49.99／年（2026-11-12 查證：hardcover.app/supporter；免費版含無限書、匯入、閱讀統計、iOS／Android，Supporter 才有任意日期範圍統計、協作清單） |
+| 年度回顧 | Year in Books（頁面全年可看；**email 需至少 3 本**有當年完讀日期，已查證更正；詳見 goodreads.md） | 年度總結被評為讀者會看；Plus 有年度對比 | 未找到資料；統計被評「Good」，低於 StoryGraph |
 | 特色 | 最大社群與評論、Kindle 同步 | 客製圖表與篩選、不連 Kindle | 半星評分、自訂清單、細緻隱私、公開 API |
 
 ## 重點
