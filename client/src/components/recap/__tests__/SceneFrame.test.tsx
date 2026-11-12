@@ -30,12 +30,15 @@ describe('SceneFrame', () => {
     expect(parseInt(logo.style.width, 10)).toBeGreaterThanOrEqual(64);
   });
 
-  it('標誌不用 screen 混合（海報上才不會淡掉），有暗色光暈襯底，且不加外框（不改變 logo 的形狀）', () => {
+  it('標誌不用 screen 混合（海報上才不會淡掉），後方是菱形柔化襯底（不是光暈／圓盤），且不加外框', () => {
     render(<SceneFrame aspectRatio="9:16" posters={['/image/p.png']}>x</SceneFrame>);
     const logo = screen.getByTestId('scene-logo') as HTMLImageElement;
     expect(logo.style.mixBlendMode).toBe('');
     expect(logo.style.border).toBe('');
-    expect(logo.style.boxShadow).not.toBe('');
+    expect(logo.style.boxShadow).toBe('');
+    const backdrop = screen.getByTestId('scene-logo-backdrop') as HTMLElement;
+    expect(backdrop.style.transform).toContain('rotate(45deg)');
+    expect(backdrop.style.filter).toContain('blur');
   });
 
   it('海報背景要清楚（不透明度 ≥ 0.75），並用文字襯底與陰影維持文字可讀', () => {

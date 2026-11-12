@@ -221,17 +221,29 @@ export default function SceneFrame({ aspectRatio, posters, frame, heroLogo, chil
           }}
         />
       ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          data-testid="scene-logo"
-          src="/image/logo/logo.png"
-          alt="Storio"
-          style={{
-            position: 'absolute', top: '26px', left: '50%', transform: 'translateX(-50%)', width: '68px', height: '68px', zIndex: 3, borderRadius: '50%',
-            // 暗色光暈襯底，在任何海報上都清楚；不加外框（維持 logo 原本的形狀）、不用 screen 混合（會在亮海報上淡掉）
-            boxShadow: '0 0 0 5px rgba(0,0,0,0.38), 0 6px 22px rgba(0,0,0,0.65)',
-          }}
-        />
+        <>
+          {/* 菱形柔化襯底：跟 logo 的菱形同形，只把它後方的海報壓暗一點、邊緣羽化，不做光暈或圓盤 */}
+          <div
+            data-testid="scene-logo-backdrop"
+            aria-hidden="true"
+            style={{
+              position: 'absolute', top: '44px', left: '50%', width: '50px', height: '50px', zIndex: 2,
+              transform: 'translateX(-50%) rotate(45deg) scale(1.15)', background: 'rgba(0,0,0,0.62)', filter: 'blur(11px)',
+            }}
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            data-testid="scene-logo"
+            src="/image/logo/logo.png"
+            alt="Storio"
+            style={{
+              position: 'absolute', top: '26px', left: '50%', transform: 'translateX(-50%)', width: '68px', height: '68px', zIndex: 3, borderRadius: '50%',
+              // 邊緣羽化：素材底色比場景略亮，不柔化會留下一圈圓盤；不用 screen 混合（會在亮海報上淡掉）
+              WebkitMaskImage: 'radial-gradient(circle closest-side, #000 84%, transparent 100%)',
+              maskImage: 'radial-gradient(circle closest-side, #000 84%, transparent 100%)',
+            }}
+          />
+        </>
       )}
     </div>
   );
