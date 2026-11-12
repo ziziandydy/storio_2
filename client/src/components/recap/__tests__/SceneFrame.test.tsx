@@ -27,7 +27,15 @@ describe('SceneFrame', () => {
     expect(logo.style.left).toBe('50%');
     expect(logo.style.transform).toContain('translateX(-50%)');
     expect(logo.style.right).toBe('');
-    expect(parseInt(logo.style.width, 10)).toBeGreaterThanOrEqual(36);
+    expect(parseInt(logo.style.width, 10)).toBeGreaterThanOrEqual(64);
+  });
+
+  it('標誌是清楚的品牌徽章：不用 screen 混合（海報上才不會淡掉），有金色細框與暗色襯底', () => {
+    render(<SceneFrame aspectRatio="9:16" posters={['/image/p.png']}>x</SceneFrame>);
+    const logo = screen.getByTestId('scene-logo') as HTMLImageElement;
+    expect(logo.style.mixBlendMode).toBe('');
+    expect(logo.style.border).toContain('1px solid');
+    expect(logo.style.boxShadow).not.toBe('');
   });
 
   it('海報背景要清楚（不透明度 ≥ 0.75），並用文字襯底與陰影維持文字可讀', () => {

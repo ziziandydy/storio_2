@@ -226,7 +226,11 @@ export default function SceneFrame({ aspectRatio, posters, frame, heroLogo, chil
           data-testid="scene-logo"
           src="/image/logo/logo.png"
           alt="Storio"
-          style={{ position: 'absolute', top: '24px', left: '50%', transform: 'translateX(-50%)', width: '44px', height: '44px', zIndex: 3, mixBlendMode: 'screen', borderRadius: '50%' }}
+          style={{
+            position: 'absolute', top: '26px', left: '50%', transform: 'translateX(-50%)', width: '68px', height: '68px', zIndex: 3, borderRadius: '50%',
+            // 品牌徽章：金色細框＋暗色光暈襯底，在任何海報上都清楚；不用 screen 混合（會在亮海報上淡掉）
+            border: '1px solid rgba(197,160,89,0.55)', boxShadow: '0 0 0 5px rgba(0,0,0,0.38), 0 6px 22px rgba(0,0,0,0.65)',
+          }}
         />
       )}
     </div>

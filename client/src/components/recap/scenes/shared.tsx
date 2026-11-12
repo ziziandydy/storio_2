@@ -32,12 +32,18 @@ export function pickPosters(own: string[] | undefined | null, fallback?: string[
 }
 
 /** 把含 `{n}` 的文案拆開，數字用計數動畫（例如「{n} 部電影」→ 5 部電影）。 */
-export function CountText({ template, value, animate }: { template: string; value: number; animate: boolean }) {
+export function CountText({ template, value, animate, numberColor, numberTestId }: { template: string; value: number; animate: boolean; numberColor?: string; numberTestId?: string }) {
   const [before, after = ''] = template.split('{n}');
   return (
     <>
       {before}
-      <CountUp value={value} animate={animate} />
+      {numberColor || numberTestId ? (
+        <span data-testid={numberTestId} style={{ color: numberColor }}>
+          <CountUp value={value} animate={animate} />
+        </span>
+      ) : (
+        <CountUp value={value} animate={animate} />
+      )}
       {after}
     </>
   );
