@@ -12,7 +12,7 @@ import re
 from collections import Counter
 from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 
-from app.services.recap_stats import median_release_age
+from app.services.recap_stats import median_release_age, recent_posters
 
 # 類別家族 → 正規式（對小寫化後的類別名稱 re.search）。
 # family／kids 用整串比對，避免誤中書類別 "Family Life"、"Family & Relationships"。
@@ -160,8 +160,19 @@ def ranked_families(rows: List[dict]) -> List[Tuple[str, int]]:
     return sorted(counts.items(), key=lambda kv: (-kv[1], _PRIORITY_INDEX[kv[0]]))
 
 
-def _result(title_id: str) -> dict:
-    return {"id": title_id, **TITLES[title_id]}
+def _result(title_id: str, source_rows: List[dict]) -> dict:
+    """稱號結果；posters 是「讓你得到這個稱號的作品」的海報（場景背景用）。"""
+    return {"id": title_id, **TITLES[title_id], "posters": recent_posters(source_rows)}
+
+
+def _oldest_rows(rows: List[dict]) -> List[dict]:
+    """電影與影集依發行年份由舊到新（老靈魂稱號的來源）；再以收藏時間穩定排序。"""
+    dated = [r for r in rows if r.get("year") and r.get("media_type") in ("movie", "tv")]
+    return sorted(dated, key=lambda r: (r["year"], str(r.get("archived_date") or r.get("created_at") or "")))
+
+
+def _family_rows(rows: List[dict], families) -> List[dict]:
+    return [r for r in rows if genre_families(r.get("genres") or []) & set(families)]
 
 
 def select_title(rows: List[dict], year: int) -> Optional[dict]:
@@ -175,12 +186,12 @@ def select_title(rows: List[dict], year: int) -> Optional[dict]:
             if len(ranked) > 1 and ranked[1][1] >= MIN_SECOND_FAMILY_COUNT:
                 pair = frozenset({top1, ranked[1][0]})
                 if pair in PAIR_TITLES:
-                    return _result(PAIR_TITLES[pair])
-            return _result(SINGLE_TITLES[top1])
+                    return _result(PAIR_TITLES[pair], _family_rows(rows, pair))
+            return _result(SINGLE_TITLES[top1], _family_rows(rows, {top1}))
 
     age = median_release_age(rows, year)
     if age is not None and age >= OLD_SOUL_MIN_AGE:
-        return _result("old_soul")
+        return _result("old_soul", _oldest_rows(rows))
 
     counts: Dict[str, int] = {}
     for row in rows:
@@ -189,6 +200,6 @@ def select_title(rows: List[dict], year: int) -> Optional[dict]:
             counts[media_type] = counts.get(media_type, 0) + 1
     if counts:
         best = max(counts, key=lambda m: (counts[m], MEDIA_PRIORITY[m]))
-        return _result(MEDIA_RULES[best])
+        return _result(MEDIA_RULES[best], [r for r in rows if r.get("media_type") == best])
 
-    return _result("story_keeper")
+    return _result("story_keeper", rows)

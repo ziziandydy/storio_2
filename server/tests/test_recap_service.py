@@ -198,7 +198,7 @@ async def test_monthly_scenes_need_two_active_months(repo):
     ]
     two_months = await service().build_recap("u1", 2026, TODAY, fetch=no_fetch)
     assert two_months.monthly["counts"][2] == 2 and len(two_months.monthly["counts"]) == 12
-    assert two_months.months_active == {"count": 2}
+    assert two_months.months_active == {"count": 2, "posters": []}
 
 
 @pytest.mark.asyncio

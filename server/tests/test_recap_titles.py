@@ -116,7 +116,7 @@ def test_genre_match_is_case_insensitive():
 
 def test_result_shape_has_id_zh_en():
     result = select_title(rows_of(5, genres=["Horror"]), 2026)
-    assert result == {"id": "midnight_wanderer", **TITLES["midnight_wanderer"]}
+    assert result == {"id": "midnight_wanderer", **TITLES["midnight_wanderer"], "posters": []}
 
 
 # ---------- 選取：混搭 ----------
@@ -221,3 +221,53 @@ def test_unknown_media_type_falls_back_to_story_keeper():
 def test_selection_is_deterministic():
     data = rows_of(3, genres=["Drama"], year=2001) + rows_of(2, genres=["Comedy"], year=2003)
     assert select_title(data, 2026) == select_title(list(data), 2026)
+
+
+# ---------- 稱號的來源海報 ----------
+
+def titled_row(poster, genres=None, media_type="movie", year=None, date="2026-03-05"):
+    return {"media_type": media_type, "genres": genres, "year": year, "poster_path": poster, "archived_date": date}
+
+
+def test_genre_title_posters_are_the_works_that_made_the_title():
+    rows = [
+        titled_row("/d1.jpg", ["Drama"], date="2026-01-01"),
+        titled_row("/d2.jpg", ["Drama"], date="2026-02-01"),
+        titled_row("/d3.jpg", ["Drama"], date="2026-03-01"),
+        titled_row("/c1.jpg", ["Comedy"], date="2026-04-01"),
+        titled_row("/d4.jpg", ["Drama"], date="2026-05-01"),
+    ]
+    posters = select_title(rows, 2026)["posters"]
+    assert "/d1.jpg" in posters and "/d2.jpg" in posters and "/d3.jpg" in posters
+    assert "/c1.jpg" not in posters  # 喜劇不是這個稱號的來源
+
+
+def test_pair_title_posters_come_from_both_families():
+    rows = (
+        [titled_row(f"/dr{i}.jpg", ["Drama"]) for i in range(3)]
+        + [titled_row(f"/th{i}.jpg", ["Thriller"]) for i in range(3)]
+        + [titled_row("/other.jpg", ["Documentary"])]
+    )
+    result = select_title(rows, 2026)
+    if result["id"] in PAIR_TITLES.values():
+        assert any(p.startswith("/dr") for p in result["posters"])
+        assert any(p.startswith("/th") for p in result["posters"])
+
+
+def test_old_soul_posters_are_the_oldest_works_first():
+    rows = [titled_row(f"/y{y}.jpg", year=y) for y in (1975, 1982, 1990, 2001, 2003, 2005)]
+    result = select_title(rows, 2026)
+    assert result["id"] == "old_soul"
+    assert result["posters"][:3] == ["/y1975.jpg", "/y1982.jpg", "/y1990.jpg"]
+
+
+def test_media_title_posters_come_from_that_media_type():
+    rows = [titled_row(f"/b{i}.jpg", media_type="book") for i in range(4)] + [titled_row("/m.jpg", media_type="movie")]
+    result = select_title(rows, 2026)
+    assert all(p.startswith("/b") for p in result["posters"])
+
+
+def test_title_posters_are_empty_list_when_no_row_has_a_poster_and_capped_at_six():
+    assert select_title([titled_row(None, ["Drama"]) for _ in range(5)], 2026)["posters"] == []
+    many = [titled_row(f"/p{i}.jpg", ["Drama"], date=f"2026-01-{i + 1:02d}") for i in range(9)]
+    assert len(select_title(many, 2026)["posters"]) == 6

@@ -125,13 +125,21 @@ def _release_years(rows: List[dict]) -> List[int]:
 
 
 def era_counts(rows: List[dict]) -> Optional[dict]:
-    """年代分佈：電影與影集依發行年份分到十年（1990、2000…），回傳各十年的部數，由舊到新。
+    """年代分佈：電影與影集依發行年份分到十年（1990、2000…），回傳各十年的部數（由舊到新）與第一名年代的海報。
     有年份的作品不足 3 部回 None。"""
     years = _release_years(rows)
     if len(years) < MIN_ERA_WORKS:
         return None
     counts = Counter((y // 10) * 10 for y in years)
-    return {"decades": [{"decade": d, "count": counts[d]} for d in sorted(counts)]}
+    top_decade = max(counts, key=lambda d: (counts[d], d))  # 作品最多的十年；同數取較近的
+    top_rows = [
+        r for r in rows
+        if r.get("year") and r.get("media_type") in ("movie", "tv") and (r["year"] // 10) * 10 == top_decade
+    ]
+    return {
+        "decades": [{"decade": d, "count": counts[d]} for d in sorted(counts)],
+        "posters": recent_posters(top_rows),  # 背景用：第一名年代的作品海報
+    }
 
 
 def median_release_age(rows: List[dict], year: int) -> Optional[int]:
@@ -188,6 +196,24 @@ def recent_posters(rows: List[dict], limit: int = 6) -> List[str]:
             posters.append(path)
             if len(posters) >= limit:
                 break
+    return posters
+
+
+def top_month_posters(rows: List[dict], counts: List[int]) -> List[str]:
+    """收藏最多的月份（同數取較早）那些收藏的海報，近→遠，最多 6 個；沒有海報回 []。"""
+    top = max(counts) if counts else 0
+    if top < 1:
+        return []
+    return recent_posters(rows_in_month(rows, counts.index(top) + 1))
+
+
+def one_poster_per_month(rows: List[dict]) -> List[str]:
+    """有收藏的每個月各取 1 個作品海報（該月最近的一部），由 1 月到 12 月；那個月沒有任何海報就跳過。"""
+    posters: List[str] = []
+    for month in range(1, 13):
+        picked = recent_posters(rows_in_month(rows, month), limit=1)
+        if picked:
+            posters.append(picked[0])
     return posters
 
 
