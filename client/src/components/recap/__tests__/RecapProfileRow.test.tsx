@@ -47,10 +47,10 @@ describe('RecapProfileRow', () => {
     expect(m.push).not.toHaveBeenCalled();
   });
 
-  it('全年顯示（標籤「年度 Recap」）', () => {
+  it('全年顯示（標籤「年度回顧」）', () => {
     set(yearsData([2026], 5));
     render(<RecapProfileRow today={OUT} />);
-    expect(screen.getByText('年度 Recap')).toBeTruthy();
+    expect(screen.getByText('年度回顧')).toBeTruthy();
   });
 
   it('只有往年達標、當年不足：顯示鼓勵文案但仍可點入，單一年份直接導向', () => {
@@ -95,7 +95,7 @@ describe('RecapProfileRow', () => {
     cleanup();
     set(null, false, true);
     const b = render(<RecapProfileRow today={OUT} />);
-    expect(b.getByText('年度 Recap')).toBeTruthy();
+    expect(b.getByText('年度回顧')).toBeTruthy();
     fireEvent.click(b.getByTestId('recap-profile-row'));
     expect(m.push).not.toHaveBeenCalled();
   });
@@ -109,14 +109,17 @@ describe('RecapProfileRow', () => {
     expect(container.textContent).not.toContain('{year}');
   });
 
-  it('中英文對照：中文介面副標 Year in Review，英文介面副標 年度回顧', () => {
+  it('各語言只顯示自己的名稱：中文「年度回顧」、英文「Yearly Recap」，不同時出現兩種', () => {
     set(yearsData([2026], 5));
     const zh = render(<RecapProfileRow today={OUT} />);
-    expect(zh.getByText('Year in Review')).toBeTruthy();
+    expect(zh.getByText('年度回顧')).toBeTruthy();
+    expect(zh.container.textContent).not.toContain('Recap');
+    expect(zh.container.textContent).not.toContain('Year in Review');
     cleanup();
     m.locale.current = 'en-US';
     const en = render(<RecapProfileRow today={OUT} />);
-    expect(en.getByText('年度回顧')).toBeTruthy();
+    expect(en.getByText('Yearly Recap')).toBeTruthy();
+    expect(en.container.textContent).not.toContain('年度回顧');
   });
 
   describe('限時窗口內', () => {
@@ -149,7 +152,7 @@ describe('RecapProfileRow', () => {
       expect(screen.queryByTestId('recap-profile-row')).toBeNull();
       act(() => dismiss(2026));
       expect(screen.getByTestId('recap-profile-row')).toBeTruthy();
-      expect(screen.getByTestId('recap-dismiss-hint').textContent).toContain('年度 Recap');
+      expect(screen.getByTestId('recap-dismiss-hint').textContent).toContain('年度回顧');
       fireEvent.click(screen.getByTestId('recap-dismiss-hint'));
       expect(screen.queryByTestId('recap-dismiss-hint')).toBeNull();
     });

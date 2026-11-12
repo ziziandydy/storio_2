@@ -12,7 +12,7 @@ import { fill } from '@/lib/recap/format';
 const HINT_MS = 6000;
 
 /**
- * Profile 的「年度 Recap」常駐一列（全年可見），樣式比照 Profile 的 ProfileItem。
+ * Profile 的「年度回顧／Yearly Recap」常駐一列（全年可見），樣式比照 Profile 的 ProfileItem。
  * - 有達標年份：可點入（1 個年份直接開、多個年份先選年份）。
  * - 當年未達門檻：副標顯示「再收藏 N 部，就能看到你的 {year}」（不責備）；若沒有任何達標年份則不可點入。
  * - 載入中或失敗：只顯示列，點擊無反應。
@@ -83,10 +83,7 @@ export default function RecapProfileRow({ today }: { today?: Date }) {
             <Sparkles size={18} />
           </div>
           <div className="flex flex-col items-start text-left min-w-0">
-            <span className="flex items-baseline gap-2">
-              <span className="text-sm font-medium text-text-primary">{r.profileRow}</span>
-              <span className="text-[10px] tracking-[0.12em] text-text-desc">{r.profileRowAlt}</span>
-            </span>
+            <span className="text-sm font-medium text-text-primary">{r.profileRow}</span>
             {encourage && <span className="text-xs text-text-desc">{encourage}</span>}
           </div>
         </div>
