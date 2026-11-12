@@ -1,0 +1,124 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Storio App Store Screenshots v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@300;400;500&family=Noto+Serif+TC:wght@600&family=Noto+Sans+TC:wght@400;500&display=block" rel="stylesheet">
+<style>
+  :root { --ink: #080808; --gold: #c5a059; --gold-soft: #d9bf86; --ivory: #ece5d6; --dim: rgba(236,229,214,.66); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--ink); overflow: hidden; }
+  body { color: var(--ivory); -webkit-font-smoothing: antialiased; font-family: Jost, 'Noto Sans TC', sans-serif; }
+  /* 以 1242 寬為設計基準，再整體縮放到目標尺寸（版面用基準單位寫） */
+  #stage { position: absolute; left: 0; top: 0; width: 1242px; transform-origin: 0 0; overflow: hidden;
+           background: radial-gradient(70% 20% at 50% 10%, rgba(197,160,89,.17), rgba(197,160,89,0) 70%),
+                       radial-gradient(80% 36% at 50% 74%, rgba(197,160,89,.08), rgba(0,0,0,0) 70%), var(--ink); }
+  #cap { position: absolute; left: 0; right: 0; text-align: center; padding: 0 70px; }
+  #kicker { font: 400 30px Jost, 'Noto Sans TC'; letter-spacing: .5em; padding-left: .5em; color: var(--gold); text-transform: uppercase; }
+  #rule { width: 120px; height: 1px; margin: 30px auto 34px; background: linear-gradient(90deg, rgba(197,160,89,0), rgba(197,160,89,.9), rgba(197,160,89,0)); }
+  #head { font: 500 118px/1.04 'Cormorant Garamond', serif; letter-spacing: -.005em; text-wrap: balance; }
+  #head em { color: var(--gold-soft); }
+  #sub { margin-top: 32px; font: 300 40px/1.4 Jost; color: var(--dim); letter-spacing: .01em; text-wrap: balance; }
+  .zh #kicker { font: 500 34px 'Noto Sans TC'; letter-spacing: .6em; padding-left: .6em; }
+  .zh #head { font: 600 98px/1.22 'Noto Serif TC', serif; letter-spacing: .02em; }
+  .zh #head em { font-style: normal; }
+  .zh #sub { font: 400 38px/1.55 'Noto Sans TC'; letter-spacing: .04em; }
+  .card { position: absolute; overflow: hidden; background: #111; border-radius: 46px;
+          box-shadow: 0 60px 120px rgba(0,0,0,.75), 0 0 0 2px rgba(197,160,89,.32); }
+  .card img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+  .fp { position: absolute; border-radius: 22px; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,.7), 0 0 0 2px rgba(197,160,89,.22); }
+  .fp img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  #wall { position: absolute; inset: -10% -10%; display: grid; grid-template-columns: repeat(6, 1fr); gap: 26px; transform: rotate(-9deg) scale(1.15); opacity: .2; filter: saturate(.8); }
+  #wall img { width: 100%; aspect-ratio: 2/3; object-fit: cover; border-radius: 18px; display: block; }
+  #fade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,8,8,.86), rgba(8,8,8,.55) 40%, rgba(8,8,8,.78)); }
+</style>
+</head>
+<body>
+<div id="stage"><div id="wallbox"></div><div id="cap"><div id="kicker"></div><div id="rule"></div><div id="head"></div><div id="sub"></div></div><div id="art"></div></div>
+<script>
+const Q = new URLSearchParams(location.search);
+const LANG = Q.get('lang') || 'en', N = Number(Q.get('s') || 1);
+const W = Number(Q.get('w') || 1206), H = Number(Q.get('h') || 2622);
+const BW = 1242, BH = Math.round(H * BW / W), K = W / BW;
+document.documentElement.style.width = W + 'px'; document.documentElement.style.height = H + 'px';
+if (LANG === 'zh') document.body.classList.add('zh');
+const stage = document.getElementById('stage');
+stage.style.height = BH + 'px'; stage.style.transform = `scale(${K})`;
+
+const APP = `out/app/${LANG}/`, FAKE = 'fake/', S2 = '../ig-story-15s/assets/share2/';
+const COPY = {
+  en: [
+    ['Storio', 'Movies, TV &amp; Books.<br><em>All in one app.</em>', 'Every story you love, kept in one private folio.'],
+    ['Collect', 'Remember everything<br><em>you watch &amp; read.</em>', 'From the first trailer to the last page, all in one place.'],
+    ['Search', 'One search.<br><em>Films, series &amp; books.</em>', 'Find it, then add it to your folio in a tap.'],
+    ['Seasons', 'Log the seasons<br><em>you actually watched.</em>', 'Pick S1, S5 or all of them. Every season counts.'],
+    ['Rate &amp; Reflect', 'Rate it.<br><em>Write what stayed.</em>', 'A score out of ten and a few honest lines.'],
+    ['Discover', 'Trailers, cast<br><em>&amp; where to watch.</em>', 'Everything about a story on one immersive page.'],
+    ['Revisit', 'Look back,<br><em>day by day.</em>', 'Your collection on a calendar and in a gallery.'],
+    ['Year in Stories', 'Your year,<br><em>in stories.</em>', 'What you collected, the eras you loved, and your title.'],
+    ['Share', 'Share cards<br><em>worth posting.</em>', 'Pick a style. Share one story or your whole year.'],
+  ],
+  zh: [
+    ['Storio', '電影、影集、書籍<br><em>一個 App 全收藏</em>', '喜歡的每個故事，都放進你的私人典藏室'],
+    ['典藏', '看過、讀過的故事<br><em>一個都不漏</em>', '從預告到最後一頁，通通替你記住'],
+    ['搜尋', '一次搜尋<br><em>電影、影集、書籍</em>', '找到作品，一鍵加入你的 Storio'],
+    ['分季', '影集分季收藏<br><em>看到哪一季都記得</em>', '可選 S1、S5 或全部，每一季都算數'],
+    ['評分與心得', '打個分數<br><em>寫下留在心裡的話</em>', '十分制評分，加上幾句真心的感想'],
+    ['探索', '預告、演員、哪裡看<br><em>一頁看完</em>', '沉浸式詳情頁，作品資訊一次掌握'],
+    ['回顧', '用日曆<br><em>重溫每一天的故事</em>', '日曆與畫廊兩種視角，回顧典藏足跡'],
+    ['年度回顧', '你的年度<br><em>故事回顧</em>', '收藏了多少、最愛哪個年代、屬於你的稱號'],
+    ['分享', '分享卡片<br><em>美得值得發</em>', '多種模板，分享單一作品或整年回顧'],
+  ],
+};
+const [k, h, s] = COPY[LANG][N - 1];
+document.querySelector('#kicker').textContent = k.replace('&amp;', '&');
+document.querySelector('#head').innerHTML = h;
+document.querySelector('#sub').textContent = s.replace('&amp;', '&');
+
+const CAP_TOP = 150;
+const capEl = document.getElementById('cap');
+capEl.style.top = CAP_TOP + 'px';
+
+// 卡片：以高度為準，寬依 1170:2532 比例
+const RATIO = 1170 / 2532;
+const card = (src, cx, cy, hgt, rot = 0, z = 1) => {
+  const w = Math.round(hgt * RATIO);
+  return `<div class="card" style="left:${Math.round(cx - w / 2)}px;top:${Math.round(cy - hgt / 2)}px;width:${w}px;height:${hgt}px;transform:rotate(${rot}deg);z-index:${z}"><img src="${src}"></div>`;
+};
+const floatPoster = (id, cx, cy, w, rot, z = 1) =>
+  `<div class="fp" style="left:${cx - w / 2}px;top:${cy - w * 0.75}px;width:${w}px;height:${w * 1.5}px;transform:rotate(${rot}deg);z-index:${z}"><img src="${FAKE}${id}.jpg"></div>`;
+const wide = (src, cx, cy, w, rot, z = 1) =>
+  `<div class="fp" style="left:${cx - w / 2}px;top:${cy - w * 0.9}px;width:${w}px;height:${w * 1.8}px;transform:rotate(${rot}deg);z-index:${z}"><img src="${src}" style="object-fit:contain;background:#000"></div>`;
+
+// 版面高度：標題區結束後到底部
+const measureCapBottom = () => capEl.getBoundingClientRect().bottom / K;
+
+const SPEC = {
+  1: (a) => card(APP + 'collection.png', BW * 0.17, a.cy + 60, a.h * 0.8, -6, 1) + card(APP + 'recap_total.png', BW * 0.83, a.cy + 60, a.h * 0.8, 6, 1) + card(APP + 'home.png', BW / 2, a.cy, a.h, 0, 3),
+  2: (a) => floatPoster('movie_0', BW * 0.12, a.cy - a.h * 0.28, 330, -9, 1) + floatPoster('series_1', BW * 0.88, a.cy + a.h * 0.22, 330, 8, 1) + card(APP + 'collection.png', BW / 2, a.cy, a.h, 0, 3),
+  3: (a) => card(APP + 'search_books.png', BW * 0.8, a.cy + 50, a.h * 0.84, 5, 1) + card(APP + 'search.png', BW * 0.36, a.cy, a.h, 0, 3),
+  4: (a) => card(APP + 'details_tv.png', BW * 0.16, a.cy + 60, a.h * 0.8, -6, 1) + card(APP + 'add_tv.png', BW / 2, a.cy, a.h, 0, 3),
+  5: (a) => floatPoster('movie_6', BW * 0.86, a.cy - a.h * 0.22, 340, 8, 1) + card(APP + 'add_movie.png', BW / 2, a.cy, a.h, 0, 3),
+  6: (a) => card(APP + 'details.png', BW * 0.84, a.cy + 60, a.h * 0.8, 6, 1) + card(APP + 'details_scroll.png', BW * 0.4, a.cy, a.h, 0, 3),
+  7: (a) => card(APP + 'collection.png', BW * 0.16, a.cy + 60, a.h * 0.8, -6, 1) + card(APP + 'calendar.png', BW / 2, a.cy, a.h, 0, 3),
+  8: (a) => card(APP + 'recap_total.png', BW * 0.14, a.cy + 70, a.h * 0.78, -7, 1) + card(APP + 'recap_title.png', BW * 0.86, a.cy + 70, a.h * 0.78, 7, 1) + card(APP + 'recap_eras.png', BW / 2, a.cy, a.h, 0, 3),
+  9: (a) => wide(S2 + 'cine_ticket.png', BW * 0.12, a.cy + 80, 480, -9, 1) + wide(S2 + 'read_desk.png', BW * 0.88, a.cy + 80, 480, 9, 1) + card(APP + 'recap_share.png', BW / 2, a.cy, a.h, 0, 3),
+};
+
+(async () => {
+  await document.fonts.ready;
+  const top = measureCapBottom() + 70;           // 標題下緣＋間距
+  const avail = BH - top - 90;                    // 剩餘高度（底部留 90）
+  const hgt = Math.min(avail, Math.round(BW * 0.7 / RATIO)); // 主卡不超過 0.7 寬
+  const a = { h: Math.round(hgt), cy: Math.round(top + avail / 2) };
+  if (N === 1) {
+    const ids = ['movie_0','series_1','book_0','movie_2','series_0','movie_3','book_1','movie_6','series_2','movie_7','series_3','book_2','movie_1','series_4','book_4','movie_4','series_5','movie_5'];
+    document.getElementById('wallbox').innerHTML = `<div id="wall">${ids.concat(ids).map((i) => `<img src="${FAKE}${i}.jpg">`).join('')}</div><div id="fade"></div>`;
+  }
+  document.getElementById('art').innerHTML = SPEC[N](a);
+  await Promise.all([...document.images].map((i) => i.decode().catch(() => {})));
+  window.__ready = true;
+})();
+</script>
+</body>
+</html>
