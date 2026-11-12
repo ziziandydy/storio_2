@@ -38,7 +38,7 @@ function sceneLabel(key: SceneKey, copy: RecapCopy, recap: RecapData): string {
     case 'series': return s.series.title;
     case 'books': return s.books.title;
     case 'genres': return s.genres.title;
-    case 'story_age': return s.storyAge.title;
+    case 'eras': return s.eras.title;
     case 'title': return s.title.eyebrow;
     case 'monthly': return s.monthly.title;
     case 'peak_month': return s.peakMonth.title;

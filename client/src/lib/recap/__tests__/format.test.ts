@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatDuration, decadeLabel, fill, durationText } from '../format';
+import { formatDuration, eraRange, fill, durationText } from '../format';
 
 describe('fill', () => {
   it('替換所有佔位符', () => {
@@ -54,15 +54,9 @@ describe('formatDuration', () => {
   });
 });
 
-describe('decadeLabel', () => {
-  it('zh-TW：1990 → 90 年代、2010 → 10 年代、2000 → 00 年代', () => {
-    expect(decadeLabel(1990, 'zh-TW')).toBe('1990 年代');
-    expect(decadeLabel(2010, 'zh-TW')).toBe('2010 年代');
-    expect(decadeLabel(2000, 'zh-TW')).toBe('2000 年代');
-  });
-
-  it('en-US：2010 → 2010s、1990 → 1990s', () => {
-    expect(decadeLabel(2010, 'en-US')).toBe('2010s');
-    expect(decadeLabel(1990, 'en-US')).toBe('1990s');
+describe('eraRange', () => {
+  it('十年的起訖年份，中英文相同', () => {
+    expect(eraRange(1990)).toBe('1990–1999');
+    expect(eraRange(2020)).toBe('2020–2029');
   });
 });

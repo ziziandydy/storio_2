@@ -5,7 +5,7 @@ import { makeRecap, makeMinimalRecap } from './fixtures';
 describe('buildScenes', () => {
   it('SCENE_ORDER 是固定的 15 個場景鍵', () => {
     expect(SCENE_ORDER).toEqual([
-      'opening', 'total', 'movies', 'series', 'books', 'genres', 'story_age', 'title',
+      'opening', 'total', 'movies', 'series', 'books', 'genres', 'eras', 'title',
       'monthly', 'peak_month', 'months_active', 'top_rated', 'first_last', 'reflection', 'closing',
     ]);
   });

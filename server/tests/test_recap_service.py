@@ -89,7 +89,7 @@ async def test_scenes_present_or_none_by_data(repo):
     assert result.books["count"] == 1 and result.books["pages"] == 400
     assert result.total["count"] == 3
     assert result.genres is None  # 類別資料不足
-    assert result.story_age is None and result.title is None
+    assert result.eras is None and result.title is None
     assert result.first_last is not None  # ≥ 2 列
     assert result.reflection is None and result.top_rated is None
 

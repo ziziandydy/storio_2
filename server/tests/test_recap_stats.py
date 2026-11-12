@@ -173,62 +173,51 @@ def test_top_genres_needs_three_rows_with_genres():
 
 # ---------- 故事年齡 ----------
 
-def test_story_age_is_year_minus_median_release_year():
-    rows = [make_row(year=y) for y in (2009, 2009, 2009, 2009, 2009)]
-    assert rs.story_age(rows, 2026) == {"median_year": 2009, "age": 17, "favorite_decade": 2000}
+def test_era_counts_groups_by_decade_oldest_first():
+    rows = [make_row(year=y) for y in (1994, 1999, 2003, 2012, 2015, 2018)]
+    assert rs.era_counts(rows) == {
+        "decades": [
+            {"decade": 1990, "count": 2},
+            {"decade": 2000, "count": 1},
+            {"decade": 2010, "count": 3},
+        ]
+    }
 
 
-def test_story_age_uses_median_so_one_old_classic_does_not_skew_it():
-    # 平均會是 2006（沒有任何一部是那年的作品）；中位數 2020 才貼近這份收藏
-    rows = [make_row(year=y) for y in (1950, 2020, 2020, 2021, 2022)]
-    result = rs.story_age(rows, 2026)
-    assert result["median_year"] == 2020 and result["age"] == 6
+def test_era_counts_counts_movies_and_series_only_and_skips_missing_year():
+    # 書的 year 是版本出版年，不代表作品年代；沒有年份的不算
+    rows = [
+        make_row(year=2010), make_row(year=2011, media_type="tv"), make_row(year=2012),
+        make_row(year=1990, media_type="book"), make_row(year=None),
+    ]
+    assert rs.era_counts(rows) == {"decades": [{"decade": 2010, "count": 3}]}
 
 
-def test_story_age_median_is_always_a_real_work_year():
-    rows = [make_row(year=y) for y in (2000, 2002, 2010, 2012, 2020, 2022)]
-    assert rs.story_age(rows, 2026)["median_year"] == 2010  # 取偏低的中位數，不會是不存在的年份
+def test_era_counts_needs_three_works_with_year():
+    rows = [make_row(year=2000), make_row(year=2010), make_row(year=None, media_type="book")]
+    assert rs.era_counts(rows) is None
 
 
-def test_story_age_counts_movies_and_series_only():
-    # 書的 year 是版本出版年，不代表作品年代；只有 4 部電影影集 + 1 本書 → 資料不足
-    rows = [make_row(year=2010)] * 3 + [make_row(year=2011, media_type="tv"), make_row(year=1990, media_type="book")]
-    assert rs.story_age(rows, 2026) is None
-    rows.append(make_row(year=2012, media_type="tv"))
-    assert rs.story_age(rows, 2026)["median_year"] == 2010
+def test_era_counts_includes_the_recap_year_decade():
+    rows = [make_row(year=y) for y in (2026, 2025, 2024, 2005)]
+    assert rs.era_counts(rows)["decades"] == [{"decade": 2000, "count": 1}, {"decade": 2020, "count": 3}]
 
 
-def test_story_age_is_never_negative():
-    rows = [make_row(year=y) for y in (2027, 2027, 2027, 2027, 2027)]
-    assert rs.story_age(rows, 2026)["age"] == 0
+def test_median_release_age_is_year_minus_median_release_year():
+    rows = [make_row(year=y) for y in (1950, 2020, 2020, 2021, 2022)]  # 中位數 2020，不被一部老片拉偏
+    assert rs.median_release_age(rows, 2026) == 6
 
 
-def test_story_age_favorite_decade_is_most_common():
-    rows = [make_row(year=y) for y in (1999, 1994, 2003, 2001, 1995)]
-    assert rs.story_age(rows, 2026)["favorite_decade"] == 1990
-
-
-def test_story_age_decade_tie_prefers_more_recent():
-    rows = [make_row(year=y) for y in (1990, 1991, 1992, 2010, 2011, 2012, 2000)]
-    assert rs.story_age(rows, 2026)["favorite_decade"] == 2010
-
-
-def test_story_age_favorite_decade_needs_three_works_else_none():
-    # 每個十年都只有 2 部，談不上「最愛」：只回傳故事年齡，不給最愛年代
-    rows = [make_row(year=y) for y in (1990, 1995, 2001, 2003, 2010, 2012)]
-    result = rs.story_age(rows, 2026)
-    assert result is not None and result["favorite_decade"] is None
-
-
-def test_story_age_needs_five_rows_with_year():
-    rows = [make_row(year=2000) for _ in range(4)] + [make_row(year=None)]
-    assert rs.story_age(rows, 2026) is None
+def test_median_release_age_needs_five_movies_or_series_and_is_never_negative():
+    rows = [make_row(year=2000) for _ in range(4)] + [make_row(year=1990, media_type="book")]
+    assert rs.median_release_age(rows, 2026) is None
+    assert rs.median_release_age([make_row(year=2027) for _ in range(5)], 2026) == 0
 
 
 def test_stats_are_deterministic():
     rows = [make_row(genres=["Drama", "Comedy"], year=2001 + i) for i in range(6)]
     assert rs.top_genres(rows) == rs.top_genres(list(rows))
-    assert rs.story_age(rows, 2026) == rs.story_age(list(rows), 2026)
+    assert rs.era_counts(rows) == rs.era_counts(list(rows))
 
 
 # ---------- 月份節奏 ----------

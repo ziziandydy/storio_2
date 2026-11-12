@@ -16,7 +16,7 @@ class RecapResponse(BaseModel):
     series: Optional[dict] = None
     books: Optional[dict] = None
     genres: Optional[dict] = None  # {"top": [{"name", "count"}]}
-    story_age: Optional[dict] = None
+    eras: Optional[dict] = None
     title: Optional[dict] = None  # {"id", "zh", "en"}
     monthly: Optional[dict] = None  # {"counts": [12 個整數]}
     peak_month: Optional[dict] = None

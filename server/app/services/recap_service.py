@@ -165,7 +165,7 @@ class RecapService:
                 if books else None
             ),
             genres=genre_scene,
-            story_age=stats.story_age(rows, year),
+            eras=stats.era_counts(rows),
             title=select_title(rows, year),
             monthly={"counts": counts} if active else None,
             peak_month=peak_scene,

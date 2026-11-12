@@ -9,7 +9,7 @@ import MoviesScene from './scenes/MoviesScene';
 import SeriesScene from './scenes/SeriesScene';
 import BooksScene from './scenes/BooksScene';
 import GenresScene from './scenes/GenresScene';
-import StoryAgeScene from './scenes/StoryAgeScene';
+import EraScene from './scenes/EraScene';
 import TitleScene from './scenes/TitleScene';
 import MonthlyScene from './scenes/MonthlyScene';
 import PeakMonthScene from './scenes/PeakMonthScene';
@@ -40,7 +40,7 @@ export default function RecapScene({ sceneKey, recap, copy, locale, aspectRatio,
     case 'series': return recap.series ? <SeriesScene {...common} data={recap.series} /> : null;
     case 'books': return recap.books ? <BooksScene {...common} data={recap.books} /> : null;
     case 'genres': return recap.genres ? <GenresScene {...common} data={recap.genres} /> : null;
-    case 'story_age': return recap.story_age ? <StoryAgeScene {...common} data={recap.story_age} /> : null;
+    case 'eras': return recap.eras ? <EraScene {...common} data={recap.eras} /> : null;
     case 'title': return recap.title ? <TitleScene {...common} data={recap.title} /> : null;
     case 'monthly': return recap.monthly ? <MonthlyScene {...common} data={recap.monthly} /> : null;
     case 'peak_month': return recap.peak_month ? <PeakMonthScene {...common} data={recap.peak_month} /> : null;

@@ -10,7 +10,7 @@ export const SCENE_SIZE: Record<RecapAspect, { w: number; h: number }> = {
 };
 
 export type SceneKey =
-  | 'opening' | 'total' | 'movies' | 'series' | 'books' | 'genres' | 'story_age' | 'title'
+  | 'opening' | 'total' | 'movies' | 'series' | 'books' | 'genres' | 'eras' | 'title'
   | 'monthly' | 'peak_month' | 'months_active' | 'top_rated' | 'first_last' | 'reflection' | 'closing';
 
 export interface TimeSummary {
@@ -23,7 +23,7 @@ export interface TimeSummary {
 export interface SeriesScene extends TimeSummary { episodes: number }
 export interface BooksScene extends TimeSummary { pages: number }
 export interface GenreScene { top: { name: string; count: number }[]; posters: string[] }
-export interface StoryAgeScene { median_year: number; age: number; favorite_decade: number | null }
+export interface EraScene { decades: { decade: number; count: number }[] }
 export interface TitleScene { id: string; zh: string; en: string }
 export interface MonthlyScene { counts: number[] }
 export interface PeakMonthScene { month: number; count: number; posters: string[] }
@@ -52,7 +52,7 @@ export interface RecapData {
   series: SeriesScene | null;
   books: BooksScene | null;
   genres: GenreScene | null;
-  story_age: StoryAgeScene | null;
+  eras: EraScene | null;
   title: TitleScene | null;
   monthly: MonthlyScene | null;
   peak_month: PeakMonthScene | null;

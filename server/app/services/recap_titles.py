@@ -12,7 +12,7 @@ import re
 from collections import Counter
 from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 
-from app.services.recap_stats import story_age
+from app.services.recap_stats import median_release_age
 
 # 類別家族 → 正規式（對小寫化後的類別名稱 re.search）。
 # family／kids 用整串比對，避免誤中書類別 "Family Life"、"Family & Relationships"。
@@ -178,8 +178,8 @@ def select_title(rows: List[dict], year: int) -> Optional[dict]:
                     return _result(PAIR_TITLES[pair])
             return _result(SINGLE_TITLES[top1])
 
-    age = story_age(rows, year)
-    if age and age["age"] >= OLD_SOUL_MIN_AGE:
+    age = median_release_age(rows, year)
+    if age is not None and age >= OLD_SOUL_MIN_AGE:
         return _result("old_soul")
 
     counts: Dict[str, int] = {}

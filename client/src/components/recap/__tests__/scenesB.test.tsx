@@ -5,7 +5,7 @@ import { render, screen, cleanup } from '@testing-library/react';
 import { translations } from '@/i18n/locales';
 import { makeRecap } from '@/lib/recap/__tests__/fixtures';
 import GenresScene from '../scenes/GenresScene';
-import StoryAgeScene from '../scenes/StoryAgeScene';
+import EraScene from '../scenes/EraScene';
 import TitleScene from '../scenes/TitleScene';
 import MonthlyScene from '../scenes/MonthlyScene';
 import PeakMonthScene from '../scenes/PeakMonthScene';
@@ -34,36 +34,50 @@ describe('GenresScene', () => {
   });
 });
 
-describe('StoryAgeScene', () => {
-  it('顯示故事年齡、作品年份中位數與最愛年代（中文）', () => {
-    const data = { median_year: 2009, age: 17, favorite_decade: 1990 };
-    const { container } = render(<StoryAgeScene {...base} data={data} copy={zh} locale="zh-TW" />);
-    expect(text(container)).toContain('你的故事年齡');
-    expect(text(container)).toContain('17 歲');
-    expect(text(container)).toContain('作品發行年份的中位數：2009');
-    expect(text(container)).toContain('最愛的年代：1990 年代');
+describe('EraScene（年代分佈）', () => {
+  const data = {
+    decades: [
+      { decade: 1990, count: 2 },
+      { decade: 2000, count: 1 },
+      { decade: 2010, count: 4 },
+    ],
+  };
+  const rows = (container: HTMLElement) => Array.from(container.querySelectorAll('[data-testid="era-row"]')).map((r) => r.textContent ?? '');
+
+  it('依年代由舊到新列出每個十年的部數（中文）', () => {
+    const { container } = render(<EraScene {...base} data={data} copy={zh} locale="zh-TW" />);
+    expect(text(container)).toContain('你收藏的年代');
+    expect(rows(container)).toEqual(['1990–19992 部作品', '2000–20091 部作品', '2010–20194 部作品']);
   });
 
-  it('英文版年代為 1990s', () => {
-    const data = { median_year: 2009, age: 17, favorite_decade: 1990 };
-    const { container } = render(<StoryAgeScene {...base} data={data} copy={en} locale="en-US" />);
-    expect(text(container)).toContain('17 years old');
-    expect(text(container)).toContain('Median release year: 2009');
-    expect(text(container)).toContain('Favorite era: 1990s');
+  it('英文版', () => {
+    const { container } = render(<EraScene {...base} data={data} copy={en} locale="en-US" />);
+    expect(rows(container)).toEqual(['1990–19992 stories', '2000–20091 stories', '2010–20194 stories']);
   });
 
-  it('沒有集中的年代（favorite_decade 為 null）：不顯示最愛年代那一行', () => {
-    const data = { median_year: 2009, age: 17, favorite_decade: null };
-    const { container } = render(<StoryAgeScene {...base} data={data} copy={zh} locale="zh-TW" />);
-    expect(text(container)).not.toContain('最愛的年代');
-    expect(text(container)).toContain('作品發行年份的中位數：2009');
+  it('長條依部數比例，最多的是滿格', () => {
+    const { container } = render(<EraScene {...base} data={data} copy={zh} locale="zh-TW" />);
+    const widths = Array.from(container.querySelectorAll('[data-testid="era-bar"]')).map((b) => (b as HTMLElement).style.width);
+    expect(widths).toEqual(['50%', '25%', '100%']);
   });
 
-  it('年齡 0～1 歲：用「新鮮出爐」取代尷尬的「0 歲」', () => {
-    const data = { median_year: 2026, age: 0, favorite_decade: 2020 };
-    const { container } = render(<StoryAgeScene {...base} data={data} copy={zh} locale="zh-TW" />);
-    expect(text(container)).toContain('新鮮出爐');
-    expect(text(container)).not.toContain('0 歲');
+  it('超過 6 個十年：最舊的合併成一列「更早」，部數相加，其餘保留', () => {
+    const many = {
+      decades: [1950, 1960, 1970, 1980, 1990, 2000, 2010, 2020].map((decade, i) => ({ decade, count: i + 1 })),
+    };
+    const { container } = render(<EraScene {...base} data={many} copy={zh} locale="zh-TW" />);
+    const r = rows(container);
+    expect(r).toHaveLength(6);
+    expect(r[0]).toBe('1980 年以前6 部作品'); // 1+2+3
+    expect(r[1]).toBe('1980–19894 部作品');
+    expect(r[5]).toBe('2020–20298 部作品');
+  });
+
+  it('剛好 6 個十年不合併', () => {
+    const six = { decades: [1970, 1980, 1990, 2000, 2010, 2020].map((decade) => ({ decade, count: 1 })) };
+    const { container } = render(<EraScene {...base} data={six} copy={zh} locale="zh-TW" />);
+    expect(rows(container)).toHaveLength(6);
+    expect(text(container)).not.toContain('以前');
   });
 });
 
@@ -127,7 +141,7 @@ describe('場景（二）共通', () => {
   it('不出現 undefined／NaN，4:5 高度 500', () => {
     const scenes = [
       <GenresScene key="g" {...base} aspectRatio="4:5" data={recap.genres!} copy={zh} locale="zh-TW" />,
-      <StoryAgeScene key="s" {...base} aspectRatio="4:5" data={recap.story_age!} copy={zh} locale="zh-TW" />,
+      <EraScene key="s" {...base} aspectRatio="4:5" data={recap.eras!} copy={zh} locale="zh-TW" />,
       <TitleScene key="t" {...base} aspectRatio="4:5" data={recap.title!} copy={zh} locale="zh-TW" />,
       <MonthlyScene key="m" {...base} aspectRatio="4:5" data={recap.monthly!} copy={zh} locale="zh-TW" />,
       <PeakMonthScene key="p" {...base} aspectRatio="4:5" data={recap.peak_month!} copy={zh} locale="zh-TW" />,

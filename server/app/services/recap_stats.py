@@ -113,29 +113,33 @@ def top_genres(rows: List[dict], limit: int = 3) -> Optional[List[dict]]:
     return [{"name": display[key], "count": count} for key, count in ranked[:limit]]
 
 
-# ---------- 故事年齡 ----------
+# ---------- 年代分佈 ----------
 
-MIN_ERA_WORKS = 5  # 故事年齡至少要有幾部有年份的電影／影集
-MIN_DECADE_WORKS = 3  # 「最愛的年代」至少要有幾部集中在同一個十年
+MIN_ERA_WORKS = 3  # 年代分佈至少要有幾部有年份的電影／影集
+MIN_MEDIAN_AGE_WORKS = 5  # 內部用的「作品年齡」至少要有幾部
 
 
-def story_age(rows: List[dict], year: int) -> Optional[dict]:
-    """故事年齡 = 當年 − 作品發行年份的「中位數」（取偏低者，所以一定是真實存在的年份；
-    平均數會被一部老片或新片拉偏成沒有任何作品屬於的年份）；最愛年代 = 作品最多的十年，
-    至少 3 部才算「最愛」，否則回 None。只算電影與影集：書的 year 是版本出版年，不代表作品年代。"""
-    years = sorted(
-        r["year"] for r in rows if r.get("year") and r.get("media_type") in ("movie", "tv")
-    )
+def _release_years(rows: List[dict]) -> List[int]:
+    """電影與影集的發行年份。書的 year 是版本出版年，不代表作品年代，所以不算。"""
+    return sorted(r["year"] for r in rows if r.get("year") and r.get("media_type") in ("movie", "tv"))
+
+
+def era_counts(rows: List[dict]) -> Optional[dict]:
+    """年代分佈：電影與影集依發行年份分到十年（1990、2000…），回傳各十年的部數，由舊到新。
+    有年份的作品不足 3 部回 None。"""
+    years = _release_years(rows)
     if len(years) < MIN_ERA_WORKS:
         return None
-    median_year = years[(len(years) - 1) // 2]
-    decades = Counter((y // 10) * 10 for y in years)
-    favorite, count = max(decades.items(), key=lambda kv: (kv[1], kv[0]))
-    return {
-        "median_year": median_year,
-        "age": max(0, year - median_year),
-        "favorite_decade": favorite if count >= MIN_DECADE_WORKS else None,
-    }
+    counts = Counter((y // 10) * 10 for y in years)
+    return {"decades": [{"decade": d, "count": counts[d]} for d in sorted(counts)]}
+
+
+def median_release_age(rows: List[dict], year: int) -> Optional[int]:
+    """作品發行年份中位數距今幾年（取偏低的中位數，不被一部老片拉偏）；只給稱號判斷用，不對外顯示。"""
+    years = _release_years(rows)
+    if len(years) < MIN_MEDIAN_AGE_WORKS:
+        return None
+    return max(0, year - years[(len(years) - 1) // 2])
 
 
 # ---------- 月份節奏 ----------

@@ -70,7 +70,7 @@ describe('Recap 預覽頁', () => {
 
   it('只有開場與總數的資料也不崩潰', () => {
     ready(makeRecap({
-      movies: null, series: null, books: null, genres: null, story_age: null, title: null, monthly: null,
+      movies: null, series: null, books: null, genres: null, eras: null, title: null, monthly: null,
       peak_month: null, months_active: null, top_rated: null, first_last: null, reflection: null,
     }));
     render(<RecapPage />);
