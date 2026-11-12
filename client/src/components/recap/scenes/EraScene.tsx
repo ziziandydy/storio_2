@@ -46,7 +46,7 @@ export default function EraScene({ data, copy, aspectRatio, backdrop }: ScenePro
               <div key={row.key} data-testid="era-row" className="flex flex-col gap-2">
                 <div className="flex items-baseline justify-between">
                   <span className={top ? 'text-[24px] font-black' : 'text-[18px] font-bold'}>{row.label}</span>
-                  <span className="text-[14px] text-white/70">{fill(copy.scene.eras.count, { n: row.count })}</span>
+                  <span className="text-[14px] text-white/90">{fill(copy.scene.eras.count, { n: row.count })}</span>
                 </div>
                 <div className="h-[10px] rounded-full bg-white/10 overflow-hidden">
                   <div

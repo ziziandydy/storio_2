@@ -40,7 +40,7 @@ export default function ClosingScene({ copy, aspectRatio }: SceneProps<Record<st
           alt={`${copy.scene.closing.download} QR`}
           style={{ width: `${size.qr}px`, height: `${size.qr}px`, background: '#fff', padding: '8px', borderRadius: '12px' }}
         />
-        <div className="text-[13px] text-white/75">
+        <div className="text-[13px] text-white/90">
           {copy.scene.closing.download} · {STORE_LABELS.join(' / ')}
         </div>
       </div>

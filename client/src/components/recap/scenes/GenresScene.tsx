@@ -20,7 +20,7 @@ export default function GenresScene({ data, copy, aspectRatio }: SceneProps<Genr
             <div key={genre.name} className="flex flex-col gap-2">
               <div className="flex items-baseline justify-between">
                 <span className={i === 0 ? 'text-[28px] font-black' : 'text-[20px] font-bold'}>{genre.name}</span>
-                <span className="text-[14px] text-white/70">{fill(copy.scene.genres.count, { n: genre.count })}</span>
+                <span className="text-[14px] text-white/90">{fill(copy.scene.genres.count, { n: genre.count })}</span>
               </div>
               <div className="h-[10px] rounded-full bg-white/10 overflow-hidden">
                 <div

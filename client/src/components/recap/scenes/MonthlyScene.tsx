@@ -36,7 +36,7 @@ export default function MonthlyScene({ data, copy, aspectRatio, backdrop }: Scen
         </div>
         <div className="flex justify-between gap-[6px]">
           {copy.months.map((label, i) => (
-            <span key={i} className="flex-1 text-center text-[9px] text-white/60 whitespace-nowrap">
+            <span key={i} className="flex-1 text-center text-[11px] text-white/85 whitespace-nowrap">
               {label}
             </span>
           ))}

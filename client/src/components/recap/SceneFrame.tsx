@@ -5,6 +5,9 @@ import { SCENE_SIZE, type RecapAspect } from '@/lib/recap/types';
 import PosterImage from './PosterImage';
 
 const MAX_POSTERS = 12; // 每月一張時最多 12 個月
+/** 文字帶的失焦程度與範圍（百分比是畫面高度）：約 34%～78% 完整失焦，上下各約 18% 羽化 */
+const FOCUS_BLUR_PX = 10;
+const FOCUS_MASK = 'linear-gradient(180deg, transparent 16%, #000 34%, #000 78%, transparent 92%)';
 
 interface SceneFrameProps {
   aspectRatio: RecapAspect;
@@ -153,9 +156,25 @@ export default function SceneFrame({ aspectRatio, posters, frame, heroLogo, chil
         aria-hidden="true"
         style={{
           position: 'absolute', inset: 0,
-          background: 'radial-gradient(ellipse 90% 52% at 50% 50%, rgba(13,13,13,0.62) 0%, rgba(13,13,13,0.38) 55%, rgba(13,13,13,0) 100%)',
+          background: 'radial-gradient(ellipse 90% 52% at 50% 50%, rgba(13,13,13,0.42) 0%, rgba(13,13,13,0.24) 55%, rgba(13,13,13,0) 100%)',
         }}
       />
+      {backdrop.length > 0 && (
+        // 文字帶：海報自己的細節（大字、人臉、高對比邊緣）會和場景文字互相干擾，所以在文字所在的中央區域
+        // 失焦並壓暗（Lens Blur Depth），上下緣羽化，海報兩端維持清楚。必須在文字層之下、海報與漸層之上。
+        <div
+          data-testid="scene-focus"
+          data-focus-blur={`${FOCUS_BLUR_PX}px`}
+          aria-hidden="true"
+          style={{
+            position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
+            backdropFilter: `blur(${FOCUS_BLUR_PX}px) brightness(0.88) saturate(1.1)`,
+            WebkitBackdropFilter: `blur(${FOCUS_BLUR_PX}px) brightness(0.88) saturate(1.1)`,
+            maskImage: FOCUS_MASK,
+            WebkitMaskImage: FOCUS_MASK,
+          }}
+        />
+      )}
       {frame && <FrameOverlay frame={frame} />}
       <div
         data-testid="scene-content"

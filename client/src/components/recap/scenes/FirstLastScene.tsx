@@ -15,7 +15,7 @@ function Entry({ label, item, locale }: { label: string; item: FirstLastItem; lo
       <div className="flex flex-col gap-1 text-left min-w-0">
         <span className="text-[11px] font-black uppercase tracking-[0.3em]" style={{ color: GOLD }}>{label}</span>
         {item.title && <span className="text-[20px] font-bold leading-snug">{item.title}</span>}
-        {item.date && <span className="text-[13px] text-white/65">{formatArchivedDate(item.date, locale)}</span>}
+        {item.date && <span className="text-[13px] text-white/90">{formatArchivedDate(item.date, locale)}</span>}
       </div>
     </div>
   );

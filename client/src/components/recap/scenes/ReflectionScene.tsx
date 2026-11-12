@@ -20,13 +20,13 @@ export default function ReflectionScene({
         {pick && (
           <>
             <div className="text-[28px] leading-snug font-bold px-2">「{pick.text}」</div>
-            <div className="text-[14px] text-white/70">
+            <div className="text-[14px] text-white/90">
               {pick.title}
               {pick.rating > 0 && <span style={{ color: GOLD }}> · {fill(copy.scene.topRated.rating, { n: pick.rating })}</span>}
             </div>
           </>
         )}
-        <div className="text-[13px] text-white/55">{countText}</div>
+        <div className="text-[13px] text-white/85">{countText}</div>
       </div>
     </SceneFrame>
   );
