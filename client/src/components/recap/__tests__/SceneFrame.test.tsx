@@ -30,11 +30,11 @@ describe('SceneFrame', () => {
     expect(parseInt(logo.style.width, 10)).toBeGreaterThanOrEqual(64);
   });
 
-  it('標誌是清楚的品牌徽章：不用 screen 混合（海報上才不會淡掉），有金色細框與暗色襯底', () => {
+  it('標誌不用 screen 混合（海報上才不會淡掉），有暗色光暈襯底，且不加外框（不改變 logo 的形狀）', () => {
     render(<SceneFrame aspectRatio="9:16" posters={['/image/p.png']}>x</SceneFrame>);
     const logo = screen.getByTestId('scene-logo') as HTMLImageElement;
     expect(logo.style.mixBlendMode).toBe('');
-    expect(logo.style.border).toContain('1px solid');
+    expect(logo.style.border).toBe('');
     expect(logo.style.boxShadow).not.toBe('');
   });
 
