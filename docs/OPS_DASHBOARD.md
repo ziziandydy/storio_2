@@ -26,7 +26,7 @@
 | 元件 | 位置 | 做什麼 |
 |---|---|---|
 | keepalive | `.github/workflows/supabase-keepalive.yml`、`scripts/supabase-keepalive.sh` | 每日 03:17 UTC 對 prod 與 dev 各做一次唯讀查詢，失敗時 GitHub 寄信 |
-| `ops` views | `server/migrations/004_ops_dashboard.sql`、`005_ops_activity.sql`（只存在 prod）、`006_engagement_events.sql`（prod 與 dev） | 彙總註冊、啟用、留存代理、收藏、AI 用量、活躍人數、互動事件 |
+| `ops` views | `server/migrations/004_ops_dashboard.sql`、`005_ops_activity.sql`（只存在 prod）、`006_engagement_events.sql`（prod 與 dev）；`011_ops_excluded_users.sql` 重寫其中 9 個 view 以套用排除清單 | 彙總註冊、啟用、留存代理、收藏、AI 用量、活躍人數、互動事件 |
 | 互動事件 | `public.engagement_events`；後端 `POST /api/v1/events`（`server/app/api/v1/endpoints/events.py`），前端 `client/src/lib/analytics.ts`、`client/src/hooks/useEngagementTracking.ts` | 6 種事件（open／browse／detail_view／search／add_collection／share）依平台、同一主體同一天只存一列；`add_collection` 由後端在新增收藏成功後記 |
 | `looker_ro` | prod 資料庫角色 | 只能讀 `ops` views；連線上限 15 |
 | 監控 | UptimeRobot 免費版（限非商業用途） | 6 個 HTTP／Keyword 監控，含 TMDB 與 Google Books 靜默失敗偵測 |
@@ -45,8 +45,30 @@
 - **啟用率**：註冊後 7 天內至少新增 1 筆收藏的比例；註冊不滿 7 天的群組以 `cohort_mature` 排除。
 - **AI 延遲**：view 依 endpoint／provider／model 分開存百分位數，報表日彙總 p50 取各組平均、p95 取各組最大，是近似值。
 - 日期一律 UTC，台灣晚間資料會落在前一天。
+- **排除清單**（migration 011）：`ops.excluded_users` 列出要排除的帳號（站長自己、Apple 審核、測試帳號），所有算用戶的 view 都不計入這些帳號：註冊、啟用率、留存代理、每日收藏、活躍、互動（帳號部分）、真實用戶。**不排除**：`v_ai_usage_daily`（沒有 user_id，且 AI 呼叫是實際費用）、訪客代號（`visitor_id`，沒有帳號可對應）。只影響報表，不刪也不改任何使用者資料。**未跑 migration 011 前，或清單為空時，數字與以前完全相同。**
 
 ## 常見維護
+
+### 管理排除清單
+**先在 dev 執行 migration 011 並驗證，再在 prod 執行**（同 006、010 的流程；Supabase MCP 是唯讀，只能由 Tu 在 SQL Editor 貼上執行）。
+
+加入排除（先查出 `user_id`，**email 不要寫進 repo 或 commit**）：
+```sql
+-- 找帳號：已登入帳號用 email；Apple 的隱藏 email 是 xxx@privaterelay.appleid.com
+select id, email, is_anonymous, created_at from auth.users where email = '<你的 email>';
+
+insert into ops.excluded_users (user_id, reason, note)
+values ('<user_id>', 'owner', '站長自己的帳號')   -- reason：owner | app_review | tester | other
+on conflict (user_id) do nothing;
+```
+移除：`delete from ops.excluded_users where user_id = '<user_id>';`
+查看：`select user_id, reason, note, created_at from ops.excluded_users order by created_at;`
+
+注意：
+- **匿名（訪客）帳號**：自己用過的訪客帳號沒有 email，要用建立時間與裝置回推，不保證找得全；以後測試盡量用固定的正式登入帳號，方便排除。
+- **Apple 審核**：若在審核備註提供 demo 帳號，把它列入（`app_review`）即可精確排除。審核員若用自己的 Apple ID 或訪客身份，無法與真實用戶區分，只能依審核期間的時間窗估計，數字視為近似。
+- 排除是**查詢時**過濾，之後補列入舊帳號，歷史報表會一併改變（這是想要的行為）。
+- 新增「算用戶」的 view 時，要比照 011 加上 `not exists (select 1 from ops.excluded_users x where x.user_id = …)`，否則新指標會漏排。
 
 ### 輪替 `looker_ro` 密碼
 1. 終端機：`openssl rand -base64 24 | tr -d '/+=' | cut -c1-24`
