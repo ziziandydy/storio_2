@@ -237,6 +237,13 @@ find-skills                         # 尋找新技能
     npm run build:ios   # ← iOS 專用！暫時移走 .env.local，改用 .env.production（Railway URL）
     # ⚠️ 不可用 npm run build，會把本機 IP bake 進靜態檔案導致 iOS 無法連後端
     ```
+    **Next 15 之後的額外檢查（2026-11-13 起；已上架的舊版 App 仍是 Next 14 打包，不受影響）**
+    - 網頁版（Vercel）會先於 iOS 用 Next 15；iOS／Android 要到下次打包才換。兩者共用同一個後端 API，升級不改 API 契約。
+    - `next build` 的日誌必須出現 `Environments: .env.production`；打包後執行 `grep -rEl "(192\.168|172\.(1[6-9]|2[0-9]|3[01])|10\.[0-9]+)\.[0-9]+\.[0-9]+:[0-9]+" client/out/_next` 應無輸出（有輸出代表本機 IP 被打進去）。
+    - 在 `output: 'export'` 下，所有 metadata route（`manifest.ts`、日後的 `sitemap.ts`／`robots.ts`／`opengraph-image`）都要 `export const dynamic = 'force-static'`，否則 build 失敗。
+    - 不要為了消除 `npm audit` 而用 `npm audit fix --force`（會直接跳到 Next 16）。Next 16 要另案評估。
+    - 網頁驗證只涵蓋未登入頁面與 headless Chromium；**送審前必須用實機（iPhone XR）走一遍**：Apple／Google 登入、訪客收藏、新增收藏、編輯心得、AI 建議、單張與月回顧分享、年度 Recap、通知權限、安全區。Android 同理。
+    - `next-env.d.ts` 由 Next 15 自動改寫（多一行 `routes.d.ts` 參考），保留提交，不要還原。
 18. **Xcode Archive** — Product → Archive → Distribute App → App Store Connect → Upload
 
 ### 部署驗證階段（每次部署後必跑）

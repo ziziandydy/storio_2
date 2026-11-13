@@ -1,5 +1,8 @@
 import { MetadataRoute } from 'next';
 
+// Next 15 在 output: 'export' 下要求 metadata route 明確標示靜態，否則 build 失敗
+export const dynamic = 'force-static';
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Storio',
