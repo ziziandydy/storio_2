@@ -24,7 +24,7 @@ def test_write_usage_row_inserts_expected_payload():
     payload = {
         "endpoint": "reflection_suggestions",
         "provider": "gemini",
-        "model": "gemini-2.5-flash",
+        "model": "gemini-3.5-flash-lite",
         "success": True,
         "prompt_tokens": 100,
         "completion_tokens": 20,
@@ -95,7 +95,7 @@ async def test_log_ai_usage_awaits_executor_write_when_loop_running():
         await ai_usage_logger.log_ai_usage(
             endpoint="search_intent",
             provider="gemini",
-            model="gemini-2.5-flash",
+            model="gemini-3.5-flash-lite",
             success=True,
             prompt_tokens=50,
             completion_tokens=10,

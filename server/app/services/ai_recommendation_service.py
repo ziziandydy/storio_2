@@ -100,7 +100,7 @@ class AIRecommendationService:
         start = time.monotonic()
         try:
             genai.configure(api_key=settings.GEMINI_API_KEY)
-            model = genai.GenerativeModel('gemini-2.5-flash')
+            model = genai.GenerativeModel('gemini-3.5-flash-lite')
 
             lang_name = "Traditional Chinese (繁體中文)" if language == "zh-TW" else "English"
             market = REGION_MARKET_MAP.get(region, region)
@@ -122,7 +122,7 @@ class AIRecommendationService:
             )
             usage = getattr(response, "usage_metadata", None)
             await log_ai_usage(
-                endpoint="daily_recommendations", provider="gemini", model="gemini-2.5-flash", success=True,
+                endpoint="daily_recommendations", provider="gemini", model="gemini-3.5-flash-lite", success=True,
                 prompt_tokens=getattr(usage, "prompt_token_count", None),
                 completion_tokens=getattr(usage, "candidates_token_count", None),
                 total_tokens=getattr(usage, "total_token_count", None),
@@ -138,7 +138,7 @@ class AIRecommendationService:
 
         except Exception as e:
             await log_ai_usage(
-                endpoint="daily_recommendations", provider="gemini", model="gemini-2.5-flash", success=False,
+                endpoint="daily_recommendations", provider="gemini", model="gemini-3.5-flash-lite", success=False,
                 latency_ms=int((time.monotonic() - start) * 1000), error=str(e),
             )
             logger.error("Gemini recommendation fetch failed: %s", e)

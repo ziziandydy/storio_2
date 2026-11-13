@@ -265,7 +265,7 @@ def test_endpoint_rejects_invalid_values(body):
 
 def _two_model_factory(first, second):
     """GenerativeModel(name, ...) 依名稱回傳不同的 mock model。"""
-    models = {"gemini-3.1-flash-lite": first, "gemini-2.5-flash": second}
+    models = {"gemini-3.1-flash-lite": first, "gemini-3.5-flash-lite": second}
     return MagicMock(side_effect=lambda name, **kw: models[name])
 
 
@@ -295,9 +295,9 @@ async def test_falls_back_to_flash_when_flash_lite_errors():
     flash = _model(json.dumps(["備援模型的句子。"]))
     out, factory, log = await _run_chain(lite, flash, language="zh-TW")
     assert out == ["備援模型的句子。"]
-    assert [c.args[0] for c in factory.call_args_list] == ["gemini-3.1-flash-lite", "gemini-2.5-flash"]
+    assert [c.args[0] for c in factory.call_args_list] == ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite"]
     assert [(c.kwargs["model"], c.kwargs["success"]) for c in log.call_args_list] == [
-        ("gemini-3.1-flash-lite", False), ("gemini-2.5-flash", True)]
+        ("gemini-3.1-flash-lite", False), ("gemini-3.5-flash-lite", True)]
 
 
 @pytest.mark.asyncio

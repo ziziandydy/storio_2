@@ -70,7 +70,7 @@ Storio 2 是一個強調「沉浸式行動優先 (Mobile-First)」的個人典�
     *   **UI**: 點擊 `StoryCard` 或是使用 `AddToFolioModal` 將作品加入館藏；在 `RateAndReflectForm` 撰寫心得。
     *   **API**: 透過 `collection.py` 端點進行資料更新。
     *   **Service & Repo**: `collection_service.py` 處理權限及資料整合後，交由 `collection_repo.py` 將資料寫入 Supabase。
-    *   **AI 心得建議**: `RateAndReflectForm` 開啟時呼叫 `POST /api/v1/ai/suggestions`（帶 `title`、`synopsis`、選填 `media_type`/`rating`）→ `GeminiService.generate_reflection_suggestions` 用 `reflection_suggestion_prompt.py` 組 prompt：每次隨機抽 3 個角度、禁問句與推薦公式，輸出再以規則過濾。模型順序 `gemini-3.1-flash-lite` → `gemini-2.5-flash` → OpenAI。使用者點選後整句填入心得欄。**心得潤飾**（`/ai/refine`）同樣用 `gemini-3.1-flash-lite`。
+    *   **AI 心得建議**: `RateAndReflectForm` 開啟時呼叫 `POST /api/v1/ai/suggestions`（帶 `title`、`synopsis`、選填 `media_type`/`rating`）→ `GeminiService.generate_reflection_suggestions` 用 `reflection_suggestion_prompt.py` 組 prompt：每次隨機抽 3 個角度、禁問句與推薦公式，輸出再以規則過濾。模型順序 `gemini-3.1-flash-lite` → `gemini-3.5-flash-lite` → OpenAI。使用者點選後整句填入心得欄。**心得潤飾**（`/ai/refine`）同樣用 `gemini-3.1-flash-lite`。
 3.  **首次使用引導 (Onboarding Flow)**:
     *   **啟動序列**: Native Splash → Web 飛入動畫 → Auth 檢查（未登入 → `OnboardingModal`）→ 首頁 → 功能學習卡
     *   **登入方式**: Google OAuth（web redirect）、Apple Sign-In（iOS native Face ID / web OAuth redirect）、訪客模式（Anonymous Auth）

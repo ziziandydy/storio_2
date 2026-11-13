@@ -88,7 +88,7 @@ async def test_generate_reflection_suggestions_falls_back_to_openai_and_logs_bot
     assert mock_log.call_count == 3
     lite_call, flash_call, openai_call = mock_log.call_args_list
     assert (lite_call.kwargs["provider"], lite_call.kwargs["model"], lite_call.kwargs["success"]) == ("gemini", "gemini-3.1-flash-lite", False)
-    assert (flash_call.kwargs["provider"], flash_call.kwargs["model"], flash_call.kwargs["success"]) == ("gemini", "gemini-2.5-flash", False)
+    assert (flash_call.kwargs["provider"], flash_call.kwargs["model"], flash_call.kwargs["success"]) == ("gemini", "gemini-3.5-flash-lite", False)
     assert openai_call.kwargs["provider"] == "openai"
     assert openai_call.kwargs["endpoint"] == "reflection_suggestions"
     assert openai_call.kwargs["success"] is True

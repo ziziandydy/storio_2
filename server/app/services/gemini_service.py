@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 # 心得建議／潤飾：短輸出、不需要深度推理，用 Flash-Lite（實測 ~1s、約 2.5 Flash 的十分之一成本）。
 FAST_MODEL = "gemini-3.1-flash-lite"
-FALLBACK_MODEL = "gemini-2.5-flash"
+FALLBACK_MODEL = "gemini-3.5-flash-lite"
 import datetime
 import asyncio
 import re
@@ -77,7 +77,7 @@ class GeminiService:
         logger.debug("Fetching new book recommendations from Gemini for %s", language)
         try:
             cls.configure()
-            model = genai.GenerativeModel('gemini-2.5-flash')
+            model = genai.GenerativeModel('gemini-3.5-flash-lite')
             
             lang_name = "Traditional Chinese (繁體中文)" if language == "zh-TW" else "English"
             market = "Taiwan/Chinese" if language == "zh-TW" else "International/US"
