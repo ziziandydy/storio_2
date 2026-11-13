@@ -83,7 +83,7 @@ Controller (endpoints/) → Service (services/) → Repository (repositories/) �
 |------|------|
 | `StoryCard` | 支援呼吸燈提示的收藏卡片 |
 | `StoryDetailsView` | 共用詳情展示 (Backdrop-First 設計) |
-| `RateAndReflectForm` | 評分與心得表單 (含 AI 潤飾，100字限制) |
+| `RateAndReflectForm` | 評分與心得表單 (含 AI 潤飾，心得上限 300 字) |
 | `ShareModal` | 分享圖片生成 (多模板：Default/Pure/Ticket/RetroTV/Shelf/Desk)；原生 App 只有「Share / Download」一顆鈕（走系統分享面板儲存影像，**不可用 `<a download>`**，WKWebView 無效），網頁桌面保留 Download |
 | `MonthlyRecapModal` | 月回顧分享（Calendar/Collage/Waterfall/Shelf），與 `ShareModal` 共用 `useProgressiveRenderQueue` 與同一套分享/儲存邏輯 |
 | `NavigationFAB` | 浮動操作按鈕 (取代底部導覽列) |
@@ -142,13 +142,13 @@ gstack                              # headless Chrome 操控：截圖、驗部�
 /qa                                 # 自動 QA：headless browser 找 UI bug → 自動修 → commit
 /review                             # Pre-landing code review（SQL 安全、LLM trust boundary）
 /investigate                        # 系統化 debug（含 browser 截圖存證）→ 取代或補充 systematic-debugging
-/ship                               # 完整 ship 流程：merge base、run tests、bump version、push、PR
+/ship                               # 本專案不用於發版（見下方 Skill routing），會與 standard-version 衝突
 /office-hours                       # 腦力激盪：YC 六個 forcing questions 幫助釐清需求與價值（用在 brainstorming 前）
 /plan-ceo-review                    # CEO 視角 plan review：挑戰前提、找 10-star 產品、確認方向夠大膽
 /plan-eng-review                    # Eng Manager 視角 plan review：架構、資料流、edge cases、測試覆蓋
 
 # 領域技術
-react-expert                        # React Hooks 最佳實踐
+react-expert                        # 從 React 原始碼與測試研究某個 API（寫文件用，非日常開發）
 supabase-postgres-best-practices    # PostgreSQL schema & RLS 設計
 tdd                                 # TDD 最佳實踐
 user-journeys                       # 使用者旅程分析
@@ -175,8 +175,8 @@ find-skills                         # 尋找新技能
 ## 測試規範
 
 - 遵循 **TDD**（先寫測試再實作）
-- **後端**: Pytest — `server/tests/`（150 tests）。會走到 Gemini/OpenAI 備援路徑的測試，必須 patch 清空 `OPENAI_API_KEY`，否則本機 `.env` 的 key 會讓測試真的打外部 API
-- **前端單元/元件**: Vitest — `client/src/**/__tests__/`（183 tests，`cd client && npm test`；元件測試檔頂端加 `// @vitest-environment jsdom`，使用 `@testing-library/react`）。目前未進 CI
+- **後端**: Pytest — `server/tests/`。會走到 Gemini/OpenAI 備援路徑的測試，必須 patch 清空 `OPENAI_API_KEY`，否則本機 `.env` 的 key 會讓測試真的打外部 API
+- **前端單元/元件**: Vitest — `client/src/**/__tests__/`（`cd client && npm test`；元件測試檔頂端加 `// @vitest-environment jsdom`，使用 `@testing-library/react`）。目前未進 CI
 - **前端/E2E**: Playwright — `client/tests/`（目前未進 CI，落後較多版本）
 - 原則上禁止為了讓測試通過而 mock 資料庫；惟**現有後端測試實際以 mock（MagicMock/AsyncMock）為主**，與此原則有落差，待後續釐清是否導入測試用 Supabase 專案。
 
@@ -188,9 +188,9 @@ find-skills                         # 尋找新技能
 
 ---
 
-## 新功能開發流程（強制執行）
+## 新功能開發流程
 
-收到任何功能需求或開發任務時，**必須**依序執行以下流程，**不得跳過任何步驟**：
+新功能或會改變產品行為的任務，依序走以下流程；標「可選」的步驟視情況決定。Bug 修復走本節最後的簡化流程，文件、研究、設定類工作不適用。
 
 ### 設計階段
 1. **`/office-hours`（可選）** — 新功能方向不確定時，先用 YC 六個 forcing questions 釐清需求
@@ -220,7 +220,7 @@ find-skills                         # 尋找新技能
 > - `feat:` commits → MINOR（1.1.0 → 1.2.0）
 > - `feat!:` 或 `BREAKING CHANGE` → MAJOR（1.1.0 → 2.0.0）
 >
-> ⚠️ **git tag 與 App Store 版號可能脫節**：曾有版本直接從 Xcode 上傳未走 `npm run release`，導致 git tag 落後 App Store。發布前先到 App Store Connect 確認當前版號，若 `standard-version` 算出的版號低於實際，用 `npm run release -- --release-as X.Y.0` 手動指定。（2026-10-07：git 與 App Store 已對齊於 v1.19.0 build 25，已上線；`ios:sync` 會連 Android 版號一起同步）
+> ⚠️ **git tag 與 App Store 版號可能脫節**（直接從 Xcode 上傳、沒走 `npm run release` 時會發生）。發布前先到 App Store Connect 確認當前版號，若 `standard-version` 算出的版號低於實際，用 `npm run release -- --release-as X.Y.0` 手動指定。`ios:sync` 會連 Android 版號一起同步。
 
 16. **版號更新（自動）**：
     ```bash
@@ -250,13 +250,6 @@ find-skills                         # 尋找新技能
     ```
 
 > **Bug 修復**可簡化為：`/investigate`（gstack，有 browser 截圖） 或 `superpowers:systematic-debugging`（純程式碼） → TDD → 實作 → `/qa` 驗證
-
----
-
-## 已知重要 Bug
-
-- ~~**分享「Saved」但相簿沒圖**~~：✅ v1.19.0 已修。原生 App 的 `<a download>` 無效卻顯示成功；改為只留「Share / Download」走系統分享面板。
-- ~~**`3d` 模板截圖失真**~~：✅ 已由 Puppeteer 微服務遷移解決（不再用 `html-to-image`），`preserve-3d` 截圖正常。歷史背景見 `docs/BUG_REPORT_SHARE_IMAGE.md`。
 
 ---
 
