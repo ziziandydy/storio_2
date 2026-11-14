@@ -244,6 +244,11 @@ find-skills                         # 尋找新技能
     - 不要為了消除 `npm audit` 而用 `npm audit fix --force`（會直接跳到 Next 16）。Next 16 要另案評估。
     - 網頁驗證只涵蓋未登入頁面與 headless Chromium；**送審前必須用實機（iPhone XR）走一遍**：Apple／Google 登入、訪客收藏、新增收藏、編輯心得、AI 建議、單張與月回顧分享、年度 Recap、通知權限、安全區。Android 同理。
     - `next-env.d.ts` 由 Next 15 自動改寫（多一行 `routes.d.ts` 參考），保留提交，不要還原。
+
+    **送審前必做：重新確認 App Store 隱私標籤（App Privacy）**
+    - 對照 `docs/app-store-privacy-answers.md` 逐項核對；功能有新增資料蒐集、第三方服務、email 用途時，同步更新標籤與該檔。
+    - 待處理中：2026-11-13 隱私頁 §2 加入「email 可用於帳號通知與回饋邀請」，Contact Info → Email Address 的用途是否要加 Other Purposes，需 Tu 在 App Store Connect 確認（見 `docs/BACKLOG.md`「下次上版前：App Store 隱私標籤」）。
+    - 隱私頁（`client/src/app/privacy/page.tsx`）與條款（`terms/page.tsx`）的內容必須與實際行為一致；改內容時手動更新兩頁的 `Last Updated`。App 內打包的是舊版頁面，要等發版才會換。
 18. **Xcode Archive** — Product → Archive → Distribute App → App Store Connect → Upload
 
 ### 部署驗證階段（每次部署後必跑）
