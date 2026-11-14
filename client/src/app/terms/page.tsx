@@ -41,7 +41,7 @@ export default function TermsPage() {
                 <section className="space-y-3">
                     <h2 className="text-lg font-bold text-white tracking-wide">4. Data Utilization for Service Improvement</h2>
                     <p className="text-white/70">
-                        We continuously strive to enhance Storio&apos;s user experience. As part of our service, we may use anonymized or aggregated data (such as rating distributions or curation trends) to train generalized machine learning models, personalize content recommendations, or optimize app performance. Your private reflections will not be publicly exposed.
+                        We continuously strive to enhance Storio&apos;s user experience. We use basic first-party usage records, such as which features are used, to understand whether the app works and to decide what to improve. We do not use your reflections or collections to train machine learning models, and we do not sell your personal data. Your private reflections will not be publicly exposed. See our Privacy Policy for details.
                     </p>
                 </section>
 
@@ -60,7 +60,7 @@ export default function TermsPage() {
                 </section>
 
                 <div className="pt-8 mb-10 border-t border-white/10 text-white/40 text-xs">
-                    Last Updated: {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    Last Updated: November 2026
                 </div>
             </main>
         </div>

@@ -32,6 +32,8 @@ export default function PrivacyPage() {
                     <h2 className="text-lg font-bold text-white tracking-wide">2. How We Use Your Information</h2>
                     <p className="text-white/70">
                         The data we collect is primarily used to provide, maintain, and improve the Storio service. This includes synchronizing your data across devices securely.
+                        <br /><br />
+                        We may also use the email address on your account to contact you about your account or important changes to the service, and occasionally to ask for your feedback about Storio. If you would rather not hear from us, email andismtu@gmail.com and we will stop.
                     </p>
                 </section>
 
@@ -44,18 +46,17 @@ export default function PrivacyPage() {
                         • <strong>Reflection suggestions:</strong> the title, synopsis, media type and rating of the work you are viewing.<br />
                         • <strong>AI search:</strong> the search description you type.<br /><br />
                         This happens only when you use those features, and the data is used to deliver the result you requested. We do not send your email address, name or account identifier to these providers. How these providers handle the data is governed by their own privacy policies and terms.
+                        <br /><br />
+                        Searches for movies, series and books are answered by TMDB and Google Books: the text you type into search is forwarded to them to find matching titles. We do not send them your email address, name or account identifier.
                     </p>
                 </section>
 
                 <section className="space-y-3">
-                    <h2 className="text-lg font-bold text-white tracking-wide">4. Analytics, Training, and Personalization</h2>
-                    <p className="text-white/70 bg-white/5 p-4 rounded-xl border border-white/10 mt-2">
-                        <strong>Data Processing Rights:</strong> To ensure the continuous evolution and sustainability of Storio, we reserve the right to utilize collected data (including usage patterns and generalized collection metrics) for analytic and operational purposes. This encompasses, but is not limited to:
+                    <h2 className="text-lg font-bold text-white tracking-wide">4. Analytics and Your Data</h2>
+                    <p className="text-white/70">
+                        Storio does not use third-party tracking scripts, advertising networks or tracking cookies, and we do not show advertisements. We do keep basic first-party usage records so we can tell whether the app works and which features are used: for example, that the app was opened, a list was browsed, a search was made, an item was added to your Folio, or a share was completed. These records are linked to your account (or to a random identifier if you use Storio without signing in) and do not contain your reflection text. We also log technical details of AI requests, such as which feature was used, how long it took and how many tokens it used, without your content or account identifier.
                         <br /><br />
-                        • <strong>Tracking and Analytics:</strong> Integration of third-party tracking scripts or cookies to monitor app performance and user interactions.<br />
-                        • <strong>Personalized Advertising:</strong> Delivering targeted advertisements or promotional content based on your interaction history.<br />
-                        • <strong>Machine Learning & Data Training:</strong> Utilizing anonymized dataset aggregations to train AI models that power features such as &quot;Storio Recommendations&quot; or automated insights.<br /><br />
-                        We prioritize stripping Personally Identifiable Information (PII) before using your data for broad statistical or training purposes.
+                        We do not sell your personal data, and we do not use your reflections or collections to train AI models. If this changes, we will update this policy before it takes effect.
                     </p>
                 </section>
 
@@ -81,7 +82,7 @@ export default function PrivacyPage() {
                 </section>
 
                 <div className="pt-8 mb-10 border-t border-white/10 text-white/40 text-xs">
-                    Last Updated: {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    Last Updated: November 2026
                 </div>
             </main>
         </div>
